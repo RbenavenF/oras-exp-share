@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "title_id": "000400000011c400",
+  "product_code": "CTR-P-ECRA",
+  "rom": {
+    "path": "inputs/game/3DS1129 - Pokemon Omega Ruby (Europe) (En,Ja,Fr,De,Es,It,Ko).3ds",
+    "size": 1898569728,
+    "sha256": "96aa3fe18a5c8cdb52f4f989712f1fa73da2bc8b3cf08e21762cf2d6a4e1d7ef"
+  },
+  "mod_root": "inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)",
+  "mod_files": [
+    {
+      "path": "inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)/code.ips",
+      "size": 135,
+      "sha256": "0da174955afe9a7baf43254ce314bf5b65032f89c70a8e1065fa92ee4c2267df"
+    },
+    {
+      "path": "inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)/instructions.txt",
+      "size": 920,
+      "sha256": "3ec4dda0e9504179c81d214bca240310455963e81d496ec8f4226a2e4ed1c77c"
+    },
+    {
+      "path": "inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)/romfs/a/0/1/2",
+      "size": 865240,
+      "sha256": "80c14d1124159f8e181430ba73f2b6568bdf3820f9fe406cb7744bb719183b55"
+    },
+    {
+      "path": "inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)/romfs/a/0/1/3",
+      "size": 1042352,
+      "sha256": "4beafb287638cac60e0390e6de5f7eaeeea1f5b7f69d3bae90209c70d5916ebb"
+    },
+    {
+      "path": "inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)/romfs/a/0/3/6",
+      "size": 41864,
+      "sha256": "a57d197013f08c9fd43b81de1625120d9c67c56609b0ec36b820f1aea445b26a"
+    },
+    {
+      "path": "inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)/romfs/a/0/3/7",
+      "size": 10144,
+      "sha256": "7db13fa7f0dba4caeb1d08685add572794be7bef886e1f8f77eaae49a3ab7e98"
+    },
+    {
+      "path": "inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)/romfs/a/0/3/8",
+      "size": 40032,
+      "sha256": "32a70de2484019eabbc3a6aea17bb68f0dd3833d3c59a8001468bc6962d59cec"
+    },
+    {
+      "path": "inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)/romfs/a/0/7/3",
+      "size": 2947028,
+      "sha256": "cf07e59d6b9bb2b3b012fb43c297b7afefc75244205cc6939a81607ca7fcd33c"
+    },
+    {
+      "path": "inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)/romfs/a/1/5/2",
+      "size": 43297836,
+      "sha256": "f8d3ca775e49e6e98262b400df907aef269cba2a784456ac6bd49923f6ca675a"
+    },
+    {
+      "path": "inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)/romfs/a/1/9/1",
+      "size": 72700,
+      "sha256": "25a6eddaba0db9e61dfcb40aa4e3e58b3570bee8ea33d0952281e74757a379c7"
+    },
+    {
+      "path": "inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)/romfs/a/1/9/2",
+      "size": 56232,
+      "sha256": "790dfdd503410c95e65458a91d3a61a3c1b071862ffe4acd25f456d07d41d171"
+    },
+    {
+      "path": "inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)/romfs/a/1/9/5",
+      "size": 148764,
+      "sha256": "6ce78500cf174c739efd95f4e5a5e4ba1c028b605eb2856f56abaff9f127e1bd"
+    },
+    {
+      "path": "inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)/romfs/a/1/9/7",
+      "size": 43520,
+      "sha256": "4d2f144ff806551f8922c6c69e98f4b02e71b899b7541afb51b50b165ea0ebdd"
+    },
+    {
+      "path": "inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)/romfs/sound/bgm_sg_e_09.dspadpcm.bcstm",
+      "size": 3556736,
+      "sha256": "a4e81341a6d7e3be36f3fced827bcd626c247600d0d341b4cd1d44f4b5b42abf"
+    }
+  ],
+  "tools": [
+    {
+      "path": "tools/ctrtool/ctrtool",
+      "size": 3046888,
+      "sha256": "c223a8334832858bd55c3e9648705c8daa677019ba66a1969f009e1fcac7c48c"
+    },
+    {
+      "path": "tools/3dstool/3dstool",
+      "size": 5720856,
+      "sha256": "1808d0ee3ad5c3ee22e23d556ffde2a55db0e80624cfb2c8f086260a8837a81c"
+    }
+  ],
+  "extracted": {
+    "code": {
+      "path": "work/extracted/exefs/code.bin",
+      "size": 5439488,
+      "sha256": "d587c98ac5c4dedacf9be4baf2d6b7d10169e6a63f8bc35b132002cc27bc1a37"
+    },
+    "exheader": {
+      "path": "work/extracted/exheader.bin",
+      "size": 2048,
+      "sha256": "1af8612a2e780ed182fdba0932b8d89a77ace9b364dcc1aadfc14f64e7e2f666"
+    }
+  }
+}

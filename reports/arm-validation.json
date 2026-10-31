@@ -1,0 +1,2094 @@
+{
+  "method": "Unicorn 2.1.4 executing original/patched ARM with external fixtures",
+  "limitations": "Not a full game run: external data and crypto helpers are fixtures. Original egg getters, reward dispatch and EV caps execute as ARM; EXP application is recorded by a stub. No save writes, menus, CRO loading or battle-party construction tested here.",
+  "cases": [
+    {
+      "name": "reserve_holder",
+      "original": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        }
+      ],
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2
+      },
+      "passed": true
+    },
+    {
+      "name": "participating_holder",
+      "original": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        }
+      ],
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 7,
+        "0014eb08": 7,
+        "004ea710": 1,
+        "003b0e7c": 1,
+        "003b1004": 1,
+        "01077a2c": 1
+      },
+      "passed": true
+    },
+    {
+      "name": "fainted_holder",
+      "original": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        }
+      ],
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 7,
+        "0014eb08": 7,
+        "004ea710": 1,
+        "003b0e7c": 1,
+        "003b1004": 1,
+        "01077a2c": 1
+      },
+      "passed": true
+    },
+    {
+      "name": "no_holder",
+      "original": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        }
+      ],
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 7,
+        "0014eb08": 7,
+        "004ea710": 1,
+        "003b0e7c": 1,
+        "003b1004": 1,
+        "01077a2c": 1
+      },
+      "passed": true
+    },
+    {
+      "name": "global_switch_off",
+      "original": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2
+      },
+      "passed": true
+    },
+    {
+      "name": "two_participants",
+      "original": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        }
+      ],
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2
+      },
+      "passed": true
+    },
+    {
+      "name": "last_party_slot",
+      "original": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        }
+      ],
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2
+      },
+      "passed": true
+    },
+    {
+      "name": "odd_amount",
+      "original": [
+        {
+          "exp": 63,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 31,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        },
+        {
+          "exp": 31,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        }
+      ],
+      "patched": [
+        {
+          "exp": 63,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 31,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2
+      },
+      "passed": true
+    },
+    {
+      "name": "minimum_one",
+      "original": [
+        {
+          "exp": 1,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 1,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        },
+        {
+          "exp": 1,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        }
+      ],
+      "patched": [
+        {
+          "exp": 1,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 1,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2
+      },
+      "passed": true
+    },
+    {
+      "name": "trainer_battle",
+      "original": [
+        {
+          "exp": 150,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 75,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        },
+        {
+          "exp": 75,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        }
+      ],
+      "patched": [
+        {
+          "exp": 150,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 75,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2
+      },
+      "passed": true
+    },
+    {
+      "name": "traded_holder",
+      "original": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 75,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        }
+      ],
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 75,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2,
+        "004d2480": 1,
+        "004ea894": 1
+      },
+      "passed": true
+    },
+    {
+      "name": "lucky_egg_participant",
+      "original": [
+        {
+          "exp": 150,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        }
+      ],
+      "patched": [
+        {
+          "exp": 150,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2
+      },
+      "passed": true
+    },
+    {
+      "name": "affection_bonus",
+      "original": [
+        {
+          "exp": 120,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 60,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        },
+        {
+          "exp": 60,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        }
+      ],
+      "patched": [
+        {
+          "exp": 120,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 60,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2
+      },
+      "passed": true
+    },
+    {
+      "name": "pokerus_holder",
+      "original": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 50,
+          "ev": [
+            2,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        }
+      ],
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 50,
+          "ev": [
+            2,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2
+      },
+      "passed": true
+    },
+    {
+      "name": "two_holders",
+      "original": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 1
+        }
+      ],
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 19,
+        "0014eb08": 19,
+        "004ea710": 3,
+        "003b0e7c": 3,
+        "003b1004": 3,
+        "01077a2c": 3
+      },
+      "passed": true
+    },
+    {
+      "name": "all_fainted",
+      "original": [
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "patched": [
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 1,
+        "0014eb08": 1
+      },
+      "passed": true
+    },
+    {
+      "name": "empty_party",
+      "original": [],
+      "patched": [],
+      "stub_calls": {
+        "0014eb30": 1,
+        "0014eb08": 1
+      },
+      "passed": true
+    }
+  ],
+  "item_fields": {
+    "original": {
+      "9": 1,
+      "10": 1,
+      "11": 4,
+      "13": 5,
+      "item_id_permitted": 1
+    },
+    "patched": {
+      "9": 0,
+      "10": 0,
+      "11": 0,
+      "13": 0,
+      "item_id_permitted": 1
+    },
+    "passed": true
+  },
+  "application_cases": [
+    {
+      "name": "application_normal",
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 100,
+          "battle_ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 50,
+          "battle_ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 1
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 0,
+          "battle_ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2,
+        "00168ec0": 3,
+        "0016bd00": 3,
+        "00168e50": 3,
+        "01071bd8": 6,
+        "01070f8c": 2,
+        "01078834": 2,
+        "messages": [
+          [
+            "individual",
+            43,
+            0
+          ],
+          [
+            "individual",
+            43,
+            1
+          ]
+        ]
+      },
+      "passed": true
+    },
+    {
+      "name": "application_level_100",
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 100,
+          "battle_ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 0,
+          "battle_ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 1
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 0,
+          "battle_ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2,
+        "00168ec0": 3,
+        "0016bd00": 3,
+        "00168e50": 3,
+        "01071bd8": 5,
+        "01070f8c": 1,
+        "01078834": 1,
+        "messages": [
+          [
+            "individual",
+            43,
+            0
+          ]
+        ]
+      },
+      "passed": true
+    },
+    {
+      "name": "application_egg",
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 100,
+          "battle_ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 0,
+          "battle_ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 0,
+          "battle_ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2,
+        "00168ec0": 3,
+        "0016bd00": 3,
+        "00168e50": 3,
+        "01071bd8": 3,
+        "01070f8c": 1,
+        "01078834": 1,
+        "messages": [
+          [
+            "individual",
+            43,
+            0
+          ]
+        ]
+      },
+      "passed": true
+    },
+    {
+      "name": "application_bad_egg",
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 100,
+          "battle_ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 0,
+          "battle_ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 0
+        },
+        {
+          "exp": 0,
+          "ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 0,
+          "battle_ev": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 0
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2,
+        "00168ec0": 3,
+        "0016bd00": 3,
+        "00168e50": 3,
+        "01071bd8": 3,
+        "01070f8c": 1,
+        "01078834": 1,
+        "messages": [
+          [
+            "individual",
+            43,
+            0
+          ]
+        ]
+      },
+      "passed": true
+    },
+    {
+      "name": "application_stat_cap",
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 100,
+          "battle_ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 50,
+          "battle_ev": [
+            252,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 252
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2,
+        "00168ec0": 2,
+        "0016bd00": 2,
+        "00168e50": 2,
+        "01071bd8": 6,
+        "01070f8c": 2,
+        "01078834": 2,
+        "messages": [
+          [
+            "individual",
+            43,
+            0
+          ],
+          [
+            "individual",
+            43,
+            1
+          ]
+        ]
+      },
+      "passed": true
+    },
+    {
+      "name": "application_total_cap",
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 100,
+          "battle_ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 50,
+          "battle_ev": [
+            251,
+            252,
+            7,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 510
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2,
+        "00168ec0": 2,
+        "0016bd00": 2,
+        "00168e50": 2,
+        "01071bd8": 6,
+        "01070f8c": 2,
+        "01078834": 2,
+        "messages": [
+          [
+            "individual",
+            43,
+            0
+          ],
+          [
+            "individual",
+            43,
+            1
+          ]
+        ]
+      },
+      "passed": true
+    },
+    {
+      "name": "application_partial_total",
+      "patched": [
+        {
+          "exp": 100,
+          "ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 100,
+          "battle_ev": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 1
+        },
+        {
+          "exp": 50,
+          "ev": [
+            2,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "shared": 0,
+          "dispatched_exp": 50,
+          "battle_ev": [
+            251,
+            252,
+            7,
+            0,
+            0,
+            0
+          ],
+          "battle_ev_total": 510
+        }
+      ],
+      "stub_calls": {
+        "0014eb30": 13,
+        "0014eb08": 13,
+        "004ea710": 2,
+        "003b0e7c": 2,
+        "003b1004": 2,
+        "01077a2c": 2,
+        "00168ec0": 2,
+        "0016bd00": 2,
+        "00168e50": 2,
+        "01071bd8": 6,
+        "01070f8c": 2,
+        "01078834": 2,
+        "messages": [
+          [
+            "individual",
+            43,
+            0
+          ],
+          [
+            "individual",
+            43,
+            1
+          ]
+        ]
+      },
+      "passed": true
+    }
+  ]
+}

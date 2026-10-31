@@ -1,0 +1,16 @@
+[   0.361354] Service.FS <Info> core/file_sys/ncch_container.cpp:ApplyCodePatch:549: File /home/rbenaven/projects/oras-exp-share/work/azahar-lab/data/azahar-emu/load/mods/000400000011C400/code.ips patching code.bin
+[   0.376913] Service.FS <Info> core/file_sys/layered_fs.cpp:operator():183: LayeredFS replacement file in use for /DllBattle.cro
+[   0.376937] Service.FS <Info> core/file_sys/layered_fs.cpp:operator():183: LayeredFS replacement file in use for /a/1/9/7
+[   0.376987] Service.FS <Info> core/file_sys/layered_fs.cpp:operator():183: LayeredFS replacement file in use for /.crr/static.crr
+[   0.377318] Service.FS <Info> core/file_sys/layered_fs.cpp:operator():183: LayeredFS replacement file in use for /DllBattle.cro
+[   0.377334] Service.FS <Info> core/file_sys/layered_fs.cpp:operator():183: LayeredFS replacement file in use for /a/1/9/7
+[   0.377370] Service.FS <Info> core/file_sys/layered_fs.cpp:operator():183: LayeredFS replacement file in use for /.crr/static.crr
+[  25.787505] Service.LDR <Warning> core/hle/service/ldr_ro/ldr_ro.cpp:LoadCRR:155: (STUBBED) called, crr_buffer_ptr=0x08C62000, crr_size=0x00002000
+[24275.057364] Service.LDR <Info> core/hle/service/ldr_ro/cro_helper.cpp:ApplyStaticAnonymousSymbolToCRS:555: CRO "DllBattle" exports 0 static anonymous symbols
+[24275.059263] Service.LDR <Info> core/hle/service/ldr_ro/cro_helper.cpp:operator():869: CRO "DllBattle" imports 0 indexed symbols from "|static|"
+[24275.059264] Service.LDR <Info> core/hle/service/ldr_ro/cro_helper.cpp:operator():886: CRO "DllBattle" imports 1012 anonymous symbols from "|static|"
+[24275.059596] Service.LDR <Info> core/hle/service/ldr_ro/cro_helper.cpp:ApplyModuleExport:986: CRO "DllBattle" exports 0 indexed symbols to "|static|"
+[24275.059597] Service.LDR <Info> core/hle/service/ldr_ro/cro_helper.cpp:ApplyModuleExport:1002: CRO "DllBattle" exports 2 anonymous symbols to "|static|"
+[24275.059747] Service.LDR <Info> core/hle/service/ldr_ro/ldr_ro.cpp:LoadCRO:331: CRO "DllBattle" loaded at 0x006F3000, fixed_end=0x007E0000
+[24275.062627] Service.LDR <Info> core/hle/service/ldr_ro/cro_helper.cpp:ApplyModuleExport:986: CRO "DllBackGround" exports 0 indexed symbols to "DllBattle"
+[24275.062628] Service.LDR <Info> core/hle/service/ldr_ro/cro_helper.cpp:ApplyModuleExport:1002: CRO "DllBackGround" exports 19 anonymous symbols to "DllBattle"

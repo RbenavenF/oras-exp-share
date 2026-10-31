@@ -1,0 +1,332 @@
+{
+  "date": "2026-10-31",
+  "emulator": "Azahar 2126.2",
+  "method": "Four actual single wild battles driven through the GUI; compare decrypted saved party data with valid save and PK6 checksums.",
+  "title_id": "000400000011C400",
+  "base": "Omega Ruby without update + Repolished 1.7.6",
+  "tested_changed_assets": {
+    "romfs/DllBattle.cro": "a871bf56d9cd101ca62cd99afe9157ba134a86096806f786efd1d03cc81af196",
+    "romfs/a/1/9/7": "2988b22d48c740b66984702a4b9e5b422a5e320eb5ecb97600a4764c60e6bce4",
+    "romfs/.crr/static.crr": "ca928126e109e48153d54ddee008c693642541038c780993016cf8fb286df68e"
+  },
+  "cases": [
+    {
+      "name": "reserve",
+      "opponent": "Wurmple",
+      "opponent_level_observed": null,
+      "before_path": "work/test-saves/route101-v2/reserve-main",
+      "after_path": "work/test-saves/results/reserve-after-main",
+      "before_sha256": "787daa0b1ffc88baf85dee3b3ba3ea82e9c4462fd6aa958a0cca198055ec4437",
+      "after_sha256": "2c1b02120ef991441ee5ba9e60b105676337ea682957f19911a2948ebe290541",
+      "held_items": [
+        0,
+        216,
+        0
+      ],
+      "exp_before": [
+        159,
+        159,
+        159
+      ],
+      "exp_after": [
+        183,
+        171,
+        159
+      ],
+      "exp_delta": [
+        24,
+        12,
+        0
+      ],
+      "ev_delta": [
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "hp_before": [
+        20,
+        20,
+        20
+      ],
+      "hp_after": [
+        16,
+        20,
+        20
+      ],
+      "levels_before": [
+        5,
+        5,
+        5
+      ],
+      "levels_after": [
+        6,
+        5,
+        5
+      ],
+      "passed": true
+    },
+    {
+      "name": "participant",
+      "opponent": "Wurmple",
+      "opponent_level_observed": 2,
+      "before_path": "work/test-saves/results/participant-before-main",
+      "after_path": "work/test-saves/results/participant-after-main",
+      "before_sha256": "ff849bd267ffc64b091cdefdebc8b990fe3970df14fd48b10ca0732c4760fee5",
+      "after_sha256": "f662263b29bdfa0baa56bc64d03c17123b610e482293c726db1787dc9d24a343",
+      "held_items": [
+        216,
+        0,
+        0
+      ],
+      "exp_before": [
+        183,
+        171,
+        159
+      ],
+      "exp_after": [
+        199,
+        171,
+        159
+      ],
+      "exp_delta": [
+        16,
+        0,
+        0
+      ],
+      "ev_delta": [
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "hp_before": [
+        16,
+        20,
+        20
+      ],
+      "hp_after": [
+        16,
+        20,
+        20
+      ],
+      "levels_before": [
+        6,
+        5,
+        5
+      ],
+      "levels_after": [
+        6,
+        5,
+        5
+      ],
+      "passed": true
+    },
+    {
+      "name": "none",
+      "opponent": "Wurmple",
+      "opponent_level_observed": 2,
+      "before_path": "work/test-saves/results/none-before-main",
+      "after_path": "work/test-saves/results/none-after-main",
+      "before_sha256": "31c3ff6c3b943252d7870bda183d1fe1ead182cd4a819bd558bc4b68035da1f7",
+      "after_sha256": "61fe7f74f886257a43d298c2c5fce1b91539d2d5255e285001b1289e17b01fca",
+      "held_items": [
+        0,
+        0,
+        0
+      ],
+      "exp_before": [
+        199,
+        171,
+        159
+      ],
+      "exp_after": [
+        215,
+        171,
+        159
+      ],
+      "exp_delta": [
+        16,
+        0,
+        0
+      ],
+      "ev_delta": [
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "hp_before": [
+        16,
+        20,
+        20
+      ],
+      "hp_after": [
+        16,
+        20,
+        20
+      ],
+      "levels_before": [
+        6,
+        5,
+        5
+      ],
+      "levels_after": [
+        6,
+        5,
+        5
+      ],
+      "passed": true
+    },
+    {
+      "name": "fainted",
+      "opponent": "Poochyena",
+      "opponent_level_observed": 2,
+      "before_path": "work/test-saves/results/fainted-before-main",
+      "after_path": "work/test-saves/results/fainted-after-main",
+      "before_sha256": "2c5598af8bc1e831cb28103d42fb915cf941958d218e8185b8d8fc67277a34df",
+      "after_sha256": "50782052053b16a15df4c0fc16fd1bb99acfb425bf76c21da3d99d6f454e9e21",
+      "held_items": [
+        0,
+        216,
+        0
+      ],
+      "exp_before": [
+        215,
+        215,
+        215
+      ],
+      "exp_after": [
+        231,
+        215,
+        215
+      ],
+      "exp_delta": [
+        16,
+        0,
+        0
+      ],
+      "ev_delta": [
+        [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "hp_before": [
+        22,
+        0,
+        22
+      ],
+      "hp_after": [
+        20,
+        0,
+        22
+      ],
+      "levels_before": [
+        6,
+        6,
+        6
+      ],
+      "levels_after": [
+        6,
+        6,
+        6
+      ],
+      "passed": true
+    }
+  ],
+  "menu_observations": [
+    "Held item removed to Items pocket",
+    "GIVE action visible in Items pocket",
+    "Item equipped to participant through bag UI and persisted in save"
+  ],
+  "limitations": [
+    "Artificial three-Pokemon teams cloned from a new laboratory starter",
+    "First Wurmple level was not captured; comparison uses actual 24/12/0 gains",
+    "Egg, level-100 and EV-cap cases tested only through ARM fixtures",
+    "No doubles, hordes, multiplayer or console test",
+    "Original item description and story delivery unchanged",
+    "Software renderer showed graphical artifacts on models; gameplay continued"
+  ],
+  "participant_matches_no_item_control": true
+}

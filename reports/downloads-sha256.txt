@@ -1,0 +1,5 @@
+d42e3de7766ee552b3609ac5acb7ad3f07209dd91bc45a21d3fc2b049790ede2  downloads/3dstool-1.2.6.tar.gz
+af037f8b775198f636b14bcfe63fb401b02246ebfefe1025bb905ce042556960  downloads/azahar-2126.2.AppImage
+b943e411e6e5d72917fbf3213981b3d3303e0d237ef2c20b7518c94ac4a09a1a  downloads/ctrtool-1.1.0.zip
+ddac49f903da9d5bac833e5cc79395098b9c33cfd3279be5f31bd00387d2d4db  downloads/ghidra_12.1.4.zip
+ebf904fd6782e429e95a60a24fe0724b20c0acb2dedb304135a5281f6b5f2e72  downloads/GhidraMCP-2.0.zip

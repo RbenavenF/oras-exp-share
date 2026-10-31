@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "status": "experimental; validated in Azahar and on a Luma3DS console",
+  "patches": [
+    {
+      "path": "romfs/DllBattle.cro",
+      "sha256": "330170f6b71d9df5cad1245a30b95f9c0a9804811057960aab3ea62bfb638375",
+      "writes": [
+        {
+          "offset": 206384,
+          "before": "50009de5040090e5100090e58c00d0e5000050e30400000a",
+          "after": "040196e7b201d0e100f020e300f020e3d80050e30400001a",
+          "reason": "Nonparticipant eligibility: held item 216 instead of global Exp. Share flag"
+        },
+        {
+          "offset": 206412,
+          "before": "01c0a0e3",
+          "after": "00c0a0e3",
+          "reason": "Holder share is not flagged as shared (+0x11 = 0): battle shows the individual EXP message instead of the team summary"
+        }
+      ]
+    },
+    {
+      "path": "romfs/a/1/9/7",
+      "sha256": "4d2f144ff806551f8922c6c69e98f4b02e71b899b7541afb51b50b165ea0ebdd",
+      "writes": [
+        {
+          "offset": 23368,
+          "before": "7f0205",
+          "after": "1f0000",
+          "reason": "Item 216: regular items pocket, clear key-item flags, remove field toggle"
+        }
+      ]
+    },
+    {
+      "path": "romfs/a/0/7/7",
+      "sha256": "ffe68cc62c9a8544f67e62745a2bbdcd0f8bbc242c68ceab44fda6a7d381fbc9",
+      "texts": [
+        {
+          "entry": 117,
+          "line": 216,
+          "before": "Al activar el dispositivo, todos los Pokémon de\ntu equipo ganan Puntos de Experiencia tras los\ncombates, aunque no salgan a luchar.",
+          "after": "Si lo lleva un Pokémon que no sale a combatir,\nrecibe la mitad de los Puntos de Experiencia\nobtenidos en el combate.",
+          "reason": "Spanish item description for held Exp. Share"
+        }
+      ]
+    },
+    {
+      "path": "romfs/a/0/7/3",
+      "sha256": "cf07e59d6b9bb2b3b012fb43c297b7afefc75244205cc6939a81607ca7fcd33c",
+      "texts": [
+        {
+          "entry": 117,
+          "line": 216,
+          "before": "Turning on this special device will\nallow all the Pokémon on your team\nto receive Exp. Points from battles.",
+          "after": "When held by a Pokémon that doesn't battle,\nit gets half of the Exp. Points earned\nfrom battles.",
+          "reason": "English item description for held Exp. Share"
+        }
+      ]
+    },
+    {
+      "path": "romfs/a/0/8/5",
+      "sha256": "fcf652e3839b3b30be976b801084f366df79026977a24afdcfc3db2d99fdf04c",
+      "texts": [
+        {
+          "entry": 432,
+          "line": 16,
+          "before": "Se trata de un objeto llamado Repartir Experiencia.[VAR BE01]\n¡Un artilugio increíble que únicamente un genio como el\nmío podría concebir![VAR BE01]\nUna vez activado, los Puntos de Experiencia que recibas\ntras un combate se repartirán entre todos los integrantes[VAR BE00]\nde tu equipo Pokémon.[VAR BE00]\n¡Te lo recomiendo encarecidamente!",
+          "after": "Se trata de un objeto llamado Repartir Experiencia.[VAR BE01]\n¡Un artilugio increíble que únicamente un genio como el\nmío podría concebir![VAR BE01]\nSi se lo das a un Pokémon, recibirá Puntos de Experiencia\ntras los combates aunque no salga a luchar.[VAR BE01]\n¡Te lo recomiendo encarecidamente!",
+          "reason": "Spanish story explanation when the item is received"
+        }
+      ]
+    }
+  ]
+}
