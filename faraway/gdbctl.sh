@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Laboratory GDB control for the Azahar stub: a persistent gdb-multiarch fed through a FIFO.
+#   gdbctl.sh start            connect (the stub halts the game), then let it run
+#   gdbctl.sh halt             pause the game (SIGINT to gdb)
+#   gdbctl.sh run              resume
+#   gdbctl.sh cmd "GDB CMD"    run a command while halted; prints its output
+#   gdbctl.sh stop             quit gdb (the emulator closes when the debugger leaves)
+set -euo pipefail
+D=/home/rbenaven/projects/oras-exp-share/work/faraway/gdb
+mkdir -p "$D"
+send() { printf '%s\n' "$*" > "$D/in"; }
+wait_quiet() { local n=0 last=-1; while true; do local s; s=$(stat -c %s "$D/out.log"); [ "$s" = "$last" ] && n=$((n+1)) || n=0; last=$s; [ $n -ge ${1:-3} ] && break; sleep 0.2; done; }
+case "$1" in
+  start)
+    rm -f "$D/in"; mkfifo "$D/in"; : > "$D/out.log"
+    (tail -f "$D/in" | gdb-multiarch -q -nx > "$D/out.log" 2>&1 & echo $! > "$D/tail.pid")
+    sleep 1; pgrep -n gdb-multiarch > "$D/gdb.pid"
+    send "set pagination off"; send "set confirm off"; send "set width 0"
+    send "set architecture arm"
+    send "target remote 127.0.0.1:24689"; sleep 2
+    send "continue"; sleep 1; tail -5 "$D/out.log";;
+  halt) kill -INT "$(cat "$D/gdb.pid")"; sleep 0.5; wait_quiet 3;;
+  run) send "continue"; sleep 0.3;;
+  cmd) shift; start=$(stat -c %s "$D/out.log"); send "$*"; sleep 0.3; wait_quiet 4; tail -c +$((start+1)) "$D/out.log";;
+  stop) send "quit" || true; sleep 1; kill "$(cat "$D/gdb.pid")" 2>/dev/null || true;;
+esac

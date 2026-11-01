@@ -172,6 +172,108 @@ def rebuild_garc(data, replacements):
     garc_entries(result)
     return result
 
+def lz11_decompress(data):
+    """Nintendo LZ11 (header byte 0x11), as used for the zone GARC entries."""
+    if data[0] != 0x11:
+        raise ValueError('Not LZ11')
+    size, pos = int.from_bytes(data[1:4], 'little'), 4
+    if size == 0:
+        size, pos = int.from_bytes(data[4:8], 'little'), 8
+    out = bytearray()
+    while len(out) < size:
+        flags = data[pos]
+        pos += 1
+        for bit in range(7, -1, -1):
+            if len(out) >= size:
+                break
+            if not flags >> bit & 1:
+                out.append(data[pos])
+                pos += 1
+                continue
+            first = data[pos]
+            indicator = first >> 4
+            if indicator == 0:
+                length = (((first & 0xF) << 4) | (data[pos + 1] >> 4)) + 0x11
+                disp = ((data[pos + 1] & 0xF) << 8 | data[pos + 2]) + 1
+                pos += 3
+            elif indicator == 1:
+                length = (((first & 0xF) << 12) | (data[pos + 1] << 4) | (data[pos + 2] >> 4)) + 0x111
+                disp = ((data[pos + 2] & 0xF) << 8 | data[pos + 3]) + 1
+                pos += 4
+            else:
+                length = indicator + 1
+                disp = ((first & 0xF) << 8 | data[pos + 1]) + 1
+                pos += 2
+            if disp > len(out):
+                raise ValueError('LZ11 back-reference before start')
+            for _ in range(length):
+                out.append(out[-disp])
+    if len(out) != size:
+        raise ValueError('LZ11 size mismatch')
+    return bytes(out)
+
+
+def lz11_compress(data):
+    """Greedy LZ11 encoder; output is valid LZ11, not byte-identical to Nintendo's."""
+    out = bytearray(b'\x11' + len(data).to_bytes(3, 'little') if len(data) < 1 << 24 else b'\x11\0\0\0' + len(data).to_bytes(4, 'little'))
+    pos, index = 0, {}
+    while pos < len(data):
+        flag_at, flags = len(out), 0
+        out.append(0)
+        for bit in range(7, -1, -1):
+            if pos >= len(data):
+                break
+            best_len = best_disp = 0
+            key = data[pos:pos + 3]
+            for start in reversed(index.get(key, [])[-64:]):
+                disp = pos - start
+                if disp > 0x1000:
+                    break
+                length = 0
+                while length < 0x10110 and pos + length < len(data) and data[start + length] == data[pos + length]:
+                    length += 1
+                if length > best_len:
+                    best_len, best_disp = length, disp
+            step = best_len if best_len >= 3 else 1
+            for k in range(pos, pos + step):
+                index.setdefault(data[k:k + 3], []).append(k)
+            if best_len < 3:
+                out.append(data[pos])
+            else:
+                flags |= 1 << bit
+                d = best_disp - 1
+                if best_len <= 0x10:
+                    out += bytes([((best_len - 1) << 4) | d >> 8, d & 0xFF])
+                elif best_len <= 0x110:
+                    n = best_len - 0x11
+                    out += bytes([n >> 4, (n & 0xF) << 4 | d >> 8, d & 0xFF])
+                else:
+                    n = best_len - 0x111
+                    out += bytes([0x10 | n >> 12, (n >> 4) & 0xFF, (n & 0xF) << 4 | d >> 8, d & 0xFF])
+            pos += step
+        out[flag_at] = flags
+    return bytes(out)
+
+
+def zo_files(data):
+    """Split a "ZO" zone container into its subfiles."""
+    if data[:2] != b'ZO':
+        raise ValueError('Not a ZO container')
+    count = struct.unpack_from('<H', data, 2)[0]
+    offsets = struct.unpack_from(f'<{count + 1}I', data, 4)
+    return [data[a:b] for a, b in zip(offsets, offsets[1:])]
+
+
+def zo_build(files):
+    header = 4 + 4 * (len(files) + 1)
+    offsets, body = [], bytearray()
+    for blob in files:
+        offsets.append(header + len(body))
+        body += blob
+    offsets.append(header + len(body))
+    return b'ZO' + struct.pack(f'<H{len(offsets)}I', len(files), *offsets) + body
+
+
 # Gen 6 text files (pk3DS TextFile.cs): one section, per-line XOR stream.
 TEXT_KEY_BASE, TEXT_KEY_ADVANCE = 0x7C89, 0x2983
 

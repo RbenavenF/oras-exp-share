@@ -28,6 +28,14 @@ def guarded_writes(original, specification):
     return bytes(result)
 
 
+def line_end(words):
+    """Index of a text line's terminator, skipping the arguments of [VAR] codes (which may be 0)."""
+    index = 0
+    while index < len(words) and words[index]:
+        index += 2 + words[index + 1] if words[index] == 0x10 else 1
+    return index
+
+
 def guarded_texts(data, specification):
     """Replace or append text lines in a GARC; the GARC is rebuilt if a size changes."""
     if not specification.get('texts'):
@@ -48,7 +56,10 @@ def guarded_texts(data, specification):
             flags.append(0)
             continue
         old = lines[change['line']]
-        if words_to_text(old) != change['before'] or text_to_words(change['before']) != old:
+        # Words after the terminator are padding, not text (zeros in Japanese, leftovers in Repolished's
+        # English file); the whole line is replaced, so only the text itself is checked.
+        core = old[:line_end(old) + 1]
+        if words_to_text(old) != change['before'] or text_to_words(change['before']) != core:
             raise ValueError(f'Unexpected text at {specification["path"]} {entry}:{change["line"]}')
         # Zero words after the terminator keep the original size when the text fits.
         lines[change['line']] = new + [0] * (len(old) - len(new))
