@@ -46,9 +46,11 @@ FUNCTION_HEADS = {0x1EFC18: 0xE92D4030, 0x1EF904: 0xE92D4FF0, 0x3B645C: 0xE92D40
                   0x11FABC: 0xE2400B1F, 0x11FAC0: 0xE2400FFF}
 # Saved works, free in the retail scripts, entity data and code (frontier/ids.py) and 0 in the user's save.
 WORK_IV = 16410            # Factory state: rentals' IV 1-31; 0 = inactive (retail behaviour)
-WORK_SETS = (16411, 16412, 16413)   # rentals: bit 15 Super (0xb8) else Normal (0xb6), bits 0-9 set index
-SUPER = 0x8000
-CONSTANTS = {'WORK_IV': WORK_IV, 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'RENTAL_LEVEL': 50}
+WORK_SETS = (16411, 16412, 16413)   # rentals: bit 15 Super (0xb8) else Normal (0xb6), bits 10-11 ability
+SUPER = 0x8000                      # slot (3 = random), bits 0-9 set index
+ABILITY_SHIFT, ABILITY_RANDOM = 10, 3
+CONSTANTS = {'WORK_IV': WORK_IV, 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'RENTAL_LEVEL': 50,
+             'RENTALS': len(WORK_SETS)}
 
 
 def word(data, va):

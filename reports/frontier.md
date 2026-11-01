@@ -287,3 +287,10 @@ Prueba en Azahar (logs `work/frontier/lab/gdb-f4-active.log`, `gdb-f4-inactive.l
 Sin probar: consola; apagar a mitad; dobles y demás modalidades con la Fábrica activa
 (el hook limita a 3 alquileres); la Caja de Combate (su rama no pasa por el hook, así que
 con la Fábrica activa usaría la Caja).
+
+Cambio posterior (sin probar en Azahar; Unicorn sí): con la Fábrica activa el hook pone
+siempre 3 alquileres (no depende de `BattleHouse_CallPartySelectApp`, que el flujo de la
+Fábrica no usará) y toma la habilidad de los bits 10–11 de cada work (0–2; 3 = al azar),
+para que no cambie entre combates. El sexo (`spec+0x1e`, escrito tal cual en los bits de
+género por `0x14f7c8`) sigue en 0xFF como en los rivales; se sortea en cada combate.
+Hook: 244 bytes (`0x579604`–`0x5796f8`), `code.ips` 662 bytes.

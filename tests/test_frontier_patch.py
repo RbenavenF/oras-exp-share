@@ -105,18 +105,19 @@ def test_inactive_factory_keeps_the_retail_branch(patched):
     assert struct.unpack('<I', uc.mem_read(WORK + 0x48, 4))[0] == 3
 
 
-@pytest.mark.parametrize('count,expected', [(3, 3), (4, 3), (6, 3), (2, 2), (0, 0)])
-def test_active_factory_builds_the_rentals(patched, count, expected):
+@pytest.mark.parametrize('count', [3, 4, 6, 2, 0])
+def test_active_factory_builds_the_rentals(patched, count):
     code, _, _ = patched
-    sets = (fp.SUPER | 208, 66, fp.SUPER | 907)
+    a = fp.ABILITY_SHIFT
+    sets = (fp.SUPER | 208, 1 << a | 66, fp.SUPER | fp.ABILITY_RANDOM << a | 907)
     uc, calls, made = run(code, count, iv=21, sets=sets)
     assert uc.reg_read(REGS['pc']) == fp.RESUME
-    assert uc.reg_read(REGS['r0']) == expected
-    assert struct.unpack('<I', uc.mem_read(WORK + 0x48, 4))[0] == expected
+    assert uc.reg_read(REGS['r0']) == 3
+    assert struct.unpack('<I', uc.mem_read(WORK + 0x48, 4))[0] == 3
     want = []
-    for i, value in enumerate(sets[:expected]):
+    for i, (value, ability) in enumerate(zip(sets, (0, 1, -1))):
         archive, index = (0xB8 if value & fp.SUPER else 0xB6), value & 0x3FF
-        want += [('load', 0x1234, archive, index), ('make', 1000 + index, 50, 21, 0x1234, -1, 0xFF),
+        want += [('load', 0x1234, archive, index), ('make', 1000 + index, 50, 21, 0x1234, ability, 0xFF),
                  ('add', PARTY, made[i]), ('free', made[i])]
     assert calls == want
     preserved(uc)

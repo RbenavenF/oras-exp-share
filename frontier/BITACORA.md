@@ -234,3 +234,36 @@ Siguiente paso (F4):
    3, escribir los works y entrar al bucle de combate de la Mansión (`0x1e1c`) sin
    pasar por la selección de equipo. Racha y ronda propias en works libres (p. ej.
    16429–16430, 16433–16435), y poner 16410 = 0 al perder, retirarse o ganar la ronda.
+
+## 2026-11-01 — Claude Code (Opus 5.5) — F4: habilidad fija y 3 alquileres siempre
+Estado: en curso
+Hecho:
+- `0x1ef904` → `0x3b24c0` → `0x12bfe0` → `0x14ef5c` (creación del Pokémon desde la
+  spec): `+0x1e` es el sexo (`0x14f7c8` lo escribe tal cual en los bits de género) y
+  `+0x22` el índice de habilidad (0–2; `0x1ef904` pone uno al azar si recibe < 0).
+- Hook: habilidad desde los bits 10–11 del work del alquiler (3 = al azar) y siempre 3
+  alquileres con la Fábrica activa (no depende de la pantalla de selección). `ubfx` no
+  existe en el ARM11 (ARMv6K): `as -mcpu=mpcore` lo rechaza, así que el generador ya
+  protege de instrucciones v6T2.
+- Tests del hook actualizados (habilidad 0, 1 y al azar; 3 alquileres con 0–6 elegidos).
+- Natives: no hay número aleatorio en los scripts (ni en `oras_natives.tsv` ni en las
+  769 nativas con nombre de `DllField.cro`; listado en `work/frontier/natives_dllfield.txt`);
+  sí `_GetRealTimeToSecond`, `TimeCountStart/Get`, `GetSecond`. Para nombres de especie
+  solo hay `WordSet*NickName` (equipo/caja) y `_SodateyaWordsetPokeName`.
+Evidencia: `python frontier/patch.py --out work/frontier/patch` (244 bytes, `code.ips`
+662 bytes); `python -m pytest -q` → 55 passed. **Sin probar en Azahar** este cambio.
+Commits: ver `git log` («Battle Frontier F4: fixed rental ability, always three rentals»).
+Decisiones:
+- Sorteo de los 6 en el script: generador congruencial en Pawn sembrado con
+  `_GetRealTimeToSecond` y un contador en un work libre.
+- Nombres en el `ListMenu`: líneas generadas en el texto de la zona 517 (una por
+  conjunto alquilable, «Especie (Objeto)»), solo en el paquete construido.
+- Sexo al azar en cada combate: se acepta por ahora (solo afecta a Atracción/Rivalidad).
+Siguiente paso (F4):
+1. Leer el script 517 alrededor de `0x14f4` (recepción) y `0x1e1c` (bucle) y el patrón
+   de `faraway/event.py` para ampliar un script retail; decidir dónde engancha el NPC de
+   la Fábrica (NPC nuevo en la zona 517 o una opción nueva en el menú de la recepcionista).
+2. Flujo: crear el trabajo (`BattleInstWorkCreate`), fijar tipo 0 y rango, sortear 6,
+   elegir 3, escribir 16410–16413, guardar y entrar en el bucle `0x1e1c`; tras cada
+   victoria ofrecer el cambio; poner 16410 = 0 al terminar.
+3. Probar en Azahar el hook nuevo dentro de ese flujo.

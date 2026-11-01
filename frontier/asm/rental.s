@@ -4,10 +4,11 @@
 @ Saved work WORK_IV (Factory state) = 0: the original branch, unchanged: r8 = player party,
 @   0x3b5d34(player party), return r0 = player party to 0x1e3d98 (the site moves it to r8 and the
 @   original copy loop at 0x1e3da0 runs).
-@ WORK_IV = 1..31: add one rental per selected slot (max 3) from saved works WORK_SET0..2, with that IV,
-@   store the count in the selection (work+0x48) and continue at the builder's common tail 0x1e3ddc
-@   with r0 = count, as the original loop does.
-@ Rental work value: bit 15 = Super archive (0xb8), else Normal (0xb6); bits 0-9 = set index.
+@ WORK_IV = 1..31: add the 3 rentals of saved works WORK_SET0..2 with that IV (whatever the player
+@   selected), store 3 as the selection count (work+0x48) and continue at the builder's common tail
+@   0x1e3ddc with r0 = 3, as the original loop does.
+@ Rental work value: bit 15 = Super archive (0xb8), else Normal (0xb6); bits 10-11 = ability slot
+@   (0-2; 3 = random, as the Maison rivals); bits 0-9 = set index.
 @ Saved work N lives at [[[work+0xb78]+0x1c]] + 0x13144 + 2*(N - 0x4000) (WorkGet, code.bin 0x3fe118 /
 @ 0x11fa90). Game functions and constants come from frontier/patch.py.
     .syntax unified
@@ -37,10 +38,8 @@ rental_hook:
     pop     {r4-r8, pc}
 
 rentals:
-    ldr     r6, [r4, #0x48]         @ selection count
-    cmp     r6, #3
-    movgt   r6, #3
-    str     r6, [r4, #0x48]
+    mov     r6, #RENTALS
+    str     r6, [r4, #0x48]         @ selection count
     mov     r6, #0
 1:
     ldr     r0, [r4, #0x48]
@@ -52,13 +51,16 @@ rentals:
     tst     r2, #0x8000
     moveq   r1, #ARCHIVE_NORMAL
     movne   r1, #ARCHIVE_SUPER
+    lsr     r0, r2, #10
+    and     r0, r0, #3              @ ability slot (ARMv6K: no ubfx)
+    cmp     r0, #3
+    mvneq   r0, #0                  @ 3 -> -1: random among the three (as the rival builder, 0x1e4e70)
+    str     r0, [sp]
     bic     r2, r2, #0xfc00
     ldr     r0, [r4, #0xb70]        @ heap
     add     r3, sp, #8
     bl      LOAD_SET                @ (heap, archive, index, out)
-    mvn     r0, #0                  @ ability slot -1: random (as the rival builder, 0x1e4e70)
-    mov     r1, #0xff               @ spec+0x1e default (as the rival builder)
-    str     r0, [sp]
+    mov     r1, #0xff               @ spec+0x1e = sex, 0xff as the rival builder (not fixed yet)
     str     r1, [sp, #4]
     add     r0, sp, #8
     mov     r1, #RENTAL_LEVEL
