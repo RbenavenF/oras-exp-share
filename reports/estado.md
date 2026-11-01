@@ -2,10 +2,12 @@
 
 ## Entrega disponible
 
-Paquete generado en `dist/held-exp-share-v0.4/`. v0.3 añadió los textos;
-v0.4 cambia 1 byte para que el portador tenga su propio mensaje de EXP.
+Paquete generado en `dist/held-exp-share-v0.5/`. v0.3 añadió los textos;
+v0.4 cambia 1 byte para que el portador tenga su propio mensaje de EXP;
+v0.5 muestra la racha del DexNav («Nivel / Racha 23/7», `reports/dexnav.md`).
 **Probado por el usuario en una 3DS con Luma3DS: v0.2 y v0.4 funcionan,
-incluido el mensaje individual del portador.**
+incluido el mensaje individual del portador.** El usuario indica (2026-11-01)
+que la racha del DexNav (v0.5) también funciona junto a los otros mods.
 La selección por objeto funciona; no hizo falta la alternativa por slot.
 **El efecto se ha validado en cuatro combates reales en Azahar.** Las pruebas
 de Azahar usan copias aisladas bajo `work/` (partida nueva y la partida
@@ -99,6 +101,12 @@ la Bolsa y el Pokémon lo conserva tras guardar. Sin duplicación.
 1. Entrega en la historia: no se modifica el evento; debe entregar el objeto
    216 en el bolsillo Objetos. Comprobarlo al llegar a ese punto.
 2. Combates dobles, hordas y entrenadores con varios Pokémon.
+
+## Racha del DexNav (v0.5)
+
+Detalle en `reports/dexnav.md`. Azahar: «22/0», «22/7» con la racha escrita
+por GDB (ficha y búsqueda) y «3/0» tras «¡Se ha escapado!». El usuario
+indica que funciona en su configuración real.
 
 ## Mensaje de EXP (v0.4)
 

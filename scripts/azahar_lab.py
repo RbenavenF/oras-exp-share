@@ -37,7 +37,7 @@ def prepare():
         shutil.copyfile(ROOT / source, rom)
     destination = LAB / 'data/azahar-emu/load/mods/000400000011C400'
     if not destination.exists():
-        shutil.copytree(ROOT / 'dist/held-exp-share-v0.4/mods/000400000011C400', destination)
+        shutil.copytree(ROOT / 'dist/held-exp-share-v0.5/mods/000400000011C400', destination)
     config = LAB / 'config/azahar-emu/qt-config.ini'
     if not config.exists():
         config.write_text('[UI]\nfirst_start=false\ncheck_for_update_on_start=false\n'

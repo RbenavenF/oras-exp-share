@@ -22,10 +22,11 @@ def test_ips_rejects_truncation_and_resize(patch):
         read_ips(patch)
 
 
-def test_ips_rejects_overlap_and_growth():
-    for records in [[IPSRecord(2, b'ab'), IPSRecord(3, b'z')], [IPSRecord(8, b'ab')]]:
+def test_ips_rejects_overlap_and_gaps_but_allows_growth():
+    for records in [[IPSRecord(2, b'ab'), IPSRecord(3, b'z')], [IPSRecord(10, b'ab')]]:
         with pytest.raises(ValueError):
             apply_ips(bytes(9), records)
+    assert apply_ips(bytes(9), [IPSRecord(8, b'ab')]) == bytes(8) + b'ab'
 
 
 def test_hash_guard_rejects_same_length_change(tmp_path):

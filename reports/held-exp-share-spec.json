@@ -21,6 +21,24 @@
       ]
     },
     {
+      "path": "romfs/DllField.cro",
+      "sha256": "23248ab0d170c2cc2b20d2bd4e7a70aeb4f57485b69b7b3d1b542958546c1455",
+      "writes": [
+        {
+          "offset": 719988,
+          "before": "3e10ffeb",
+          "after": "e10101eb",
+          "reason": "DexNav search-level box: call the chain routine at +0xF0400 instead of SetPaneNumber (+0x73D74)"
+        },
+        {
+          "offset": 984064,
+          "before": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "after": "1f402de908d04de20040a0e10010a0e32920a0e34630a0e3240ffeeb0020a0e3e80094e5000050e3d4019015000050130000901500005013a82090150000a0e300008de50100a0e304008de5d00094e50110a0e30230a0e3f242fceb08d08de21f40bde84530a0e3410efeea",
+          "reason": "Unused zero padding after the code segment (same RX page): set label to text line 70, register DexNav chain [[[[ui+0xE8]+0x1D4]]+0xA8] as number 1, then SetPaneNumber with text line 69"
+        }
+      ]
+    },
+    {
       "path": "romfs/a/1/9/7",
       "sha256": "4d2f144ff806551f8922c6c69e98f4b02e71b899b7541afb51b50b165ea0ebdd",
       "writes": [
@@ -42,6 +60,20 @@
           "before": "Al activar el dispositivo, todos los Pokémon de\ntu equipo ganan Puntos de Experiencia tras los\ncombates, aunque no salgan a luchar.",
           "after": "Si lo lleva un Pokémon que no sale a combatir,\nrecibe la mitad de los Puntos de Experiencia\nobtenidos en el combate.",
           "reason": "Spanish item description for held Exp. Share"
+        },
+        {
+          "entry": 84,
+          "line": 69,
+          "append": true,
+          "after": "[VAR 0202 0]/[VAR 0202 1]",
+          "reason": "DexNav search-level box: search level / chain"
+        },
+        {
+          "entry": 84,
+          "line": 70,
+          "append": true,
+          "after": "Nivel / Racha",
+          "reason": "DexNav label for the search level / chain box"
         }
       ]
     },
@@ -55,6 +87,20 @@
           "before": "Turning on this special device will\nallow all the Pokémon on your team\nto receive Exp. Points from battles.",
           "after": "When held by a Pokémon that doesn't battle,\nit gets half of the Exp. Points earned\nfrom battles.",
           "reason": "English item description for held Exp. Share"
+        },
+        {
+          "entry": 84,
+          "line": 69,
+          "append": true,
+          "after": "[VAR 0202 0]/[VAR 0202 1]",
+          "reason": "DexNav search-level box: search level / chain"
+        },
+        {
+          "entry": 84,
+          "line": 70,
+          "append": true,
+          "after": "Level / Chain",
+          "reason": "DexNav label for the search level / chain box"
         }
       ]
     },
@@ -68,6 +114,126 @@
           "before": "Se trata de un objeto llamado Repartir Experiencia.[VAR BE01]\n¡Un artilugio increíble que únicamente un genio como el\nmío podría concebir![VAR BE01]\nUna vez activado, los Puntos de Experiencia que recibas\ntras un combate se repartirán entre todos los integrantes[VAR BE00]\nde tu equipo Pokémon.[VAR BE00]\n¡Te lo recomiendo encarecidamente!",
           "after": "Se trata de un objeto llamado Repartir Experiencia.[VAR BE01]\n¡Un artilugio increíble que únicamente un genio como el\nmío podría concebir![VAR BE01]\nSi se lo das a un Pokémon, recibirá Puntos de Experiencia\ntras los combates aunque no salga a luchar.[VAR BE01]\n¡Te lo recomiendo encarecidamente!",
           "reason": "Spanish story explanation when the item is received"
+        }
+      ]
+    },
+    {
+      "path": "romfs/a/0/7/1",
+      "sha256": "36408562d069b5bc77d99cd91d9751b569859cb217dfcbcd074ce8bf6c41b7ed",
+      "texts": [
+        {
+          "entry": 84,
+          "line": 69,
+          "append": true,
+          "after": "[VAR 0202 0]/[VAR 0202 1]",
+          "reason": "DexNav search-level box: search level / chain"
+        },
+        {
+          "entry": 84,
+          "line": 70,
+          "append": true,
+          "after": "サーチレベル",
+          "reason": "DexNav label for the search level / chain box (original label kept)"
+        }
+      ]
+    },
+    {
+      "path": "romfs/a/0/7/2",
+      "sha256": "bda76ee27bbdc3b20d7462c4b9039673374b13a174ad4633a52dd53f9a227336",
+      "texts": [
+        {
+          "entry": 84,
+          "line": 69,
+          "append": true,
+          "after": "[VAR 0202 0]/[VAR 0202 1]",
+          "reason": "DexNav search-level box: search level / chain"
+        },
+        {
+          "entry": 84,
+          "line": 70,
+          "append": true,
+          "after": "サーチレベル",
+          "reason": "DexNav label for the search level / chain box (original label kept)"
+        }
+      ]
+    },
+    {
+      "path": "romfs/a/0/7/4",
+      "sha256": "f651963ad1f184038b979809b9196031a4f2811ffb3e9a6282abc9afceac6cb6",
+      "texts": [
+        {
+          "entry": 84,
+          "line": 69,
+          "append": true,
+          "after": "[VAR 0202 0]/[VAR 0202 1]",
+          "reason": "DexNav search-level box: search level / chain"
+        },
+        {
+          "entry": 84,
+          "line": 70,
+          "append": true,
+          "after": "N. recherche",
+          "reason": "DexNav label for the search level / chain box (original label kept)"
+        }
+      ]
+    },
+    {
+      "path": "romfs/a/0/7/5",
+      "sha256": "9ac375407ac0084d4dea9a87d7bd3463f6bdf27ca823f7a5ee9dde826788e985",
+      "texts": [
+        {
+          "entry": 84,
+          "line": 69,
+          "append": true,
+          "after": "[VAR 0202 0]/[VAR 0202 1]",
+          "reason": "DexNav search-level box: search level / chain"
+        },
+        {
+          "entry": 84,
+          "line": 70,
+          "append": true,
+          "after": "Livello ricerca",
+          "reason": "DexNav label for the search level / chain box (original label kept)"
+        }
+      ]
+    },
+    {
+      "path": "romfs/a/0/7/6",
+      "sha256": "b600e40e418a7795b4b52dbb426ac9e7c9c34f6aa9600492d00d2438f9e30494",
+      "texts": [
+        {
+          "entry": 84,
+          "line": 69,
+          "append": true,
+          "after": "[VAR 0202 0]/[VAR 0202 1]",
+          "reason": "DexNav search-level box: search level / chain"
+        },
+        {
+          "entry": 84,
+          "line": 70,
+          "append": true,
+          "after": "Such-Level",
+          "reason": "DexNav label for the search level / chain box (original label kept)"
+        }
+      ]
+    },
+    {
+      "path": "romfs/a/0/7/8",
+      "sha256": "58932e42b31c2ec8c06d88e1a2009574ecff7b5cb6b66288693dc8e506787e39",
+      "texts": [
+        {
+          "entry": 84,
+          "line": 69,
+          "append": true,
+          "after": "[VAR 0202 0]/[VAR 0202 1]",
+          "reason": "DexNav search-level box: search level / chain"
+        },
+        {
+          "entry": 84,
+          "line": 70,
+          "append": true,
+          "after": "서치 레벨",
+          "reason": "DexNav label for the search level / chain box (original label kept)"
         }
       ]
     }

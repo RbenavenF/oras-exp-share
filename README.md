@@ -36,7 +36,7 @@ python scripts/prepare_baseline.py --output work/otra-base
 python scripts/build_patch.py --output work/otro-parche
 ```
 
-`dist/held-exp-share-v0.4/` contiene el paquete local completo en
+`dist/held-exp-share-v0.5/` contiene el paquete local completo en
 `mods/000400000011C400/`, diferencias IPS por archivo en `patches/`, un manifiesto
 y `LEEME.txt`. Las diferencias se aplican sobre **Repolished**, no sobre cualquier
 ROM. El generador valida SHA-256 y bytes originales; IPS por sí solo no lo hace.
@@ -46,6 +46,8 @@ La entrega en la historia no se modifica: el evento original da el mismo
 objeto 216, que ahora va al bolsillo Objetos. v0.3 adapta la descripción
 (español e inglés) y la explicación al recibirlo (español). v0.4 muestra
 «X ha ganado N Puntos de Experiencia» para el portador al acabar el combate.
+v0.5 añade la racha al DexNav: la casilla del nivel de búsqueda muestra
+«Nivel / Racha 23/7» ([reports/dexnav.md](reports/dexnav.md)).
 
 Partidas que ya tienen el objeto como objeto clave: convertirlas con
 `scripts/save_fixture.py --move-exp-share` (ver `reports/laboratorio.md`). Los archivos de juego, las partidas y los

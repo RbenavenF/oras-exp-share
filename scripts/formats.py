@@ -55,12 +55,15 @@ def read_ips(data):
 
 
 def apply_ips(original, records):
+    """Apply records; a record may extend the file only if it starts within it."""
     patched = bytearray(original)
     occupied = set()
     for record in records:
         end = record.offset + len(record.data)
-        if end > len(original):
+        if record.offset > len(patched):
             raise ValueError('IPS record outside input file')
+        if end > len(patched):
+            patched.extend(bytes(end - len(patched)))
         positions = set(range(record.offset, end))
         if occupied & positions:
             raise ValueError('Overlapping IPS records')
@@ -125,6 +128,49 @@ def garc_entries(data):
             result.append((entry, subentry, content + start, length))
     return result
 
+
+
+def rebuild_garc(data, replacements):
+    """Rebuild a contiguous, unpadded GARC v4 with {(entry, subentry): bytes} replaced."""
+    if data[:4] != b'CRAG' or struct.unpack_from('<HH', data, 0xA) != (0x400, 4):
+        raise ValueError('Only GARC v4 is supported')
+    entries = garc_entries(data)
+    content = struct.unpack_from('<I', data, 0x10)[0]
+    position = content
+    for _, _, offset, length in entries:
+        if offset != position:
+            raise ValueError('GARC entries are not contiguous')
+        position += length
+    if position != len(data):
+        raise ValueError('Unexpected data after GARC entries')
+    unknown = set(replacements) - {(entry, sub) for entry, sub, _, _ in entries}
+    if unknown:
+        raise ValueError(f'Unknown GARC entries: {sorted(unknown)}')
+    header = bytearray(data[:content])
+    fato = struct.unpack_from('<I', data, 4)[0]
+    fatb = fato + struct.unpack_from('<I', data, fato + 4)[0]
+    fimb = fatb + struct.unpack_from('<I', data, fatb + 4)[0]
+    if data[fimb:fimb + 4] != b'BMIF' or fimb + 12 != content:
+        raise ValueError('Unexpected FIMB layout')
+    body, records, index = bytearray(), [], 0
+    for entry in range(struct.unpack_from('<H', data, fato + 8)[0]):
+        pos = fatb + 12 + struct.unpack_from('<I', data, fato + 12 + entry * 4)[0]
+        mask = struct.unpack_from('<I', data, pos)[0]
+        pos += 4
+        for sub in range(32):
+            if mask & (1 << sub):
+                _, _, offset, length = entries[index]
+                blob = replacements.get((entry, sub), data[offset:offset + length])
+                struct.pack_into('<III', header, pos, len(body), len(body) + len(blob), len(blob))
+                body += blob
+                records.append(len(blob))
+                pos += 12
+                index += 1
+    struct.pack_into('<I', header, fimb + 8, len(body))
+    struct.pack_into('<II', header, 0x14, content + len(body), max(records))
+    result = bytes(header + body)
+    garc_entries(result)
+    return result
 
 # Gen 6 text files (pk3DS TextFile.cs): one section, per-line XOR stream.
 TEXT_KEY_BASE, TEXT_KEY_ADVANCE = 0x7C89, 0x2983
