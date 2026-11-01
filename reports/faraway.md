@@ -1,4 +1,27 @@
-# Mapa Viejo e Isla Suprema — estado (fase 3 en curso)
+# Mapa Viejo e Isla Suprema — estado (EN PAUSA desde 2026-11-01)
+
+## Pausa (2026-11-01)
+
+El usuario probó v0.2 en su 3DS: «algo ha mejorado pero las animaciones pinchan un
+poco». Como prueba de concepto (añadir contenido nuevo por mods) se da por buena, y el
+desarrollo se detiene para empezar el Frente de Batalla (`frontier/PLAN.md`).
+
+Fallos conocidos al pausar:
+- **Animaciones flojas** (dicho por el usuario; no concretó cuáles). Candidatas
+  observadas en Azahar, sin confirmar con él:
+  - Mew aparece y desaparece de golpe entre huidas (`MdlSetVisible`, sin animación
+    de entrada ni salida).
+  - Mew se desplaza con órdenes de movimiento de campo sobre el esqueleto de su
+    modelo de combate. No tiene un ciclo propio de vuelo ni de paso.
+  - La escena de la barca es la del muelle de la Ruta 104 (embarcadero de madera),
+    también al salir de Calagua.
+- Sin probar: derrotar a Mew, quedarse sin Pokémon, otros idiomas.
+- Arenque sigue en el muelle tras la captura (decisión de diseño: viaje repetible).
+
+Para retomarlo: paquete `dist/oras-mew-luma-preview-v0.2.zip`, partida de Checkpoint
+`dist/oras-mew-checkpoint-test-v0.1/`; se regenera con `faraway/build.py` y
+`faraway/package.py`.
+
 
 Base: Omega Ruby 1.0 EUR + Repolished 1.7.6 + Repartir Exp. + racha DexNav (v0.5).
 Todo lo medido abajo es del volcado local; las pruebas son de Azahar 2126.2.

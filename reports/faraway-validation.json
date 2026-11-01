@@ -232,8 +232,13 @@
   "overlay_note": "final_overlay_sha256 is the v0.2 build tested in tall_grass_hide_and_capture (through its development-warp variant).",
   "remaining": [
     "Defeat Mew and lose all party Pokemon",
-    "Console validation of the v0.2 changes"
+    "Polish the animations the user found rough on console (v0.2)"
   ],
+  "paused": {
+    "date": "2026-11-01",
+    "console_v0_2": "User played v0.2 on their 3DS: improved, but the animations are still rough (not itemised by the user)",
+    "reason": "Proof of concept accepted; work moves to the Battle Frontier (frontier/PLAN.md)"
+  },
   "previous_sources": {
     "faraway/event.py": "53468000fad2f72b684f7e2df57f300b94f6a41c8f74a3f8389cc0518ca19385",
     "faraway/build.py": "9ab3d99c02a3044cb77b55e9d12a04659c768939439a157b4744cf7f3f39abee",
