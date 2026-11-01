@@ -33,18 +33,35 @@ Reproducir la Fábrica Batalla de Pokémon Esmeralda dentro de ORAS Repolished 1
 encadenada con los mods ya entregados (Repartir Exp. equipable y racha DexNav, v0.5;
 evento de Mew opcional). Después, el resto de instalaciones del Frente.
 
-Reglas de la Fábrica que vamos a reproducir (Esmeralda; **contrastar con
-pret/pokeemerald `src/battle_factory.c` antes de fijar números**):
+Reglas de la Fábrica que vamos a reproducir. Contrastadas el 2026-11-01 con
+pret/pokeemerald `731ad5bf` (`src/battle_factory.c`, `src/battle_factory_screen.c`,
+`src/frontier_util.c`, scripts de `BattleFactoryLobby`/`PreBattleRoom`/`BattleRoom`);
+las constantes están en `frontier/data.py`:
 
 - Modalidades Nivel 50 y Nivel Libre; Individual y Doble. Empezamos por **Nivel 50
   Individual**.
 - El jugador no usa su equipo: elige **3 Pokémon de alquiler de entre 6** al azar.
-- Una ronda son **7 combates**. Tras cada victoria se puede **cambiar uno** de los
-  alquilados por uno del equipo del rival derrotado.
+  En los 6 no se repite especie ni objeto, y no sale Unown (`GenerateInitialRentalMons`).
+- Una ronda son **7 combates** (`FRONTIER_STAGES_PER_CHALLENGE`). Tras cada victoria,
+  salvo la 7.ª, se ofrece **cambiar uno** de los alquilados por uno de los 3 del rival
+  derrotado, o no cambiar; los cambios se cuentan en la racha.
 - Al acabar la ronda, los alquileres se devuelven y la siguiente empieza con 6 nuevos.
-  El conjunto de alquiler sube de nivel de dificultad con las rondas.
-- Racha guardada; Puntos de Batalla (PB) como premio; jefe de la instalación
-  (Esmeralda: Noland, combates 21 y 42) con símbolos de plata y oro.
+  El conjunto de alquiler depende de la ronda (`sInitialRentalMonRanges`): ronda 1 un
+  rango débil, rondas 2–3 dos copias de un rango medio, rondas 4–7 cuatro copias del
+  rango fuerte, ronda 8+ todas las copias fuertes juntas. Con 15/22/29/36/43 alquileres
+  acumulados, 1–5 de los 6 salen del nivel de la ronda siguiente (`GetNumPastRentalsRank`).
+- IV fijos por ronda (`sFixedIVTable`): 3, 6, 9, 12, 15, 21, 31, 31 (el último rival
+  de la ronda usa el valor alto: 6, 9, 12, 15, 18, 31, 31, 31). En retail la ronda 9
+  lee fuera de la tabla; usamos el comportamiento `BUGFIX` (31).
+- Rivales: mismo rango que los alquileres de la ronda, sin especies de los 6
+  alquileres del jugador. Primera versión: el rival lo genera la Mansión (§5.4).
+- PB al ganar la ronda (7.º combate): 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9 por ronda
+  (Individual), +10 si fue el jefe.
+- Jefe (Noland): combate 21 (símbolo de plata) y 42 (oro); con los dos símbolos,
+  en el 21, el 42 y cada 21 después (`sFrontierBrainStreakAppearances = {21, 42, 21, 1}`).
+- Correspondencia con los datos de la Mansión (medida, `reports/frontier.md` §7):
+  ronda 1 = `maisonpkN` 66–131, rondas 2–3 = `maisonpkN` 132–169 y 170–207,
+  rondas 4–7 = los cuatro niveles de `maisonpkS`, ronda 8+ = los cuatro juntos.
 
 Lo que no cambia: el equipo, la caja y la partida del jugador tienen que quedar
 idénticos al salir, ganes, pierdas o apagues a mitad.
@@ -161,7 +178,7 @@ Plan, bitácora, `frontier/survey.py`, pausa documentada del evento de Mew.
 - **Salida**: punto de inyección elegido (A o B) con evidencia de gdb en Azahar de un
   combate real de la Mansión.
 
-### F2 — Datos de alquiler
+### F2 — Datos de alquiler (hecho, 2026-11-01; `frontier/data.py`, `reports/frontier.md` §7)
 - `frontier/data.py`: lee `maisonpk`/`maisontr` del volcado (con hash), define los
   niveles de alquiler por ronda y genera las tablas que use el código. Al repositorio
   solo van el generador y los índices, nunca los datos del juego.

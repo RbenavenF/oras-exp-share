@@ -145,3 +145,44 @@ Partida `work/frontier/lab/main` (copia de `work/partida-convertida/main`, SHA-2
   del combate, al leer el resultado y de vuelta en el mostrador: SHA-256
   `f7436e68…` en `party_before.bin`, `party_after.bin` y `party_end.bin`.
 - `x/4wx 0x579ff0` lee ceros: el relleno de `.text` está mapeado.
+
+## 7. Datos de alquiler (F2)
+
+`python frontier/data.py --out work/frontier/data` comprueba los SHA-256 de
+`a/1/8/2`–`a/1/8/5` (iguales en ORAS 1.0 y Repolished), que cada GARC se reconstruye
+idéntico sin cambios, y la estructura de niveles de abajo; escribe la tabla binaria
+`rental_levels.bin` (148 bytes) y un listado con especie y objeto de cada conjunto
+(`rentals.txt`, en `work/` por contener datos del juego). Tests:
+`tests/test_frontier_data.py`.
+
+Estructura medida de los conjuntos (999 por archivo, 16 bytes):
+
+| Archivo | Rangos | Qué son |
+|---|---|---|
+| `maisonpkN` | 0–65 y 66–131 | Dos copias de los mismos 66 Pokémon débiles (Rattata, Pidgey…), mismo orden |
+| `maisonpkN` | 132–169 y 170–207 | Dos copias de 38 Pokémon medios (Gurdurr, Sliggoo…) |
+| `maisonpkN` | 208–216; 217–998 vacíos | Equipos especiales (Claydol, Metagross…) |
+| `maisonpkS` | nivel *k* = 0–3: `52k`…`52k+20` y `208+175k`…`382+175k` | Cuatro copias de las mismas 196 especies (21 de Kalos + 175), mismo orden, conjuntos distintos |
+| `maisonpkS` | 908–987 | Cuatro copias de 20 legendarios (Articuno…Regigigas) |
+| `maisonpkS` | 988–996; vacíos 21–51, 73–103, 125–155, 177–207, 997–998 | Especiales |
+
+Los entrenadores de cada tramo de racha del elector de la Mansión (`0x1e3aac`:
+Normal racha 0–4 → entrenadores 0–49, 5–9 → 30–69, 10–14 → 50–89, 15–18 → 70–109;
+el tramo usa `0x1e4860(work, …, primero, cuántos)`) solo eligen conjuntos de su nivel:
+entrenadores 0–49 → nivel 0, 50–69 → 1, 70–89 → 2, 90–109 → 3, en los dos archivos
+(`check_tiers`). En Súper los tramos son de 10 victorias (0–9, 10–19, …) y desde 50
+entrenadores 90–189, que mezclan niveles y legendarios.
+
+Niveles de alquiler de la Fábrica Nivel 50 (`RENTAL_LEVELS`; correspondencia con
+`sInitialRentalMonRanges` de Esmeralda):
+
+| Ronda | Conjuntos | Esmeralda |
+|---|---|---|
+| 1 | N 66–131 (66) | rango débil 110–199 |
+| 2, 3 | N 132–169, N 170–207 (38 cada uno) | rango medio, copias 1 y 2 |
+| 4–7 | S nivel 0, 1, 2, 3 (196 cada uno) | rango fuerte, copias 1–4 |
+| 8+ | S niveles 0–3 (784, 196 especies) | 372–849 |
+
+Formato de `rental_levels.bin` (para el código nativo): u16 número de niveles; u16 por
+nivel con el desplazamiento de su lista; cada lista: u16 número de rangos y, por rango,
+u16 archivo (`0xb6` Normal, `0xb8` Súper), u16 primer conjunto, u16 cuántos.

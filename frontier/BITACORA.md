@@ -106,3 +106,40 @@ Siguiente paso: F2 (datos de alquiler) y preparación de F3.
    los conjuntos por nivel de alquiler y generar las tablas; tests en `tests/`.
 3. Para F3, desensamblar los argumentos de pila de `0x1ef904` (`[sp]`, `[sp+4]`)
    y cómo libera la Mansión el `PokemonParam` temporal (`0x1e35c4`, vtable +8).
+
+## 2026-11-01 — Claude Code (Opus 5.5) — F2: datos de alquiler
+Estado: hecho
+Hecho:
+- Reglas de la Fábrica contrastadas con pret/pokeemerald `731ad5bf`
+  (`battle_factory.c`, `battle_factory_screen.c`, `frontier_util.c` y scripts de las
+  salas) y anotadas en PLAN §1: 7 combates por ronda, 3 de 6 sin especie ni objeto
+  repetidos, cambio tras cada victoria salvo la 7.ª, IV fijos por ronda, PB por ronda,
+  jefe en 21/42 y rangos de alquiler por ronda.
+- Medida la estructura de `maisonpkN`/`maisonpkS`: Normal = dos copias de 66 débiles
+  y dos de 38 medios; Súper = cuatro niveles de las mismas 196 especies
+  (`52k..52k+20` + `208+175k..382+175k`), más 4×20 legendarios en 908–987. Los
+  entrenadores de cada tramo de racha de `0x1e3aac` eligen solo conjuntos de su nivel.
+- `frontier/data.py`: lee los cuatro archivos con SHA-256, comprueba la reconstrucción
+  idéntica y la estructura (`check_tiers`), define `RENTAL_LEVELS` y las constantes de
+  Esmeralda, y escribe `rental_levels.bin` (formato en `reports/frontier.md` §7).
+- `tests/test_frontier_data.py` (8 tests); `reports/frontier.md` §7; PLAN F2 hecha.
+Evidencia: `python frontier/data.py --out work/frontier/data` → 4 archivos «sha256 ok,
+unchanged rebuild identical», «tier structure ok», 8 niveles (66, 38, 38, 196×4, 784
+conjuntos); `work/frontier/data/rental_levels.bin` (148 bytes) y `rentals.txt`.
+`python -m pytest -q` → 45 passed (sin skips en los nuevos). Nada ejecutado en Azahar.
+Commits: ver `git log` («Battle Frontier F2: rental levels from the Battle Maison sets»).
+Decisiones:
+- Nivel 50: ronda 1 = N 66–131 (la segunda copia del rango débil, la que usa la Mansión
+  en rachas más altas), rondas 2–3 = las dos copias medias de Normal, rondas 4–7 = los
+  cuatro niveles Súper, ronda 8+ = los cuatro juntos. Es ajustable en `RENTAL_LEVELS`.
+- Los legendarios (S 908–987) quedan fuera de Nivel 50; se decidirá en F5 si entran en
+  Nivel Libre (Esmeralda añade su «high tier» solo allí).
+- IV de la ronda 9+: 31 (comportamiento `BUGFIX`), no los IV aleatorios del fallo retail.
+Siguiente paso: F3 (prototipo de un combate con alquileres fijos).
+1. Desensamblar `0x1ef904` (argumentos de pila `[sp]`, `[sp+4]`) y `0x1efc18` (carga
+   de un conjunto: ¿acepta el archivo `0xb6`/`0xb8` como parámetro?) y cómo libera la
+   Mansión el `PokemonParam` temporal (`0x1e35c4`, vtable +8).
+2. Diseñar el hook en `0x1e3d2c`: en vez de `GetMemberPointer`+`AddMember` del equipo
+   del jugador, construir 3 `PokemonParam` con `0x1ef904` desde conjuntos fijos y
+   añadirlos con `AddMember` (`0x3b645c`); código en el relleno `0x579604`.
+3. Generador del parche con comprobación de hash y bytes, y prueba en Azahar con gdb.
