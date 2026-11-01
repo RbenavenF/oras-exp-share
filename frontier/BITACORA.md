@@ -314,3 +314,30 @@ Commits: ver `git log` («Battle Frontier F4: rename the overlay builder (module
 Decisiones: ninguna nueva.
 Siguiente paso: el de la entrada anterior (aislar el cambio de recuerdos y seguir con el
 flujo de la Fábrica). Comando nuevo: `python frontier/overlay.py` en vez de `frontier/build.py`.
+
+## 2026-11-01 — Claude Code (Opus 5.5) — F4: el cambio de recuerdos es del juego
+Estado: en curso
+Hecho: control sin parche (Repolished `code.ips`, script retail, overlay de desarrollo),
+partida `f4_active.sav`, mismo recorrido con la pantalla de selección y combate perdido.
+La partida guardada tras la derrota cambia `0xCC` (1→2) de Poochyena (hueco 2), un campo de
+recuerdos del PK6, igual que en la prueba con la Fábrica (Beldum y Shroomish). Conclusión
+en `reports/frontier.md` §10: es la mecánica de recuerdos del juego, no la Fábrica.
+Evidencia: `work/frontier/lab/control_after.sav` (`bf647740…`), comparada con
+`f4_active.sav` decodificando los 6 PK6 (`scripts/save_fixture.py`): solo el hueco 2
+cambia, en `0xCC` y el checksum.
+Commits: ver `git log` («Battle Frontier F4: memory-field change isolated to the retail game»).
+Decisiones: el criterio «equipo de la partida idéntico» se entiende como especie, nivel,
+experiencia, PS, movimientos, objetos, EV e IV; los campos de recuerdos los cambia el juego
+retail y se aceptan. Si se quiere que la Fábrica no deje recuerdos en Pokémon que no
+combatieron, es una mejora posterior (decisión del usuario).
+Siguiente paso: flujo de la Fábrica (F4):
+1. Opción «Fábrica Batalla» en el `ListMenu` de la recepcionista (`0x15a4`–`0x15f8`, línea
+   de texto nueva en el texto 619 de la zona 517) que lleve a una rutina nueva.
+2. Rutina: sorteo de 6 conjuntos de `RENTAL_LEVELS[ronda]` con un congruencial en Pawn
+   (semilla `_GetRealTimeToSecond` + contador en un work libre; especies y objetos sin
+   repetir), menú de 6 con líneas «Especie (Objeto)» generadas por conjunto, elegir 3,
+   escribir 16410 (IV de la ronda) y 16411–16413 (con habilidad 0/1 al azar), y saltar a
+   la rama de desafío Individual (`0x1768`/`0x18f8` con tipo 0).
+3. Tras cada victoria, cambio de un alquiler por uno del rival (hay que saber qué conjuntos
+   usó el rival: `work+0x0C` ficha del entrenador y lo que elige `0x1e4a94`).
+4. Poner 16410 = 0 al perder, retirarse o terminar la ronda, y en la recepción normal.

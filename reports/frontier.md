@@ -322,3 +322,12 @@ desarrollo; log `work/frontier/lab/gdb-f4-noselect.log`):
   partida con la Fábrica activa. Sin aislar si es la mecánica de recuerdos del juego
   (que en F3 no se disparó) o algo del flujo sin pantalla de selección: hay que repetir
   el mismo recorrido sin parche y con la pantalla.
+
+Control sin parche (2026-11-01): `code.ips` de Repolished y script retail, misma partida
+`f4_active.sav`, recepcionista → Individual → selección (Torchic, Poochyena, Silcoon) →
+guardar → combate perdido. La partida guardada tras la derrota (`control_after.sav`,
+`bf647740…`) también cambia un campo de recuerdos: Poochyena (hueco 2) `0xCC` 1→2, nada
+más. **Conclusión**: el juego retail actualiza los recuerdos del PK6 de los Pokémon del
+equipo en este flujo; el cambio de §10 no lo causa la Fábrica. Con la Fábrica los afectados
+pueden ser Pokémon que no combatieron (el juego elige del equipo de la partida). Especie,
+nivel, PS, movimientos, objetos y EV no cambian en ningún caso medido.
