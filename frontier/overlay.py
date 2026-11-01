@@ -9,7 +9,7 @@ The zone archive a/0/1/3 is read from --zones (default: the Repolished baseline;
 Faraway dev overlay's, which carries the Route 102 warp), checked by SHA-256 of its zone 517 entry, and only
 zone 517's script (ZO file 2) is replaced. Output under work/: romfs/a/0/1/3 and code.ips.
 
-Usage: python frontier/build.py --out work/frontier/build [--zones PATH]
+Usage: python frontier/overlay.py --out work/frontier/build [--zones PATH]
 """
 import argparse
 import hashlib

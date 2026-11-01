@@ -6,7 +6,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'frontier'))
-import build as fbuild  # noqa: E402
+import overlay as fbuild  # noqa: E402
 import patch as fp  # noqa: E402
 from formats import garc_entries, lz11_decompress, zo_files  # noqa: E402
 from pawn import OP, Script, decode, gf_hash, s32  # noqa: E402

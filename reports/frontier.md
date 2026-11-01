@@ -297,13 +297,13 @@ Hook: 244 bytes (`0x579604`–`0x5796f8`), `code.ips` 662 bytes.
 
 ## 10. F4: la Mansión sin pantalla de selección con la Fábrica activa (Azahar, 2026-11-01)
 
-`python frontier/build.py --out work/frontier/build [--zones …/a/0/1/3]` comprueba el
+`python frontier/overlay.py --out work/frontier/build [--zones …/a/0/1/3]` (antes `frontier/build.py`, renombrado) comprueba el
 SHA-256 del contenedor de la zona 517 (`bf788f5f…`, igual en ORAS 1.0, Repolished, v0.5 y el
 overlay de Mew), sustituye solo su script e inserta al principio de `0x457c` (rutina que
 abre `BattleHouse_CallPartySelectApp` y devuelve el work `0x800C`):
 `WorkGet(16410)`; si ≠ 0, `WorkSet(0x800C, 1)` y devuelve 1 sin abrir la pantalla.
 Escribe `romfs/a/0/1/3` y `code.ips` (hook de §9 con habilidad fija y 3 alquileres).
-Tests: `tests/test_frontier_build.py`.
+Tests: `tests/test_frontier_overlay.py`.
 
 Prueba (`f4_active.sav`, overlay `work/frontier/build` sobre el `a/0/1/3` del overlay de
 desarrollo; log `work/frontier/lab/gdb-f4-noselect.log`):

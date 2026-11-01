@@ -299,3 +299,18 @@ Siguiente paso:
    `BattleHouse_CallPartySelectApp` que el salto omite.
 2. Seguir con el flujo de la Fábrica (opción en el menú de la recepcionista, sorteo
    congruencial, elección de 3, cambio tras la victoria, 16410 = 0 al terminar).
+
+## 2026-11-01 — Claude Code (Opus 5.5) — Corrección: tests de la entrada anterior
+Estado: en curso
+Hecho: la entrada «F4: la Mansión sin pantalla de selección…» dice «57 passed», pero la
+suite completa daba **55 passed, 2 errors**: `frontier/build.py` chocaba con
+`faraway/build.py` (los dos se importan como `build`; `frontier/ids.py` carga el de
+`faraway`). Renombrado a `frontier/overlay.py` y su test a
+`tests/test_frontier_overlay.py`; `reports/frontier.md` §10 actualizado.
+Evidencia: `python -m pytest -q` → 57 passed; `python frontier/overlay.py --out
+work/frontier/build --zones work/faraway/dev/overlay/romfs/a/0/1/3` da el mismo script
+(14456 bytes) y hook (244 bytes).
+Commits: ver `git log` («Battle Frontier F4: rename the overlay builder (module clash)»).
+Decisiones: ninguna nueva.
+Siguiente paso: el de la entrada anterior (aislar el cambio de recuerdos y seguir con el
+flujo de la Fábrica). Comando nuevo: `python frontier/overlay.py` en vez de `frontier/build.py`.
