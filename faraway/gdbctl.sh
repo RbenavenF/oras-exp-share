@@ -13,8 +13,9 @@ wait_quiet() { local n=0 last=-1; while true; do local s; s=$(stat -c %s "$D/out
 case "$1" in
   start)
     rm -f "$D/in"; mkfifo "$D/in"; : > "$D/out.log"
-    (tail -f "$D/in" | gdb-multiarch -q -nx > "$D/out.log" 2>&1 & echo $! > "$D/tail.pid")
-    sleep 1; pgrep -n gdb-multiarch > "$D/gdb.pid"
+    # gdb reads the FIFO through a read-write descriptor, so it never sees end of file.
+    nohup bash -c "exec 3<>\"$D/in\"; exec gdb-multiarch -q -nx <&3 > \"$D/out.log\" 2>&1" >/dev/null 2>&1 &
+    echo $! > "$D/gdb.pid"; sleep 1
     send "set pagination off"; send "set confirm off"; send "set width 0"
     send "set architecture arm"
     send "target remote 127.0.0.1:24689"; sleep 2

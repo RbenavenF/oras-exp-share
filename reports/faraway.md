@@ -19,6 +19,10 @@ Todo lo medido abajo es del volcado local; las pruebas son de Azahar 2126.2.
 6. Guardado en el juego: flags 3031 (capturado) y 3034 (combate iniciado) en el
    archivo. Al recargar, Mew ya no aparece.
 7. Arenque en la isla: «¿Volvemos a Ciudad Calagua?» → vuelta al puerto.
+8. Partida sin Delta (2720 sí, 2729 no): en el puerto no aparecen ni el marinero
+   ni Arenque.
+9. Huida: Mew Nv. 30 debilitó a Torchic; con Beldum la huida funcionó. Mew
+   desaparece; al salir del claro y volver a entrar está otra vez («¡Miu!»).
 
 Capturas en `work/faraway/` (no se versionan).
 
@@ -70,7 +74,6 @@ Capturas en `work/faraway/` (no se versionan).
 
 - Fase 3: modelo de campo de Mew (no existe en ORAS), escondite y persecución
   en hierba alta, geometría definitiva (hierba alta, playa), escenas.
-- Huida y derrota (Mew debe volver al salir y entrar), partida anterior al Delta,
-  recarga con el mapa ya recibido, otros idiomas (ahora: español y, en el resto,
-  inglés).
+- Derrotar a Mew (no a la inversa) y quedar sin Pokémon; recarga con el mapa
+  ya recibido; otros idiomas (ahora: español y, en el resto, inglés).
 - Paquete final combinado e instalador; prueba en consola.
