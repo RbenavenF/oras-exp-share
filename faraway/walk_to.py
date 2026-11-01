@@ -16,13 +16,16 @@ KEY = {'up': 't', 'down': 'g', 'left': 'f', 'right': 'h'}
 
 
 def gdb(*args):
-    return subprocess.run([str(ROOT / 'faraway/gdbctl.sh'), *args], capture_output=True, text=True).stdout
+    return subprocess.run([str(ROOT / 'faraway/gdbctl.sh'), *args], capture_output=True, text=True,
+                          check=True, timeout=20).stdout
 
 
 def position():
-    gdb('halt')
-    out = gdb('cmd', f'x/3fw {POS}')
-    gdb('run')
+    try:
+        gdb('halt')
+        out = gdb('cmd', f'x/3fw {POS}')
+    finally:
+        gdb('run')
     for line in out.splitlines():
         if line.startswith('0x'):
             parts = line.split()
@@ -53,12 +56,19 @@ def walk_to(x, y, axis='xy', hold=0.06, limit=60):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('x', type=float)
-    parser.add_argument('y', type=float)
+    parser.add_argument('x', type=float, nargs='?')
+    parser.add_argument('y', type=float, nargs='?')
+    parser.add_argument('--position', action='store_true', help='read the current tile without moving')
+    parser.add_argument('--limit', type=int, default=60, help='maximum number of movement attempts')
     parser.add_argument('--face', choices=KEY)
     parser.add_argument('--axis', default='xy')
     args = parser.parse_args()
-    print('at', walk_to(args.x, args.y, args.axis))
+    if args.position:
+        print('at', position())
+        return
+    if args.x is None or args.y is None:
+        parser.error('X and Y are required unless --position is used')
+    print('at', walk_to(args.x, args.y, args.axis, limit=args.limit))
     if args.face:
         tap(args.face, 0.03)
         print('facing', args.face)

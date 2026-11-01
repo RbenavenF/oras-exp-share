@@ -19,6 +19,7 @@ FLAG_MEW_BATTLED = 3034
 FLAG_HIDE_GIVER = 3037       # recomputed on every harbor load
 FLAG_HIDE_BRINEY = 3039      # recomputed on every harbor load
 WORK_PROGRESS = 16665        # saved work; 0 none, 1 map received, 2 island unlocked, 3 Mew seen
+WORK_MEW_SPOT = 16667        # free saved work (no script, trigger or code literal): Mew's current hiding spot
 PROGRESS_MAP, PROGRESS_ISLAND, PROGRESS_MEW_SEEN = 1, 2, 3
 
 ITEM_OLD_SEA_MAP = 442       # Gen 4 "Town Map": no ORAS script gives, takes or checks it
@@ -42,7 +43,20 @@ MOVEMODEL_MEW = 544          # appended after the 544 retail MoveModels
 # Event ids (NPC script numbers) added to the zone scripts.
 EV_GIVER, EV_BRINEY = 40, 41
 HARBOR_NPC_GIVER, HARBOR_NPC_BRINEY = 3, 4   # entity indices: after the harbor's three retail NPCs
+MEADOW_NPC_MEW = 0                           # Mew is the meadow's only NPC
 EV_ISLAND_BRINEY, EV_MEW = 40, 41
+EV_MEW_FLEE = 42             # trigger script: the player came close to Mew's current spot
+
+# Hide-and-seek (meadow, zone 474), in tiles. Mew starts at spot 0 and flees one spot each time the player
+# steps into the trigger area of its current spot; the last spot is backed against the cliff: there it stays,
+# and talking to it starts the battle. (spot, trigger rectangle x, y, width, height)
+MEW_SPOTS = [((20, 19), (17, 21, 7, 2)),
+             ((25, 17), (21, 19, 7, 2)),
+             ((16, 21), (15, 23, 5, 2)),
+             ((25, 23), (21, 24, 6, 2)),
+             ((20, 14), None)]
+MEW_SPOT_INACTIVE = len(MEW_SPOTS)  # no trigger matches while Mew is absent
+MEW_MOVE_A, MEW_MOVE_B = 19, 38   # MdlAcmdMakeMoveEx constants copied from retail calls (shared script 55)
 
 # Arrival points for _MapChangeCore: (zone, tile x, height, tile y, direction). Measured in Azahar.
 ARRIVE_ISLAND = (ZONE_ISLAND, 24, 126, 6, 1)
@@ -50,7 +64,7 @@ ARRIVE_HARBOR = (ZONE_HARBOR, 24, 0, 26, 1)
 
 FERRY = {'msg': 0xD8, 'keywait': 0x1B0, 'close': 0x1F4, 'yesno': 0x260, 'talk_se': 0x2C8,
          'eye': 0x644, 'face': 0x510, 'wait_acmd': 0x4BC, 'wait_frames': 0x668, 'wait_fade': 0x210,
-         'wait_se': 0x6D0, 'mapchange': 0x724}
+         'wait_se': 0x6D0, 'mapchange': 0x724, 'fade_in': 0x30}
 FERRY_FADE_NATIVE = 33       # unnamed native the ferry calls as (1, 2, 45) before waiting on the fade
 GIVE_ROUTINE = 0xC0C         # shared script 10: MsgLoad, ItemAddCheck, ItemAdd + fanfare + messages
 SE_SHIP_HORN = 655698        # played by the ferry before every crossing
@@ -112,15 +126,16 @@ TEXT = {
         ],
     },
     'meadow': {
-        'es': ['¡Miu!', 'Mew ha desaparecido entre la hierba...'],
-        'en': ['Mew!', 'Mew vanished into the grass...'],
+        'es': ['¡Miu!', 'Mew ha desaparecido entre la hierba...', '¡Mew ha huido entre la hierba!',
+               '¡Mew no tiene adónde huir!'],
+        'en': ['Mew!', 'Mew vanished into the grass...', 'Mew fled into the grass!', 'Mew has nowhere left to run!'],
     },
 }
 H = {k: HARBOR_TEXT_BASE + i for i, k in enumerate(['sea', 'giver_intro', 'giver_map', 'giver_keep', 'giver_briney', 'giver_after',
                                  'briney_hi', 'briney_map', 'briney_legend', 'briney_ask', 'briney_go',
                                  'briney_no', 'briney_again', 'peeko'])}
 I = {k: i for i, k in enumerate(['arrive', 'ask_back', 'go_back', 'stay'])}
-M = {k: i for i, k in enumerate(['cry', 'vanished'])}
+M = {k: i for i, k in enumerate(['cry', 'vanished', 'fled', 'cornered'])}
 
 
 # --- Script building --------------------------------------------------------------------------
@@ -314,6 +329,25 @@ def harbor_entity_script(base):
     return p.build_script(main)
 
 
+def meadow_entity_script(base):
+    """On meadow load: restart the chase unless Mew has already been captured."""
+    p = Program.from_script(base)
+    main = f'L{base.main:x}'
+    loader = _case_label(p, main, 0)
+    p.items.insert(p.items.index(('label', loader)) + 1, Op(OP['CALL'], ['meadow_reset']))
+    p.items.insert(p.items.index(('label', loader)) + 1, Op(OP['PUSH_P_C'], [0]))
+    p.label('meadow_reset')
+    p.emit('PROC', 0)
+    p.sysreq('WorkSet', WORK_MEW_SPOT, MEW_SPOT_INACTIVE)
+    p.sysreq('FlagGet', FLAG_MEW_CAPTURED)
+    p.emit('JNZ', 'meadow_reset_end')
+    p.sysreq('WorkSet', WORK_MEW_SPOT, 0)
+    p.label('meadow_reset_end')
+    p.emit('ZERO_PRI', 0)
+    p.emit('RETN', 0)
+    return p.build_script(main)
+
+
 def _case_label(program, main_label, value):
     start = next(i for i, item in enumerate(program.items) if item == ('label', main_label))
     table = next(item for item in program.items[start:] if not isinstance(item, tuple) and item.op == OP['CASETBL'])
@@ -357,39 +391,108 @@ def island_script(base, ferry, shared10):
 
 
 def meadow_script(base, ferry, shared10):
-    """Faraway Island interior: Mew (provisional: talk to battle; the chase comes in phase 3)."""
+    """Faraway Island interior: Mew hides in the grass and flees from spot to spot until it is cornered."""
     p = Program.from_script(base)
     main = f'L{base.main:x}'
     h = import_helpers(p, ferry, shared10, 'L4')
     w = Writer(p, ferry, h, ferry.natives[FERRY_FADE_NATIVE][1])
-    end = add_cases(p, main, {EV_MEW: 'case_mew'})
+    end = add_cases(p, main, {EV_MEW: 'case_mew', EV_MEW_FLEE: 'case_mew_flee'})
     case_stub(p, 'case_mew', 'mew', end)
+    case_stub(p, 'case_mew_flee', 'mew_flee', end)
     npc, result = -4, -8
+    last = len(MEW_SPOTS) - 1
+
+    # Talking to Mew: before it is cornered it just slips away; at the last spot the battle starts.
     begin_routine(p, 'mew', 2)
-    # Like retail legend encounters (Registeel, zone 159): no turning towards the player, which a field
-    # Pokemon model may never finish; cry, a short pause, the message, then the battle.
     p.sysreq('WorkGet', WORK_TALK_TARGET)
     p.emit('STOR_P_S_PRI', npc)
     p.sysreq('VoicePlay', SPECIES_MEW, 0)
     p.call(h['wait_frames'], 40)
-    w.last(npc, M['cry'])
+    p.sysreq('WorkGet', WORK_MEW_SPOT)
+    p.emit('EQ_P_C_PRI', last)
+    p.emit('JNZ', 'mew_cornered')
+    p.emit('PUSH_P_C', 0)
+    p.emit('CALL', 'mew_flee')
+    p.emit('JUMP', 'mew_end')
+    p.label('mew_cornered')
+    w.last(npc, M['cornered'])
     p.call(h['close'], 0)
     p.sysreq('FlagSet', FLAG_MEW_BATTLED)
     p.sysreq('CallWildBattle', STATIC_MEW)
     p.sysreq('WildBattleResultGet')
     p.emit('STOR_P_S_PRI', result)
     p.sysreq('MdlDel', ('local', npc))
+    # Mew is absent for the rest of this visit; only the next map load may restart the chase.
+    p.sysreq('WorkSet', WORK_MEW_SPOT, MEW_SPOT_INACTIVE)
     p.emit('LOAD_P_S_PRI', result)
     p.emit('EQ_P_C_PRI', RESULT_CAPTURED)
     p.emit('JZER', 'mew_escaped')
     p.sysreq('FlagSet', FLAG_MEW_CAPTURED)
     p.emit('JUMP', 'mew_end')
     p.label('mew_escaped')
-    p.call(h['msg'], M['vanished'], ('local', npc), 0, 256, 0)
+    # CallWildBattle returns with the field faded out. Retail Registeel (zone 159, sub_840)
+    # restores it with the same helper before showing the non-capture message.
+    p.call(h['fade_in'], 2, 4)
+    p.call(h['wait_fade'])
+    # Narrate from the player: the former speaker was removed by MdlDel above.
+    p.call(h['msg'], M['vanished'], 255, 0, 256, 0)
     p.sysreq('LastKeyWait')
     p.call(h['close'], 0)
     p.label('mew_end')
     end_routine(p, 2)
+
+    # Flee: Mew darts to the next spot and the trigger of that spot becomes the armed one.
+    begin_routine(p, 'mew_flee', 1)
+    p.sysreq('FlagGet', FLAG_MEW_CAPTURED)
+    p.emit('JNZ', 'flee_end')
+    p.sysreq('WorkGet', WORK_MEW_SPOT)
+    p.emit('SWITCH', 'flee_table')
+    targets = []
+    for k in range(last):
+        (x, y), _ = MEW_SPOTS[k + 1]
+        p.label(f'flee_{k}')
+        p.sysreq('VoicePlay', SPECIES_MEW, 0)
+        p.sysreq('MdlAcmdInit', MEADOW_NPC_MEW)
+        p.sysreq('MdlAcmdMakeMoveEx', MEW_MOVE_A, x, MEW_MOVE_B, y, 0, 1, 1)
+        p.sysreq('MdlAcmdSetEnd')
+        p.call(h['wait_acmd'], MEADOW_NPC_MEW)
+        p.sysreq('WorkSet', WORK_MEW_SPOT, k + 1)
+        p.emit('JUMP', 'flee_done')
+        targets.append((k, f'flee_{k}'))
+    p.label('flee_default')
+    p.emit('JUMP', 'flee_end')
+    p.label('flee_table')
+    table = [len(targets), 'flee_default']
+    for k, label in targets:
+        table += [k, label]
+    p.items.append(Op(OP['CASETBL'], table))
+    p.label('flee_done')
+    p.call(h['msg'], M['fled'], 255, 0, 256, 0)
+    p.sysreq('LastKeyWait')
+    p.call(h['close'], 0)
+    p.label('flee_end')
+    end_routine(p, 1)
+    return p.build_script(main)
+
+
+def meadow_probe_script(base, ferry, shared10, calls):
+    """LABORATORY: talking to Mew runs MdlAcmdMakeMoveEx with each argument tuple in `calls`, then waits."""
+    p = Program.from_script(base)
+    main = f'L{base.main:x}'
+    h = import_helpers(p, ferry, shared10, 'L4')
+    end = add_cases(p, main, {EV_MEW: 'case_probe'})
+    case_stub(p, 'case_probe', 'probe', end)
+    npc = -4
+    begin_routine(p, 'probe')
+    p.sysreq('WorkGet', WORK_TALK_TARGET)
+    p.emit('STOR_P_S_PRI', npc)
+    for args in calls:
+        p.sysreq('MdlAcmdInit', ('local', npc))
+        p.sysreq('MdlAcmdMakeMoveEx', *args)
+        p.sysreq('MdlAcmdSetEnd')
+        p.call(h['wait_acmd'], ('local', npc))
+        p.call(h['wait_frames'], 60)
+    end_routine(p)
     return p.build_script(main)
 
 

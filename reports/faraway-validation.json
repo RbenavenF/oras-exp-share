@@ -1,0 +1,198 @@
+{
+  "date": "2026-11-01",
+  "environment": "Azahar 2126.2; isolated laboratory; Omega Ruby 1.0 EUR + Repolished 1.7.6 + held Exp. Share / DexNav v0.5",
+  "scope": "Runtime regression of Mew chase state, save/reload, flee/reentry and visible post-battle message; no console validation of this event.",
+  "automated_tests": {
+    "command": ".venv/bin/python -m pytest -q",
+    "passed": 34,
+    "note": "Event control-flow tests mock native effects; runtime checks below were performed separately in Azahar."
+  },
+  "sources": {
+    "faraway/event.py": "53468000fad2f72b684f7e2df57f300b94f6a41c8f74a3f8389cc0518ca19385",
+    "faraway/build.py": "9ab3d99c02a3044cb77b55e9d12a04659c768939439a157b4744cf7f3f39abee",
+    "faraway/java/faraway/Build.java": "891f750c179c896ad73605ff452d3c7398633b92a0024b08f0bc0529099c7d58",
+    "faraway/mew_model.py": "9ee6b83ab635e60bc7a554afefdab338d7d50f4ec5b91ed5185db614c3d8946c",
+    "tests/test_faraway.py": "df528ed6019da6fb1112d7991239244d1cd9f2c9fe697868f1b876a58d0afa61"
+  },
+  "runtime_cases": [
+    {
+      "case": "captured_remains_absent",
+      "observed": "Crossed all four trigger rectangles, exited to zone 473, reentered zone 474 and crossed first trigger again. No Mew, dialogue or movement lock.",
+      "evidence": {
+        "file": "work/faraway/validation-hide-seek/captured-reentry.main",
+        "sha256": "478fab42bdea70977013d0366c3d9af003fdf66590d49d3b82d83ee748689d2f",
+        "valid_save_blocks": 58,
+        "place": {
+          "zone": 474,
+          "tile_x": 20.5,
+          "height": 38.0,
+          "tile_y": 18.5
+        },
+        "capture_flag_3031": 1,
+        "battle_flag_3034": 1,
+        "chase_work_16667": 5
+      }
+    },
+    {
+      "case": "mid_chase_save_reload",
+      "observed": "Saved at work 2, restarted Azahar, Mew retained its position. Third and fourth proximity triggers completed the chase.",
+      "before": {
+        "file": "work/faraway/validation-hide-seek/mid-chase.main",
+        "sha256": "6ce067cbbb124ca142bcf78c6addf7b642329d62ed1cbe7277852c5e0a02a254",
+        "valid_save_blocks": 58,
+        "place": {
+          "zone": 474,
+          "tile_x": 23.5,
+          "height": 38.0,
+          "tile_y": 20.5
+        },
+        "capture_flag_3031": 0,
+        "battle_flag_3034": 0,
+        "chase_work_16667": 2
+      },
+      "after": {
+        "file": "work/faraway/validation-hide-seek/cornered.main",
+        "sha256": "90e517e66a5f4fa2eb2a79c466f8cd70c1e4ab63685aea4143624e326e9f80a1",
+        "valid_save_blocks": 58,
+        "place": {
+          "zone": 474,
+          "tile_x": 20.5,
+          "height": 38.0,
+          "tile_y": 15.5
+        },
+        "capture_flag_3031": 0,
+        "battle_flag_3034": 0,
+        "chase_work_16667": 4
+      }
+    },
+    {
+      "case": "flee_then_reenter",
+      "observed": "Fled using Smoke Ball, Mew absent and first trigger inactive. Exited to zone 473 and reentered: Mew present at first spot, work 0.",
+      "before": {
+        "file": "work/faraway/validation-hide-seek/after-flee.main",
+        "sha256": "930a1b3dd081a8107c5ecacced7e6c63bc5f35d58d19a9832112691a6f2fd270",
+        "valid_save_blocks": 58,
+        "place": {
+          "zone": 474,
+          "tile_x": 20.5,
+          "height": 38.0,
+          "tile_y": 15.5
+        },
+        "capture_flag_3031": 0,
+        "battle_flag_3034": 1,
+        "chase_work_16667": 5
+      },
+      "after": {
+        "file": "work/faraway/validation-hide-seek/flee-reentry.main",
+        "sha256": "5bee8f0fdb53ed33cc40ebd7c111255b836d76a2b6952e9e49144ec81e2d68f7",
+        "valid_save_blocks": 58,
+        "place": {
+          "zone": 474,
+          "tile_x": 20.5,
+          "height": 38.0,
+          "tile_y": 24.5
+        },
+        "capture_flag_3031": 0,
+        "battle_flag_3034": 1,
+        "chase_work_16667": 0
+      }
+    },
+    {
+      "case": "visible_flee_message_final_overlay",
+      "observed": "After fleeing, field and vanished message appeared before any further A press. Closed message, walked from tile (20,15) to (20,18), saved successfully.",
+      "evidence": {
+        "file": "work/faraway/validation-hide-seek/final-after-flee.main",
+        "sha256": "8f470621756d3d029351a590519d8e76a555faf3ff71238b31635e6105d6c498",
+        "valid_save_blocks": 58,
+        "place": {
+          "zone": 474,
+          "tile_x": 20.5,
+          "height": 38.0,
+          "tile_y": 18.5
+        },
+        "capture_flag_3031": 0,
+        "battle_flag_3034": 1,
+        "chase_work_16667": 5
+      },
+      "screenshot": "work/faraway/validation-hide-seek/flee-visible-message.png"
+    }
+  ],
+  "fixture": {
+    "source_sha256": "2b369b908d0b32c41e55d0a217efef0a962484beb9a67e596ffb722eff4d4fce",
+    "output_sha256": "a8993b8a11b80d4de638b99d56d60fa7e326336fbc417e7047a8d4cfef2cf94c",
+    "changes": {
+      "flags": {
+        "3031": 0,
+        "3034": 0
+      },
+      "works": {
+        "16667": 0
+      },
+      "lead_item": 228,
+      "lead_healed": true
+    },
+    "note": "Artificial local retry fixture; existing boxed Mew retained, not a fresh player save."
+  },
+  "state_test_overlay_sha256": {
+    "romfs/.crr/static.crr": "3ab778653f48bbdeb244aef20f88b4856b1286c44defeaba513f6ab256d9fc60",
+    "romfs/DllBattle.cro": "46153fa373b8166a3a65a31272008dc8d63207f3b2498752c69c1a0c74235519",
+    "romfs/DllField.cro": "cf8c0dd3613564e3aa64165f241c3b462cfeb4cfc663900dea80b739b6c5cf8b",
+    "romfs/a/0/1/3": "b27cc306622dd95b1c857b9bd67be43798adbf5a3de07778e51ac79b78dc6911",
+    "romfs/a/0/1/4": "d8ab1e5b8b9e269b803951387f1db5e4ceb201af8cabce62c38beb0f49f8e0a7",
+    "romfs/a/0/2/1": "59507d88b29ef3c32789ed37452d6c9bc6577fa186ab26fb811cd79bed21643c",
+    "romfs/a/0/3/9": "831f7822a9c0db3a225dff7ca16de8696442d4ff7a3a761ed6cd3aac4b3e06bd",
+    "romfs/a/0/4/0": "5ece6f428778ce7f68183be315d9e72bb84b77b3c7d9df34f4beea307322c372",
+    "romfs/a/0/7/1": "8103d49e7d6d7a2c3fac451b49a58c97445a697286d227cfe0670a2630ce9f5c",
+    "romfs/a/0/7/2": "8df973d6cf3180b5544d09790b151736a59df8cc4878aa4fbcc05d651629fd13",
+    "romfs/a/0/7/3": "b90acdbafa822c172280f812c9273ee5aa36a58a40c7aa128d3afc84e65cc367",
+    "romfs/a/0/7/4": "db861a2a7a2412e8d5398550cdaa330bfb1f8e9054aeb06745c900d8d7344de0",
+    "romfs/a/0/7/5": "abb9ca0d8a0a0e5660930ef20c948940898e7da72bf2446e97190ac59042476c",
+    "romfs/a/0/7/6": "f2dad0a3e6d9ebca3b88353381ea4c23b81eaf7d64ab48219467c87b4509b1c2",
+    "romfs/a/0/7/7": "f359335cb79a6fb0e60fc0c6587434a65f640d5cf8026731f98d7e8179ed747e",
+    "romfs/a/0/7/8": "44729d5a08b13962bf342bd8d86d51e5c6a267bf146457c770cb53071b7320e4",
+    "romfs/a/0/7/9": "831589d83085722d6ab9141710ae7fa66fe64ad5f80aa437a60aadd505c40a8d",
+    "romfs/a/0/8/0": "bb489da6677609c636c65c7976218b848bcf57c7796551b346e2f16587a70573",
+    "romfs/a/0/8/1": "eb21978ef3e175d4b753d33aebf19668fb5fda65fd24abcc2d221ab98844988d",
+    "romfs/a/0/8/2": "3bdbc6dea2bb2b19d3fa417340ce66d4fe109141914f3453ac0251784344a96b",
+    "romfs/a/0/8/3": "eedf5d12c1bdc107967ab4c50b462c901174fd17fb7bf37beadf1aa64add4df2",
+    "romfs/a/0/8/4": "9b26f82903330dbe28361ca7ce4c60deba4f6b6c2e84b7eeb3f2ba76515d6122",
+    "romfs/a/0/8/5": "243de599786f3f4396b1b75e4a18a415fdc59c7dfbfda16bb78599561147c989",
+    "romfs/a/0/8/6": "b03b5e4c1662f68ed47564482ed2d625520e1c94b1e0e010cc97cc0e3136cc8d",
+    "romfs/a/1/3/7": "455c9acd87bf7a760c38b50ea06322d9602213dfbc805c3665652c9fdd158aa3",
+    "romfs/a/1/9/7": "2988b22d48c740b66984702a4b9e5b422a5e320eb5ecb97600a4764c60e6bce4"
+  },
+  "final_overlay_sha256": {
+    "romfs/.crr/static.crr": "3ab778653f48bbdeb244aef20f88b4856b1286c44defeaba513f6ab256d9fc60",
+    "romfs/DllBattle.cro": "46153fa373b8166a3a65a31272008dc8d63207f3b2498752c69c1a0c74235519",
+    "romfs/DllField.cro": "cf8c0dd3613564e3aa64165f241c3b462cfeb4cfc663900dea80b739b6c5cf8b",
+    "romfs/a/0/1/3": "8e7bb05f823ff789c7d984ef57ef3dd96f8019b391b2ab65336f7afdc57a30da",
+    "romfs/a/0/1/4": "d8ab1e5b8b9e269b803951387f1db5e4ceb201af8cabce62c38beb0f49f8e0a7",
+    "romfs/a/0/2/1": "59507d88b29ef3c32789ed37452d6c9bc6577fa186ab26fb811cd79bed21643c",
+    "romfs/a/0/3/9": "831f7822a9c0db3a225dff7ca16de8696442d4ff7a3a761ed6cd3aac4b3e06bd",
+    "romfs/a/0/4/0": "5ece6f428778ce7f68183be315d9e72bb84b77b3c7d9df34f4beea307322c372",
+    "romfs/a/0/7/1": "8103d49e7d6d7a2c3fac451b49a58c97445a697286d227cfe0670a2630ce9f5c",
+    "romfs/a/0/7/2": "8df973d6cf3180b5544d09790b151736a59df8cc4878aa4fbcc05d651629fd13",
+    "romfs/a/0/7/3": "b90acdbafa822c172280f812c9273ee5aa36a58a40c7aa128d3afc84e65cc367",
+    "romfs/a/0/7/4": "db861a2a7a2412e8d5398550cdaa330bfb1f8e9054aeb06745c900d8d7344de0",
+    "romfs/a/0/7/5": "abb9ca0d8a0a0e5660930ef20c948940898e7da72bf2446e97190ac59042476c",
+    "romfs/a/0/7/6": "f2dad0a3e6d9ebca3b88353381ea4c23b81eaf7d64ab48219467c87b4509b1c2",
+    "romfs/a/0/7/7": "f359335cb79a6fb0e60fc0c6587434a65f640d5cf8026731f98d7e8179ed747e",
+    "romfs/a/0/7/8": "44729d5a08b13962bf342bd8d86d51e5c6a267bf146457c770cb53071b7320e4",
+    "romfs/a/0/7/9": "831589d83085722d6ab9141710ae7fa66fe64ad5f80aa437a60aadd505c40a8d",
+    "romfs/a/0/8/0": "bb489da6677609c636c65c7976218b848bcf57c7796551b346e2f16587a70573",
+    "romfs/a/0/8/1": "eb21978ef3e175d4b753d33aebf19668fb5fda65fd24abcc2d221ab98844988d",
+    "romfs/a/0/8/2": "3bdbc6dea2bb2b19d3fa417340ce66d4fe109141914f3453ac0251784344a96b",
+    "romfs/a/0/8/3": "eedf5d12c1bdc107967ab4c50b462c901174fd17fb7bf37beadf1aa64add4df2",
+    "romfs/a/0/8/4": "9b26f82903330dbe28361ca7ce4c60deba4f6b6c2e84b7eeb3f2ba76515d6122",
+    "romfs/a/0/8/5": "243de599786f3f4396b1b75e4a18a415fdc59c7dfbfda16bb78599561147c989",
+    "romfs/a/0/8/6": "b03b5e4c1662f68ed47564482ed2d625520e1c94b1e0e010cc97cc0e3136cc8d",
+    "romfs/a/1/3/7": "455c9acd87bf7a760c38b50ea06322d9602213dfbc805c3665652c9fdd158aa3",
+    "romfs/a/1/9/7": "2988b22d48c740b66984702a4b9e5b422a5e320eb5ecb97600a4764c60e6bce4"
+  },
+  "overlay_note": "The first three cases used the state correction before the subsequent fade/message correction. The final case used the final overlay. Installed overlay bytes were hash-checked.",
+  "remaining": [
+    "Defeat Mew and lose all party Pokemon",
+    "Final map geometry, tall-grass hiding and presentation",
+    "Combined release package and event validation on the user platform"
+  ]
+}

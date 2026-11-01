@@ -105,6 +105,20 @@ public final class Build {
 			warp.targetZone = Integer.parseInt(w[1]);
 			warp.targetWarpId = Integer.parseInt(w[2]);
 		}
+		for (int i = 0; plan.getProperty(k + "trigger." + i) != null; i++) {
+			// script,work,value,x,y,w,h (tiles),height: fires while WorkGet(work) == value, like retail story triggers
+			String[] t = plan.getProperty(k + "trigger." + i).split(",");
+			ZoneEntities.Trigger trig = new ZoneEntities.Trigger();
+			trig.script = Integer.parseInt(t[0].trim());
+			trig.constant = Integer.parseInt(t[1].trim());
+			trig.u2 = Integer.parseInt(t[2].trim());
+			trig.x = Integer.parseInt(t[3].trim());
+			trig.y = Integer.parseInt(t[4].trim());
+			trig.w = Integer.parseInt(t[5].trim());
+			trig.h = Integer.parseInt(t[6].trim());
+			trig.u14 = Integer.parseInt(t[7].trim());   // height of the trigger plane (retail: the floor's)
+			e.triggers1.add(trig);
+		}
 		ctrmap.formats.npcreg.NPCRegistry reg = new ctrmap.formats.npcreg.NPCRegistry(
 				s.staged(ArchiveType.NPC_REGISTRIES, z.header.areadataID), s);
 		boolean regChanged = false;

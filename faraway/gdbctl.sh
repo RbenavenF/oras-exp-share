@@ -8,13 +8,13 @@
 set -euo pipefail
 D=/home/rbenaven/projects/oras-exp-share/work/faraway/gdb
 mkdir -p "$D"
-send() { printf '%s\n' "$*" > "$D/in"; }
+send() { timeout 5 bash -c 'printf "%s\n" "$2" > "$1"' bash "$D/in" "$*"; }
 wait_quiet() { local n=0 last=-1; while true; do local s; s=$(stat -c %s "$D/out.log"); [ "$s" = "$last" ] && n=$((n+1)) || n=0; last=$s; [ $n -ge ${1:-3} ] && break; sleep 0.2; done; }
 case "$1" in
   start)
     rm -f "$D/in"; mkfifo "$D/in"; : > "$D/out.log"
     # gdb reads the FIFO through a read-write descriptor, so it never sees end of file.
-    nohup bash -c "exec 3<>\"$D/in\"; exec gdb-multiarch -q -nx <&3 > \"$D/out.log\" 2>&1" >/dev/null 2>&1 &
+    nohup setsid bash -c "exec 3<>\"$D/in\"; exec gdb-multiarch -q -nx <&3 > \"$D/out.log\" 2>&1" >/dev/null 2>&1 &
     echo $! > "$D/gdb.pid"; sleep 1
     send "set pagination off"; send "set confirm off"; send "set width 0"
     send "set architecture arm"

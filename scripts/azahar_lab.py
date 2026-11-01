@@ -70,7 +70,8 @@ def start():
     with (LAB / 'azahar-console.log').open('w') as log:
         emulator = subprocess.Popen([str(RUNTIME / 'app/AppRun'), '-w', str(LAB / 'omega-ruby.cci')],
                                     env=environment(display), stdout=log, stderr=log, start_new_session=True)
-    state = dict(display=display, xvfb_pid=server.pid, azahar_pid=emulator.pid)
+    state = dict(display=display, xvfb_pid=server.pid, azahar_pid=emulator.pid,
+                 pid_namespace=os.readlink('/proc/self/ns/pid'))
     state_file.write_text(json.dumps(state, indent=2) + '\n')
     print(json.dumps(state))
 
@@ -115,6 +116,8 @@ def main():
             subprocess.run([str(RUNTIME / 'x11/usr/bin/xdotool'), *args.arguments],
                            env=environment(state['display']), check=True)
         else:
+            if state.get('pid_namespace', os.readlink('/proc/self/ns/pid')) != os.readlink('/proc/self/ns/pid'):
+                raise RuntimeError('Stop must run in the same PID namespace as start (outside the sandbox)')
             for key in ['azahar_pid', 'xvfb_pid']:
                 try:
                     command = Path(f'/proc/{state[key]}/cmdline').read_bytes()

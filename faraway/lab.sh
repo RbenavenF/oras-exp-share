@@ -9,7 +9,9 @@ SAVE="$1"; OVERLAY="${2:-work/faraway/build/overlay}"
 LAB=work/azahar-lab
 MOD=$LAB/data/azahar-emu/load/mods/000400000011C400
 SAVEDIR="$LAB/data/azahar-emu/sdmc/Nintendo 3DS/00000000000000000000000000000000/00000000000000000000000000000000/title/00040000/0011c400/data/00000001"
-python scripts/azahar_lab.py stop 2>/dev/null || true
+if [ -f "$LAB/session.json" ]; then
+  python scripts/azahar_lab.py stop
+fi
 rm -rf "$MOD"
 cp -r dist/held-exp-share-v0.5/mods/000400000011C400 "$MOD"
 cp -r "$OVERLAY"/romfs/. "$MOD"/romfs/

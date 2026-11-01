@@ -11,6 +11,13 @@ envía controles y la detiene. Las acciones sobre X11 requieren autorización
 fuera del sandbox; las capturas son lecturas de un archivo local. La sesión
 queda registrada en `work/azahar-lab/session.json`.
 
+El arranque y la parada deben ejecutarse fuera del sandbox. Las sesiones
+nuevas registran el espacio de PIDs y rechazan una parada desde otro: antes,
+el sandbox podía no ver el proceso y retirar sus metadatos sin cerrar Azahar.
+`faraway/lab.sh` ya no ignora ese error. El controlador GDB usa una sesión de
+procesos independiente y limita la espera al escribir en su FIFO; `walk_to.py`
+propaga errores, reanuda el juego tras leer y admite `--position` y `--limit`.
+
 Comprobado: arranque de Omega Ruby, aplicación de code.ips y sustituciones
 LayeredFS en el log, introducción de Repolished y movimiento por Villa Raíz.
 También se ha entrado en el primer combate y se ha registrado la carga de

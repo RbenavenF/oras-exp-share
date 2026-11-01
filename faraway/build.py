@@ -8,6 +8,7 @@
 """
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import struct
@@ -101,7 +102,11 @@ def compile_scripts(game, out):
         f'zone{ev.ZONE_HARBOR}.ent': ev.harbor_entity_script(entity_script(harbor[1])),
         # The island zones keep their donors' retail scripts (Southern Island 214/215) and gain cases.
         f'zone{ev.ZONE_ISLAND}': ev.island_script(Script.parse(zone_files(game, 214)[2]), ferry, giver),
-        f'zone{ev.ZONE_MEADOW}': ev.meadow_script(Script.parse(zone_files(game, 215)[2]), ferry, giver),
+        f'zone{ev.ZONE_MEADOW}.ent': ev.meadow_entity_script(entity_script(zone_files(game, 215)[1])),
+        f'zone{ev.ZONE_MEADOW}': (ev.meadow_probe_script(Script.parse(zone_files(game, 215)[2]), ferry, giver,
+                                                         json.loads(os.environ['FARAWAY_MOVE_PROBE']))
+                                  if os.environ.get('FARAWAY_MOVE_PROBE') else
+                                  ev.meadow_script(Script.parse(zone_files(game, 215)[2]), ferry, giver)),
     }
     names = native_names(ROOT / 'tools/CTRMap-F5/src/ctrmap/resources/oras_natives.tsv')
     out.mkdir(parents=True, exist_ok=True)
@@ -133,8 +138,13 @@ def plan(work, scripts_dir):
         f'zone.{i}.npc.0={ev.MODEL_BRINEY},{ev.MODEL_BRINEY},{ev.EV_ISLAND_BRINEY},0,19,30,90,1',
         f'zone.{i}.npc.1={ev.MODEL_PEEKO},484,2000,0,18,30,90,1',
         f'zone.{b}.clearNpcs=1', f'zone.{b}.clearTriggers=1', f'zone.{b}.warp.0=0,{i},0',
-        f'zone.{b}.npc.0={ev.MODEL_MEW},{ev.MOVEMODEL_MEW},{ev.EV_MEW},{ev.FLAG_MEW_CAPTURED},20,15,36,1',
+        f'zone.{b}.npc.0={ev.MODEL_MEW},{ev.MOVEMODEL_MEW},{ev.EV_MEW},{ev.FLAG_MEW_CAPTURED},'
+        f'{ev.MEW_SPOTS[0][0][0]},{ev.MEW_SPOTS[0][0][1]},36,1',
         f'regnew.{ev.MODEL_MEW}=104,{ev.MODEL_PEEKO}',
+    ] + [
+        # trigger: script,work,value,x,y,w,h — armed only while Mew is at that spot (retail pattern)
+        f'zone.{b}.trigger.{k}={ev.EV_MEW_FLEE},{ev.WORK_MEW_SPOT},{k},{x},{y},{w},{h},36'
+        for k, (_, area) in enumerate(ev.MEW_SPOTS) if area for x, y, w, h in [area]
     ]
     path = work / 'plan.properties'
     path.write_text('\n'.join(lines) + '\n')
