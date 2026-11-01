@@ -184,7 +184,7 @@ Plan, bitácora, `frontier/survey.py`, pausa documentada del evento de Mew.
   solo van el generador y los índices, nunca los datos del juego.
 - Tests: formato, rangos, reconstrucción idéntica del GARC sin cambios.
 
-### F3 — Prototipo: un combate con equipo de alquiler
+### F3 — Prototipo: un combate con equipo de alquiler (hecho, 2026-11-01; `reports/frontier.md` §8)
 - Hook mínimo: un combate de la Mansión en el que el jugador lleva 3 alquileres fijos.
 - **Salida**: combate jugado en Azahar; equipo de la partida idéntico antes y después
   (comparado con `save_fixture.py`).
@@ -210,11 +210,16 @@ Se planifican cuando la Fábrica esté en consola.
 ## 7. Riesgos y decisiones abiertas
 
 - **Espacio para código nativo**: 2556 bytes a cero al final de `.text`
-  (VA `0x579604`–`0x57A000`, `reports/frontier.md` §5), mapeados en Azahar. Falta
-  ejecutar código allí y probarlo en consola; si no basta, medir otras vías.
-- **Formato del Pokémon en memoria**: si el equipo del combate guarda los PK6 cifrados,
-  hay que generar Pokémon válidos (checksum, PID), igual que hace la Mansión con los
-  rivales; se intentará reutilizar su función.
+  (VA `0x579604`–`0x57A000`, `reports/frontier.md` §5). El hook de F3 (168 bytes) se
+  ejecuta allí en Azahar (§8); falta probarlo en consola. Alternativa ya probada en
+  consola por v0.5: el relleno de texto de `DllField.cro` (DexNav,
+  `reports/held-exp-share-spec.json`).
+- **Distribución del parche de `code.bin`**: Luma carga un solo `code.ips` por título y
+  Repolished ya usa uno; el nuestro se genera como diferencia con el `code.bin` limpio,
+  así que lo sustituye y contiene los registros de Repolished (`f3_patch.py`).
+- **Formato del Pokémon en memoria** (resuelto en F3): los alquileres se crean con la
+  misma función que los rivales de la Mansión (`0x1ef904`), que genera un
+  `PokemonParam` válido; se vieron y usaron en combate en Azahar.
 - **Partida de laboratorio post-Delta**: la del usuario está en la Ruta 102. Primero
   se intenta con warp de desarrollo.
 - **Conjuntos de Esmeralda o de ORAS**: empezamos con `maisonpk` (formato nativo y

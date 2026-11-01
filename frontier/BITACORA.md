@@ -143,3 +143,50 @@ Siguiente paso: F3 (prototipo de un combate con alquileres fijos).
    del jugador, construir 3 `PokemonParam` con `0x1ef904` desde conjuntos fijos y
    añadirlos con `AddMember` (`0x3b645c`); código en el relleno `0x579604`.
 3. Generador del parche con comprobación de hash y bytes, y prueba en Azahar con gdb.
+
+## 2026-11-01 — Claude Code (Opus 5.5) — F3: combate de la Mansión con 3 alquileres
+Estado: hecho
+Hecho:
+- Desensamblados `0x1ef904` (conjunto → `PokemonParam`: argumentos de pila =
+  habilidad, −1 al azar, y u16 en spec+0x1e, 0xFF), `0x1efc18` (carga de conjunto:
+  heap, archivo, índice, salida) y el constructor del rival `0x1e4a94`, que usa los
+  dos con `(set, 50, IV, heap, −1, 0xFF)`. Detalle en `reports/frontier.md` §8.
+- `frontier/asm/rental_f3.s` + `frontier/f3_patch.py`: hook de 168 bytes en el relleno
+  `0x579604` y desvío de la rama «equipo de la partida» de `0x1e3d2c` en `0x1e3d8c`.
+  Crea `work+0x48` Pokémon de `maisonpkS` 208… (Venusaur, Charizard, Blastoise…),
+  nivel 50, IV 31, los añade con `AddMember` y libera el temporal. Comprueba hashes,
+  palabras del sitio y prólogos; `code.ips` = diferencia con el `code.bin` limpio
+  (incluye Repolished).
+- `tests/test_frontier_f3.py`: el sitio y el hook en Unicorn (5 tests).
+- `faraway/lab.sh`: variable `CODE_IPS` para instalar otro `code.ips` en el laboratorio.
+- PLAN: F3 hecha; riesgos de espacio, distribución del `code.ips` y formato actualizados.
+Evidencia: `python frontier/f3_patch.py --out work/frontier/f3` → hook
+`0x579604`–`0x5796ac`, `code.ips` 574 bytes (SHA-256 `f1bff00a…`). `python -m pytest -q`
+→ 50 passed. Azahar con gdb (`work/frontier/lab/gdb-f3.log`): partida
+`work/frontier/lab/main-maison` (`4f5a79c7…`); punto de ruptura en `0x579604` con
+`work+0x30 = [0,2,4]`, `work+0x48 = 3`; en `0x1e3ddc` `r0 = 3` y el equipo del combate
+con 3 miembros; en combate Venusaur/Charizard/Blastoise Nv. 50 con objeto
+(`f3_battle_party.png`, `f3_battle_venusaur.png`); retirada y vuelta al mostrador.
+Equipo de la partida en memoria idéntico (`f3_party_before.bin` = `f3_party_end.bin`,
+`f7436e68…`) y bloque de equipo de la partida guardada tras la derrota
+(`f3_after.sav`) idéntico al de `main-maison` (`d8e76518…`). `use_gdbstub` devuelto a
+`false` (también hay que poner `use_gdbstub\default=false` para activarlo).
+Commits: ver `git log` («Battle Frontier F3: Battle Maison battle with three rental Pokémon»).
+Decisiones:
+- El parche de `code.bin` se distribuirá como un `code.ips` completo (limpio → nuestro),
+  porque Luma carga uno solo y Repolished ya ocupa ese archivo.
+- Se mantiene la creación con `0x1ef904` (la del rival): da Pokémon válidos sin escribir
+  PK6 a mano.
+Sin probar: victoria con alquileres, apagar a mitad, otras modalidades, la Caja de
+Combate con el parche y la consola.
+Siguiente paso: F4 (Fábrica Nivel 50 Individual jugable). Empezar por:
+1. Activación: el hook solo debe actuar en la Fábrica. Buscar cómo lee el código nativo
+   un work/flag de script (`EventWork`; p. ej. desde una nativa conocida como
+   `GetMyWinCount` o `_GetWork`) y medir works/flags libres con el método del evento
+   de Mew (`reports/faraway.md` §Identificadores). El script dejará en works los 3
+   índices de conjunto alquilados y el hook los leerá de ahí.
+2. Ganar un combate con alquileres en Azahar y comprobar qué hace la Mansión después
+   (racha, PB, guardado) con el equipo de la partida.
+3. Flujo del NPC de la Fábrica sobre el script 517 (`faraway/event.py` como patrón):
+   sorteo de 6 de `RENTAL_LEVELS` (en el script o en código nativo), elección de 3 con
+   `ListMenu` y cambio tras la victoria.

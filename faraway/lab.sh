@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Laboratory only: reset the Azahar lab mod to dist v0.5 + the Faraway overlay, install a save copy, boot.
-# Usage: faraway/lab.sh SAVE_FILE [OVERLAY_DIR]
+# Usage: [CODE_IPS=path/code.ips] faraway/lab.sh SAVE_FILE [OVERLAY_DIR]
+# CODE_IPS replaces the mod's code.ips (it must already contain Repolished's records, e.g. frontier/f3_patch.py).
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -15,6 +16,7 @@ fi
 rm -rf "$MOD"
 cp -r dist/held-exp-share-v0.5/mods/000400000011C400 "$MOD"
 cp -r "$OVERLAY"/romfs/. "$MOD"/romfs/
+if [ -n "${CODE_IPS:-}" ]; then cp "$CODE_IPS" "$MOD/code.ips"; fi
 cp "$SAVE" "$SAVEDIR/main"
 python scripts/azahar_lab.py start
 sleep 40

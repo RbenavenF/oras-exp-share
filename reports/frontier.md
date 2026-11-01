@@ -186,3 +186,52 @@ Niveles de alquiler de la Fábrica Nivel 50 (`RENTAL_LEVELS`; correspondencia co
 Formato de `rental_levels.bin` (para el código nativo): u16 número de niveles; u16 por
 nivel con el desplazamiento de su lista; cada lista: u16 número de rangos y, por rango,
 u16 archivo (`0xb6` Normal, `0xb8` Súper), u16 primer conjunto, u16 cuántos.
+
+## 8. Prototipo F3: combate de la Mansión con 3 alquileres fijos (Azahar, 2026-11-01)
+
+Funciones usadas (lectura estática, `frontier/disasm_code.py`):
+
+| Función | Firma medida | Fuente |
+|---|---|---|
+| `0x1efc18` | `(heap, archivo, índice, salida[16])`: abre el archivo (`0x11c94c`), comprueba (`0x11c930`), lee (`0x128cbc`) y cierra (`0x36edd4`) | mismo patrón en el constructor del rival `0x1e4b38`–`0x1e4b94` |
+| `0x1ef904` | `(conjunto*, nivel, IV, heap, [sp] habilidad, [sp+4] u16 en spec+0x1e) → PokemonParam*`. Habilidad < 0: al azar entre 3; ≥ 3: 0. Pone especie, forma, nivel, los 6 IV, objeto (`0x3b54c8`), 4 movimientos (`0x3b54d8`), amistad 0 si sabe Frustración (218) o 255 (`0x3b47ec`), naturaleza (`0x12c190`) y EV = 510/nº de bits, máx. 255 (`0x3b4b64`) | el rival la llama con `(set, 50, IV, heap, -1, 0xFF)` en `0x1e4e70`–`0x1e4e88`; el IV del rival sube por tramo de entrenador: 3, 7, 11, 15, 19 (Normal), …, 31 |
+| `0x3b645c` | `AddMember(party, PokemonParam*)`: copia | `0x1e35c0` |
+| vtable `+8` | libera el `PokemonParam` temporal | `0x1e35c4`–`0x1e35d8` |
+
+Parche (`python frontier/f3_patch.py --out work/frontier/f3`; comprueba SHA-256 del
+`code.bin` limpio, del de Repolished y de su `code.ips`, las 5 palabras del sitio y
+los prólogos de las 3 funciones):
+
+- `0x579604`–`0x5796ac` (168 bytes del relleno): `frontier/asm/rental_f3.s`. Para
+  `i < work+0x48` (máx. 6): carga `maisonpkS[208+i]`, crea el Pokémon a nivel 50 con
+  IV 31, lo añade al equipo del combate y libera el temporal.
+- `0x1e3d8c`: la rama «equipo de la partida» de `0x1e3d2c` pasa a ser
+  `mov r0,r6; mov r1,sb; bl 0x579604; ldr r0,[r4,#0x1c]; b 0x1e3ddc`. La rama de la
+  Caja de Combate no cambia. Es un parche de laboratorio: afecta a todos los combates
+  de la Mansión.
+- `code.ips` (574 bytes) = diferencia con el `code.bin` limpio: incluye los registros de
+  Repolished y sustituye a su `code.ips`. `CODE_IPS=work/frontier/f3/code.ips
+  faraway/lab.sh …` lo instala en el laboratorio.
+- `tests/test_frontier_f3.py` ejecuta el sitio y el hook en Unicorn, con las 3
+  funciones simuladas: argumentos, orden de llamadas, liberación, registros
+  preservados y retorno a `0x1e3ddc` con 3, 4, 6 y 0 elegidos.
+
+Prueba en Azahar (partida `work/frontier/lab/main-maison`, SHA-256 `4f5a79c7…`, la
+guardada en la Mansión al final de F1; log `work/frontier/lab/gdb-f3.log`):
+
+- En memoria, `0x579604` contiene el hook y `0x1e3d8c` la desviación.
+- Individual Normal, elegidos Torchic, Poochyena y Silcoon; la Mansión pide guardar.
+- Punto de ruptura en `0x579604` alcanzado: `r0 = 0x08822544` (trabajo),
+  `r1 = 0x08822440` (equipo nuevo), `work+0x30 = [0,2,4]`, `work+0x48 = 3`.
+  En `0x1e3ddc`: `r0 = 3` y el `PokeParty` tiene 3 miembros (`+0x18 = 3`).
+- En combate salen **Venusaur, Charizard y Blastoise, Nv. 50, con objeto**
+  (`f3_battle_party.png`); Venusaur 187/187 PS (= IV 31 y 255 EV en PS).
+  Retirada (cuenta como derrota) y vuelta al mostrador sin cuelgues.
+- Equipo de la partida en memoria (`0x08cf71f0`–`0x08cf7d94`) antes del hook y de
+  vuelta en el mostrador: SHA-256 `f7436e68…` los dos (el mismo que en F1).
+- La Mansión guarda tras la derrota (`f3_after.sav`, SHA-256 `08eaa586…`). Bloque de
+  equipo de la partida (`save_fixture.py`, `0x14200`, 0x61C bytes) idéntico al de
+  `main-maison`: `d8e76518…` en los dos; mismos 6 Pokémon y niveles.
+
+Sin probar: victoria con alquileres (y lo que la Mansión haga después), apagar a
+mitad, Doble/Triple/Rotación/Multi y la Caja de Combate con el parche, y la consola.
