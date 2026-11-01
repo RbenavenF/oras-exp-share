@@ -189,7 +189,7 @@ Plan, bitácora, `frontier/survey.py`, pausa documentada del evento de Mew.
 - **Salida**: combate jugado en Azahar; equipo de la partida idéntico antes y después
   (comparado con `save_fixture.py`).
 
-### F4 — Fábrica Nivel 50 Individual jugable
+### F4 — Fábrica Nivel 50 Individual jugable (en curso; activación hecha, `reports/frontier.md` §9)
 - NPC, inscripción, elegir 3 de 6, 7 combates, cambio tras cada victoria, racha, PB,
   guardar y continuar entre combates, derrota y abandono.
 - **Salida**: ronda completa en Azahar, más los casos: perder en el 1.º y el 7.º

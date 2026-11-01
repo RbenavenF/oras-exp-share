@@ -198,11 +198,11 @@ Funciones usadas (lectura estática, `frontier/disasm_code.py`):
 | `0x3b645c` | `AddMember(party, PokemonParam*)`: copia | `0x1e35c0` |
 | vtable `+8` | libera el `PokemonParam` temporal | `0x1e35c4`–`0x1e35d8` |
 
-Parche (`python frontier/f3_patch.py --out work/frontier/f3`; comprueba SHA-256 del
+Parche (versión F3, commit `2923e19`: `python frontier/f3_patch.py --out work/frontier/f3`; hoy `frontier/patch.py`, §9; comprueba SHA-256 del
 `code.bin` limpio, del de Repolished y de su `code.ips`, las 5 palabras del sitio y
 los prólogos de las 3 funciones):
 
-- `0x579604`–`0x5796ac` (168 bytes del relleno): `frontier/asm/rental_f3.s`. Para
+- `0x579604`–`0x5796ac` (168 bytes del relleno): `frontier/asm/rental_f3.s` (hoy `rental.s`). Para
   `i < work+0x48` (máx. 6): carga `maisonpkS[208+i]`, crea el Pokémon a nivel 50 con
   IV 31, lo añade al equipo del combate y libera el temporal.
 - `0x1e3d8c`: la rama «equipo de la partida» de `0x1e3d2c` pasa a ser
@@ -235,3 +235,55 @@ guardada en la Mansión al final de F1; log `work/frontier/lab/gdb-f3.log`):
 
 Sin probar: victoria con alquileres (y lo que la Mansión haga después), apagar a
 mitad, Doble/Triple/Rotación/Multi y la Caja de Combate con el parche, y la consola.
+
+## 9. F4: activación por works guardados (Azahar, 2026-11-01)
+
+Works libres (`python frontier/ids.py`): de los 376 works guardados (16384–16759), 253
+aparecen en algún script retail (1157: zona, entidades y compartidos), en los datos de
+entidades o como literal en `code.bin`, `static.crs` o un CRO (palabra alineada o
+inmediato ARM); 121 no, y todos valen 0 en la partida del usuario y en la de laboratorio.
+16665 y 16667 son del evento de Mew. Los works calculados en ejecución (base + índice) no
+se ven con este método. Elegidos para la Fábrica:
+
+| Work | Uso |
+|---|---|
+| 16410 | Estado: IV de los alquileres (1–31); 0 = Fábrica inactiva, la Mansión usa tu equipo |
+| 16411–16413 | Alquileres: bit 15 = `maisonpkS` (`0xb8`), si no `maisonpkN` (`0xb6`); bits 0–9 = conjunto |
+
+Lectura desde código: el work guardado *N* está en
+`[[[work+0xB78]+0x1C]] + 0x13144 + 2·(N − 0x4000)` (`WorkGet` → `0x3fe118`: base
+`[[[ctx+8]+0x1C]] + 0x13140`; `0x11fa90`: `+ 2·N − 0x7ffc`). Comprobado en Azahar: en
+`0x579604` esa dirección (`0x08c7db20`) contiene 31, 66, 33268, 33675, lo escrito en la
+partida con `faraway/save_event.py`.
+
+Hook (`frontier/asm/rental.s`, 240 bytes en `0x579604`–`0x5796f4`; generador
+`python frontier/patch.py --out work/frontier/patch`, `code.ips` 655 bytes; tests
+`tests/test_frontier_patch.py`, `tests/test_frontier_ids.py`):
+
+- Sitio `0x1e3d8c`: `mov r0,r6; mov r1,sb; bl 0x579604; mov r8,r0; nop`.
+- Work 16410 = 0: hace lo que hacía el original (`r8` = equipo de la partida,
+  `0x3b5d34`) y vuelve a `0x1e3d98`; sigue el bucle original en `0x1e3da0`.
+- Work 16410 ≠ 0: un alquiler por elegido (máx. 3) con ese IV, guarda el número en
+  `work+0x48` y salta a la cola común `0x1e3ddc` con `r0` = número.
+
+Prueba en Azahar (logs `work/frontier/lab/gdb-f4-active.log`, `gdb-f4-inactive.log`):
+
+- Fábrica activa (`f4_active.sav`, SHA-256 `62e5b64c…` = `f3_after.sav` + works 16410=31,
+  16411=66, 16412=0x8000|500, 16413=0x8000|907): sale de `0x579604` directamente a
+  `0x1e3ddc` con `r0 = 3`; en combate **Rattata (N 66), Mandibuzz (S 500) y Slaking
+  (S 907), Nv. 50** (`f4_active_party.png`); los movimientos de Slaking son los del
+  conjunto 907 (Retribución, Tajo Umbrío, Lanza Mugre, Golpe Aéreo; `f4_slaking_moves.png`).
+- **Primera victoria con alquileres**: la Mansión da 1 PB (`f4_win_bp.png`) y sigue al
+  combate 2, donde los alquileres se reconstruyen con los PS completos
+  (`f4_battle2_party.png`). Slaking salió macho en el combate 1 y hembra en el 2: PID,
+  sexo y habilidad (`-1` = al azar) se sortean en cada combate.
+- Retirada en el combate 2; en el mostrador el equipo de la partida en memoria sigue
+  siendo `f7436e68…`, y la partida guardada tras la derrota (`f4_active_after.sav`,
+  `fac8791d…`) tiene el bloque de equipo `d8e76518…` (igual) y los works intactos.
+- Fábrica inactiva (`f3_after.sav`, works a 0) con el mismo `code.ips`: el hook pasa por la
+  rama original (`0x1e3da0` con `r8 = 0x08cf71f0`) y sale tu Torchic Nv. 12
+  (`f4_inactive_torchic.png`).
+
+Sin probar: consola; apagar a mitad; dobles y demás modalidades con la Fábrica activa
+(el hook limita a 3 alquileres); la Caja de Combate (su rama no pasa por el hook, así que
+con la Fábrica activa usaría la Caja).

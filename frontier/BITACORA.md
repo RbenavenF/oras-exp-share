@@ -190,3 +190,47 @@ Siguiente paso: F4 (Fábrica Nivel 50 Individual jugable). Empezar por:
 3. Flujo del NPC de la Fábrica sobre el script 517 (`faraway/event.py` como patrón):
    sorteo de 6 de `RENTAL_LEVELS` (en el script o en código nativo), elección de 3 con
    `ListMenu` y cambio tras la victoria.
+
+## 2026-11-01 — Claude Code (Opus 5.5) — F4: activación de los alquileres por works guardados
+Estado: en curso (F4: hecha la activación; falta el flujo de la Fábrica)
+Hecho:
+- `frontier/ids.py`: busca works guardados libres (scripts retail, datos de entidades,
+  literales en `code.bin`/`static.crs`/CRO) y comprueba su valor en las partidas. 121
+  libres; elegidos 16410 (estado = IV, 0 inactiva) y 16411–16413 (alquileres: bit 15
+  Súper, bits 0–9 conjunto).
+- Medido cómo lee el código un work guardado (`WorkGet` → `0x3fe118` → `0x11fa90`):
+  `[[[work+0xB78]+0x1C]] + 0x13144 + 2·(N − 0x4000)`; confirmado en Azahar.
+- Hook nuevo `frontier/asm/rental.s` (240 bytes): con 16410 = 0 hace lo del original;
+  con 16410 ≠ 0 crea los alquileres de los works. `frontier/f3_patch.py` →
+  `frontier/patch.py`, `rental_f3.s` → `rental.s`, `test_frontier_f3.py` →
+  `test_frontier_patch.py` (7 tests: rama original, 5 recuentos, solo sitio y relleno);
+  `tests/test_frontier_ids.py` (3 tests).
+- `reports/frontier.md` §9 (y §8 apunta a los nombres nuevos); PLAN: F4 en curso.
+Evidencia: `python frontier/ids.py`; `python frontier/patch.py --out work/frontier/patch`
+(hook `0x579604`–`0x5796f4`, `code.ips` 655 bytes); `python -m pytest -q` → 55 passed.
+Azahar (gdb): con `f4_active.sav` (`62e5b64c…`) salen Rattata N66, Mandibuzz S500 y
+Slaking S907 Nv. 50 con los movimientos del conjunto; **victoria** (1 PB), combate 2 con
+los alquileres reconstruidos, retirada; equipo de la partida en memoria `f7436e68…` y
+bloque de equipo de la partida guardada `d8e76518…`, iguales que antes; works intactos.
+Con `f3_after.sav` (works a 0) el hook pasa por la rama original y sale tu Torchic.
+Logs `work/frontier/lab/gdb-f4-active.log` y `gdb-f4-inactive.log`; capturas `f4_*.png`.
+`use_gdbstub` devuelto a `false`.
+Commits: ver `git log` («Battle Frontier F4: rentals gated by saved works»).
+Decisiones:
+- El estado de la Fábrica vive en works guardados, no en el trabajo de la Mansión: así
+  sobrevive al guardado obligatorio y a apagar la consola.
+- Hallazgo: PID, sexo y habilidad de los alquileres se sortean en cada combate
+  (Slaking macho en el 1, hembra en el 2). Esmeralda los guarda; habrá que fijarlos.
+Siguiente paso (F4):
+1. Fijar habilidad y sexo de cada alquiler: medir qué es el u16 de spec+0x1e de `0x1ef904`
+   (¿sexo, 0xFF = al azar?) y si el PID depende de la semilla `IV+nivel+especie`
+   (`0x10fc5c`); guardar habilidad (y sexo) en los bits 10–13 de 16411–16413.
+2. Con la Fábrica activa, no usar la selección del jugador: el hook debe poner 3 fijo
+   (el trabajo nace con `+0x48 = 0` si se salta `BattleHouse_CallPartySelectApp`), y la
+   rama de la Caja de Combate (`+0x2C` ≠ 0) también debe ir a los alquileres.
+3. Script: NPC de la Fábrica en la zona 517 sobre el script retail (patrón de
+   `faraway/event.py`). Buscar en `oras_natives.tsv` una nativa de número aleatorio y
+   cómo poner nombres de especie en un `ListMenu`; sortear 6 de `RENTAL_LEVELS`, elegir
+   3, escribir los works y entrar al bucle de combate de la Mansión (`0x1e1c`) sin
+   pasar por la selección de equipo. Racha y ronda propias en works libres (p. ej.
+   16429–16430, 16433–16435), y poner 16410 = 0 al perder, retirarse o ganar la ronda.
