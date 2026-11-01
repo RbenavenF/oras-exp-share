@@ -294,3 +294,31 @@ Fábrica no usará) y toma la habilidad de los bits 10–11 de cada work (0–2;
 para que no cambie entre combates. El sexo (`spec+0x1e`, escrito tal cual en los bits de
 género por `0x14f7c8`) sigue en 0xFF como en los rivales; se sortea en cada combate.
 Hook: 244 bytes (`0x579604`–`0x5796f8`), `code.ips` 662 bytes.
+
+## 10. F4: la Mansión sin pantalla de selección con la Fábrica activa (Azahar, 2026-11-01)
+
+`python frontier/build.py --out work/frontier/build [--zones …/a/0/1/3]` comprueba el
+SHA-256 del contenedor de la zona 517 (`bf788f5f…`, igual en ORAS 1.0, Repolished, v0.5 y el
+overlay de Mew), sustituye solo su script e inserta al principio de `0x457c` (rutina que
+abre `BattleHouse_CallPartySelectApp` y devuelve el work `0x800C`):
+`WorkGet(16410)`; si ≠ 0, `WorkSet(0x800C, 1)` y devuelve 1 sin abrir la pantalla.
+Escribe `romfs/a/0/1/3` y `code.ips` (hook de §9 con habilidad fija y 3 alquileres).
+Tests: `tests/test_frontier_build.py`.
+
+Prueba (`f4_active.sav`, overlay `work/frontier/build` sobre el `a/0/1/3` del overlay de
+desarrollo; log `work/frontier/lab/gdb-f4-noselect.log`):
+
+- Tras confirmar Individual se pasa directamente a «¿Quieres guardar la partida?»: no
+  aparece la pantalla de selección.
+- En `0x579604`: `work+0x48 = 0` (nadie eligió) y works `0x1f, 0x42, 0x81f4, 0x838b`.
+  En combate Rattata, Mandibuzz y Slaking Nv. 50 (`f4_noselect_party.png`); Slaking con
+  Ausente (habilidad 0, la pedida) y Vidasfera (`f4_slaking_ability.png`). Retirada y
+  vuelta al mostrador.
+- **Abierto**: en la partida guardada tras la derrota (`f4b_after.sav`, `76289ff9…`) el
+  bloque de equipo difiere del de `f4_active.sav` en 8 bytes: solo campos de recuerdos
+  del PK6 (Beldum, hueco 1: `0xA4` 1→3, `0xA5` 3→23, `0xA6` 9→11, `0xA8` 9→0; Shroomish,
+  hueco 5: `0xCC` 1→2). Especie, nivel, PS, movimientos, objetos y EV, iguales. En memoria
+  el equipo también cambió (`38c28b7c…`). El hook no lee ni escribe el equipo de la
+  partida con la Fábrica activa. Sin aislar si es la mecánica de recuerdos del juego
+  (que en F3 no se disparó) o algo del flujo sin pantalla de selección: hay que repetir
+  el mismo recorrido sin parche y con la pantalla.

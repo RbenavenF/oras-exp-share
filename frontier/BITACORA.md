@@ -267,3 +267,35 @@ Siguiente paso (F4):
    elegir 3, escribir 16410–16413, guardar y entrar en el bucle `0x1e1c`; tras cada
    victoria ofrecer el cambio; poner 16410 = 0 al terminar.
 3. Probar en Azahar el hook nuevo dentro de ese flujo.
+
+## 2026-11-01 — Claude Code (Opus 5.5) — F4: la Mansión sin pantalla de selección con la Fábrica activa
+Estado: en curso
+Hecho:
+- `frontier/build.py`: sustituye solo el script de la zona 517 (comprobando el SHA-256 del
+  contenedor) e inserta al principio de `0x457c` el salto de `BattleHouse_CallPartySelectApp`
+  si el work 16410 ≠ 0 (pone `0x800C = 1` y devuelve 1). Escribe `romfs/a/0/1/3` y el
+  `code.ips`. `tests/test_frontier_build.py` (2 tests).
+- Probado en Azahar el hook nuevo (habilidad fija, 3 alquileres) dentro del flujo real:
+  sin pantalla de selección, `work+0x48 = 0` y aun así salen los 3 alquileres; Slaking con
+  la habilidad 0 pedida (Ausente). Detalle en `reports/frontier.md` §10.
+Evidencia: `python frontier/build.py --out work/frontier/build --zones
+work/faraway/dev/overlay/romfs/a/0/1/3`; `CODE_IPS=work/frontier/build/code.ips
+faraway/lab.sh work/frontier/lab/f4_active.sav work/frontier/build`; log
+`work/frontier/lab/gdb-f4-noselect.log`; capturas `f4_noselect_party.png`,
+`f4_slaking_ability.png`; partida tras la derrota `f4b_after.sav` (`76289ff9…`).
+`python -m pytest -q` → 57 passed. `use_gdbstub` devuelto a `false`.
+Commits: ver `git log` («Battle Frontier F4: skip the Maison party selection while the Factory is active»).
+Decisiones:
+- Se reutiliza el flujo de la Mansión desde la recepcionista; la pantalla de selección se
+  salta en su propia rutina, no en el código nativo.
+Problema abierto (no resuelto): tras esta prueba el equipo guardado cambió en 8 bytes de
+recuerdos del PK6 (Beldum `0xA4`–`0xA8`, Shroomish `0xCC`); lo demás, igual. No está
+aislado si es la mecánica de recuerdos del juego o el flujo sin pantalla.
+Siguiente paso:
+1. Aislar el cambio de recuerdos: repetir el recorrido (recepcionista → Individual →
+   guardar → combate → retirada) con la `code.ips` de Repolished sin la Fábrica y con
+   `f3_after.sav`/`main-maison`, y comparar el bloque de equipo. Si también cambia, es del
+   juego (los recuerdos se actualizan solos) y se documenta; si no, buscar qué hace
+   `BattleHouse_CallPartySelectApp` que el salto omite.
+2. Seguir con el flujo de la Fábrica (opción en el menú de la recepcionista, sorteo
+   congruencial, elección de 3, cambio tras la victoria, 16410 = 0 al terminar).
