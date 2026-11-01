@@ -1,4 +1,33 @@
-# ORAS: Repartir Exp. equipable para Repolished
+# ORAS Repolished: mods (Repartir Exp., DexNav, Mew, Frente de Batalla)
+
+## Proyecto activo: Frente de Batalla (desde 2026-11-01)
+Empezamos por la Fábrica Batalla. Al iniciar cualquier sesión (Claude Code o Codex):
+1. Lee `frontier/PLAN.md` y las últimas entradas de `frontier/BITACORA.md`.
+2. Continúa por el «Siguiente paso» de la última entrada.
+
+Trazabilidad obligatoria, porque se alterna entre Claude Code y Codex:
+- En cada hito con commit y **antes de terminar la sesión**, añade una entrada al
+  final de `frontier/BITACORA.md`. El formato está en PLAN §8: estado, qué se hizo,
+  evidencia, commits, decisiones y siguiente paso.
+- Si el trabajo queda a medias, la entrada lleva «Estado: en curso».
+- No reescribas entradas anteriores: corrígelas con una entrada nueva.
+- Los hechos medidos van con su fuente (script, comando, listado o dirección). Lo que
+  no se haya ejecutado se marca como no probado.
+- Todo lo que haga falta para continuar debe quedar escrito en el repositorio, no en
+  la memoria de un agente.
+- Commits con autor `rubenb114 <rubenb114@hotmail.com>`. El pie del mensaje identifica
+  al agente: Claude usa sus líneas `Co-Authored-By`/`Claude-Session`; Codex usa
+  `Agent: Codex`.
+
+Proyectos anteriores:
+- Repartir Exp. equipable y racha DexNav: entregados (v0.5), descritos abajo.
+- Evento de Mew: en pausa (`reports/faraway.md`).
+
+Las reglas de abajo siguen vigentes para todo el repositorio.
+
+---
+
+## Proyecto original: Repartir Exp. equipable
 
 ## Objetivo
 Crear un parche compatible con Omega Ruby Repolished para que el
