@@ -145,6 +145,20 @@ modelo de Mew se ve mal y Mew no se esconde porque no hay hierba alta.
   profundidad. Copiar el *mapper* completo dejó a Mew negro: el tipo de
   sampler depende de la unidad (0 en la unidad 0 de Mew, 1 en la unidad 1 de
   campo). Por eso solo se copian los modos de repetición.
+- **Hierba alta:** `faraway/java/ctrmap/tests/FarawayGrass.java` usa el pintor
+  de CTRMap-F5 en modo compuesto. Pinta las 165 casillas transitables de las
+  filas 13-26 del claro (zona 474, región 861) y conserva acantilados, agua y
+  colisión. La tupla `TALL_GRASS` del pintor (`0600183d`) no es hierba de ORAS:
+  comparte el prefijo del agua y el jugador no podía pisarla. La hierba retail
+  (`04400020`, medida en la Ruta 102 y presente en 59 de 857 regiones) se
+  escribe después del Apply. La zona no tiene tabla de encuentros: en toda la
+  persecución no salió ningún combate salvaje.
+- **Escondite:** tras las huidas 1-3, Mew queda oculto (`MdlSetVisible(0, 0)`,
+  nativo usado 349 veces en scripts retail); solo se ve la mata de hierba. Al
+  acercarse, reaparece, espera 20 fotogramas, grita y huye. En el último punto
+  queda visible.
+- Validado en Azahar con esta build: persecución, combate, captura con Master
+  Ball, guardado con 3031 = 1, 16667 = 5 y 16697 = 0.
 - Paquete `dist/oras-mew-luma-preview-v0.2.zip`.
 
 ## Identificadores (medidos)
@@ -193,8 +207,7 @@ modelo de Mew se ve mal y Mew no se esconde porque no hay hierba alta.
 
 ## Pendiente
 
-- Fase 3: geometría definitiva (hierba alta, playa), ocultación en la hierba y
-  escenas. Ya hay modelo real y persecución por cuatro huidas.
+- Validación en consola de v0.2.
 - Derrotar a Mew (no a la inversa) y quedar sin Pokémon; recarga con el mapa
   ya recibido; otros idiomas (ahora: español y, en el resto, inglés).
 - Prueba del evento en consola y entrega final; ya hay paquete combinado

@@ -55,8 +55,10 @@ MEW_SPOTS = [((20, 19), (17, 21, 7, 2)),
              ((16, 21), (15, 23, 5, 2)),
              ((25, 23), (21, 24, 6, 2)),
              ((20, 14), None)]
+MEADOW_GRASS_ROWS = (13, 26)   # the meadow's oval (Probe floor 474: rows 13-26); the path south stays bare
 MEW_SPOT_INACTIVE = len(MEW_SPOTS)  # no trigger matches while Mew is absent
 MEW_MOVE_A, MEW_MOVE_B = 19, 38   # MdlAcmdMakeMoveEx constants copied from retail calls (shared script 55)
+MEW_POP_FRAMES = 20          # pause between Mew reappearing from the grass and its cry
 
 # Arrival points for _MapChangeCore: (zone, tile x, height, tile y, direction). Measured in Azahar.
 ARRIVE_ISLAND = (ZONE_ISLAND, 24, 126, 6, 1)
@@ -463,11 +465,18 @@ def meadow_script(base, ferry, shared10):
     for k in range(last):
         (x, y), _ = MEW_SPOTS[k + 1]
         p.label(f'flee_{k}')
+        if k:
+            # Mew was hiding in the grass: it pops out before darting off.
+            p.sysreq('MdlSetVisible', MEADOW_NPC_MEW, 1)
+            p.call(h['wait_frames'], MEW_POP_FRAMES)
         p.sysreq('VoicePlay', SPECIES_MEW, 0)
         p.sysreq('MdlAcmdInit', MEADOW_NPC_MEW)
         p.sysreq('MdlAcmdMakeMoveEx', MEW_MOVE_A, x, MEW_MOVE_B, y, 0, 1, 1)
         p.sysreq('MdlAcmdSetEnd')
         p.call(h['wait_acmd'], MEADOW_NPC_MEW)
+        if k + 1 < last:
+            # It ducks into the tall grass of its new spot; the cornered spot keeps it in sight.
+            p.sysreq('MdlSetVisible', MEADOW_NPC_MEW, 0)
         p.sysreq('WorkSet', WORK_MEW_SPOT, k + 1)
         p.emit('JUMP', 'flee_done')
         targets.append((k, f'flee_{k}'))

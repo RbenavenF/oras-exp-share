@@ -5,15 +5,17 @@
   "automated_tests": {
     "command": ".venv/bin/python -m pytest -q",
     "passed": 37,
-    "note": "Includes test_boat_scene_keeps_brineys_story_state, shown to fail (3 cases) when the restore of work 16697 is replaced."
+    "note": "Includes test_boat_scene_keeps_brineys_story_state, shown to fail (3 cases) when the restore of work 16697 is replaced. test_four_escapes_then_no_more_movement also checks Mew hides after each flee except the last and reappears before fleeing."
   },
   "sources": {
-    "faraway/event.py": "0005524ebd65646a5503301bf89eacc5bf3dfaa69728ff1fa2ececa96b167cd2",
-    "faraway/build.py": "9ab3d99c02a3044cb77b55e9d12a04659c768939439a157b4744cf7f3f39abee",
+    "faraway/event.py": "78963ea47f3d88e29b0ced84539ae2d5cd1e9754a0777321f3f866e1982dfcc9",
+    "faraway/build.py": "e1800335d50f390c2ea0a8a9cb675ac305734d8f454987415c734520c8fe32a0",
     "faraway/java/faraway/Build.java": "891f750c179c896ad73605ff452d3c7398633b92a0024b08f0bc0529099c7d58",
+    "faraway/java/faraway/Grass.java": "e9bf2c18912b77b667e6cf8f888eef2765b1e55c3b5d99d734d950d3974713e9",
+    "faraway/java/ctrmap/tests/FarawayGrass.java": "bd7cb9c60858073d08d8821359b16e1cdcb5cc58604eafaba0554f0790402d4f",
     "faraway/mew_model.py": "9ee6b83ab635e60bc7a554afefdab338d7d50f4ec5b91ed5185db614c3d8946c",
     "faraway/dotnet/MewModel/Program.cs": "56bfa011b98e56b0cba69576b7edf6a2ec10056df2a04b425ec2bb70a93607c6",
-    "tests/test_faraway.py": "af233da2564f8f887169e7ffdbf9c2ec6e3aed10c72793a89923436e0ede5ad7"
+    "tests/test_faraway.py": "b2f2c658245f98ffdc7fc0834c38732045c0ecbfaf6a89637699167fa92a9cff"
   },
   "runtime_cases": [
     {
@@ -136,6 +138,23 @@
         "fixed_model": "work/faraway/console-test/21-mew-model.png",
         "zoom_old_vs_new": "work/faraway/console-test/mew-compare.png"
       }
+    },
+    {
+      "case": "tall_grass_hide_and_capture",
+      "date": "2026-11-01",
+      "observed": "Meadow rows 13-26 painted as tall grass (165 tiles). First Apply used CTRMap-F5's TALL_GRASS tuple 0600183d and the player could not step onto it; retail tall grass is 04400020 (Route 102; 59 of 857 retail regions), set after the Apply. Then: walking in grass works, grass tufts at the player's and Mew's feet, no wild encounter during the whole chase. Mew hides after flees 1-3 (tuft visible), pops out when approached, stays visible at the cornered spot; talk -> '¡Mew no tiene adónde huir!' -> Mew Lv 30 battle -> Master Ball capture -> box 1. In-game save: flag 3031 = 1, 3034 = 1, work 16667 = 5, work 16697 = 0.",
+      "evidence": {
+        "blocked_first_apply": "work/faraway/console-test/42-pace.png",
+        "grass_zoom": "work/faraway/console-test/grass-zoom.png",
+        "chase": "work/faraway/console-test/strip-f.png",
+        "chase_2": "work/faraway/console-test/strip-g.png",
+        "battle": "work/faraway/console-test/strip-h.png",
+        "saved_after_capture": {
+          "file": "work/faraway/console-test/grass-captured.main",
+          "sha256": "f9ed1b66961a409953fff9758232dfb2bf9715ecc63737ccda61f46def04681e"
+        }
+      },
+      "overlay": "dev overlay of the final build (identical to the release overlay except the Route 102 development warp in a/0/1/3)."
     }
   ],
   "fixture": {
@@ -186,10 +205,10 @@
     "romfs/.crr/static.crr": "3ab778653f48bbdeb244aef20f88b4856b1286c44defeaba513f6ab256d9fc60",
     "romfs/DllBattle.cro": "46153fa373b8166a3a65a31272008dc8d63207f3b2498752c69c1a0c74235519",
     "romfs/DllField.cro": "cf8c0dd3613564e3aa64165f241c3b462cfeb4cfc663900dea80b739b6c5cf8b",
-    "romfs/a/0/1/3": "66af01b77767ebcceee8e5e84135c2858199d798fc6ec72e57a89ccf1be699c7",
-    "romfs/a/0/1/4": "d8ab1e5b8b9e269b803951387f1db5e4ceb201af8cabce62c38beb0f49f8e0a7",
+    "romfs/a/0/1/3": "b93d4c8b2f19dd14df7b8c3a00ce63f8ddc196819c7a3414e29b3331f3630f94",
+    "romfs/a/0/1/4": "c7ba908565e07a76b9521359288d4f2d47e5bc334d40457baaaaa28992094803",
     "romfs/a/0/2/1": "292dad15b562186689486da83d2db18c93f54491b54d9287d460463accd5a1c0",
-    "romfs/a/0/3/9": "831f7822a9c0db3a225dff7ca16de8696442d4ff7a3a761ed6cd3aac4b3e06bd",
+    "romfs/a/0/3/9": "ee777a1f079e7be0a93c25f92121c70ccce5e760636f650140ba855d941a8169",
     "romfs/a/0/4/0": "5ece6f428778ce7f68183be315d9e72bb84b77b3c7d9df34f4beea307322c372",
     "romfs/a/0/7/1": "8103d49e7d6d7a2c3fac451b49a58c97445a697286d227cfe0670a2630ce9f5c",
     "romfs/a/0/7/2": "8df973d6cf3180b5544d09790b151736a59df8cc4878aa4fbcc05d651629fd13",
@@ -210,9 +229,8 @@
     "romfs/a/1/3/7": "455c9acd87bf7a760c38b50ea06322d9602213dfbc805c3665652c9fdd158aa3",
     "romfs/a/1/9/7": "2988b22d48c740b66984702a4b9e5b422a5e320eb5ecb97600a4764c60e6bce4"
   },
-  "overlay_note": "final_overlay_sha256 is the v0.2 build. Capture/flee paths were not re-run on it; their scripts are unchanged from the overlay validated in the earlier cases.",
+  "overlay_note": "final_overlay_sha256 is the v0.2 build tested in tall_grass_hide_and_capture (through its development-warp variant).",
   "remaining": [
-    "Tall grass in the meadow and Mew hiding in it",
     "Defeat Mew and lose all party Pokemon",
     "Console validation of the v0.2 changes"
   ],

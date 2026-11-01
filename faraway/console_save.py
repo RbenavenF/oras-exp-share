@@ -24,7 +24,7 @@ SOURCE_SHA256 = 'e97f367403c87e720d70fd32218178da3213294638d4fe9ceea6c443caba66c
 BACKUP = 'MewTest-puerto-Calagua'
 EXPECTED_FLAGS = {2720: 1, 2729: 1, 3026: 0, 3031: 0, 3034: 0}
 EXPECTED_WORKS = {16665: 0, 16667: 0}
-README = """Partida de prueba del evento de Mew (Rubí Omega EUR 1.0 + paquete oras-mew-luma-preview-v0.1)
+README = """Partida de prueba del evento de Mew (Rubí Omega EUR 1.0 + paquete oras-mew-luma-preview v0.1 o posterior)
 
 QUÉ ES
 Copia de laboratorio guardada por el propio juego en el puerto de Ciudad Calagua,
@@ -35,7 +35,7 @@ junto al marinero que entrega el Mapa Viejo. Procede de tu partida de inputs/sav
 No sirve para seguir la historia: úsala solo para probar el evento.
 
 ANTES DE NADA
-1. Instala el paquete oras-mew-luma-preview-v0.1 en SD:/luma/titles/000400000011C400/
+1. Instala el paquete oras-mew-luma-preview en SD:/luma/titles/000400000011C400/
    y activa "Enable game patching" en Luma. Juego sin actualización.
 2. Abre Checkpoint, elige Rubí Omega y haz Backup de tu partida actual.
    Esa copia es la que restaurarás al terminar.

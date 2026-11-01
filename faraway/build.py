@@ -162,6 +162,22 @@ def run_java(game, work, plan_path):
     return log.read_text()
 
 
+def paint_grass(game, work):
+    """Tall grass over the meadow's walkable tiles (CTRMap-F5 painter, composite Apply on the zone's own map)."""
+    ws = work / 'ws-grass'
+    if ws.exists():
+        shutil.rmtree(ws)
+    log = work / 'grass.log'
+    with log.open('w') as stream:
+        subprocess.run([str(ROOT / 'faraway/run.sh'), 'Grass', str(game), str(ws), str(ev.ZONE_MEADOW),
+                        str(ev.MEADOW_GRASS_ROWS[0]), str(ev.MEADOW_GRASS_ROWS[1])],
+                       stdout=stream, stderr=subprocess.STDOUT, check=True)
+    text = log.read_text()
+    if 'Painted map applied to zone' not in text:
+        raise ValueError(f'Grass Apply did not report success: {text}')
+    return text
+
+
 def text_edit(data, entry, changes, path):
     """changes: {line: text}; lines past the end are appended in order."""
     entries = garc_entries(data)
@@ -217,7 +233,7 @@ def _lines(data, entry):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--skip', action='append', default=[], help='laboratory bisection: harbor-scripts, harbor-npcs')
+    parser.add_argument('--skip', action='append', default=[], help='laboratory bisection: harbor-scripts, harbor-npcs, grass')
     args = parser.parse_args()
     work = ROOT / 'work/faraway/build'
     work.mkdir(parents=True, exist_ok=True)
@@ -235,6 +251,8 @@ def main():
         plan_path.write_text(''.join(l for l in plan_path.read_text().splitlines(True)
                                      if not l.startswith(f'zone.{ev.ZONE_HARBOR}.npc')))
     print(run_java(game, work, plan_path))
+    if 'grass' not in args.skip:
+        print(paint_grass(game, work))
     originals, assets = build_patch.patched_assets()
     changed = {}
     for rel in STAGED:

@@ -40,7 +40,7 @@ def run(program, entry, works, flags, battle_result=4):
     names = {s32(gf_hash(n)): n for n in (
         'FlagGet', 'FlagSet', 'WorkGet', 'WorkSet', 'WildBattleResultGet', 'CallWildBattle',
         'VoicePlay', 'MdlAcmdInit', 'MdlAcmdMakeMoveEx', 'MdlAcmdSetEnd', 'LastKeyWait', 'MdlDel',
-        'CallApplicationDemo')}
+        'CallApplicationDemo', 'MdlSetVisible')}
     pc, pri, stack, locals_, calls = labels[entry], 0, [], {}, []
     for _ in range(1000):
         item = program.items[pc]
@@ -137,6 +137,9 @@ def test_four_escapes_then_no_more_movement(programs):
         calls = run(programs[1], 'mew_flee', works, flags)
         assert works[ev.WORK_MEW_SPOT] == expected
         assert sum(n == 'MdlAcmdMakeMoveEx' for n, _ in calls) == 1
+        visibility = [a[1] for n, a in calls if n == 'MdlSetVisible' and a[0] == ev.MEADOW_NPC_MEW]
+        # Hidden Mew pops out before fleeing (not from the first, visible spot); it hides again except when cornered.
+        assert visibility == ([1] if expected > 1 else []) + ([0] if expected < len(ev.MEW_SPOTS) - 1 else [])
     assert not any(n.startswith('MdlAcmd') for n, _ in run(programs[1], 'mew_flee', works, flags))
 
 

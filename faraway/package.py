@@ -11,9 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 TITLE = '000400000011C400'
 README = """Omega Ruby Repolished + Repartir Exp. + racha DexNav + evento de Mew
 Prototipo jugable. Base: Omega Ruby EUR 1.0, sin actualización, Repolished 1.7.6.
-El circuito de Mew se ha jugado en la consola del usuario (v0.1). Esta versión
-añade la escena de la barca de Arenque y corrige el modelo de Mew; esos dos
-cambios están probados en Azahar, todavía no en consola.
+El circuito de Mew se ha jugado en la consola del usuario (v0.1). Los cambios
+de esta versión están probados en Azahar, todavía no en consola.
 
 INSTALACIÓN EN 3DS CON LUMA
 1. Apaga la consola. Guarda una copia de tu partida y de la carpeta de mods actual.
@@ -38,12 +37,16 @@ NOVEDADES v0.2
   guarda antes de la escena y se restaura después.
 - Mew: el modelo conserva las coordenadas de textura, el espejo del cuerpo y la
   transparencia de los iris del modelo de combate (antes: ojos negros).
+- Hierba alta en todo el claro (sin Pokémon salvajes). Mew se esconde en la
+  hierba tras cada huida: solo se ve la mata moviéndose. Al acercarte sale,
+  grita y vuelve a huir. En el último punto, contra el acantilado, se queda a la
+  vista para que puedas hablarle.
 - Arenque sigue en el muelle tras capturar a Mew a propósito: el viaje a la isla
   se puede repetir.
 
 ESTADO
-Faltan la hierba alta del claro (Mew aún no se esconde), las pruebas de derrotar
-a Mew y perder todo el equipo, y validar en consola los cambios de v0.2.
+Faltan las pruebas de derrotar a Mew y perder todo el equipo, y validar en
+consola los cambios de v0.2.
 No contiene partidas, claves ni ROM completa. Contiene archivos derivados del
 volcado local: úsalo localmente; estos archivos quedan excluidos de Git.
 Nada se instala automáticamente. manifest.json registra los hashes del paquete.

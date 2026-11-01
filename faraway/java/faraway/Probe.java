@@ -141,6 +141,24 @@ public final class Probe {
 				}
 				System.out.println(row);
 			}
+		} else if (mode.equals("tuples")) {
+			// Tilemap tuples (4 bytes per tile) over a rectangle of tiles: tuples ZONE X0 X1 Y0 Y1
+			int z = Integer.parseInt(args[3]);
+			ZoneHeader h = new ZoneHeader(ContainerBytes.subfile(ZoneTables.zoneNow(s, z), 0), ctrmap.gamedef.GameType.ORAS);
+			byte[] mm = java.nio.file.Files.readAllBytes(s.staged(ArchiveType.MAP_MATRIX, h.mapmatrixID).toPath());
+			ctrmap.formats.mapmatrix.MapMatrix.Grid g = ctrmap.formats.mapmatrix.MapMatrix.Grid.of(mm);
+			int x0 = Integer.parseInt(args[4]), x1 = Integer.parseInt(args[5]), y0 = Integer.parseInt(args[6]), y1 = Integer.parseInt(args[7]);
+			for (int y = y0; y <= y1; y++) {
+				StringBuilder row = new StringBuilder(String.format("%4d ", y));
+				for (int x = x0; x <= x1; x++) {
+					int k = (y / 40) * g.width + x / 40;
+					byte[] fd = java.nio.file.Files.readAllBytes(s.staged(ArchiveType.FIELD_DATA, g.id(k)).toPath());
+					byte[] tm = ContainerBytes.subfile(fd, 0);
+					int off = 4 + ((y % 40) * 40 + x % 40) * 4;
+					row.append(String.format("%02x%02x%02x%02x ", tm[off], tm[off + 1], tm[off + 2], tm[off + 3]));
+				}
+				System.out.println(row);
+			}
 		} else if (mode.equals("repurpose")) {
 			System.out.println(ctrmap.ZoneRepurposeScanner.report(ctrmap.ZoneRepurposeScanner.scanZones(s)));
 		}
