@@ -28,7 +28,7 @@ STAGED = ['a/0/1/4', 'a/0/3/9', 'a/0/4/0', 'a/0/7/3', 'a/0/8/1', 'a/0/1/3', 'a/0
           'a/0/3/6', 'a/0/3/7', 'a/0/3/8', 'a/1/9/5', 'a/1/8/9', 'a/1/9/7', 'a/0/2/9', 'a/1/8/2', 'a/1/8/3',
           'a/1/8/4', 'a/1/8/5', 'a/1/8/6']
 # The Java build may change only these; anything else it touches is an error.
-ZONE_ARCHIVES = {'a/0/1/3', 'a/0/1/4', 'a/0/3/9', 'a/0/4/0', 'a/1/3/7'}
+ZONE_ARCHIVES = {'a/0/1/3', 'a/0/1/4', 'a/0/3/9', 'a/0/4/0', 'a/1/3/7', 'a/0/2/1'}
 GAMETEXT = {lang: f'romfs/a/0/7/{lang}' for lang in range(1, 9)}          # 1 JP kana .. 8 KO
 STORYTEXT = {lang: f'romfs/a/0/{(78 + lang) // 10}/{(78 + lang) % 10}' for lang in range(1, 9)}
 LANG = {1: 'en', 2: 'en', 3: 'en', 4: 'en', 5: 'en', 6: 'en', 7: 'es', 8: 'en'}  # text set used per language
@@ -76,6 +76,20 @@ def entity_script(entities):
     return Script.parse(entities[offset:offset + struct.unpack_from('<I', entities, offset)[0]])
 
 
+def add_mew_model(game, work):
+    """Append the field Mew built from its battle model as MoveModels entry MOVEMODEL_MEW."""
+    import mew_model
+    from formats import lz11_compress, rebuild_garc
+    manifest = json.loads((ROOT / 'baseline/oras/manifest.json').read_text())
+    check_file(mew_model.POKEMON_MODELS, manifest['repolished']['romfs/a/0/0/8'])
+    mm = mew_model.build(work / 'mew')
+    archive = game / 'a/0/2/1'
+    data = archive.read_bytes()
+    if len(garc_entries(data)) != ev.MOVEMODEL_MEW:
+        raise ValueError('MoveModels does not end where the Mew entry is expected')
+    archive.write_bytes(rebuild_garc(data, {}, [lz11_compress(mm)]))
+
+
 def compile_scripts(game, out):
     shared = (game / 'a/0/2/9').read_bytes()
     entries = garc_entries(shared)
@@ -119,7 +133,8 @@ def plan(work, scripts_dir):
         f'zone.{i}.npc.0={ev.MODEL_BRINEY},{ev.MODEL_BRINEY},{ev.EV_ISLAND_BRINEY},0,19,30,90,1',
         f'zone.{i}.npc.1={ev.MODEL_PEEKO},484,2000,0,18,30,90,1',
         f'zone.{b}.clearNpcs=1', f'zone.{b}.clearTriggers=1', f'zone.{b}.warp.0=0,{i},0',
-        f'zone.{b}.npc.0={ev.MODEL_PEEKO},484,{ev.EV_MEW},{ev.FLAG_MEW_CAPTURED},20,15,36,1',
+        f'zone.{b}.npc.0={ev.MODEL_MEW},{ev.MOVEMODEL_MEW},{ev.EV_MEW},{ev.FLAG_MEW_CAPTURED},20,15,36,1',
+        f'regnew.{ev.MODEL_MEW}=104,{ev.MODEL_PEEKO}',
     ]
     path = work / 'plan.properties'
     path.write_text('\n'.join(lines) + '\n')
@@ -199,6 +214,7 @@ def main():
     game = stage(work)
     scripts = work / 'scripts'
     compile_scripts(game, scripts)
+    add_mew_model(game, work)
     if 'harbor-ent' in args.skip:
         (scripts / f'zone{ev.ZONE_HARBOR}.ent.bin').unlink()
     if 'harbor-scripts' in args.skip:

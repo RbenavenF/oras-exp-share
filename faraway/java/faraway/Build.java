@@ -115,6 +115,22 @@ public final class Build {
 			npc.uid = e.npcs.size();
 			npc.model = Integer.parseInt(n[0].trim());
 			int moveModel = Integer.parseInt(n[1].trim());
+			if (!reg.entries.containsKey(npc.model) && plan.getProperty("regnew." + npc.model) != null) {
+				String fresh = plan.getProperty("regnew." + npc.model);
+				if (fresh != null) {
+					// A model new to the game: copy a retail entry (render, shadow, collision) and point it at the
+					// appended MoveModels index. Format: templateArea,templateUid.
+					String[] t = fresh.split(",");
+					ctrmap.formats.npcreg.NPCRegistry tr = new ctrmap.formats.npcreg.NPCRegistry(
+							s.staged(ArchiveType.NPC_REGISTRIES, Integer.parseInt(t[0].trim())), s);
+					ctrmap.formats.npcreg.NPCRegistry.NPCRegistryEntry copy = copyEntry(tr.entries.get(Integer.parseInt(t[1].trim())));
+					copy.model = moveModel;
+					if (reg.register(copy, npc.model) != npc.model) {
+						throw new IllegalStateException("uid " + npc.model + " is taken in area " + z.header.areadataID);
+					}
+					regChanged = true;
+				}
+			}
 			if (!reg.entries.containsKey(npc.model)) {
 				// The exact retail entry (collision size, render and shadow bits) from an area that has the model.
 				int donorArea = num("regdonor." + npc.model);

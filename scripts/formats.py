@@ -130,45 +130,72 @@ def garc_entries(data):
 
 
 
-def rebuild_garc(data, replacements):
-    """Rebuild a contiguous, unpadded GARC v4 with {(entry, subentry): bytes} replaced."""
+def rebuild_garc(data, replacements, append=()):
+    """See _rebuild_garc; refuses archives whose unchanged rebuild is not byte-identical."""
+    if _rebuild_garc(data, {}) != data:
+        raise ValueError('GARC layout not reproduced exactly; refusing to rebuild it')
+    return _rebuild_garc(data, replacements, append)
+
+
+def _rebuild_garc(data, replacements, append=()):
+    """Rebuild a GARC v4 with {(entry, subentry): bytes} replaced and single-file entries appended.
+
+    The archive's own entry alignment is kept: text archives pack entries back to back, others pad
+    each entry to four bytes (FATB "end" is then the padded end). Anything else is refused.
+    """
     if data[:4] != b'CRAG' or struct.unpack_from('<HH', data, 0xA) != (0x400, 4):
         raise ValueError('Only GARC v4 is supported')
     entries = garc_entries(data)
     content = struct.unpack_from('<I', data, 0x10)[0]
-    position = content
-    for _, _, offset, length in entries:
-        if offset != position:
-            raise ValueError('GARC entries are not contiguous')
-        position += length
-    if position != len(data):
-        raise ValueError('Unexpected data after GARC entries')
-    unknown = set(replacements) - {(entry, sub) for entry, sub, _, _ in entries}
-    if unknown:
-        raise ValueError(f'Unknown GARC entries: {sorted(unknown)}')
-    header = bytearray(data[:content])
     fato = struct.unpack_from('<I', data, 4)[0]
     fatb = fato + struct.unpack_from('<I', data, fato + 4)[0]
     fimb = fatb + struct.unpack_from('<I', data, fatb + 4)[0]
     if data[fimb:fimb + 4] != b'BMIF' or fimb + 12 != content:
         raise ValueError('Unexpected FIMB layout')
-    body, records, index = bytearray(), [], 0
-    for entry in range(struct.unpack_from('<H', data, fato + 8)[0]):
+    records = []
+    count = struct.unpack_from('<H', data, fato + 8)[0]
+    for entry in range(count):
         pos = fatb + 12 + struct.unpack_from('<I', data, fato + 12 + entry * 4)[0]
         mask = struct.unpack_from('<I', data, pos)[0]
-        pos += 4
+        subs = [struct.unpack_from('<III', data, pos + 4 + 12 * k) for k in range(bin(mask).count('1'))]
+        records.append((mask, subs))
+    padded = any(end != start + length for _, subs in records for start, end, length in subs)
+    align = 4 if padded else 1
+    position = content
+    for _, _, offset, length in entries:
+        if offset != position:
+            raise ValueError('GARC entries are not laid out as expected')
+        position += -(-length // align) * align
+    if position != len(data):
+        raise ValueError('Unexpected data after GARC entries')
+    unknown = set(replacements) - {(entry, sub) for entry, sub, _, _ in entries}
+    if unknown:
+        raise ValueError(f'Unknown GARC entries: {sorted(unknown)}')
+    blobs, index = [], 0
+    for entry, (mask, subs) in enumerate(records):
+        row = []
         for sub in range(32):
             if mask & (1 << sub):
                 _, _, offset, length = entries[index]
-                blob = replacements.get((entry, sub), data[offset:offset + length])
-                struct.pack_into('<III', header, pos, len(body), len(body) + len(blob), len(blob))
-                body += blob
-                records.append(len(blob))
-                pos += 12
+                row.append((sub, replacements.get((entry, sub), data[offset:offset + length])))
                 index += 1
-    struct.pack_into('<I', header, fimb + 8, len(body))
-    struct.pack_into('<II', header, 0x14, content + len(body), max(records))
-    result = bytes(header + body)
+        blobs.append(row)
+    blobs += [[(0, blob)] for blob in append]
+    fato_out = bytearray(b'OTAF' + struct.pack('<IHH', 12 + 4 * len(blobs), len(blobs), 0xFFFF))
+    fatb_out, body, largest = bytearray(), bytearray(), 0
+    for row in blobs:
+        fato_out += struct.pack('<I', len(fatb_out))
+        fatb_out += struct.pack('<I', sum(1 << sub for sub, _ in row))
+        for _, blob in row:
+            start = len(body)
+            body += blob + b'\xff' * (-len(blob) % align)  # retail pads with 0xFF
+            fatb_out += struct.pack('<III', start, len(body), len(blob))
+            largest = max(largest, len(blob))
+    fatb_out = b'BTAF' + struct.pack('<II', 12 + len(fatb_out), len(blobs)) + fatb_out
+    header = bytearray(data[:fato])
+    content = fato + len(fato_out) + len(fatb_out) + 12
+    struct.pack_into('<III', header, 0x10, content, content + len(body), largest)
+    result = bytes(header + fato_out + fatb_out + b'BMIF' + struct.pack('<II', 12, len(body)) + body)
     garc_entries(result)
     return result
 

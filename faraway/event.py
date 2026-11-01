@@ -36,6 +36,8 @@ LOCATION_FARAWAY = 277       # empty odd location-name slot
 MODEL_BRINEY = 283           # MoveModels 283 (rstr0166), as on the S.S. Tidal
 MODEL_PEEKO = 4134           # uid of MoveModels 484 (pm0278, Wingull)
 MODEL_SAILOR = 232           # MoveModels 232 (rstr0115), the harbor's own sailor
+MODEL_MEW = 4247             # new registry uid (4096 + species, as Pokemon uids are) for the built field model
+MOVEMODEL_MEW = 544          # appended after the 544 retail MoveModels
 
 # Event ids (NPC script numbers) added to the zone scripts.
 EV_GIVER, EV_BRINEY = 40, 41
