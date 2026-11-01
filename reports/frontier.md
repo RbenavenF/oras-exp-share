@@ -1,8 +1,8 @@
 # Frente de Batalla — estado medido
 
 Hechos estables del proyecto (PLAN §8). La historia de cada sesión está en
-`frontier/BITACORA.md`. Todo lo de este informe sale de lectura estática salvo que
-se diga lo contrario; **nada de F1 se ha comprobado aún en ejecución**.
+`frontier/BITACORA.md`. §1–§5 salen de lectura estática; §6 recoge lo comprobado en
+Azahar con gdb (2026-11-01). Nada se ha comprobado en consola.
 
 Reproducción:
 
@@ -90,9 +90,8 @@ constructor `0x112a04`: 6 `PokemonParam`) y llama a `0x1e3d2c(work, a, work+0x2C
 
 Conclusión: el equipo del combate es una copia; el equipo de la partida no se
 escribe en este camino. Para la Fábrica basta con que el bucle de `0x1e3d2c`
-añada Pokémon de alquiler en vez de copiar los del jugador. **Pendiente de
-comprobar en ejecución** (gdb en Azahar) y de comprobar que nada después del
-combate copia el equipo de vuelta (la Mansión no da EXP, pero hay que verlo).
+añada Pokémon de alquiler en vez de copiar los del jugador. Comprobado en
+Azahar (§6): el equipo de la partida queda idéntico byte a byte tras el combate.
 
 Para construir los alquileres existe ya una fábrica de Pokémon a partir de un
 conjunto de 16 bytes: `0x1ef904(conjunto*, nivel, IV, heap, …)` devuelve un
@@ -107,5 +106,42 @@ conjunto de 16 bytes: `0x1ef904(conjunto*, nivel, IV, heap, …)` devuelve un
   última página (`0x47A000`) hay **2556 bytes a cero**, VA `0x579604`–`0x57A000`,
   igual en la base limpia y en Repolished (`maison_map.py`). La página está dentro
   del segmento de texto (0x47A páginas), así que debería cargarse con permiso de
-  ejecución. **No comprobado en ejecución.**
+  ejecución. En Azahar la zona está mapeada y a cero (§6); la última función de
+  `.text` acaba en `0x579600` (`bx lr`). **No se ha ejecutado código allí** y Azahar
+  no demuestra los permisos de la consola.
 - Ninguna otra vía (CRO, ampliar el exheader) se ha medido todavía.
+
+## 6. Comprobación en Azahar (2026-11-01)
+
+Partida `work/frontier/lab/main` (copia de `work/partida-convertida/main`, SHA-256
+`a74ddefd…`, 6 Pokémon de nivel 6–12), overlay de desarrollo
+`faraway/dev_overlay.sh 517 0` (warp de la Ruta 102 a la zona 517) y gdb con
+`faraway/gdbctl.sh` (hay que poner `use_gdbstub=true` en
+`work/azahar-lab/config/azahar-emu/qt-config.ini` y conectar cuando el puerto
+24689 ya escucha; se dejó otra vez en `false`). Log: `work/frontier/lab/gdb-f1.log`.
+
+- La partida no necesita el Resort desbloqueado: con el warp se entra en la
+  Mansión y la recepcionista (NPC 1, tile 23,24) inscribe normalmente.
+- Al hablar salta `0x1e5cd4` (`BattleInstWorkCreate`); trabajo en `0x08822544`
+  (`[ctx+0x64]`). El retorno a `0x7886ac` da la base de `DllField.cro` en esta
+  sesión: `0x006F3000` (= `0x7886ac − 0x956ac`; puede variar con el orden de carga).
+- La pantalla de `_CallTrialDownloadApp` es la de tipo de combate (Individual,
+  Doble, Triple, Rotatorio, Múltiple). Con Individual Normal: `+0x838 = 0`,
+  `+0x839 = 0`.
+- Antes del primer combate el script pide guardar (`GlobalCall 2003`); sin
+  guardar, `0x1a70` cancela.
+- Elegidos Torchic, Poochyena y Silcoon (huecos 0, 2, 4): `work+0x2C = 0`,
+  `work+0x30 = [0, 2, 4, 0, 0, 0]`, `work+0x48 = 3`.
+- `0x1e30b8` con `r1 = 0`, `r2 = 1` (`StartBattle(0, 1)`), `lr = 0x788048`
+  (`DllField.cro+0x95048`). `0x1e3d2c` recibe el `PokeParty` nuevo en `0x08822440`;
+  al salir tiene 3 miembros (objetos en `0x0880a814`, `0x0880a9f8`, `0x0880abdc`,
+  0x1E4 bytes cada uno), distintos de los del equipo de la partida
+  (`0x08cf71f0`, 6 miembros desde `0x08cf723c`). Comparados con los huecos 0, 2
+  y 4, solo difieren los punteros internos de cada objeto (cabecera y
+  `+0x130`–`+0x1c4`) y una palabra que vale 8 en la copia y 4 en el original
+  (`+0x138`, `+0x178`, `+0x1c4`); el resto es igual.
+- En combate se ven solo esos 3 Pokémon. Derrota: `work+0x73C = 0`.
+- El equipo de la partida en memoria (`0x08cf71f0`–`0x08cf7d94`) es idéntico antes
+  del combate, al leer el resultado y de vuelta en el mostrador: SHA-256
+  `f7436e68…` en `party_before.bin`, `party_after.bin` y `party_end.bin`.
+- `x/4wx 0x579ff0` lee ceros: el relleno de `.text` está mapeado.

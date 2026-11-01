@@ -70,3 +70,39 @@ Siguiente paso:
    `work+0x2C..0x4C`, comprobar que el equipo guardado no cambia tras el combate.
 3. Comprobar que la VA `0x579604` es ejecutable (escribir un `bx lr` y llamarlo, o
    leer los permisos de la página desde gdb).
+
+## 2026-11-01 — Claude Code (Opus 5.5) — F1: comprobación en Azahar; F1 cerrada
+Estado: hecho
+Hecho:
+- Combate real de la Mansión (Individual, Normal) en Azahar con gdb; detalle en
+  `reports/frontier.md` §6.
+- Confirmado en ejecución: `BattleInstWorkCreate` → `0x1e5cd4` (trabajo en
+  `0x08822544`), selección en `work+0x2C/+0x30/+0x48` (`[0,2,4]`, 3),
+  `StartBattle(0,1)` → `0x1e30b8`, y `0x1e3d2c` llena un `PokeParty` nuevo con
+  copias de los huecos elegidos.
+- El equipo de la partida en memoria no cambia: volcados antes del combate, tras
+  el resultado y de vuelta en el mostrador, los tres con el mismo SHA-256.
+- El relleno de `.text` (`0x579604`–`0x57A000`) está mapeado y a cero.
+- La Mansión funciona sin el Resort desbloqueado (warp de desarrollo); exige
+  guardar antes del primer combate.
+- PLAN: F1 marcada como hecha y riesgo de espacio actualizado (§7).
+Evidencia: `work/frontier/lab/gdb-f1.log` (6 puntos de ruptura alcanzados),
+`work/frontier/lab/party_{before,after,end}.bin` (SHA-256 `f7436e68…` los tres),
+`work/frontier/lab/battleparty.bin`. Partida usada: `work/frontier/lab/main`
+(SHA-256 `a74ddefd…`, copia de `work/partida-convertida/main`). Procedimiento:
+`faraway/dev_overlay.sh 517 0`, `faraway/lab.sh work/frontier/lab/main
+work/faraway/dev/overlay` con `use_gdbstub=true` (devuelto a `false` al acabar),
+`faraway/gdbctl.sh start` cuando el puerto 24689 escucha, `faraway/walk.sh`.
+Commits: ver `git log` («Battle Frontier F1: Battle Maison battle traced in Azahar»).
+Decisiones:
+- **Opción A elegida**: los alquileres se inyectan en `0x1e3d2c`, que construye el
+  equipo del combate. La opción B (copia del equipo en la partida) queda descartada.
+- Para crear los alquileres se reutilizará `0x1ef904` (conjunto de 16 bytes →
+  `PokemonParam`), la misma función que usa la Mansión para el compañero de Multi.
+Siguiente paso: F2 (datos de alquiler) y preparación de F3.
+1. Contrastar con pret/pokeemerald `src/battle_factory.c` los niveles de alquiler
+   por ronda y las reglas (3 de 6, cambio tras victoria) y anotarlos en PLAN §1.
+2. `frontier/data.py`: leer `a/1/8/2`–`a/1/8/5` con comprobación de hash, agrupar
+   los conjuntos por nivel de alquiler y generar las tablas; tests en `tests/`.
+3. Para F3, desensamblar los argumentos de pila de `0x1ef904` (`[sp]`, `[sp+4]`)
+   y cómo libera la Mansión el `PokemonParam` temporal (`0x1e35c4`, vtable +8).

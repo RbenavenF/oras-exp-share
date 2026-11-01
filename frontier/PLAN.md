@@ -145,7 +145,7 @@ Cada fase termina con commit, evidencia y entrada en la bitácora.
 ### F0 — Arranque (hecho, 2026-11-01)
 Plan, bitácora, `frontier/survey.py`, pausa documentada del evento de Mew.
 
-### F1 — Ingeniería inversa de la Mansión (sin cambiar el juego)
+### F1 — Ingeniería inversa de la Mansión (hecho, 2026-11-01; `reports/frontier.md`)
 - Leer el flujo del script 517: inscripción, elección de modalidad, selección de
   equipo, bucle de combates, victoria y derrota, guardado, PB. Documentarlo en
   `reports/frontier.md` con direcciones del listado.
@@ -192,8 +192,9 @@ Se planifican cuando la Fábrica esté en consola.
 
 ## 7. Riesgos y decisiones abiertas
 
-- **Espacio para código nativo**: sin medir; puede condicionar todo F3. Es la primera
-  medición de F1 tras localizar el punto de inyección.
+- **Espacio para código nativo**: 2556 bytes a cero al final de `.text`
+  (VA `0x579604`–`0x57A000`, `reports/frontier.md` §5), mapeados en Azahar. Falta
+  ejecutar código allí y probarlo en consola; si no basta, medir otras vías.
 - **Formato del Pokémon en memoria**: si el equipo del combate guarda los PK6 cifrados,
   hay que generar Pokémon válidos (checksum, PID), igual que hace la Mansión con los
   rivales; se intentará reutilizar su función.
