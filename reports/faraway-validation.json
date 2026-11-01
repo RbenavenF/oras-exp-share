@@ -4,15 +4,16 @@
   "scope": "Runtime regression of Mew chase state, save/reload, flee/reentry and visible post-battle message; no console validation of this event.",
   "automated_tests": {
     "command": ".venv/bin/python -m pytest -q",
-    "passed": 34,
-    "note": "Event control-flow tests mock native effects; runtime checks below were performed separately in Azahar."
+    "passed": 37,
+    "note": "Includes test_boat_scene_keeps_brineys_story_state, shown to fail (3 cases) when the restore of work 16697 is replaced."
   },
   "sources": {
-    "faraway/event.py": "53468000fad2f72b684f7e2df57f300b94f6a41c8f74a3f8389cc0518ca19385",
+    "faraway/event.py": "0005524ebd65646a5503301bf89eacc5bf3dfaa69728ff1fa2ececa96b167cd2",
     "faraway/build.py": "9ab3d99c02a3044cb77b55e9d12a04659c768939439a157b4744cf7f3f39abee",
     "faraway/java/faraway/Build.java": "891f750c179c896ad73605ff452d3c7398633b92a0024b08f0bc0529099c7d58",
     "faraway/mew_model.py": "9ee6b83ab635e60bc7a554afefdab338d7d50f4ec5b91ed5185db614c3d8946c",
-    "tests/test_faraway.py": "df528ed6019da6fb1112d7991239244d1cd9f2c9fe697868f1b876a58d0afa61"
+    "faraway/dotnet/MewModel/Program.cs": "56bfa011b98e56b0cba69576b7edf6a2ec10056df2a04b425ec2bb70a93607c6",
+    "tests/test_faraway.py": "af233da2564f8f887169e7ffdbf9c2ec6e3aed10c72793a89923436e0ede5ad7"
   },
   "runtime_cases": [
     {
@@ -115,6 +116,26 @@
         "chase_work_16667": 5
       },
       "screenshot": "work/faraway/validation-hide-seek/flee-visible-message.png"
+    },
+    {
+      "case": "boat_scene_both_ways",
+      "date": "2026-11-01",
+      "observed": "Harbor: Briney Yes -> fade -> retail boat scene (application demo 9: Briney boat with Peeko) -> Faraway Island. Island Briney Yes -> same scene -> Lilycove harbor. In-game save afterwards: work 16697 = 0, its value before both crossings.",
+      "evidence": {
+        "departure_strip": "work/faraway/console-test/strip-c.png",
+        "return_strip": "work/faraway/console-test/strip-e.png"
+      },
+      "overlays": "Departure with the release overlay of the previous model build (same event scripts); return with the dev overlay (Route 102 warp to zone 474) of the final build."
+    },
+    {
+      "case": "mew_model_uv_fix",
+      "date": "2026-11-01",
+      "observed": "Copying the whole texture mapper rendered Mew black (sampler type 0 in unit 1). Copying only wrap modes plus UV transform and blending: Mew textured, blue eyes in place, irises translucent.",
+      "evidence": {
+        "black_model": "work/faraway/console-test/20-meadow.png",
+        "fixed_model": "work/faraway/console-test/21-mew-model.png",
+        "zoom_old_vs_new": "work/faraway/console-test/mew-compare.png"
+      }
     }
   ],
   "fixture": {
@@ -165,6 +186,47 @@
     "romfs/.crr/static.crr": "3ab778653f48bbdeb244aef20f88b4856b1286c44defeaba513f6ab256d9fc60",
     "romfs/DllBattle.cro": "46153fa373b8166a3a65a31272008dc8d63207f3b2498752c69c1a0c74235519",
     "romfs/DllField.cro": "cf8c0dd3613564e3aa64165f241c3b462cfeb4cfc663900dea80b739b6c5cf8b",
+    "romfs/a/0/1/3": "66af01b77767ebcceee8e5e84135c2858199d798fc6ec72e57a89ccf1be699c7",
+    "romfs/a/0/1/4": "d8ab1e5b8b9e269b803951387f1db5e4ceb201af8cabce62c38beb0f49f8e0a7",
+    "romfs/a/0/2/1": "292dad15b562186689486da83d2db18c93f54491b54d9287d460463accd5a1c0",
+    "romfs/a/0/3/9": "831f7822a9c0db3a225dff7ca16de8696442d4ff7a3a761ed6cd3aac4b3e06bd",
+    "romfs/a/0/4/0": "5ece6f428778ce7f68183be315d9e72bb84b77b3c7d9df34f4beea307322c372",
+    "romfs/a/0/7/1": "8103d49e7d6d7a2c3fac451b49a58c97445a697286d227cfe0670a2630ce9f5c",
+    "romfs/a/0/7/2": "8df973d6cf3180b5544d09790b151736a59df8cc4878aa4fbcc05d651629fd13",
+    "romfs/a/0/7/3": "b90acdbafa822c172280f812c9273ee5aa36a58a40c7aa128d3afc84e65cc367",
+    "romfs/a/0/7/4": "db861a2a7a2412e8d5398550cdaa330bfb1f8e9054aeb06745c900d8d7344de0",
+    "romfs/a/0/7/5": "abb9ca0d8a0a0e5660930ef20c948940898e7da72bf2446e97190ac59042476c",
+    "romfs/a/0/7/6": "f2dad0a3e6d9ebca3b88353381ea4c23b81eaf7d64ab48219467c87b4509b1c2",
+    "romfs/a/0/7/7": "f359335cb79a6fb0e60fc0c6587434a65f640d5cf8026731f98d7e8179ed747e",
+    "romfs/a/0/7/8": "44729d5a08b13962bf342bd8d86d51e5c6a267bf146457c770cb53071b7320e4",
+    "romfs/a/0/7/9": "831589d83085722d6ab9141710ae7fa66fe64ad5f80aa437a60aadd505c40a8d",
+    "romfs/a/0/8/0": "bb489da6677609c636c65c7976218b848bcf57c7796551b346e2f16587a70573",
+    "romfs/a/0/8/1": "eb21978ef3e175d4b753d33aebf19668fb5fda65fd24abcc2d221ab98844988d",
+    "romfs/a/0/8/2": "3bdbc6dea2bb2b19d3fa417340ce66d4fe109141914f3453ac0251784344a96b",
+    "romfs/a/0/8/3": "eedf5d12c1bdc107967ab4c50b462c901174fd17fb7bf37beadf1aa64add4df2",
+    "romfs/a/0/8/4": "9b26f82903330dbe28361ca7ce4c60deba4f6b6c2e84b7eeb3f2ba76515d6122",
+    "romfs/a/0/8/5": "243de599786f3f4396b1b75e4a18a415fdc59c7dfbfda16bb78599561147c989",
+    "romfs/a/0/8/6": "b03b5e4c1662f68ed47564482ed2d625520e1c94b1e0e010cc97cc0e3136cc8d",
+    "romfs/a/1/3/7": "455c9acd87bf7a760c38b50ea06322d9602213dfbc805c3665652c9fdd158aa3",
+    "romfs/a/1/9/7": "2988b22d48c740b66984702a4b9e5b422a5e320eb5ecb97600a4764c60e6bce4"
+  },
+  "overlay_note": "final_overlay_sha256 is the v0.2 build. Capture/flee paths were not re-run on it; their scripts are unchanged from the overlay validated in the earlier cases.",
+  "remaining": [
+    "Tall grass in the meadow and Mew hiding in it",
+    "Defeat Mew and lose all party Pokemon",
+    "Console validation of the v0.2 changes"
+  ],
+  "previous_sources": {
+    "faraway/event.py": "53468000fad2f72b684f7e2df57f300b94f6a41c8f74a3f8389cc0518ca19385",
+    "faraway/build.py": "9ab3d99c02a3044cb77b55e9d12a04659c768939439a157b4744cf7f3f39abee",
+    "faraway/java/faraway/Build.java": "891f750c179c896ad73605ff452d3c7398633b92a0024b08f0bc0529099c7d58",
+    "faraway/mew_model.py": "9ee6b83ab635e60bc7a554afefdab338d7d50f4ec5b91ed5185db614c3d8946c",
+    "tests/test_faraway.py": "df528ed6019da6fb1112d7991239244d1cd9f2c9fe697868f1b876a58d0afa61"
+  },
+  "previous_final_overlay_sha256": {
+    "romfs/.crr/static.crr": "3ab778653f48bbdeb244aef20f88b4856b1286c44defeaba513f6ab256d9fc60",
+    "romfs/DllBattle.cro": "46153fa373b8166a3a65a31272008dc8d63207f3b2498752c69c1a0c74235519",
+    "romfs/DllField.cro": "cf8c0dd3613564e3aa64165f241c3b462cfeb4cfc663900dea80b739b6c5cf8b",
     "romfs/a/0/1/3": "8e7bb05f823ff789c7d984ef57ef3dd96f8019b391b2ab65336f7afdc57a30da",
     "romfs/a/0/1/4": "d8ab1e5b8b9e269b803951387f1db5e4ceb201af8cabce62c38beb0f49f8e0a7",
     "romfs/a/0/2/1": "59507d88b29ef3c32789ed37452d6c9bc6577fa186ab26fb811cd79bed21643c",
@@ -189,10 +251,7 @@
     "romfs/a/1/3/7": "455c9acd87bf7a760c38b50ea06322d9602213dfbc805c3665652c9fdd158aa3",
     "romfs/a/1/9/7": "2988b22d48c740b66984702a4b9e5b422a5e320eb5ecb97600a4764c60e6bce4"
   },
-  "overlay_note": "The first three cases used the state correction before the subsequent fade/message correction. The final case used the final overlay. Installed overlay bytes were hash-checked.",
-  "remaining": [
-    "Defeat Mew and lose all party Pokemon",
-    "Final map geometry, tall-grass hiding and presentation",
-    "Combined release package and event validation on the user platform"
-  ]
+  "console": {
+    "v0.1": "User report 2026-11-01: event played through on their console. Feedback: no animation on the crossing; Briney stays on the dock after the event; Mew model looks bad; Mew does not hide (no tall grass)."
+  }
 }

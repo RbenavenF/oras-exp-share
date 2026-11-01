@@ -24,6 +24,32 @@ namespace MewModel
                 }
                 return 0;
             }
+            // mat FILE: per material, the texture coordinate transforms and samplers; per mesh, the vertex attributes
+            if (args[0] == "mat")
+            {
+                H3D h = H3D.Open(File.ReadAllBytes(args[1]));
+                foreach (var m in h.Models)
+                {
+                    foreach (var mat in m.Materials)
+                    {
+                        var p = mat.MaterialParams;
+                        Console.WriteLine($"material {mat.Name} texcfg {p.TexCoordConfig} colorop {p.ColorOperation.FragOpMode} depth {p.DepthColorMask.Enabled}/{p.DepthColorMask.DepthFunc}/{p.DepthColorMask.RedWrite}{p.DepthColorMask.AlphaWrite} flags {p.Flags} frag {p.FragmentFlags} layer? alpha {p.AlphaTest.Enabled}/{p.AlphaTest.Function}/{p.AlphaTest.Reference} blend {p.BlendFunction.ColorSrcFunc}/{p.BlendFunction.ColorDstFunc} mode {p.ColorOperation.BlendMode} depthwrite {p.DepthColorMask.DepthWrite}");
+                        for (int i = 0; i < 3; i++)
+                        {
+                            var c = p.TextureCoords[i];
+                            var t = mat.TextureMappers[i];
+                            Console.WriteLine($"  flags {c.Flags} cam {c.ReferenceCameraIndex} sampler {t.SamplerType} min {t.MinFilter} mag {t.MagFilter} lod {t.MinLOD}/{t.LODBias}"); Console.WriteLine($"  tex{i} '{(i == 0 ? mat.Texture0Name : i == 1 ? mat.Texture1Name : mat.Texture2Name)}' map {c.MappingType} xform {c.TransformType} scale {c.Scale} rot {c.Rotation} trans {c.Translation} source {p.TextureSources[i]} wrap {t.WrapU}/{t.WrapV}");
+                        }
+                    }
+                    foreach (var mesh in m.Meshes)
+                    {
+                        var names = new System.Collections.Generic.List<string>();
+                        foreach (var a in mesh.Attributes) names.Add($"{a.Name}:{a.Format}x{a.Elements}*{a.Scale}");
+                        Console.WriteLine($"mesh mat {mesh.MaterialIndex} layer {mesh.Layer} {string.Join(" ", names)}");
+                    }
+                }
+                return 0;
+            }
             // merge OUT IN1 IN2 ...: one BCH holding everything the inputs hold (model + textures)
             if (args[0] == "merge")
             {
@@ -52,6 +78,20 @@ namespace MewModel
                     var copy = H3D.Open((byte[])templateBytes.Clone()).Models[0].Materials[0];   // Open relocates its buffer in place
                     copy.Name = old.Name;
                     copy.Texture1Name = old.Texture0Name;                      // Mew's "...1" diffuse map
+                    // The diffuse map keeps its own UV transform (body and eyes: scale 2 with mirrored wrap;
+                    // irises: scale +-4 with an offset) and sampler; without them the texture lands wrong.
+                    copy.MaterialParams.TextureCoords[1] = old.MaterialParams.TextureCoords[0];
+                    // Only the wrap modes: the sampler type differs per texture unit (Mew's unit 0 = 0, the
+                    // template's unit 1 = 1); copying the whole mapper rendered Mew black in Azahar.
+                    var mapper = copy.TextureMappers[1];
+                    mapper.WrapU = old.TextureMappers[0].WrapU;
+                    mapper.WrapV = old.TextureMappers[0].WrapV;
+                    copy.TextureMappers[1] = mapper;
+                    // Translucent parts (the irises) keep their blending, alpha test and depth mask.
+                    copy.MaterialParams.BlendFunction = old.MaterialParams.BlendFunction;
+                    copy.MaterialParams.AlphaTest = old.MaterialParams.AlphaTest;
+                    copy.MaterialParams.DepthColorMask = old.MaterialParams.DepthColorMask;
+                    copy.MaterialParams.ColorOperation = old.MaterialParams.ColorOperation;
                     model.Materials[i] = copy;
                     Console.WriteLine($"material {old.Name}: {old.MaterialParams.ShaderReference} -> {copy.MaterialParams.ShaderReference}, texture {copy.Texture1Name}");
                 }

@@ -11,7 +11,9 @@ ROOT = Path(__file__).resolve().parents[1]
 TITLE = '000400000011C400'
 README = """Omega Ruby Repolished + Repartir Exp. + racha DexNav + evento de Mew
 Prototipo jugable. Base: Omega Ruby EUR 1.0, sin actualización, Repolished 1.7.6.
-El evento de Mew está probado en Azahar; todavía no está validado en una 3DS.
+El circuito de Mew se ha jugado en la consola del usuario (v0.1). Esta versión
+añade la escena de la barca de Arenque y corrige el modelo de Mew; esos dos
+cambios están probados en Azahar, todavía no en consola.
 
 INSTALACIÓN EN 3DS CON LUMA
 1. Apaga la consola. Guarda una copia de tu partida y de la carpeta de mods actual.
@@ -30,9 +32,18 @@ acorralado, habla con él para combatir contra Mew de nivel 30.
 Si huyes del combate, sal del claro y vuelve para reintentarlo. Tras capturarlo
 no reaparece. Este paquete no incluye el acceso de desarrollo desde Ruta 102.
 
+NOVEDADES v0.2
+- Viaje: fundido y escena original de la barca de Arenque (la del muelle de la
+  Ruta 104) a la ida y a la vuelta. El estado de su barca en tu historia se
+  guarda antes de la escena y se restaura después.
+- Mew: el modelo conserva las coordenadas de textura, el espejo del cuerpo y la
+  transparencia de los iris del modelo de combate (antes: ojos negros).
+- Arenque sigue en el muelle tras capturar a Mew a propósito: el viaje a la isla
+  se puede repetir.
+
 ESTADO
-Faltan el escenario definitivo (playa, hierba alta y escenas), las pruebas de
-derrotar a Mew y perder todo el equipo, y la validación del evento en consola.
+Faltan la hierba alta del claro (Mew aún no se esconde), las pruebas de derrotar
+a Mew y perder todo el equipo, y validar en consola los cambios de v0.2.
 No contiene partidas, claves ni ROM completa. Contiene archivos derivados del
 volcado local: úsalo localmente; estos archivos quedan excluidos de Git.
 Nada se instala automáticamente. manifest.json registra los hashes del paquete.
@@ -56,7 +67,7 @@ def checked_files(directory, expected):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output', type=Path, default=ROOT / 'dist/oras-mew-luma-preview-v0.1')
+    parser.add_argument('--output', type=Path, default=ROOT / 'dist/oras-mew-luma-preview-v0.2')
     out = parser.parse_args().output.resolve()
     archive = out.parent / (out.name + '.zip')
     if not any(out.is_relative_to(ROOT / folder) for folder in ('dist', 'work')):
@@ -86,7 +97,7 @@ def main():
     checked_files(target, expected)
     (out / 'LEEME.txt').write_text(README, encoding='utf-8')
     (out / 'manifest.json').write_text(json.dumps({
-        'title_id': TITLE, 'status': 'preview; Mew event validated in Azahar, pending 3DS test',
+        'title_id': TITLE, 'status': 'preview v0.2; v0.1 circuit played on the user console; boat scene and model fix validated in Azahar only',
         'base_manifest_sha256': sha(base_dir / 'manifest.json'),
         'validation_report_sha256': sha(validation_path), 'development_warp': False,
         'files': {f'luma/titles/{TITLE}/{rel}': digest for rel, digest in sorted(expected.items())},

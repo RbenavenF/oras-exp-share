@@ -121,6 +121,32 @@ El empaquetador valida los hashes de v0.5, las fuentes y el overlay del informe
 de pruebas, y comprueba cada archivo del ZIP contra su copia en disco.
 Es una entrega preliminar: el evento aún no está validado en una 3DS.
 
+## Consola y v0.2 (2026-11-01)
+
+El usuario jugó el circuito de v0.1 en su consola. Funcionó. Sus observaciones:
+el viaje no tiene animación, Arenque sigue en el muelle tras el evento, el
+modelo de Mew se ve mal y Mew no se esconde porque no hay hierba alta.
+
+- **Viaje:** el ferry retail (script compartido 79) tampoco tiene animación;
+  la barca de Arenque sí. Su rutina retail (compartido 41, `GlobalCall` 10290,
+  `sub_1FC`) hace fundido, `WorkSet(16697, 6|7)`,
+  `CallApplicationDemo(9, 0×7, 30)`, un fotograma de espera y el cambio de mapa.
+  Los otros usos de `CallApplicationDemo` son 7, 8, 10, 11, 12, 15, 16, 17, 20
+  y 21 (teleférico, submarino, etc.). El viaje copia esa secuencia en los dos
+  sentidos; el valor de 16697 se guarda en la pila y se restaura. En Azahar
+  sale la escena retail del bote con Peeko; tras ida y vuelta, el guardado
+  tiene 16697 = 0, como antes.
+- **Arenque en el muelle:** se mantiene a propósito; la especificación pide
+  que el viaje se pueda repetir también tras capturar a Mew.
+- **Modelo de Mew:** al copiar el material de Wingull se perdían la
+  transformación UV (escala 2 con espejo en cuerpo y ojos, ±4 con
+  desplazamiento en los iris) y la transparencia de los iris. `fieldify`
+  conserva ahora UV, modos de repetición, mezcla, prueba alfa y máscara de
+  profundidad. Copiar el *mapper* completo dejó a Mew negro: el tipo de
+  sampler depende de la unidad (0 en la unidad 0 de Mew, 1 en la unidad 1 de
+  campo). Por eso solo se copian los modos de repetición.
+- Paquete `dist/oras-mew-luma-preview-v0.2.zip`.
+
 ## Identificadores (medidos)
 
 | Qué | Valor | Prueba |

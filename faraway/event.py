@@ -67,7 +67,11 @@ FERRY = {'msg': 0xD8, 'keywait': 0x1B0, 'close': 0x1F4, 'yesno': 0x260, 'talk_se
          'wait_se': 0x6D0, 'mapchange': 0x724, 'fade_in': 0x30}
 FERRY_FADE_NATIVE = 33       # unnamed native the ferry calls as (1, 2, 45) before waiting on the fade
 GIVE_ROUTINE = 0xC0C         # shared script 10: MsgLoad, ItemAddCheck, ItemAdd + fanfare + messages
-SE_SHIP_HORN = 655698        # played by the ferry before every crossing
+# Captain Briney's boat scene. Shared script 41 (GlobalCall 10290), the retail Briney routine, plays it from his
+# Route 104 dock through sub_1FC: CallApplicationDemo(9, 0 x7, 30), then a one-frame yield, then the map change.
+# Before it, the routine sets the saved work 16697 (Briney's boat state) to 6 (to Dewford) or 7 (to Route 109).
+APP_DEMO_BOAT, APP_DEMO_BOAT_ARG = 9, 30
+WORK_BRINEY_BOAT, BRINEY_BOAT_DEMO_STATE = 16697, 6
 WORK_TALK_TARGET = 32785     # temporary work: the NPC being talked to
 WORK_YESNO = 32784           # temporary work the yes/no window answers in
 
@@ -144,6 +148,7 @@ class Writer:
 
     def __init__(self, program, ferry, helpers, fade_native):
         self.p, self.ferry, self.h, self.fade_native = program, ferry, helpers, fade_native
+        self.yield_label = 'L4'   # the base script's yield stub (native 0 + HALT), as import_helpers assumes
         self.serial = 0
 
     def label(self, stem):
@@ -186,8 +191,15 @@ class Writer:
         p, h = self.p, self.h
         p.sysreq(self.fade_native, 1, 2, 45)
         p.call(h['wait_fade'])
-        p.sysreq('SEPlay', SE_SHIP_HORN)
-        p.call(h['wait_se'], SE_SHIP_HORN)
+        # Briney's boat scene, set up as his retail routine does. His story state (work 16697) is kept on the
+        # stack and written back afterwards, so his boat stays wherever the player's story left it.
+        p.sysreq('WorkGet', WORK_BRINEY_BOAT)
+        p.emit('PUSH_PRI', 0)
+        p.sysreq('WorkSet', WORK_BRINEY_BOAT, BRINEY_BOAT_DEMO_STATE)
+        p.sysreq('CallApplicationDemo', APP_DEMO_BOAT, 0, 0, 0, 0, 0, 0, 0, APP_DEMO_BOAT_ARG)
+        p.call(self.yield_label, 1)
+        p.push(WORK_BRINEY_BOAT)
+        p.emit('SYSREQ_N', 'WorkSet', 8)   # WorkSet(16697, saved value still on the stack)
         p.call(h['mapchange'], zone, x, height, y, direction, 0)
 
 

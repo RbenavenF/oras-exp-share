@@ -39,7 +39,8 @@ def run(program, entry, works, flags, battle_result=4):
     labels = {item[1]: i for i, item in enumerate(program.items) if isinstance(item, tuple)}
     names = {s32(gf_hash(n)): n for n in (
         'FlagGet', 'FlagSet', 'WorkGet', 'WorkSet', 'WildBattleResultGet', 'CallWildBattle',
-        'VoicePlay', 'MdlAcmdInit', 'MdlAcmdMakeMoveEx', 'MdlAcmdSetEnd', 'LastKeyWait', 'MdlDel')}
+        'VoicePlay', 'MdlAcmdInit', 'MdlAcmdMakeMoveEx', 'MdlAcmdSetEnd', 'LastKeyWait', 'MdlDel',
+        'CallApplicationDemo')}
     pc, pri, stack, locals_, calls = labels[entry], 0, [], {}, []
     for _ in range(1000):
         item = program.items[pc]
@@ -51,6 +52,8 @@ def run(program, entry, works, flags, battle_result=4):
             continue
         if op in ('PUSH_C', 'PUSH_P_C'):
             stack.append(a[0])
+        elif op == 'PUSH_PRI':
+            stack.append(pri)
         elif op == 'PUSH_P_S':
             stack.append(locals_[a[0]])
         elif op == 'STOR_P_S_PRI':
@@ -69,12 +72,12 @@ def run(program, entry, works, flags, battle_result=4):
             pc = labels[dict(zip(table[2::2], table[3::2])).get(pri, table[1])]
         elif op == 'CALL':
             # These tests enter routines directly; only retail dialogue/wait helpers may be mocked.
-            assert a[0].startswith('f'), a[0]
+            assert a[0].startswith('f') or a[0] == 'L4', a[0]
             count = stack.pop() // 4
             args = tuple(stack.pop() for _ in range(count))
             calls.append(('helper:' + a[0], args))
         elif op == 'SYSREQ_N':
-            name = names[program.native_hashes[a[0]]]
+            name = names.get(program.native_hashes[a[0]], f'native{program.native_hashes[a[0]]:x}')
             args = tuple(stack.pop() for _ in range(a[1] // 4))
             calls.append((name, args))
             pri = 0
@@ -140,3 +143,23 @@ def test_four_escapes_then_no_more_movement(programs):
 def test_captured_mew_ignores_stale_armed_trigger(programs):
     calls = run(programs[1], 'mew_flee', {ev.WORK_MEW_SPOT: 0}, {ev.FLAG_MEW_CAPTURED})
     assert not any(n.startswith('MdlAcmd') or n == 'VoicePlay' for n, _ in calls)
+
+
+@pytest.mark.parametrize('briney_state', [0, 2, 8])
+def test_boat_scene_keeps_brineys_story_state(programs, briney_state):
+    """The crossing plays Briney's boat scene with his work at 6, as retail does, then restores the player's value."""
+    game = ROOT / 'baseline/oras/repolished/romfs'
+    shared = (game / 'a/0/2/9').read_bytes()
+    entries = garc_entries(shared)
+    ferry, giver = (Script.parse(shared[entries[i][2]:entries[i][2] + entries[i][3]]) for i in (79, 10))
+    p = Program.from_script(Script.parse(faraway_build.zone_files(game, 214)[2]))
+    w = ev.Writer(p, ferry, ev.import_helpers(p, ferry, giver, 'L4'), ferry.natives[ev.FERRY_FADE_NATIVE][1])
+    ev.begin_routine(p, 'crossing')
+    w.travel(*ev.ARRIVE_HARBOR)
+    ev.end_routine(p)
+    works = {ev.WORK_BRINEY_BOAT: briney_state}
+    calls = run(p, 'crossing', works, set())
+    demo = calls.index(('CallApplicationDemo', (ev.APP_DEMO_BOAT, 0, 0, 0, 0, 0, 0, 0, ev.APP_DEMO_BOAT_ARG)))
+    assert ('WorkSet', (ev.WORK_BRINEY_BOAT, ev.BRINEY_BOAT_DEMO_STATE)) in calls[:demo]
+    assert calls[-1][0].startswith('helper:fmapchange_') and calls[-1][1] == ev.ARRIVE_HARBOR + (0,)
+    assert works[ev.WORK_BRINEY_BOAT] == briney_state
