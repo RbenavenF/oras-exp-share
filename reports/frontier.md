@@ -414,3 +414,64 @@ Pruebas en el intérprete (`scripts/pawn_vm.py`, `tests/test_frontier_factory.py
 - especies y objetos distintos, menús de 6, 5 y 4, y valores y habilidades de los works;
 - cancelar en cada menú, rechazar la confirmación, perder y pausar;
 - la racha que pasa la zona.
+
+## 12. F4: intercambio tras la victoria, sorteo por ronda y limpieza en la derrota (Azahar, 2026-11-02)
+
+**Conjuntos del rival** (lectura de `code.bin`):
+- El constructor del equipo rival es `0x1e4a94(work, …, ficha del entrenador, archivo,
+  [sp] nº de Pokémon, …, [sp+0x10] salida PokemonParam*[])`. Lo llaman `0x1e35a8` y
+  `0x1e3610`, al montar cada combate.
+- Para cada hueco `r7` sortea un índice de la lista de la ficha (`ldrh r4, [r0, #4]` en
+  `0x1e4b34`). Si la especie o el objeto se repiten, vuelve a `0x1e4b24` y sortea otro
+  para el mismo `r7`.
+- Guarda especies y objetos (`work+0x14`, `work+0x20`), pero no los índices.
+- `frontier/asm/rental.s` `rival_hook` sustituye esa instrucción por un `bl`. La función
+  no usa `lr`. Hace la carga original y, con la Fábrica activa y `r7 < 3`, copia el
+  índice al work `16433 + r7`. El último sorteo de cada hueco es el aceptado.
+- Tests Unicorn en `tests/test_frontier_patch.py`.
+
+**Script** (`frontier/factory.py`):
+- **Tras cada victoria:** en `0x2264`, después de la comprobación de victoria y antes del
+  menú de continuar, `factory_after_win`. Con la Fábrica activa, cada 7 victorias hace
+  `GlobalCall 9771`, el sorteo del nivel siguiente, repetido hasta que se eligen 3. Si no,
+  `GlobalCall 9772`, el intercambio.
+- **Intercambio** (script compartido 5 `factory_swap`), dos menús:
+  - qué alquiler das, o «No cambiar»;
+  - qué conjunto del rival tomas (`maisonpkN`, con habilidad 0/1 al azar).
+  - B en cualquiera de los dos mantiene el equipo.
+- **Derrota:** `0x2210` (el camino de derrota) pone 16410 = 0 antes de que la Mansión
+  guarde el récord (`0x3fdc` guarda la partida).
+- **Texto 637 reorganizado:**
+  - líneas 0–2, elegir alquiler; 3–5, intercambio;
+  - 6–213, `maisonpkN` 0–207 (`LINE_N + índice`; ahí están todos los conjuntos de
+    entrenadores de rango Normal);
+  - desde 214, los Súper de los niveles de alquiler, en orden de hueco (`super_lines()`).
+- **Fuera del intercambio:** el sorteo ya no limpia 16410 al cancelar; lo hace la
+  recepción.
+
+**Prueba** (`main-maison`, `work/frontier/build`):
+- **Inscripción:** Honedge (Garra Rápida), Panpour (Campana Concha) y Joltik (Baya
+  Aslac).
+- **Combate 1:** Honedge cae contra Pansear; Panpour gana. «Ruben ha obtenido 1 PB.»
+- **Oferta:** «¿Quieres cambiar un Pokémon de alquiler? Elige el que darías a cambio.»,
+  con mis tres y «No cambiar» (`f4d_swap_give.png`).
+- **Menú del rival:** Marill (Baya Tamar), Pansage (Baya Zidra) y Pansear (Baya Pasio),
+  el equipo del rival vencido (`f4d_swap_take.png`). Elegí dar Honedge y tomar Marill.
+- **Combate 2:** «El próximo combate será el número 2». El equipo es Marill, Panpour y
+  Joltik Nv. 50 (`f4d_battle2_party.png`); el intercambio se aplica.
+- **Primera derrota (build sin la limpieza en `0x2210`):** me retiré. La partida que
+  guarda la Mansión al perder (`f4d_after_loss.sav`, `afa9cb02…`) tenía todavía
+  16410 = 3: guarda dentro de su rutina de derrota, antes de que la recepción limpie.
+  Además: 16411 = 61 (Marill), 16412 = 88, 16413 = 1128, 16433–16435 = 44, 2, 20 (equipo
+  de Stunky) y 16429 = 1.
+- **Con la limpieza en `0x2210`:** inscripción nueva y derrota en el combate 1. El
+  guardado de antes del combate (`f4e_before_loss.sav`, `324e8690…`) tiene 16410 = 3; el
+  de la derrota (`f4e_after_loss.sav`, `d20c94ed…`) tiene 16410 = 0 y 16433–16435 =
+  41, 24, 54. Vuelta al campo sin problemas.
+
+**Sin probar en Azahar**:
+- el sorteo nuevo tras la 7.ª victoria (solo en el intérprete:
+  `test_every_seven_wins_a_new_draft_until_chosen`);
+- la pausa y la reanudación;
+- rechazar el intercambio (tests: `test_swap_declined_keeps_the_team`);
+- nada en consola.

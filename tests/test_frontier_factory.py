@@ -67,8 +67,16 @@ def draft(game, choices, streak=0, seconds=1234567, rng=0):
     return works, menus, log
 
 
+def set_of_line(line):
+    """(rank, index) shown by a TEXT_FACTORY line."""
+    if line < factory.LINE_S:
+        return 'N', line - factory.LINE_N
+    return next(('S', first + line - start) for first, last, start in factory.super_lines()
+                if start <= line <= start + last - first)
+
+
 def offered(menus, table):
-    return [table[line - factory.LINE_SLOTS] for line, _, _ in menus[0]]
+    return [set_of_line(line) for line, _, _ in menus[0]]
 
 
 @pytest.mark.parametrize('streak, level', [(0, 0), (6, 0), (7, 1), (20, 2), (21, 3), (48, 6), (49, 7), (400, 7)])
@@ -78,13 +86,13 @@ def test_draft_from_the_round_level(game, streak, level):
     first, count = levels[level]
     assert [len(m) for m in menus] == [6, 5, 4]
     lines = [line for line, _, _ in menus[0]]
-    assert all(first <= line - factory.LINE_SLOTS < first + count for line in lines)
+    assert all(set_of_line(line) in table[first:first + count] for line in lines)
     drawn = [sets[r][i] for r, i in offered(menus, table)]
     assert len({s['species'] for s in drawn}) == 6 and len({s['item'] for s in drawn}) == 6
     assert log[-1] == ('result', [0, 1])
     assert works[fp.WORK_IV] == fd.fixed_iv(level + 1)
     for work, k in zip(fp.WORK_SETS, (2, 0, 5)):
-        rank, index = table[lines[k] - factory.LINE_SLOTS]
+        rank, index = set_of_line(lines[k])
         value = works[work]
         assert value & 0x3FF == index and bool(value & fp.SUPER) == (rank == 'S')
         assert (value >> fp.ABILITY_SHIFT) & 3 in (0, 1)
@@ -102,7 +110,7 @@ def test_menus_offer_only_the_remaining_rentals(game):
 @pytest.mark.parametrize('choices', [[65535], [0, 65535], [0, 1, 65535], [0, 0]])
 def test_cancel_reports_no_choice(game, choices):
     works, _, log = draft(game, choices)
-    assert works.get(fp.WORK_IV) == 0 and log[-1] == ('result', [0, 0])
+    assert fp.WORK_IV not in works and log[-1] == ('result', [0, 0])
     assert ('close', [0]) in log
     assert all(works.get(w, 0) == 0 for w in fp.WORK_SETS)
 
@@ -180,9 +188,102 @@ def test_reception_entries(game):
               and ins[i - 1].args == [fp.WORK_IV] and ins[i - 2].args == [0]]
     assert any(labels[factory.CLEANUP] < a < labels[factory.CLEANUP] + 0x20 for a in clears)
     assert any(labels[factory.RECEPTION_RESULT] < a < labels[factory.RECEPTION_RESULT] + 0x80 for a in clears)
+    assert any(labels[factory.LOST] <= a < labels[factory.LOST] + 0x10 for a in clears)
 
 
 def test_every_level_can_complete_a_draft(game):
     sets, table, levels, *_ = game
     factory.check_draws(sets, table, levels)
     assert [c for _, c in levels] == [66, 38, 38, 196, 196, 196, 196, 784]
+
+
+def test_text_lines_cover_rentals_and_rivals(game):
+    sets, table, *_ = game
+    seen = {factory.line_of(r, i) for r, i in table} | {factory.line_of('N', i) for i in range(208)}
+    assert len(seen) == len(set(table) | {('N', i) for i in range(208)})
+    assert all(set_of_line(factory.line_of(r, i)) == (r, i) for r, i in table)
+
+
+def swap(game, choices, mine, rivals):
+    script, labels = game[3], game[4]
+    works = {**dict(zip(fp.WORK_SETS, mine)), **dict(zip(fp.WORK_RIVAL, rivals))}
+    menus, log, state = [], [], {'menu': None}
+
+    def run_menu(vm, args):
+        menus.append(state['menu'])
+        return choices.pop(0)
+
+    stubs = natives({
+        'WorkGet': lambda vm, a: works.get(a[0], 0),
+        'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]) or log.append(('set', a)),
+        'ListMenuAdd': lambda vm, a: state['menu'].append((a[0], a[1], a[2])),
+    })
+    helper = {name: labels[f'z{name}_{address:x}'] for name, address in factory.HELPERS.items()}
+    calls = {helper['msg']: lambda vm, a: log.append(('msg', a[0])),
+             helper['msg_wait']: lambda vm, a: 0,
+             helper['msg_close']: lambda vm, a: log.append(('close', a)),
+             helper['menu_init']: lambda vm, a: state.__setitem__('menu', []),
+             helper['menu_run']: run_menu}
+    VM(script, stubs, calls).run(labels['factory_swap'])
+    return works, menus, log
+
+
+MINE = (66 | 1 << fp.ABILITY_SHIFT, fp.SUPER | 500, fp.SUPER | fp.ABILITY_RANDOM << fp.ABILITY_SHIFT | 907)
+RIVALS = (12, 140, 207)
+
+
+@pytest.mark.parametrize('give, take', [(0, 0), (1, 2), (2, 1)])
+def test_swap_replaces_the_rental_given_away(game, give, take):
+    works, menus, log = swap(game, [give, take], MINE, RIVALS)
+    assert [e[1] for e in log if e[0] == 'msg'] == [factory.LINE_SWAP_GIVE, factory.LINE_SWAP_TAKE]
+    assert [line for line, _, _ in menus[0]] == [factory.line_of('N', 66), factory.line_of('S', 500),
+                                                factory.line_of('S', 907), factory.LINE_NO_SWAP]
+    assert [line for line, _, _ in menus[1]] == [factory.line_of('N', r) for r in RIVALS]
+    new = works[fp.WORK_SETS[give]]
+    assert new & 0x3FF == RIVALS[take] and not new & fp.SUPER and (new >> fp.ABILITY_SHIFT) & 3 in (0, 1)
+    assert all(works[fp.WORK_SETS[k]] == MINE[k] for k in range(3) if k != give)
+    assert log[-1] == ('close', [0])
+
+
+@pytest.mark.parametrize('choices', [[3], [65535], [0, 65535], [1, 7]])
+def test_swap_declined_keeps_the_team(game, choices):
+    works, _, log = swap(game, choices, MINE, RIVALS)
+    assert not [e for e in log if e[0] == 'set'] and log[-1] == ('close', [0])
+
+
+def after_win(game, streak, iv=21, draft_results=(1,)):
+    *_, script, labels = game
+    works, log, results = {fp.WORK_IV: iv}, [], list(draft_results)
+    stubs = natives({
+        'WorkGet': lambda vm, a: works.get(a[0], 0),
+        'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
+        'GetMyWinCount': lambda vm, a: streak,
+        'GlobalCall': lambda vm, a: log.append(a[0]),
+        'GlobalGetChildParam': lambda vm, a: results.pop(0),
+    })
+    VM(script, stubs).run(labels['factory_after_win'])
+    return works, log
+
+
+@pytest.mark.parametrize('streak', [1, 6, 8, 13, 20, 22])
+def test_after_a_win_the_swap_is_offered(game, streak):
+    works, log = after_win(game, streak)
+    assert log == [factory.GLOBAL_SWAP] and works[factory.WORK_STREAK] == streak
+
+
+@pytest.mark.parametrize('streak', [7, 14, 49])
+def test_every_seven_wins_a_new_draft_until_chosen(game, streak):
+    works, log = after_win(game, streak, draft_results=(0, 0, 1))
+    assert log == [factory.GLOBAL_DRAFT] * 3 and works[factory.WORK_STREAK] == streak
+
+
+def test_after_win_does_nothing_for_the_maison(game):
+    works, log = after_win(game, 7, iv=0)
+    assert log == [] and factory.WORK_STREAK not in works
+
+
+def test_after_win_is_called_from_the_battle_loop(game):
+    *_, script, labels = game
+    ins = decode(script.code)
+    calls = [x for x in ins if x.op == OP['CALL'] and x.address + x.args[0] == labels['factory_after_win']]
+    assert len(calls) == 1 and labels[factory.AFTER_BATTLE] < calls[0].address < labels[factory.AFTER_BATTLE] + 0x20

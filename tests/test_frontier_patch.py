@@ -130,6 +130,49 @@ def test_patch_only_touches_site_padding_and_text_row(patched):
     site = fp.SITE - fp.BASE
     cave = fp.CAVE - fp.BASE
     text = fp.GLOBAL_ROW - fp.BASE + 8
-    assert all(site <= i < site + 20 or cave <= i < cave + len(hook) or text <= i < text + 2 for i in diff)
+    rival = fp.RIVAL_SITE - fp.BASE
+    assert all(site <= i < site + 20 or cave <= i < cave + len(hook) or text <= i < text + 2
+               or rival <= i < rival + 4 for i in diff)
     assert struct.unpack_from('<8H', code, fp.GLOBAL_ROW - fp.BASE) == (9770, 9779, 5, 1, fp.TEXT_FACTORY, 0, 0, 0)
     assert len(code) == len(original)
+
+
+def run_rival(code, slot, iv, index=0x1A7):
+    """Execute the patched rival-builder instruction at 0x1e4b34 up to the next one."""
+    uc = Uc(UC_ARCH_ARM, UC_MODE_ARM)
+    uc.mem_map(0x100000, (len(code) + 0xFFF) & ~0xFFF)
+    uc.mem_write(0x100000, code)
+    for base in (WORK, STACK - 0x10000, CTX, HEAP):
+        uc.mem_map(base, 0x10000)
+    uc.mem_map(SAVE, 0x20000)
+    uc.mem_write(WORK + 0xB78, struct.pack('<I', CTX))
+    uc.mem_write(CTX + 0x1C, struct.pack('<I', GAMEDATA))
+    uc.mem_write(GAMEDATA, struct.pack('<I', SAVE))
+    uc.mem_write(work_address(fp.WORK_IV), struct.pack('<H', iv))
+    for number in fp.WORK_RIVAL:
+        uc.mem_write(work_address(number), struct.pack('<H', 0xBEEF))
+    uc.mem_write(HEAP + 4, struct.pack('<H', index))
+    regs = {'r0': HEAP, 'r1': 0x11, 'r2': 0x22, 'r3': 0x33, 'r4': 0x44, 'r7': slot, 'fp': WORK,
+            'sp': STACK - 0x100, 'lr': 0xDEAD0000}
+    for name, value in regs.items():
+        uc.reg_write(REGS[name], value)
+    uc.emu_start(fp.RIVAL_SITE, fp.RIVAL_SITE + 4, count=100)
+    rivals = [struct.unpack('<H', uc.mem_read(work_address(n), 2))[0] for n in fp.WORK_RIVAL]
+    return uc, rivals
+
+
+@pytest.mark.parametrize('slot', [0, 1, 2, 3, 5])
+def test_rival_sets_are_copied_while_the_factory_is_active(patched, slot):
+    code, _, _ = patched
+    uc, rivals = run_rival(code, slot, iv=21)
+    assert uc.reg_read(REGS['pc']) == fp.RIVAL_SITE + 4
+    assert uc.reg_read(REGS['r4']) == 0x1A7                     # the original load still happens
+    for name, value in {'r2': 0x22, 'r3': 0x33, 'r7': slot, 'fp': WORK, 'sp': STACK - 0x100}.items():
+        assert uc.reg_read(REGS[name]) == value, name
+    assert rivals == [0x1A7 if k == slot else 0xBEEF for k in range(3)]
+
+
+def test_rival_sets_untouched_while_the_factory_is_inactive(patched):
+    code, _, _ = patched
+    uc, rivals = run_rival(code, 1, iv=0)
+    assert uc.reg_read(REGS['r4']) == 0x1A7 and rivals == [0xBEEF] * 3

@@ -32,5 +32,5 @@ def test_scan_sees_known_works(used):
 def test_factory_works_are_free(used):
     import factory
     works, _, _ = used
-    for number in (fp.WORK_IV, *fp.WORK_SETS, factory.WORK_RNG, factory.WORK_STREAK):
+    for number in (fp.WORK_IV, *fp.WORK_SETS, *fp.WORK_RIVAL, factory.WORK_RNG, factory.WORK_STREAK):
         assert number not in works and number not in ids.KNOWN

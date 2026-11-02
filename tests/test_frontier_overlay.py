@@ -68,7 +68,7 @@ def test_texts_append_the_option_and_the_factory_entry(built):
             assert words_to_text(new_lines[-1]) == factory.OPTION[factory.LANG[lang]]
         e = b[-1]
         lines = [words_to_text(w) for w in text_lines(after[e[2]:e[2] + e[3]])[0]]
-        assert lines[:3] == factory.PICK[factory.LANG[lang]] and len(lines) == factory.LINE_SLOTS + 926
+        assert lines[:3] == factory.PICK[factory.LANG[lang]] and len(lines) == factory.LINE_S + 784
 
 
 def test_shared_archive_changes_only_script_5(built):

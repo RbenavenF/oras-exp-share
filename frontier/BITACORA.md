@@ -455,3 +455,35 @@ ahora.
 Siguiente paso: el de la entrada «F4: inscripción en la Fábrica». En F6, primero una prueba
 pequeña: estampar un edificio con puerta en una zona clonada y entrar en él, en Azahar y
 en consola.
+
+## 2026-11-02 14:15 — Claude Code (Opus 5.5) — F4: intercambio tras la victoria y sorteo por ronda
+Estado: en curso
+Hecho:
+- `frontier/asm/rental.s` `rival_hook` en `0x1e4b34` (constructor del rival): con la
+  Fábrica activa copia los índices de conjunto del rival a los works 16433–16435.
+- `frontier/factory.py`: tras cada victoria (`0x2264`), `factory_after_win`. Cada 7
+  victorias hay sorteo nuevo (`GlobalCall 9771`, hasta elegir); si no, intercambio
+  (`GlobalCall 9772`, `factory_swap`, dos menús).
+- La derrota (`0x2210`) limpia 16410 antes del guardado de la Mansión.
+- Texto 637 reorganizado: `maisonpkN` 0–207 completos para los rivales, más los Súper.
+- `scripts/pawn_vm.py` admite `SUB_ALT`.
+- `reports/frontier.md` §12 y PLAN F4 actualizados.
+Evidencia:
+- `reports/frontier.md` §12. Capturas `work/frontier/lab/f4d_*.png`.
+- Partidas: `f4d_after_loss.sav` (`afa9cb02…`), `f4e_before_loss.sav` (`324e8690…`) y
+  `f4e_after_loss.sav` (`d20c94ed…`, 16410 = 0).
+- `python -m pytest -q` → 108 passed. `use_gdbstub` en `false`.
+Commits: ver `git log` («Battle Frontier F4: swap after a win, new draft every round»).
+Decisiones:
+- El rival se sigue generando con la Mansión en rango Normal (trainers por racha), así
+  que se puede tomar cualquier conjunto `maisonpkN` 0–207.
+- Sin restricción de especie u objeto repetidos al tomar del rival (Esmeralda tampoco la
+  aplica en el cambio, sin comprobar).
+Sin probar en Azahar: el sorteo tras la 7.ª victoria, rechazar el intercambio, la pausa y la
+reanudación, y nada en consola.
+Siguiente paso:
+1. Ronda completa en Azahar (7 victorias) para ver el sorteo nuevo. Para acelerar,
+   partida con la racha de Individual Normal en 6, o probar en una partida editada.
+2. Pausa y reanudación (caso 3 del despachador, `0x5b58`), con la Fábrica activa.
+3. Racha propia de la Fábrica y PB por ronda de Esmeralda (ahora son los de la Mansión).
+4. Después, F6: isla del Frente (objeto, ferry de Calagua, zona nueva).

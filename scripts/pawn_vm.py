@@ -139,6 +139,8 @@ class VM:
                 pri = alt
             elif name == 'ADD':
                 pri = s32(pri + alt)
+            elif name == 'SUB_ALT':
+                pri = s32(alt - pri)
             elif name in ('ADD_P_C', 'ADD_C'):
                 pri = s32(pri + arg)
             elif name == 'SMUL':

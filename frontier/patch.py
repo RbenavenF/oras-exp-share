@@ -5,7 +5,8 @@ The rentals and their IV are read from free saved works (WORK_*, frontier/ids.py
 party builder behaves as in the retail game. Steps:
 1. Check the clean and Repolished code.bin (SHA-256) and the exact words at the hook site and padding.
 2. Assemble frontier/asm/rental.s with arm-none-eabi-as/ld at the start of the .text padding.
-3. Redirect the player-party branch of the party builder (0x1e3d8c) to it.
+3. Redirect the player-party branch of the party builder (0x1e3d8c) to it, and the rival builder's set read
+   (0x1e4b34) to `rival_hook`, which copies the rival's sets to WORK_RIVAL for the swap.
 4. Point the text of the GlobalCall row for ids 9770-9779 (shared script 5, the Factory draft;
    frontier/factory.py) at a new story text entry, TEXT_FACTORY.
 5. Write code.bin and code.ips; the IPS is the diff from the clean code.bin, so it already contains
@@ -39,6 +40,8 @@ CAVE, CAVE_END = 0x579604, 0x57A000           # .text padding (reports/frontier.
 SITE = 0x1E3D8C                               # player-party branch of the party builder 0x1e3d2c
 SITE_BEFORE = [0xE5960B78, 0xE590001C, 0xE5908014, 0xE1A00008, 0xEB0747E4]  # ldr r0,[r6,#0xb78] .. bl 0x3b5d34
 RESUME = 0x1E3DDC                             # common tail: level 50 adjust, per-member updates
+RIVAL_SITE = 0x1E4B34                         # rival builder 0x1e4a94: ldrh r4, [r0, #4] (drawn set index)
+RIVAL_BEFORE = 0xE1D040B4
 FUNCTIONS = {'LOAD_SET': 0x1EFC18, 'MAKE_PARAM': 0x1EF904, 'ADD_MEMBER': 0x3B645C, 'PARTY_PREPARE': 0x3B5D34,
              'RESUME': RESUME}
 FUNCTION_HEADS = {0x1EFC18: 0xE92D4030, 0x1EF904: 0xE92D4FF0, 0x3B645C: 0xE92D4070, 0x3B5D34: 0xE92D4070,
@@ -50,6 +53,7 @@ FUNCTION_HEADS = {0x1EFC18: 0xE92D4030, 0x1EF904: 0xE92D4FF0, 0x3B645C: 0xE92D40
 WORK_IV = 16410            # Factory state: rentals' IV 1-31; 0 = inactive (retail behaviour)
 WORK_SETS = (16411, 16412, 16413)   # rentals: bit 15 Super (0xb8) else Normal (0xb6), bits 10-11 ability
 SUPER = 0x8000                      # slot (3 = random), bits 0-9 set index
+WORK_RIVAL = (16433, 16434, 16435)  # last rival's set indices (maisonpkN/S of the rank; written by rival_hook)
 ABILITY_SHIFT, ABILITY_RANDOM = 10, 3
 # GlobalCall range table (rodata, 86 rows of u16 first id, last id, shared script, flag, story text, 0, 0, 0
 # from 0x587678): the row for ids 9770-9779 (shared script 5, a retail placeholder) gets the Factory text.
@@ -57,7 +61,7 @@ GLOBAL_ROW = 0x587AA8
 GLOBAL_ROW_BEFORE = (9770, 9779, 5, 1, 618, 0, 0, 0)
 TEXT_FACTORY = 637                  # new story text entry (the retail archives have 637 entries, 0-636)
 CONSTANTS = {'WORK_IV': WORK_IV, 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'RENTAL_LEVEL': 50,
-             'RENTALS': len(WORK_SETS)}
+             'RENTALS': len(WORK_SETS), 'WORK_RIVAL': WORK_RIVAL[0]}
 
 
 def word(data, va):
@@ -70,6 +74,7 @@ def arm_branch(source, target, link=False):
 
 
 def assemble():
+    """(hook bytes at CAVE, {global symbol: address})."""
     with tempfile.TemporaryDirectory() as tmp:
         obj, elf, binary = (Path(tmp) / n for n in ('hook.o', 'hook.elf', 'hook.bin'))
         defs = [a for k, v in CONSTANTS.items() for a in ('--defsym', f'{k}={v}')]
@@ -78,7 +83,9 @@ def assemble():
         subprocess.run(['arm-none-eabi-ld', f'-Ttext={CAVE:#x}', '-e', 'rental_hook', *syms, '-o', elf, obj],
                        check=True)
         subprocess.run(['arm-none-eabi-objcopy', '-O', 'binary', '-j', '.text', elf, binary], check=True)
-        return binary.read_bytes()
+        names = subprocess.run(['arm-none-eabi-nm', elf], check=True, capture_output=True, text=True).stdout
+        symbols = {n: int(a, 16) for a, t, n in (line.split() for line in names.splitlines()) if t == 'T'}
+        return binary.read_bytes(), symbols
 
 
 def build():
@@ -94,7 +101,7 @@ def build():
     for va, head in FUNCTION_HEADS.items():
         if word(code, va) != head:
             sys.exit(f'{va:#x}: unexpected word {word(code, va):08x}')
-    hook = assemble()
+    hook, symbols = assemble()
     if CAVE + len(hook) > CAVE_END or any(code[CAVE - BASE:CAVE - BASE + len(hook)]):
         sys.exit('hook does not fit in the zero padding')
     code[CAVE - BASE:CAVE - BASE + len(hook)] = hook
@@ -104,6 +111,9 @@ def build():
             0xE1A08000,                               # mov r8, r0        (player party, as 0x1e3d94)
             0xE1A00000]                               # nop               (0x3b5d34 already called)
     struct.pack_into(f'<{len(site)}I', code, SITE - BASE, *site)
+    if word(code, RIVAL_SITE) != RIVAL_BEFORE:
+        sys.exit(f'rival site word differs: {word(code, RIVAL_SITE):08x}')
+    struct.pack_into('<I', code, RIVAL_SITE - BASE, arm_branch(RIVAL_SITE, symbols['rival_hook'], link=True))
     row = struct.unpack_from('<8H', code, GLOBAL_ROW - BASE)
     if row != GLOBAL_ROW_BEFORE:
         sys.exit(f'GlobalCall row {GLOBAL_ROW:#x} differs: {row}')

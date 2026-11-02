@@ -23,8 +23,12 @@ script (ZO container 21428 bytes) hangs the field load in Azahar while 16.5 KB (
   selection app. Its result is the «back to the menu» local (-4) the info options also set: declined
   confirmation or cancelled draft -> back to the menu, Factory cleared; challenge played -> 0, Factory
   cleared if the streak is 0 (lost), kept if not (paused, for the resume). Option 0 (the Maison's own
-  challenge) first clears the Factory (WorkSet(WORK_IV, 0)), as does case 1 (0x1458, the «you did not save»
-  cleanup).
+  challenge) first clears the Factory (WorkSet(WORK_IV, 0)), as do case 1 (0x1458, the «you did not save»
+  cleanup) and the lost-battle path (0x2210, before the game saves the record).
+- After each win (0x2264, before the continue menu) `factory_after_win`: every 7 wins a new draft of the
+  next level (GlobalCall GLOBAL_DRAFT until 3 are chosen), otherwise the swap offer (GlobalCall
+  GLOBAL_SWAP, shared script 5 `factory_swap`), with the last rival's sets copied by the code.bin rival hook
+  (patch.WORK_RIVAL).
 
 Rental slots: every set any level can draw, numbered so each level is one contiguous range (round 1-3:
 the Normal ranges; 4-7: the four Super tiers; 8+: all Super tiers). Slot s has one data cell
@@ -46,11 +50,17 @@ WORK_STREAK = 16429              # streak handed from the zone script to the dra
 SHARED_SCRIPT = 5                # a/0/2/9 entry: GlobalCall 9770-9779 (patch.GLOBAL_ROW)
 SHARED_PLACEHOLDER = 9770        # its only retail case
 GLOBAL_DRAFT = 9771
+GLOBAL_SWAP = 9772
 TEXT_ZONE = 619                  # zone 517's story text
 TEXT_LINES = 188                 # lines of text 619 in every language (Repolished 1.7.6)
 LINE_OPTION = TEXT_LINES         # «Battle Factory», in text 619
-LINE_PICK = (0, 1, 2)            # in patch.TEXT_FACTORY
-LINE_SLOTS = 3
+# Lines of patch.TEXT_FACTORY: prompts, then «Species (Item)» for every Normal set a trainer or a rental can use
+# (maisonpkN 0-207, line = LINE_N + index), then the Super sets of the rental levels in slot order.
+LINE_PICK = (0, 1, 2)
+LINE_SWAP_GIVE, LINE_SWAP_TAKE, LINE_NO_SWAP = 3, 4, 5
+LINE_N = 6
+NORMAL_LINES = 208
+LINE_S = LINE_N + NORMAL_LINES
 MENU_FACTORY = 4                 # value of the new reception menu entry
 WORK_SELECT_RESULT, WORK_SELECT_TYPE, WORK_SELECT_X = 0x800C, 0x800D, 0x800E
 LCG_MUL, LCG_ADD = 0x41C64E6D, 0x6073
@@ -62,11 +72,17 @@ HELPERS = {'msg': MSG, 'msg_wait': MSG_WAIT, 'msg_close': MSG_CLOSE, 'menu_init'
 CHALLENGE = 'L18f8'                                   # (rank, type, work 0x800E) -> 1 if declined
 RECEPTION_RESULT, RECEPTION_AGAIN, RECEPTION_NEXT = 'L1634', -4, 'L1810'
 CLEANUP = 'L1458'
+AFTER_BATTLE = 'L2264'          # battle loop: local -8 = 1 after a win; then the continue / pause menu (0x3b90)
+LOST = 'L2210'                  # battle loop, lost battle: record (0x3fdc, which saves the game), ClearWinCount
 OPTION = {'es': 'Fábrica Batalla', 'en': 'Battle Factory'}
 PICK = {'es': ['Elige tu primer Pokémon de alquiler.', 'Elige tu segundo Pokémon de alquiler.',
                'Elige tu tercer Pokémon de alquiler.'],
         'en': ['Choose your first rental Pokémon.', 'Choose your second rental Pokémon.',
                'Choose your third rental Pokémon.']}
+SWAP = {'es': ['¿Quieres cambiar un Pokémon de alquiler?\nElige el que darías a cambio.',
+               '¿Qué Pokémon del rival quieres?', 'No cambiar'],
+        'en': ['Do you want to swap a rental Pokémon?\nChoose the one to give away.',
+               'Which of your opponent\u2019s Pokémon do you want?', 'Don\u2019t swap']}
 GAMETEXT = {lang: f'a/0/7/{lang}' for lang in range(1, 9)}                       # 1 JP kana .. 8 KO
 STORYTEXT = {lang: f'a/0/{(78 + lang) // 10}/{(78 + lang) % 10}' for lang in range(1, 9)}
 LANG = {lang: 'es' if lang == 7 else 'en' for lang in range(1, 9)}              # as faraway/build.py
@@ -109,14 +125,36 @@ def check_draws(sets, table, levels):
             raise ValueError(f'level at slot {first}: a draft could run out of sets')
 
 
+def super_lines():
+    """[(first index, last index, line of the first)] for the Super sets that have a line (rental levels 4-8)."""
+    out = []
+    for k, tier in enumerate(fd.SUPER_TIERS):
+        line = LINE_S + k * len(fd.indices(tier))
+        for _, first, last in tier:
+            out.append((first, last, line))
+            line += last - first + 1
+    return out
+
+
+def line_of(rank, index):
+    if rank == 'N':
+        if not 0 <= index < NORMAL_LINES:
+            raise ValueError(f'N{index} has no line')
+        return LINE_N + index
+    return next(line + index - first for first, last, line in super_lines() if first <= index <= last)
+
+
 def lines_for(lang, gametext, sets, table):
-    """Lines of the new text patch.TEXT_FACTORY in one language: the 3 prompts, then «Species (Item)» per slot."""
+    """Lines of the new text patch.TEXT_FACTORY in one language (layout: LINE_* above)."""
     def names(entry):
         e = next(e for e in garc_entries(gametext) if e[0] == entry)
         return [words_to_text(w) for w in text_lines(gametext[e[2]:e[2] + e[3]])[0]]
     species, items = names(fd.TEXT_SPECIES), names(fd.TEXT_ITEMS)
-    out = list(PICK[LANG[lang]])
-    for rank, index in table:
+    out = list(PICK[LANG[lang]]) + list(SWAP[LANG[lang]])
+    supers = [(r, i) for r, i in table if r == 'S']
+    for rank, index in [('N', i) for i in range(NORMAL_LINES)] + supers:
+        if len(out) != line_of(rank, index):
+            raise ValueError('text layout does not match line_of')
         s = sets[rank][index]
         out.append(f'{species[s["species"]]} ({items[s["item"]]})' if s['item'] else species[s['species']])
     return out
@@ -179,6 +217,49 @@ class Routine:
         self.op('SMUL_P_C', 4)
         self.add(base)
         self.op('LOAD_I', 0)
+
+    def line_of_slot(self, slot, first_super):
+        """PRI = text line of draft slot `slot` (local): Normal slots are maisonpkN 66.. in order, then Super."""
+        done, normal = self.new_label('line'), self.new_label('normal')
+        self.load(slot)
+        self.const_alt(first_super)
+        self.op('JSLESS', normal)
+        self.load(slot)
+        self.add(LINE_S - first_super)
+        self.op('JUMP', done)
+        self.p.label(normal)
+        self.load(slot)
+        self.add(LINE_N + fd.NORMAL_TIERS[1][0][1])
+        self.p.label(done)
+
+    def line_of_value(self, value, tmp):
+        """PRI = text line of a rental work value (local; bit 15 Super, bits 0-9 index); `tmp` is a scratch local."""
+        done = self.new_label('vline')
+        self.load(value)
+        self.field(0, 10)
+        self.store(tmp)
+        self.load(value)
+        self.field(15, 1)
+        normal = self.new_label('vnormal')
+        self.op('JZER', normal)
+        for first, last, line in super_lines():
+            skip = self.new_label('vskip')
+            self.load(tmp)
+            self.const_alt(first)
+            self.op('JSLESS', skip)
+            self.load(tmp)
+            self.const_alt(last)
+            self.op('JSGRTR', skip)
+            self.load(tmp)
+            self.add(line - first)
+            self.op('JUMP', done)
+            self.p.label(skip)
+        self.const(LINE_NO_SWAP)            # not a rental set: should not happen
+        self.op('JUMP', done)
+        self.p.label(normal)
+        self.load(tmp)
+        self.add(LINE_N)
+        self.p.label(done)
 
     def arg(self, value):
         return ('local', self.local[value]) if isinstance(value, str) else value
@@ -293,8 +374,7 @@ def draft_routine(p, cells, levels, helpers):
             r.op('JNZ', skip)
             r.p.push(0)
             r.p.push(k)
-            r.load(f'slot{k}')
-            r.add(LINE_SLOTS)
+            r.line_of_slot(f'slot{k}', levels[3][0])
             r.op('PUSH_PRI', 0)
             r.p.emit('SYSREQ_N', 'ListMenuAdd', 12)
             r.p.label(skip)
@@ -346,8 +426,82 @@ def draft_routine(p, cells, levels, helpers):
     r.ret()
     r.p.label(cancel)
     r.call(helpers['msg_close'], 0)
-    r.sysreq('WorkSet', patch.WORK_IV, 0)
     r.sysreq('GlobalSetParentParam', 0, 0)
+    r.op('ZERO_PRI', 0)
+    r.ret()
+
+
+def swap_routine(p, helpers):
+    """factory_swap(): after a win, offer one of the last rival's sets (patch.WORK_RIVAL, maisonpkN indices
+    written by the code.bin rival hook) for one of the player's rentals, as Emerald's Factory. Two menus:
+    which rental to give (or «Don't swap»), then which rival set to take. B in either menu keeps the team."""
+    names = ['sel', 'give', 'value', 'tmp', *(f'mine{k}' for k in range(fd.PARTY_SIZE)),
+             *(f'rival{k}' for k in range(fd.PARTY_SIZE))]
+    r = Routine(p, 'factory_swap', names)
+    for k in range(fd.PARTY_SIZE):
+        r.sysreq('WorkGet', patch.WORK_SETS[k])
+        r.store(f'mine{k}')
+        r.sysreq('WorkGet', patch.WORK_RIVAL[k])
+        r.store(f'rival{k}')
+    keep = 'factory_swap_keep'
+
+    def menu(prompt, entries, extra):
+        r.call(helpers['msg'], prompt, 1, 0, 256, 0)
+        r.call(helpers['msg_wait'])
+        r.call(helpers['menu_init'], 180, 112, 0, 1, 0, 0)
+        for k, local in enumerate(entries):
+            r.p.push(0)
+            r.p.push(k)
+            if local.startswith('mine'):
+                r.line_of_value(local, 'tmp')
+            else:
+                r.load(local)
+                r.field(0, 10)
+                r.add(LINE_N)
+            r.op('PUSH_PRI', 0)
+            r.p.emit('SYSREQ_N', 'ListMenuAdd', 12)
+        if extra:
+            r.sysreq('ListMenuAdd', LINE_NO_SWAP, len(entries), 0)
+        r.call(helpers['menu_run'])
+        r.store('sel')
+        r.const_alt(len(entries) - 1)
+        r.op('JSGRTR', keep)            # «Don't swap», B (65535) or anything unexpected
+        r.load('sel')
+        r.const_alt(0)
+        r.op('JSLESS', keep)
+
+    menu(LINE_SWAP_GIVE, [f'mine{k}' for k in range(fd.PARTY_SIZE)], True)
+    r.load('sel')
+    r.store('give')
+    menu(LINE_SWAP_TAKE, [f'rival{k}' for k in range(fd.PARTY_SIZE)], False)
+    # value = rival set (Normal archive) with a random ability slot 0/1, written over the rental given away
+    taken = r.new_label('taken')
+    for k in range(fd.PARTY_SIZE):
+        other = r.new_label('take')
+        r.load('sel')
+        r.op('EQ_P_C_PRI', k)
+        r.op('JZER', other)
+        r.load(f'rival{k}')
+        r.field(0, 10)
+        r.store('value')
+        r.op('JUMP', taken)
+        r.p.label(other)
+    r.op('JUMP', keep)
+    r.p.label(taken)
+    r.call('factory_rand', 2)
+    r.op('SMUL_P_C', 1 << patch.ABILITY_SHIFT)
+    r.load_alt('value')
+    r.op('ADD', 0)
+    r.store('value')
+    for k in range(fd.PARTY_SIZE):
+        other = r.new_label('give')
+        r.load('give')
+        r.op('EQ_P_C_PRI', k)
+        r.op('JZER', other)
+        r.sysreq('WorkSet', patch.WORK_SETS[k], 'value')
+        r.p.label(other)
+    r.p.label(keep)
+    r.call(helpers['msg_close'], 0)
     r.op('ZERO_PRI', 0)
     r.ret()
 
@@ -364,14 +518,16 @@ def shared_program(shared, zone, cells, levels):
         raise ValueError(f'shared script {SHARED_SCRIPT} is not the retail placeholder')
     end = next(i for i in range(index + 1, len(p.items)) if not isinstance(p.items[i], tuple))
     p.items.insert(end, ('label', 'factory_case_end'))
-    pairs.append((GLOBAL_DRAFT, 'factory_case'))
+    pairs += [(GLOBAL_DRAFT, 'factory_case_draft'), (GLOBAL_SWAP, 'factory_case_swap')]
     table.args = [len(pairs), table.args[1]] + [x for pair in sorted(pairs) for x in pair]
-    p.label('factory_case')
-    p.call('factory_draft')
-    p.emit('JUMP', 'factory_case_end')
+    for case, routine in (('factory_case_draft', 'factory_draft'), ('factory_case_swap', 'factory_swap')):
+        p.label(case)
+        p.call(routine)
+        p.emit('JUMP', 'factory_case_end')
     # Each helper is copied with its own prefix (shared callees are duplicated, which is harmless).
     helpers = {name: p.transplant(zone, address, f'z{name}_') for name, address in HELPERS.items()}
     draft_routine(p, cells, levels, helpers)
+    swap_routine(p, helpers)
     return p
 
 
@@ -407,6 +563,34 @@ def reception_routine(p):
     r.p.label('factory_back')
     r.sysreq('WorkSet', patch.WORK_IV, 0)
     r.const(1)
+    r.ret()
+
+
+def after_win_routine(p):
+    """factory_after_win(): Factory active -> every 7 wins a new draft of the next level (repeated until 3 are
+    chosen), otherwise the swap offer. Called from the battle loop after a win, before the continue menu."""
+    r = Routine(p, 'factory_after_win', ['streak'])
+    r.sysreq('WorkGet', patch.WORK_IV)
+    r.op('JZER', 'factory_after_win_end')
+    r.sysreq('GetMyWinCount', 0, 0)
+    r.store('streak')
+    r.sysreq('WorkSet', WORK_STREAK, 'streak')
+    r.load('streak')
+    r.op('MOVE_ALT', 0)
+    r.const(fd.STAGES_PER_ROUND)
+    r.op('SDIV_ALT', 0)                  # PRI = streak / 7
+    r.op('SMUL_P_C', fd.STAGES_PER_ROUND)
+    r.load_alt('streak')
+    r.op('SUB_ALT', 0)                   # PRI = streak - 7 * (streak / 7)
+    r.op('JZER', 'factory_after_win_draft')
+    r.sysreq('GlobalCall', GLOBAL_SWAP)
+    r.op('JUMP', 'factory_after_win_end')
+    r.p.label('factory_after_win_draft')
+    r.sysreq('GlobalCall', GLOBAL_DRAFT)
+    r.sysreq('GlobalGetChildParam', 0)
+    r.op('JZER', 'factory_after_win_draft')
+    r.p.label('factory_after_win_end')
+    r.op('ZERO_PRI', 0)
     r.ret()
 
 
@@ -453,4 +637,19 @@ def reception(p):
     if p.items[at + 1].op != OP['PROC']:
         raise ValueError('0x1458 is not a routine start')
     p.items[at + 2:at + 2] = _clear(p)
+
+    at = _index(p, AFTER_BATTLE)
+    head = p.items[at + 1:at + 4]
+    if [o.op for o in head] != [OP['LOAD_P_S_PRI'], OP['EQ_P_C_PRI'], OP['JZER']] or head[0].args != [-8] \
+            or head[1].args != [1] or head[2].args != ['L2624']:
+        raise ValueError('won-battle check not found at 0x2264')
+    call = Program(p.script)
+    call.call('factory_after_win')
+    p.items[at + 4:at + 4] = call.items
+
+    at = _index(p, LOST)              # clear before the loss is saved, so the save never holds a dead Factory
+    if p.items[at + 1].op != OP['ZERO_P_S'] or p.items[at + 1].args != [-8]:
+        raise ValueError('lost-battle path not found at 0x2210')
+    p.items[at + 1:at + 1] = _clear(p)
     reception_routine(p)
+    after_win_routine(p)

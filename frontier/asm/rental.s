@@ -84,3 +84,27 @@ rentals:
     add     sp, sp, #0x18
     pop     {r4-r8, lr}
     b       RESUME
+
+@ Rival party builder 0x1e4a94, at 0x1e4b34 (original: ldrh r4, [r0, #4], the set index drawn from the trainer's
+@ list for rival slot r7; fp = facility work). Called with bl from the site, so lr is the return (the builder
+@ never uses lr). While the Factory is active, also store the index in saved work WORK_RIVAL + r7 (r7 < RENTALS):
+@ a rejected draw is redrawn for the same r7 and overwrites it, so the last value is the accepted set. The
+@ zone script offers these sets for the swap after a win. r0, r1 are free here (reloaded before use); r2, r3
+@ and the flags are not touched before the builder sets them again.
+    .global rival_hook
+rival_hook:
+    ldrh    r4, [r0, #4]
+    cmp     r7, #RENTALS
+    bxge    lr
+    ldr     r0, [fp, #0xb78]
+    ldr     r0, [r0, #0x1c]
+    ldr     r0, [r0]                @ save data
+    add     r0, r0, #0x13000
+    add     r0, r0, #(0x144 + 2 * (WORK_IV - 0x4000))
+    ldrh    r1, [r0]
+    cmp     r1, #0
+    bxeq    lr                      @ Factory inactive: retail behaviour
+    add     r0, r0, #(2 * (WORK_RIVAL - WORK_IV))
+    add     r0, r0, r7, lsl #1
+    strh    r4, [r0]
+    bx      lr
