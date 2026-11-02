@@ -411,3 +411,20 @@ Decisiones:
   se viaja y qué mapa sirve de base para la isla (§5.6).
 Siguiente paso: el de la entrada anterior (cambio tras la victoria, sorteo cada 7
 victorias, derrota, pausa y reanudación en Azahar).
+
+## 2026-11-02 13:21 — Claude Code (Opus 5.5) — Decisiones del usuario sobre la isla del Frente
+Estado: en curso
+Hecho: PLAN §5.6 recoge lo que decidió el usuario.
+- Objeto clave «Pase del Frente», tras ganar la Liga.
+- Viaje en el **ferry** de Calagua (destino nuevo «Isla del Frente»), no en la barca.
+- Activación: el mod hace de DLC. ORAS no tiene soporte de contenido descargable, así
+  que la zona va siempre en el paquete y el pase la abre.
+- Queda como propuesta quién entrega el pase (por defecto, un marinero del puerto de
+  Calagua).
+Evidencia: mensajes del usuario en la sesión; sin mediciones nuevas.
+Commits: ver `git log` («Battle Frontier: user decisions for the Frontier island»).
+Decisiones: las de arriba. El mapa base de la isla sigue abierto (candidato: exterior del
+Resort Batalla).
+Siguiente paso: el de la entrada «F4: inscripción en la Fábrica» (cambio tras la victoria,
+sorteo cada 7 victorias, derrota, pausa y reanudación). Para F6 habrá que medir el flag de
+campeón y el menú de destinos del ferry (script compartido 79).

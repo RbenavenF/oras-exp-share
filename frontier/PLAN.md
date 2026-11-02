@@ -160,14 +160,19 @@ La Mansión ya resuelve lo difícil: elegir rival de `maisontr`, generar su equi
 6. **Ubicación**: primera versión, la opción «Fábrica Batalla» de la recepcionista de la
    zona 517, que usa las salas de la Mansión (hecho, `reports/frontier.md` §11).
    Destino (visión del usuario, §1): una zona de expansión desbloqueada por un objeto.
-   Propuesta, **pendiente de que el usuario la confirme**:
-   - **Objeto**: un objeto clave nuevo, «Pase del Frente» (p. ej.), en un hueco de
-     objeto libre, como el Mapa Viejo del evento de Mew.
-   - **Entrega**: un NPC después de la Liga o del Episodio Delta (p. ej. en el Resort
-     Batalla, junto al cartel «proyecto Frente de Batalla» del texto 625, o en un
-     puerto).
-   - **Viaje**: barco desde Calagua o Portual, como el ferry del evento de Mew (escena
-     de la barca, cambio de mapa con `_MapChangeCore`).
+   Decidido por el usuario (2026-11-02):
+   - **Objeto**: objeto clave nuevo «Pase del Frente», en un hueco de objeto libre, como
+     el Mapa Viejo del evento de Mew.
+   - **Cuándo**: tras ganar la Liga (hay que medir el flag de campeón).
+   - **Viaje**: en el **ferry** de Calagua, no en la barca de Arenque: con el pase, el
+     ferry ofrece un destino nuevo, «Isla del Frente», como el S.S. Marea de Esmeralda.
+     El ferry retail es el script compartido 79 (`reports/faraway.md`).
+   - Propuesta pendiente: quién entrega el pase. Por defecto, un marinero del puerto de
+     Calagua al hablarle con la Liga ganada.
+   - **Activación**: el mod de Luma hace de DLC. La zona y los scripts van siempre en el
+     paquete, y el pase decide si el ferry ofrece el destino. ORAS no tiene código para
+     contenido descargable de verdad: un título de DLC aparte no lo leería nadie, así
+     que no es una vía.
    - **Zona**: isla clonada de un mapa de ORAS (el exterior del Resort Batalla es el
      candidato natural), con puertas a interiores clonados. Ya probado con
      CTRMap-F5: clonar zonas, mapa y área propios, entidades (`faraway/java`). Un mapa
