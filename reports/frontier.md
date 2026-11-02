@@ -607,3 +607,55 @@ la Fábrica.
 - Solo las hacen los scripts de la Mansión, salvo lo que no se haya visto: no se ha
   medido si la tarjeta de entrenador o el PSS muestran esa racha.
 - La recepción lo limpia al entrar.
+
+## 16. F6: medidas para el pase y el ferry (volcado, 2026-11-02)
+
+Fuentes: listados `work/frontier/survey/shared79.lst`, `zone317.lst`, `zone212.lst`
+(generados con `pawn.listing` y los nombres de `oras_natives.tsv`), tabla `GlobalCall` de
+`code.bin`, `a/1/9/7` (datos de objeto) y `a/0/7/x`/`a/0/8/x` (textos).
+
+**Campeón de la Liga: flag 2720** (PKHeX `flags_oras`: «Entered Hall of Fame»). Ningún
+script lo activa con un literal (lo pone el código del Salón de la Fama); 37 lecturas
+`FlagGet(2720)` en scripts retail, entre ellas el ferry (compartido 79, `0x8d8`) y el
+marinero del puerto de Calagua (zona 317, `0x10ac`). La partida del usuario
+(`inputs/save/20261031-123645/main`) es de principio de juego: 2720 = 0, un solo objeto
+clave (216).
+
+**Ferry: script compartido 79**, fila `GlobalCall` 33 (`0x587888`: ids 10430–10439,
+texto 11). La zona 317 lo abre con `GlobalCall(10430)` desde el caso 5 (empleado, NPC
+uid 0, modelo 300).
+- `0x14a0` (caso 10430): `PlayerGetZoneID` → 275 (Portual) llama `0x8b8(4, 275)`; 317
+  (Calagua) `0x8b8(0, 317)`; cualquier otra zona `0x8b8(0, 212)` (Resort). El primer
+  argumento es el NPC que habla.
+- `0x8b8(npc, zona)`: `ItemGetNum(736)` (Ticket del Barco) y `FlagGet(2720)`. Sin 2720,
+  línea 0 («no está en servicio»); sin ticket, líneas 2–3; con ambos, líneas 4–5 y menú
+  (`0x760` = `ListMenuInit(180, 112, 0, 1, 0, 0)`; `ListMenuAdd(línea, valor, 0)`):
+  - zona 275: 6/valor 0 (Resort), 8/2 (Calagua), 9/3 (salir);
+  - zona 317: 6/0 (Resort), 7/1 (Portual), 9/3;
+  - otra: 7/1, 8/2, 9/3.
+- Resultado (`0x7c8`, work 32784) → `SWITCH @1470`: 0 `@cb8`, 1 `@e84`, 2 `@1140`,
+  otro `@13fc`. Cada caso confirma (línea 10/12/11 + Sí/No, `0x260`), despide (13) o
+  dice 14, fija `WorkSet(16707, destino)` y `WorkSet(16709, 0)`, fundido (nativa 33 con
+  (1, 2, 45), espera `0x210`), bocina (`SEPlay(655698)`) y `0x724` = `_MapChangeCore`
+  con (zona, x, altura, y, dirección, 0):
+  - al Resort, directo: (212, 53, 2, 34, 2), 16707 = 3;
+  - entre Portual y Calagua, por el camarote (zona 216, (216, 37, 56, 9, 1)), 16707 =
+    1 o 2;
+  - del Resort a Portual o Calagua, directo, con `ReserveScript(1)`.
+- 16707 solo lo lee la zona 216 (camarote); los puertos y el Resort solo lo escriben.
+  Un viaje directo a la isla no necesita tocarlo.
+- Texto 11 (16 líneas en los 8 idiomas): 0 sin servicio, 1–5 ticket, 6–8 destinos, 9
+  salir, 10–12 confirmaciones, 13 despedida, 14 «espere a bordo», 15 variable.
+
+**Pase del Frente: objeto 701** (Pase TMV de Kalos; no se puede obtener en ORAS).
+- Datos idénticos a los del Mapa Viejo (442), que ya funciona en consola: bolsillo de
+  objetos clave (4), precio 0, mismos bytes de cabecera (`a/1/9/7`).
+- Ningún script lo da, quita ni consulta: 6 operandos con el valor 701, ninguno ante una
+  nativa `Item*`. Control: la misma búsqueda encuentra `ItemGetNum(457)` (Pase de
+  Concursos) en el compartido 27 y en la zona 276, por eso 457 se descarta.
+- En `code.bin` aparece en el `movw` de una enumeración de todos los objetos
+  (`0x5949dc`–…: `movweq r0, #0x2b1`, `#0x2b2`, …), como el 442.
+
+**Puerto de Calagua (zona 317)**: 3 NPC. uid 0: empleado del ferry (caso 5). uid 1:
+modelo 309, flag 1050, sin script. uid 2: marinero, modelo 232, caso 4. El caso 4 dice
+la línea 23 del texto 523 sin la Liga y la 24 con ella.

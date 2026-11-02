@@ -570,3 +570,89 @@ paso de F6:
 1. medir el flag de campeón de la Liga;
 2. medir el menú de destinos del ferry de Calagua (script compartido 79);
 3. medir un hueco de objeto clave libre para el Pase del Frente (como el Mapa Viejo).
+
+## 2026-11-02 15:50 — Codex — Revisión de EXP del portador participante
+Estado: hecho
+Hecho: a petición del usuario, revisado si el portador de Repartir Exp. recibe la
+mitad cuando participa y gana. Conserva la experiencia normal; la mitad se aplica
+al portador que no participa. Sin cambios en el parche.
+Evidencia: ejecución con `source scripts/env.sh` y Python de
+`scripts/validate_arm.py:execute(True, ...)`: portador participante → [100, 0, 0],
+participante sin objeto → [100, 0, 0], portador en reserva → [100, 50, 0]; asserts
+correctos. Relectura con `scripts/save_fixture.py:inspect` de las partidas
+`participant` y `none` referenciadas en `reports/gameplay-validation.json`:
+ambas dan [16, 0, 0], con objetos [216, 0, 0] y [0, 0, 0], respectivamente;
+hashes antes/después coinciden con el informe. La rama participante evita la
+comprobación del objeto (`reports/ingenieria.md`, salto a CRO +0x3265C).
+No se ha jugado un combate nuevo ni probado la instalación del usuario en consola.
+Commits: sin commit.
+Decisiones: revisión puntual del mod entregado, sin cambiar las reglas de EXP.
+Siguiente paso: retomar F6 según la entrada anterior: flag de campeón, menú del
+ferry de Calagua y hueco de objeto para el Pase del Frente.
+
+## 2026-11-02 19:47 — Codex — Encuentros de Senda Ígnea
+Estado: hecho
+Hecho: revisión puntual solicitada por el usuario. Añadido lector sin escritura
+`scripts/inspect_encounters.py` y resultados en `reports/senda-ignea.md`.
+Zona 85, lugar 288; encuentros en `a/0/1/3`, entrada 537 (EN), offset 0x4864.
+En Repolished, normales: Numel 40 %, Grimer 30 %, Slugma 10 %, Torkoal 10 %,
+Machop 5 %, Koffing 5 %. Hordas: Numel/Grimer/Slugma 60/35/5 %.
+Evidencia: `source scripts/env.sh`;
+`python scripts/inspect_encounters.py 'Senda Ígnea' > work/senda-ignea-encounters.json`.
+Hashes validados contra manifiesto; comparación byte a byte del archivo de
+baseline con inputs/repolished correcta; suma de pesos normales 100 % para ambas
+versiones. Formato y pesos contrastados con CTRMap-F5 y pk3DS (rutas en el informe).
+Sin prueba nueva en emulador/consola; desbloqueo y probabilidades DexNav no medidos.
+Commits: sin commit.
+Decisiones: analizar el paquete local 1.7.6 y comparar con el volcado limpio;
+no cambiar encuentros. Repolished intercambia Grimer y Koffing respecto al original.
+Siguiente paso: retomar F6: flag de campeón, menú del ferry de Calagua y hueco
+de objeto para el Pase del Frente.
+
+## 2026-11-02 20:31 — Codex — Cambios evolutivos de Repolished
+Estado: hecho
+Hecho: revisión solicitada por el usuario; lector `scripts/inspect_evolutions.py`
+e informe completo `reports/evoluciones-repolished.md`. Comparadas 826 entradas:
+38 distintas, correspondientes a 35 especies. Mega-evoluciones sin cambios de tabla.
+Detectado Mienfoo con método 4 y argumento 65535, frente a nivel 50 original;
+Pumpkaboo normal usa Piedra Noche o intercambio, otras formas nivel 30.
+Evidencia: `source scripts/env.sh`;
+`python scripts/inspect_evolutions.py > work/evolution-changes.json` ejecutado
+correctamente. Hashes contra manifiesto y coincidencia con el paquete original
+comprobados. Métodos y formas según pk3DS, fuentes y bytes en el informe.
+No se ha probado ninguna evolución nueva en emulador/consola ni el comportamiento
+del motor con el argumento anómalo de Mienfoo.
+Commits: sin commit.
+Decisiones: documentar los métodos exactos, incluidas las vías originales que
+se conservan y las que se sustituyen; no modificar el juego en esta revisión.
+Siguiente paso: si se solicita, investigar/corregir la evolución de Mienfoo sobre
+una copia. Frente pendiente: F6 (flag de campeón, ferry y hueco del Pase del Frente).
+
+## 2026-11-02 20:56 — Claude Code — F6: medidas del pase, el ferry y el puerto
+Estado: hecho
+Hecho: medidos los tres datos que pedía el paso anterior. Detalle en
+`reports/frontier.md` §16.
+- Flag de campeón: 2720 («Entered Hall of Fame»).
+- Ferry: compartido 79, `GlobalCall(10430)`, texto 11. Son el menú por zona, los casos
+  0/1/2, `0x724` = `_MapChangeCore` y 16707, que solo lee el camarote 216.
+- Objeto: 701 (Pase TMV), con los mismos datos que el 442 del Mapa Viejo y sin usos en
+  scripts.
+- Puerto 317: el marinero es uid 2, caso 4, y el empleado uid 0, caso 5.
+Evidencia: listados `work/frontier/survey/shared79.lst`, `zone317.lst` y `zone212.lst`;
+búsquedas de operandos en los 1157 scripts, con control positivo (`ItemGetNum(457)`
+encontrado); tabla `GlobalCall` fila 33 (`0x587888`) en `code.bin`; datos `a/1/9/7`.
+Las listas de PKHeX se copian a `work/pkhex/`, sin versionar. Nada ejecutado en Azahar.
+Commits: el de esta entrada. Incluye también, sin cambios, las tres entradas de Codex
+anteriores (revisiones puntuales); sus archivos (`reports/senda-ignea.md`,
+`reports/evoluciones-repolished.md` y `scripts/inspect_*.py`) siguen sin versionar porque
+no son de esta sesión.
+Decisiones:
+- El pase lo da el marinero que ya existe en el puerto (uid 2), en vez de un NPC nuevo.
+  Así no se tocan las entidades de la zona 317 ni el marinero del evento de Mew.
+- El ferry ofrece «Isla del Frente» en Calagua y en Portual, como el S.S. Marea de
+  Esmeralda, si llevas el objeto 701.
+- El viaje es directo, como al Resort. Desde la isla, un empleado con uid 0 que llame a
+  `GlobalCall(10430)` cae en la rama «otra zona» y ofrece Portual y Calagua sin tocar el
+  ferry.
+Siguiente paso: implementar el pase (texto del objeto, entrega del marinero) y el destino
+nuevo del ferry; probarlo en Azahar con destino provisional, y después clonar la isla.
