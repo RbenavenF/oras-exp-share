@@ -123,11 +123,13 @@ def test_active_factory_builds_the_rentals(patched, count):
     preserved(uc)
 
 
-def test_patch_only_touches_site_and_padding(patched):
+def test_patch_only_touches_site_padding_and_text_row(patched):
     code, hook, _ = patched
     original = fp.REPOLISHED.read_bytes()
     diff = [i for i in range(len(original)) if original[i] != code[i]]
     site = fp.SITE - fp.BASE
     cave = fp.CAVE - fp.BASE
-    assert all(site <= i < site + 20 or cave <= i < cave + len(hook) for i in diff)
+    text = fp.GLOBAL_ROW - fp.BASE + 8
+    assert all(site <= i < site + 20 or cave <= i < cave + len(hook) or text <= i < text + 2 for i in diff)
+    assert struct.unpack_from('<8H', code, fp.GLOBAL_ROW - fp.BASE) == (9770, 9779, 5, 1, fp.TEXT_FACTORY, 0, 0, 0)
     assert len(code) == len(original)

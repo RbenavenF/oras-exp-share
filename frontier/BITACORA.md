@@ -341,3 +341,54 @@ Siguiente paso: flujo de la Fábrica (F4):
 3. Tras cada victoria, cambio de un alquiler por uno del rival (hay que saber qué conjuntos
    usó el rival: `work+0x0C` ficha del entrenador y lo que elige `0x1e4a94`).
 4. Poner 16410 = 0 al perder, retirarse o terminar la ronda, y en la recepción normal.
+
+## 2026-11-02 02:55 — Claude Code (Opus 5.5) — F4: inscripción en la Fábrica (elegir 3 de 6)
+Estado: en curso
+Hecho:
+- `frontier/factory.py` (nuevo). La recepcionista de la zona 517 tiene la opción
+  «Fábrica Batalla» (texto 619, línea 188). La opción llama a `GlobalCall(9771)`.
+- El caso 9771 es nuevo en el script compartido 5 (`a/0/2/9`), un esqueleto retail.
+  Hace el sorteo de 6 conjuntos del nivel de la ronda con un congruencial en Pawn,
+  sembrado con `_GetRealTimeToSecond` y el work 16414, con especies y objetos distintos.
+  Luego muestra tres menús «Especie (Objeto)» y escribe los works 16410–16413.
+- Después, la zona hace `SetRank(0)` y llama al desafío `0x18f8` en Individual, sin la
+  pantalla de modalidad.
+- La opción «Combatir» y el caso 1 (`0x1458`) ponen 16410 = 0.
+- `frontier/patch.py`: la fila de `GlobalCall` 9770–9779 (`0x587AA8`) apunta su texto a
+  la entrada nueva 637. Ahí van los 3 avisos y una línea por conjunto (926) en cada
+  idioma, generadas del volcado.
+- `frontier/overlay.py` escribe `a/0/1/3`, `a/0/2/9` y los 8 textos de historia; `--zones`
+  pasa a ser `--romfs`, que si falta un archivo usa la base.
+- `scripts/pawn_vm.py` (nuevo) es un intérprete Pawn mínimo para los tests.
+- `frontier/lab_factory.py` (nuevo) espera al menú de la recepcionista y elige la Fábrica.
+- `reports/frontier.md` §11 y PLAN (F4, y riesgo de tamaño del script de zona) actualizados.
+Evidencia:
+- `reports/frontier.md` §11. Capturas: `work/frontier/lab/f4c_menu.png`,
+  `f4c_draft1.png`, `f4c_draft1_bottom.png`, `f4c_draft2.png`, `f4c_draft3.png`,
+  `f4c_battle_party.png`, `f4c_cancel_menu.png` y `f4c_cancel_back.png`.
+- Partida tras inscribirse: `work/frontier/lab/f4c_saved.sav` (`d534beaa…`), con
+  16410 = 3 y 16411–16413 = N128 Boldore, N122 Drowzee y N96 Spinarak. En combate salen
+  esos tres, Nv. 50.
+- `python -m pytest -q` → 83 passed. `use_gdbstub` devuelto a `false`.
+Commits: ver `git log` («Battle Frontier F4: Factory sign-up with a draft of 6 rentals»).
+Decisiones:
+- El script de la zona 517 no puede crecer mucho. Con un ZO de 21.428 bytes la zona se
+  cuelga al cargar; con 17.248 carga. Por eso el sorteo y sus textos van a un script
+  compartido con texto propio, sin tocar el texto de la zona salvo una línea.
+- Desde el script hijo no se llaman nativas de la Mansión (`GetMyWinCount` colgó el
+  juego): la zona pasa la racha en el work 16429.
+- El nivel de alquiler sale de la racha de la Mansión (Individual Normal, compartida;
+  desviación conocida) dividida entre 7.
+- Sin aplicar todavía `PAST_RENTALS_RANK`, que hace que algunos alquileres salgan del
+  nivel siguiente.
+- Habilidad 0/1 al azar por alquiler.
+Sin probar: que una derrota sola deje 16410 = 0 en Azahar (tras perder entré por
+«Combatir», que también lo limpia; la lógica está en los tests), la pausa y la
+reanudación, otros idiomas y consola.
+Siguiente paso:
+1. Tras cada victoria, ofrecer cambiar un alquiler por uno del último rival. Hace falta
+   saber qué conjuntos usó el rival (`work+0x0C`, `0x1e4a94`) y pasarlos al hijo en
+   works (p. ej. 16433–16435), sin llamar nativas de la Mansión desde él.
+2. Cada 7 victorias, sorteo nuevo de 6 del nivel siguiente (en el bucle `0x1e1c`, tras
+   `AddWinCount`).
+3. Comprobar en Azahar la derrota sola, la pausa y la reanudación.

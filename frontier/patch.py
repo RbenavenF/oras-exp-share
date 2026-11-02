@@ -6,7 +6,9 @@ party builder behaves as in the retail game. Steps:
 1. Check the clean and Repolished code.bin (SHA-256) and the exact words at the hook site and padding.
 2. Assemble frontier/asm/rental.s with arm-none-eabi-as/ld at the start of the .text padding.
 3. Redirect the player-party branch of the party builder (0x1e3d8c) to it.
-4. Write code.bin and code.ips; the IPS is the diff from the clean code.bin, so it already contains
+4. Point the text of the GlobalCall row for ids 9770-9779 (shared script 5, the Factory draft;
+   frontier/factory.py) at a new story text entry, TEXT_FACTORY.
+5. Write code.bin and code.ips; the IPS is the diff from the clean code.bin, so it already contains
    Repolished's records and replaces its code.ips in the mod folder.
 
 Usage: python frontier/patch.py --out work/frontier/patch
@@ -49,6 +51,11 @@ WORK_IV = 16410            # Factory state: rentals' IV 1-31; 0 = inactive (reta
 WORK_SETS = (16411, 16412, 16413)   # rentals: bit 15 Super (0xb8) else Normal (0xb6), bits 10-11 ability
 SUPER = 0x8000                      # slot (3 = random), bits 0-9 set index
 ABILITY_SHIFT, ABILITY_RANDOM = 10, 3
+# GlobalCall range table (rodata, 86 rows of u16 first id, last id, shared script, flag, story text, 0, 0, 0
+# from 0x587678): the row for ids 9770-9779 (shared script 5, a retail placeholder) gets the Factory text.
+GLOBAL_ROW = 0x587AA8
+GLOBAL_ROW_BEFORE = (9770, 9779, 5, 1, 618, 0, 0, 0)
+TEXT_FACTORY = 637                  # new story text entry (the retail archives have 637 entries, 0-636)
 CONSTANTS = {'WORK_IV': WORK_IV, 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'RENTAL_LEVEL': 50,
              'RENTALS': len(WORK_SETS)}
 
@@ -97,6 +104,10 @@ def build():
             0xE1A08000,                               # mov r8, r0        (player party, as 0x1e3d94)
             0xE1A00000]                               # nop               (0x3b5d34 already called)
     struct.pack_into(f'<{len(site)}I', code, SITE - BASE, *site)
+    row = struct.unpack_from('<8H', code, GLOBAL_ROW - BASE)
+    if row != GLOBAL_ROW_BEFORE:
+        sys.exit(f'GlobalCall row {GLOBAL_ROW:#x} differs: {row}')
+    struct.pack_into('<H', code, GLOBAL_ROW - BASE + 8, TEXT_FACTORY)
     return bytes(code), hook, site
 
 

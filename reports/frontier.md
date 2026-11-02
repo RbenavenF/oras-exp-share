@@ -331,3 +331,86 @@ más. **Conclusión**: el juego retail actualiza los recuerdos del PK6 de los Po
 equipo en este flujo; el cambio de §10 no lo causa la Fábrica. Con la Fábrica los afectados
 pueden ser Pokémon que no combatieron (el juego elige del equipo de la partida). Especie,
 nivel, PS, movimientos, objetos y EV no cambian en ningún caso medido.
+
+## 11. F4: inscripción en la Fábrica desde la recepcionista (Azahar, 2026-11-02)
+
+`python frontier/overlay.py --out work/frontier/build --romfs work/faraway/dev/overlay/romfs`
+(`frontier/factory.py`). Escribe `a/0/1/3` (zona 517), `a/0/2/9` (script compartido 5),
+los ocho textos de historia y `code.ips`.
+
+**Límite del script de zona** (medido, bisección en Azahar con datos de relleno, scripts
+de prueba fuera del repositorio):
+- El script de la zona 517 ya es el mayor de todas las zonas retail: 29.320 bytes en
+  memoria y 14.428 en archivo. El contenedor ZO mayor es el de la zona 83, con 17.416.
+- Un primer intento con todo el sorteo dentro del script de zona (21.696 bytes, ZO
+  22.488) dejaba el juego en negro a 0 FPS al cargar la partida en la Mansión.
+- Con el mismo script y 2000 celdas de datos a cero (37.376 bytes en memoria, archivo
+  16.456, ZO 17.248), la zona carga. Con 1250 celdas aleatorias (34.376 en memoria,
+  archivo 20.636, ZO 21.428), se cuelga.
+- Conclusión: el límite es el tamaño del archivo o contenedor, no la memoria, y está
+  entre 17.248 y 21.428 bytes de ZO. El build final deja la zona en 14.680 bytes (ZO
+  15.472); `tests/test_frontier_overlay.py` exige un ZO ≤ 17.248.
+
+**Scripts compartidos y `GlobalCall`** (lectura estática de `code.bin`):
+- La tabla de rangos está en `0x587678` (VA): 86 filas de 8 `u16`, con este formato:
+  primer id, último id, script de `a/0/2/9`, indicador, texto de historia, 0, 0, 0.
+- Ejemplos: 2000–2099 → script 15, que incluye el guardado `GlobalCall 2003`;
+  10290–10309 → script 41, la barca de Arenque (`reports/faraway.md`).
+- Los scripts compartidos retail llegan a 29.082 bytes (el 47).
+- El script 5 es un esqueleto retail de 167 bytes: un caso, el 9770, que llama a una
+  rutina vacía. Ningún script retail llama a 9770 (búsqueda en los 1157 listados). Su
+  fila es `0x587AA8`: (9770, 9779, 5, 1, 618).
+- La Fábrica añade el caso 9771 al script 5 y cambia el texto de esa fila de 618 a 637.
+  637 es una entrada nueva de los textos de historia, que tenían 637 entradas (0–636).
+  Son 2 bytes de `code.bin`, comprobados en `frontier/patch.py`.
+- El hijo muestra mensajes y menús con su propio texto. Los ayudantes de mensaje y menú
+  se copian del script 517 (`Program.transplant`).
+
+**Nativas de la Mansión en el hijo** (medido): con la siembra y `GetMyWinCount(0, 0)`
+dentro del script compartido, el juego se queda a 0 FPS al elegir la opción. La CPU da
+vueltas en código Thumb hacia `0x2fee00`–`0x2ffa00` y la pila del script hijo está
+vacía. La variante que solo siembra y llama al generador no se cuelga, ni la que
+devuelve sin hacer nada.
+
+Al mover `GetMyWinCount` (y su comprobación de signo) al script de zona y pasar la racha
+en el work 16429, el sorteo funciona. No está aislado si el problema es la nativa en sí
+o algo de su contexto; la regla práctica es no llamar nativas de la Mansión desde el
+hijo.
+
+**Prueba de punta a punta** (`main-maison`, `faraway/lab.sh` con
+`CODE_IPS=work/frontier/build/code.ips` y el overlay `work/frontier/build`; para llegar
+al menú se usa `frontier/lab_factory.py`):
+- El menú de la recepcionista tiene 5 opciones; «Fábrica Batalla» va antes de «No quiero
+  nada» (`work/frontier/lab/f4c_menu.png`).
+- Al elegirla salen «Elige tu primer Pokémon de alquiler.» y un menú de 6 alquileres de
+  la ronda 1 (`maisonpkN` 66–131), con especies y objetos distintos: Wingull (Baya
+  Gualot), Kricketune (Baya Zidra), Drowzee (Cuchara Torcida), Skiploom (Baya Alcho),
+  Spinarak (Baya Kouba) y Boldore (Globo Helio) (`f4c_draft1.png`,
+  `f4c_draft1_bottom.png`).
+- El segundo y el tercer menú ofrecen solo los no elegidos (`f4c_draft2.png`,
+  `f4c_draft3.png`).
+- Después: «¿Quieres participar en Combates Individuales?», «Sí», guardado sin pantalla
+  de selección y combate.
+- En combate: Boldore, Drowzee y Spinarak Nv. 50, en el orden elegido, contra un Omanyte
+  Nv. 50 (`f4c_battle_party.png`).
+- La partida guardada antes del combate (`f4c_saved.sav`, `d534beaa…`) tiene:
+  - 16410 = 3 (IV de la ronda 1);
+  - 16411–16413 = N128 Boldore, N122 Drowzee y N96 Spinarak, los tres con habilidad 1;
+  - 16414 (estado del generador) = 29669 y 16429 = 0.
+- Retirada del combate y vuelta a la recepción.
+- Una segunda inscripción sortea otros 6 (Frillish, Snorunt, Pansage, Drowzee…) y B en
+  el primer menú vuelve a «¿En qué te puedo ayudar?» (`f4c_cancel_menu.png`,
+  `f4c_cancel_back.png`).
+
+**Sin probar en Azahar**:
+- que una derrota sola deje 16410 = 0: tras perder pulsé A de más y volví a entrar por
+  «Combatir», que también lo pone a 0; la lógica sí está probada en
+  `tests/test_frontier_factory.py`;
+- la pausa y la reanudación;
+- el texto 637 en idiomas distintos del español, y nada en consola.
+
+Pruebas en el intérprete (`scripts/pawn_vm.py`, `tests/test_frontier_factory.py`):
+- el nivel por racha (0, 6, 7, 20, 21, 48, 49 y 400);
+- especies y objetos distintos, menús de 6, 5 y 4, y valores y habilidades de los works;
+- cancelar en cada menú, rechazar la confirmación, perder y pausar;
+- la racha que pasa la zona.

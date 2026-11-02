@@ -189,7 +189,7 @@ Plan, bitácora, `frontier/survey.py`, pausa documentada del evento de Mew.
 - **Salida**: combate jugado en Azahar; equipo de la partida idéntico antes y después
   (comparado con `save_fixture.py`).
 
-### F4 — Fábrica Nivel 50 Individual jugable (en curso; activación hecha, `reports/frontier.md` §9)
+### F4 — Fábrica Nivel 50 Individual jugable (en curso; activación e inscripción con elección de 3 de 6 hechas, `reports/frontier.md` §9–§11)
 - NPC, inscripción, elegir 3 de 6, 7 combates, cambio tras cada victoria, racha, PB,
   guardar y continuar entre combates, derrota y abandono.
 - **Salida**: ronda completa en Azahar, más los casos: perder en el 1.º y el 7.º
@@ -227,6 +227,11 @@ Se planifican cuando la Fábrica esté en consola.
   posterior del usuario.
 - **Interfaz de alquiler**: `ListMenu` es suficiente para jugar, pero no enseña
   estadísticas; una pantalla propia es trabajo aparte.
+- **Tamaño del script de zona** (medido, `reports/frontier.md` §11): el de la zona 517 ya
+  es el mayor; con un contenedor ZO de 21.428 bytes la zona se cuelga al cargar y con
+  17.248 carga. Lo grande de la Fábrica va al script compartido 5 (`GlobalCall` 9771) y
+  a su texto propio (637). Desde ese script hijo no se llaman nativas de la Mansión
+  (`GetMyWinCount` lo colgó): la zona le pasa lo que necesite en works.
 
 ## 8. Trazabilidad (relevo Claude Code ↔ Codex)
 
