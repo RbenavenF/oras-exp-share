@@ -160,3 +160,20 @@ def test_sailor_on_top_of_the_mew_harbor(scripts):
     assert len(mew.code) > len(harbor.code)
     assert harbor_run(scripts, mew, True, False)['give'] == [(island.ITEM_PASS, 1, 1)]
     assert harbor_run(scripts, mew, True, False, event=ev.EV_GIVER)['give'] == []
+
+
+def test_island_script_keeps_arrival_and_clerk_without_the_scene():
+    import island_build
+    from pawn import decode as _decode
+    zones = overlay.ZONES.read_bytes()
+    _, _, offset, length = garc_entries(zones)[island_build.DONOR_ISLAND]
+    donor = Script.parse(zo_files(lz11_decompress(zones[offset:offset + length]))[2])
+    script = island_build.island_script(donor)
+    tables = [i for i in _decode(script.code) if i.op == OP['CASETBL']]
+    events = [sorted(t.args[2::2]) for t in tables]
+    assert sorted(island_build.ISLAND_EVENTS) in events and sorted(island_build.DONOR_EVENTS) not in events
+    # The arrival routine no longer branches on the Resort scene work: its first jump is unconditional.
+    ins = _decode(script.code)
+    k = next(i for i, x in enumerate(ins) if x.op == OP['PUSH_P_C'] and x.args == [island_build.WORK_RESORT_SCENE])
+    assert ins[k + 4].op == OP['JUMP']
+    assert Script.parse(script.build()).build() == script.build()

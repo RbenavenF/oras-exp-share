@@ -696,3 +696,43 @@ Siguiente paso: la zona de la isla.
 3. Poner un empleado de ferry con uid 0 que llame a `GlobalCall(10430)` para la vuelta.
 4. Puerta de la Mansión → zona 517 (la Fábrica) de momento.
 5. Cambiar `island.ARRIVAL` y probar ida y vuelta en Azahar.
+
+## 2026-11-02 21:46 — Claude Code — F6: zona de la isla (209) y sala clonada (213)
+Estado: en curso
+Hecho:
+- `frontier/island_build.py`: con CTRMap-F5 (`Build.java` del evento de Mew) clona 212
+  → 209 «Isla del Frente» (empleado del ferry uid 0, script de 212 sin la escena de
+  Blasco) y 517 → 213 (sala de la Mansión con la Fábrica, texto 619). Pone el nombre de
+  lugar 279. Lo llama `overlay.py`; `--no-island` lo salta.
+- El ferry llega ahora a (209, 53, 2, 34, 2).
+- `Build.java`: opción `keeptext.<zona>`. `Probe.java`: modo `repurpose`.
+Evidencia:
+- `reports/frontier.md` §18.
+- `python -m pytest -q tests` → 140 passed. El test nuevo del script de la isla falla si
+  se quita el cambio `JNZ` → `JUMP`.
+- Azahar: ferry → isla, con control libre y el nombre en pantalla; el muelle lleva a la
+  sala 213. Capturas `work/frontier/lab/f6c_*.png`.
+Commits: el de esta entrada.
+Decisiones:
+- Zonas 209 y 213: libres según `ZoneRepurposeScanner` y la búsqueda de literales. Las
+  473/474 quedan para Mew.
+- Distribución provisional: muelle → sala, sin edificio. Lo visual se deja para después,
+  como pidió el usuario.
+**Fallo abierto**: en 213, hablar con la recepcionista de la Fábrica cuelga el juego.
+- El juego queda en bucle dentro de un `printf`, que parece un aviso de error que no
+  vuelve.
+- En 517 funciona.
+**Estado del laboratorio**:
+- El warp de desarrollo apunta a la zona 213; `faraway/dev_overlay.sh 213 0` lo
+  reconstruye.
+- `use_gdbstub` vuelve a estar en `false`.
+- Partida `work/frontier/lab/f6_pass.sav` (`333ebfc5…`).
+Siguiente paso:
+1. En 213, hablar con un NPC que no sea de la Mansión. Si cuelga cualquiera, el problema
+   está en el clon (área o registro). Si solo cuelgan las recepcionistas, mirar qué
+   comprueban las nativas de la Mansión (`BattleInstWorkCreate` `0x1e5cd4`, …) sobre
+   la zona; empezar por los retornos de la pila `0x3dc308`, `0x3ffc54` y `0x50334c`.
+2. Si la Mansión exige la zona 517, otra vía: la isla lleva a la 517 real. La salida de
+   517 la elegiría un script según un work puesto al entrar desde la isla (disparador +
+   `_MapChangeCore`), en vez del warp fijo a 516.
+3. Probar la vuelta en ferry desde la isla y guardar en la isla.

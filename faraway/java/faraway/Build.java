@@ -64,7 +64,11 @@ public final class Build {
 		ctrmap.AreaForker.ForkResult area = ctrmap.AreaForker.forkIfShared(slot);
 		System.out.println("zone " + slot + " cloned from " + donor + "; own map; area "
 				+ (area == null ? "already private" : area.oldArea + " -> " + area.newArea));
-		// Restore the slot's own identity: story text file, script id, place name.
+		// Restore the slot's own identity: story text file, script id, place name. With keeptext.<slot> the
+		// donor's story text stays (a clone that runs the donor's script needs the donor's messages).
+		if (plan.getProperty("keeptext." + slot) != null) {
+			text = u16(MasterTable.read(s).row(slot), 0x06);
+		}
 		MasterTable table = MasterTable.read(s);
 		byte[] r = table.row(slot);
 		put16(r, 0x06, text);

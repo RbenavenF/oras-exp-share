@@ -10,7 +10,7 @@ Measured in reports/frontier.md §16:
   the destination menu with ListMenuAdd(line, value, 0) and switches on the answer: 0 Battle Resort (0xcb8),
   1 Slateport (0xe84), 2 Lilycove (0x1140). In Slateport (275) and Lilycove (317) the menu gains «Isla del
   Frente» (value 4) when the pass is held; value 4 runs a copy of the Battle Resort case (confirm, yes/no, the
-  same fade and horn, a direct map change) with its own lines and arrival point.
+  same fade and horn, a direct map change) with its own lines and arrival point, the island (zone 209).
 
 The harbor and the ferry are edited by content, not by hash: the harbor may already carry the Mew event (same
 zone, more cases and text lines), and every check below says what it expected when it fails.
@@ -41,8 +41,9 @@ FERRY_MENU = 'L8b8'
 RESORT_CASE, RESORT_CASE_END = 'Lcb8', 'Le84'
 RESORT_CONFIRM_LINE = 10
 RESORT_ARRIVAL = (212, 53, 2, 34, 2)       # (zone, x, height, y, direction) of the retail Battle Resort trip
-# Provisional: the island zone does not exist yet, so the new destination lands at the Battle Resort harbor.
-ARRIVAL = RESORT_ARRIVAL
+ZONE_ISLAND = 209              # the island exterior, a clone of the Resort harbor (frontier/island_build.py)
+# The island has the Resort harbor's geometry, so the ferry lands on the same tile.
+ARRIVAL = (ZONE_ISLAND,) + RESORT_ARRIVAL[1:]
 MAPCHANGE = 'L724'
 GAMETEXT_ITEM = {'counted': 113, 'single': 114, 'plural': 115, 'single2': 116, 'description': 117}
 

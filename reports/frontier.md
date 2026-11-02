@@ -709,3 +709,64 @@ partida de laboratorio `main` en la Ruta 102 con 2720 = 1 y el Ticket del Barco)
 - otros idiomas;
 - el menú de Portual (solo el test de la VM);
 - la consola.
+
+## 18. F6: zona de la isla (Azahar, 2026-11-02; en curso)
+
+Código: `frontier/island_build.py`, llamado desde `frontier/overlay.py` salvo con
+`--no-island`. Prepara una copia de los archivos que abre CTRMap-F5 (con las archivos
+del Frente encima) y ejecuta `faraway/java/faraway/Build.java`. Al plan se añade
+`keeptext.<zona>`: el clon conserva el texto del donante.
+
+**Zonas libres** (`faraway/run.sh Probe … repurpose`, que llama a `ZoneRepurposeScanner`
+de CTRMap-F5; salida en `work/frontier/island/repurpose.txt`):
+- «SAFEST» solo son 473 y 474, las de Mew.
+- 209 y 213 («Battle Resort», sin mapa, sin NPC, sin warps, sin disparadores) salen como
+  «likely free».
+- Ningún script empuja 209 o 213 antes de un cambio de mapa. Los únicos literales son
+  209 como desplazamiento de flag (zona 368) y 213 como espera de fotogramas.
+- Los cambios de mapa calculados de los compartidos 46, 71 y 74 son de Bases Secretas.
+  El del 35 es un ayudante que recibe la zona como argumento.
+- El texto 9 de la zona 209 son 12 líneas `[VAR BDFF n]` y no lo usa otra zona.
+- Lugar 279: impar y vacío en los 8 idiomas; el 277 es el de Mew.
+
+**Construcción** (`work/frontier/build-island/java.log`):
+- **209 «Isla del Frente»**: clon de 212 (muelle del Resort) con mapa propio y área
+  231.
+  - Un solo NPC: el empleado del ferry, uid 0, modelo 300, evento 2 (`GlobalCall(10430)`),
+    en (54,34).
+  - Warp 0 → 213.
+  - Script: el de 212 con el despachador reducido a −1, 1 y 2. En el 1 se cambia
+    `JNZ @3f28` por `JUMP`.
+- **213**: clon de 517 (sala de la Mansión con la Fábrica), con área 232 y el texto 619
+  conservado. Script idéntico al de 517 parcheado (14.940 bytes). Warp 0 → 209.
+- Llegada del ferry: `island.ARRIVAL` = (209, 53, 2, 34, 2).
+
+**Errores medidos y corregidos**:
+- Con el script de 212 entero, la llegada se cuelga. El evento 1 se ejecuta al llegar y,
+  con 16615 = 0, monta la escena de Blasco con los NPC 1–3, que no existen: pantalla
+  inferior oscurecida y sin control.
+- Sin el evento 1, la pantalla se queda en blanco: ese evento hace la bocina, el fundido
+  de entrada y `WorkSet(16707, 0)` (`0x3f28`).
+
+**Probado en Azahar** (`f6_pass.sav`, `333ebfc5…`: `main` con 2720, Ticket del Barco y
+Pase del Frente; warp de desarrollo al puerto, con gdb para leer la casilla):
+- empleado de Calagua → «Isla del Frente» → llegada a (53,34) con la cámara normal, el
+  nombre «Isla del Frente» abajo y control libre (`f6c_island.png`);
+- al norte del muelle se entra en 213, la sala de la Mansión, con el mismo nombre
+  (`f6c_hall.png`).
+
+**Fallo abierto: hablar con la recepcionista de la Fábrica en 213 cuelga el juego.**
+- La pantalla inferior se oscurece y la superior se congela a 0 FPS.
+- El CPU sigue en marcha, dentro de un formateador `printf` (`0x2ff9f0`/`0x2fee84`).
+- En la pila se está formateando la cadena «0x08d73c4c». Hay retornos en `0x3dc308`,
+  `0x3ffc54` y `0x50334c`: parece un aviso o volcado de error del juego que no vuelve.
+- En 517 la misma recepcionista funciona (§11–§15).
+- Sin probar todavía:
+  - si cuelga cualquier NPC de 213 o solo los de la Mansión;
+  - qué comprueba el código (zona 517, área, registro de NPC…).
+
+**Pendiente**:
+- la vuelta en ferry desde la isla (empleado uid 0, rama «otra zona»);
+- salir de 213 a 209;
+- guardar en la isla;
+- la consola.

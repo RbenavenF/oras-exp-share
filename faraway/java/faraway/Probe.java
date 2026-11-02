@@ -29,6 +29,8 @@ public final class Probe {
 						z, LocationNames.getLocName(s, h.parentMap), h.parentMap, h.areadataID, h.mapmatrixID, h.textID,
 						h.script, e.npcs.size(), e.warps.size(), e.triggers1.size(), e.triggers2.size(), e.furniture.size());
 			}
+		} else if (mode.equals("repurpose")) {
+			System.out.println(ctrmap.ZoneRepurposeScanner.report(ctrmap.ZoneRepurposeScanner.scanZones(s)));
 		} else if (mode.equals("disasm")) {
 			for (int i = 3; i < args.length; i++) {
 				int z = Integer.parseInt(args[i]);

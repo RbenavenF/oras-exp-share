@@ -37,6 +37,7 @@ import build_patch  # noqa: E402
 import data as fd  # noqa: E402
 import factory  # noqa: E402
 import island  # noqa: E402
+import island_build  # noqa: E402
 import patch  # noqa: E402
 
 ROMFS = ROOT / 'baseline/oras/repolished/romfs'
@@ -208,11 +209,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--romfs', type=Path, default=ROMFS)
+    parser.add_argument('--no-island', action='store_true', help='skip the CTRMap-F5 island zones (faster)')
     args = parser.parse_args()
     out = args.out.resolve()
     if not out.is_relative_to(ROOT / 'work'):
         parser.error('--out must be under work/ (the output contains game data)')
     archives, (zone_script, script5) = build(args.romfs)
+    if not args.no_island:
+        archives, log = island_build.build(archives, lambda rel: source(args.romfs, rel),
+                                           out.parent / (out.name + '-island'))
+        print(''.join(line + '\n' for line in log.splitlines() if line.startswith(('zone ', 'pack'))), end='')
     code, hook, _ = patch.build()
     if out.exists():
         shutil.rmtree(out)

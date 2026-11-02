@@ -232,7 +232,7 @@ Plan, bitácora, `frontier/survey.py`, pausa documentada del evento de Mew.
 ### F5 — Jefe, récords, Doble y Nivel Libre
 Jefe en los combates 21 y 42 con símbolos, cartel de récords, el resto de modalidades.
 
-### F6 — Isla del Frente: objeto, viaje, zona y Fábrica en su edificio (en curso; pase, marinero y destino del ferry probados en Azahar con llegada provisional al Resort, `reports/frontier.md` §16–§17)
+### F6 — Isla del Frente: objeto, viaje, zona y Fábrica en su edificio (en curso; pase, marinero, ferry e isla 209 probados en Azahar; la sala clonada 213 se cuelga al hablar con la recepcionista, `reports/frontier.md` §16–§18)
 - Objeto clave, su entrega, el viaje y la isla con el edificio de la Fábrica (§5.6),
   reutilizando lo del evento de Mew (`faraway/`). Textos ES/EN.
 - Paquete Luma `dist/oras-frontier-…` encadenado con v0.5 (y Mew si se quiere).
