@@ -534,6 +534,8 @@ def shared_program(shared, zone, cells, levels):
 def reception_routine(p):
     """factory_reception() -> 1 = back to the reception menu, 0 = challenge played."""
     r = Routine(p, 'factory_reception', ['streak'])
+    r.sysreq('WorkGet', patch.WORK_IV)
+    r.op('JNZ', 'factory_resume')    # paused Factory challenge: keep the rentals, as Emerald
     r.sysreq('GetMyWinCount', 0, 0)
     r.store('streak')
     r.op('MOVE_ALT', 0)
@@ -545,6 +547,7 @@ def reception_routine(p):
     r.sysreq('GlobalCall', GLOBAL_DRAFT)
     r.sysreq('GlobalGetChildParam', 0)
     r.op('JZER', 'factory_back')
+    r.p.label('factory_resume')
     r.sysreq('WorkSet', WORK_SELECT_RESULT, 1)
     r.sysreq('WorkSet', WORK_SELECT_TYPE, 0)
     r.sysreq('WorkSet', WORK_SELECT_X, 0)

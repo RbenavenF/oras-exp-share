@@ -128,7 +128,8 @@ def test_drafts_vary_with_the_clock_and_saved_state(game):
     assert offered(a, table) != offered(b, table)
 
 
-def reception(game, chosen, declined=False, streak_before=0, streak_after=0, iv=21):
+def reception(game, chosen, declined=False, streak_before=0, streak_after=0, iv=0):
+    """iv: WORK_IV on entry (0 = new sign-up). The stubbed draft writes IV 21 when it reports a choice."""
     *_, script, labels = game
     works, log = {fp.WORK_IV: iv}, []
     wins = [streak_before, streak_after]
@@ -138,8 +139,9 @@ def reception(game, chosen, declined=False, streak_before=0, streak_after=0, iv=
         return 1 if declined else 0
 
     stubs = natives({
+        'WorkGet': lambda vm, a: works.get(a[0], 0),
         'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
-        'GlobalCall': lambda vm, a: log.append(('global', a)),
+        'GlobalCall': lambda vm, a: log.append(('global', a)) or (chosen and works.__setitem__(fp.WORK_IV, 21)),
         'GlobalGetChildParam': lambda vm, a: chosen,
         'SetRank': lambda vm, a: log.append(('rank', a)),
         'GetMyWinCount': lambda vm, a: wins.pop(0),
@@ -161,6 +163,12 @@ def test_reception_plays_the_challenge(game):
 def test_reception_passes_the_streak_to_the_draft(game, before, passed):
     _, works, log = reception(game, chosen=0, streak_before=before)
     assert works[factory.WORK_STREAK] == passed and log[0] == ('global', [factory.GLOBAL_DRAFT])
+
+
+def test_reception_resumes_a_paused_factory_without_a_draft(game):
+    result, works, log = reception(game, chosen=0, streak_before=4, iv=21)  # paused: WORK_IV != 0 on entry
+    assert result == 0 and not [e for e in log if e[0] == 'global']
+    assert [e for e in log if e[0] == 'challenge'][0][1] == [0, 0, 0] and works[fp.WORK_IV] == 21
 
 
 def test_reception_keeps_a_paused_challenge(game):

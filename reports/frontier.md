@@ -469,9 +469,51 @@ Pruebas en el intérprete (`scripts/pawn_vm.py`, `tests/test_frontier_factory.py
   de la derrota (`f4e_after_loss.sav`, `d20c94ed…`) tiene 16410 = 0 y 16433–16435 =
   41, 24, 54. Vuelta al campo sin problemas.
 
-**Sin probar en Azahar**:
-- el sorteo nuevo tras la 7.ª victoria (solo en el intérprete:
-  `test_every_seven_wins_a_new_draft_until_chosen`);
-- la pausa y la reanudación;
-- rechazar el intercambio (tests: `test_swap_declined_keeps_the_team`);
-- nada en consola.
+**Sin probar en Azahar** cuando se escribió esta sección: el sorteo tras la 7.ª
+victoria, la pausa y la reanudación, y rechazar el intercambio. Las tres se probaron
+después (§13). Nada en consola.
+
+## 13. F4: pausa, reanudación y ronda completa (Azahar, 2026-11-02)
+
+**Racha en la partida** (medido comparando guardados, bloque 37):
+- `0x1BBC0`: racha actual de Individual Normal (`u16`). Pasa de 0 a 1 tras una
+  victoria y una pausa (`f4f_before_pause.sav` → `f4f_paused.sav`), y vuelve a 0 tras
+  perder.
+- `0x1BBC4`: récord.
+- En memoria es `[partida] + 0x195e0 + 0x1c4 + 2·rango`: `0x45cee8`, el que llama
+  `GetMyWinCount`.
+- Un primer intento de edición en `0x1BC00 + 0x1C4` (bloque 38) no tuvo efecto: la
+  racha siguió en 0.
+
+**Pausa**:
+- «Pausar» tras ganar guarda la partida (`f4f_paused.sav`, `02c6d7f3…`): 16410 = 3, los
+  3 alquileres, 16433–16435 del último rival y racha 1.
+- La Mansión no tiene un caso de reanudación aparte: al volver a la recepcionista sale
+  el menú normal, y la racha continúa al inscribirse otra vez en la misma modalidad.
+- Corrección: si 16410 ≠ 0 al elegir «Fábrica Batalla» (desafío pausado),
+  `factory_reception` no sortea y sigue con los alquileres guardados, como en Esmeralda
+  (`test_reception_resumes_a_paused_factory_without_a_draft`).
+
+**Reanudación con racha 6** (`f4f_paused_streak6.sav`, `aa5b24b3…`: la anterior con
+`0x1BBC0` = `0x1BBC4` = 6):
+- «Fábrica Batalla» → «Tu racha de victorias consecutivas obtenidas hasta el momento
+  asciende a 6.» → «¿Quieres participar…?», sin sorteo (`f4g_resume1.png`–`3.png`).
+- Combate 7 con los alquileres guardados (Swinub con PS llenos, `f4g_battle7.png`).
+  Perdido.
+- La partida de la derrota (`f4g_after_loss.sav`, `e0245289…`) tiene 16410 = 0, racha 0
+  y récord 6.
+- El rival tenía el conjunto N92, igual que uno de mis alquileres. La Mansión no excluye
+  las especies del jugador (Esmeralda sí): desviación conocida.
+
+**Ronda completa** (`f4h_paused_streak6_legend.sav`, `2703fb2a…`: la anterior con
+16410 = 31 y alquileres S922 Latias, S915 Regice y S940 Tornadus, para asegurar la
+victoria):
+- Reanudación y combate 7 ganado. En vez del intercambio sale «Elige tu primer Pokémon
+  de alquiler.» con 6 nuevos: Purugly, Gurdurr, Stunfisk, Mightyena… (`f4h_redraft.png`).
+- Elegí 3 y salió «El próximo combate será el número 8» (`f4h_after_redraft.png`).
+- Pausa → `f4h_paused_round2.sav` (`0c15ca2d…`): 16410 = 6 (IV de la ronda 2),
+  16411–16413 = N152 Purugly, N132 Gurdurr y N154 Stunfisk, los tres del nivel 2
+  (`maisonpkN` 132–169), racha 7 y 16429 = 7.
+
+**Intercambio rechazado** (`f4f_no_swap.png`): «No cambiar» tras ganar mantiene el equipo
+y sigue al menú de continuar.

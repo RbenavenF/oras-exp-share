@@ -487,3 +487,36 @@ Siguiente paso:
 2. Pausa y reanudación (caso 3 del despachador, `0x5b58`), con la Fábrica activa.
 3. Racha propia de la Fábrica y PB por ronda de Esmeralda (ahora son los de la Mansión).
 4. Después, F6: isla del Frente (objeto, ferry de Calagua, zona nueva).
+
+## 2026-11-02 14:54 — Claude Code (Opus 5.5) — F4: ronda completa, pausa y reanudación
+Estado: en curso
+Hecho:
+- Racha de Individual Normal localizada en la partida: `0x1BBC0` (actual) y `0x1BBC4`
+  (récord), bloque 37.
+- `factory_reception`: con la Fábrica activa (desafío pausado) no sortea y reanuda con
+  los alquileres guardados.
+- Probado en Azahar:
+  - intercambio rechazado;
+  - pausa (guarda la Fábrica y la racha);
+  - reanudación con racha 6;
+  - derrota en el combate 7 (Fábrica limpia);
+  - victoria en el 7 → sorteo nuevo del nivel 2 con IV 6 → «combate número 8».
+- `reports/frontier.md` §13; PLAN F4 actualizado.
+Evidencia: `reports/frontier.md` §13. Partidas `work/frontier/lab/f4f_paused.sav`
+(`02c6d7f3…`), `f4f_paused_streak6.sav` (`aa5b24b3…`), `f4g_after_loss.sav`
+(`e0245289…`), `f4h_paused_streak6_legend.sav` (`2703fb2a…`) y
+`f4h_paused_round2.sav` (`0c15ca2d…`). `python -m pytest -q` → 109 passed.
+`use_gdbstub` en `false`.
+Commits: ver `git log` («Battle Frontier F4: resume a paused Factory, full round tested»).
+Decisiones:
+- Las partidas de laboratorio se editan con la racha en `0x1BBC0` y con alquileres
+  fuertes para llegar rápido a los casos.
+- Desviación aceptada por ahora: el rival puede llevar especies que tiene el jugador.
+Siguiente paso:
+1. Racha propia de la Fábrica: ahora se comparte con Individual Normal de la Mansión, y
+   «Combatir» la continúa con el equipo del jugador. Opción: guardar la racha de la
+   Mansión al entrar en la Fábrica y restaurarla al salir, o usar works propios
+   (16430…) y restaurar `0x1BBC0`.
+2. PB por ronda de Esmeralda (3, 3, 4, … al ganar el 7.º) en lugar de los de la
+   Mansión por combate.
+3. Después, F6: isla del Frente.
