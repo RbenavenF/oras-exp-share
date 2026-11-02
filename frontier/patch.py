@@ -6,7 +6,8 @@ party builder behaves as in the retail game. Steps:
 1. Check the clean and Repolished code.bin (SHA-256) and the exact words at the hook site and padding.
 2. Assemble frontier/asm/rental.s with arm-none-eabi-as/ld at the start of the .text padding.
 3. Redirect the player-party branch of the party builder (0x1e3d8c) to it, and the rival builder's set read
-   (0x1e4b34) to `rival_hook`, which copies the rival's sets to WORK_RIVAL for the swap.
+   (0x1e4b34) to `rival_hook`, which copies the rival's sets to WORK_RIVAL for the swap, and the Maison's four
+   Singles streak accessors to the Factory streak works while WORK_ROUTE is set.
 4. Point the text of the GlobalCall row for ids 9770-9779 (shared script 5, the Factory draft;
    frontier/factory.py) at a new story text entry, TEXT_FACTORY.
 5. Write code.bin and code.ips; the IPS is the diff from the clean code.bin, so it already contains
@@ -54,6 +55,12 @@ WORK_IV = 16410            # Factory state: rentals' IV 1-31; 0 = inactive (reta
 WORK_SETS = (16411, 16412, 16413)   # rentals: bit 15 Super (0xb8) else Normal (0xb6), bits 10-11 ability
 SUPER = 0x8000                      # slot (3 = random), bits 0-9 set index
 WORK_RIVAL = (16433, 16434, 16435)  # last rival's set indices (maisonpkN/S of the rank; written by rival_hook)
+WORK_FSTREAK, WORK_ROUTE, WORK_FRECORD = 16437, 16438, 16439   # Factory streak / «route the streak» / record
+MAISON_BASE = 0x195E0                 # Maison block in the save data (GetMyWinCount native, AddWinCount 0x1e2fd4)
+SAVE_WORKS = 0x13144                  # saved works in the save data (WorkGet 0x3fe118)
+# Maison Singles streak accessors: site -> (stub, resume). Each site is add OUT, r0, r2, lsl #1.
+STREAK_SITES = {0x45CDC4: ('streak_inc', 0xE0801082), 0x45CF14: ('streak_get', 0xE0800082),
+                0x45CFB8: ('streak_set', 0xE0800082), 0x45D03C: ('streak_record', 0xE0800082)}
 ABILITY_SHIFT, ABILITY_RANDOM = 10, 3
 # GlobalCall range table (rodata, 86 rows of u16 first id, last id, shared script, flag, story text, 0, 0, 0
 # from 0x587678): the row for ids 9770-9779 (shared script 5, a retail placeholder) gets the Factory text.
@@ -61,7 +68,12 @@ GLOBAL_ROW = 0x587AA8
 GLOBAL_ROW_BEFORE = (9770, 9779, 5, 1, 618, 0, 0, 0)
 TEXT_FACTORY = 637                  # new story text entry (the retail archives have 637 entries, 0-636)
 CONSTANTS = {'WORK_IV': WORK_IV, 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'RENTAL_LEVEL': 50,
-             'RENTALS': len(WORK_SETS), 'WORK_RIVAL': WORK_RIVAL[0]}
+             'RENTALS': len(WORK_SETS), 'WORK_RIVAL': WORK_RIVAL[0],
+             'ROUTE_DELTA': MAISON_BASE - SAVE_WORKS - 2 * (WORK_ROUTE - 0x4000),
+             'SLOT_DELTA': MAISON_BASE - SAVE_WORKS - 2 * (WORK_FSTREAK - 0x4000) + 0x1C4}
+assert WORK_FRECORD == WORK_FSTREAK + 2      # the accessors read the record at slot + 0x1c8
+for _name in ('ROUTE_DELTA', 'SLOT_DELTA'):
+    assert CONSTANTS[_name] < 0x10000          # two subs: bits 8-15 and 0-7
 
 
 def word(data, va):
@@ -79,7 +91,8 @@ def assemble():
         obj, elf, binary = (Path(tmp) / n for n in ('hook.o', 'hook.elf', 'hook.bin'))
         defs = [a for k, v in CONSTANTS.items() for a in ('--defsym', f'{k}={v}')]
         subprocess.run(['arm-none-eabi-as', '-mcpu=mpcore', *defs, '-o', obj, ASM], check=True)
-        syms = [f'--defsym={k}={v:#x}' for k, v in FUNCTIONS.items()]
+        resumes = {f'STREAK_{stub[7:].upper()}_RESUME': site + 4 for site, (stub, _) in STREAK_SITES.items()}
+        syms = [f'--defsym={k}={v:#x}' for k, v in {**FUNCTIONS, **resumes}.items()]
         subprocess.run(['arm-none-eabi-ld', f'-Ttext={CAVE:#x}', '-e', 'rental_hook', *syms, '-o', elf, obj],
                        check=True)
         subprocess.run(['arm-none-eabi-objcopy', '-O', 'binary', '-j', '.text', elf, binary], check=True)
@@ -114,6 +127,10 @@ def build():
     if word(code, RIVAL_SITE) != RIVAL_BEFORE:
         sys.exit(f'rival site word differs: {word(code, RIVAL_SITE):08x}')
     struct.pack_into('<I', code, RIVAL_SITE - BASE, arm_branch(RIVAL_SITE, symbols['rival_hook'], link=True))
+    for va, (stub, before) in STREAK_SITES.items():
+        if word(code, va) != before:
+            sys.exit(f'streak accessor {va:#x} differs: {word(code, va):08x}')
+        struct.pack_into('<I', code, va - BASE, arm_branch(va, symbols[stub]))
     row = struct.unpack_from('<8H', code, GLOBAL_ROW - BASE)
     if row != GLOBAL_ROW_BEFORE:
         sys.exit(f'GlobalCall row {GLOBAL_ROW:#x} differs: {row}')

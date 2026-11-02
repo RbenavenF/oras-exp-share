@@ -19,7 +19,7 @@ script (ZO container 21428 bytes) hangs the field load in Azahar while 16.5 KB (
 - Zone 517 (addresses of work/frontier/survey/zone517.lst, reports/frontier.md §1): a fifth reception menu
   entry «Battle Factory» (text 619 line LINE_OPTION, value 4) before «Nothing»; at 0x1634 value 4 calls
   `factory_reception`: WORK_STREAK = max(GetMyWinCount(0, 0), 0), GlobalCall(GLOBAL_DRAFT); if chosen, works
-  0x800C-0x800E, SetRank(0) and the Maison challenge routine 0x18f8(rank 0, Singles, 0) without the mode
+  0x800C-0x800E and the Maison challenge routine 0x18f8(rank 0, Singles, 0) without the mode
   selection app. Its result is the «back to the menu» local (-4) the info options also set: declined
   confirmation or cancelled draft -> back to the menu, Factory cleared; challenge played -> 0, Factory
   cleared if the streak is 0 (lost), kept if not (paused, for the resume). Option 0 (the Maison's own
@@ -534,18 +534,20 @@ def shared_program(shared, zone, cells, levels):
 
 
 def reception_routine(p):
-    """factory_reception() -> 1 = back to the reception menu, 0 = challenge played."""
-    r = Routine(p, 'factory_reception', ['streak'])
+    """factory_reception() -> 1 = back to the reception menu, 0 = challenge played.
+
+    patch.WORK_ROUTE is set for the whole challenge: the code.bin streak hooks then point the Maison's Singles
+    Normal streak and record at the Factory's own works (patch.WORK_FSTREAK / WORK_FRECORD), so every Maison
+    streak read and write (battle number, trainer brackets, BP, records, ClearWinCount after a loss) applies
+    to the Factory. Cleared when the challenge returns, and at every reception (a save made during the
+    challenge can hold it)."""
+    r = Routine(p, 'factory_reception', [])
+    r.sysreq('SetRank', 0)                      # the streak route covers rank Normal only
+    r.sysreq('WorkSet', patch.WORK_ROUTE, 1)
     r.sysreq('WorkGet', patch.WORK_IV)
-    r.op('JNZ', 'factory_resume')    # paused Factory challenge: keep the rentals, as Emerald
-    r.sysreq('GetMyWinCount', 0, 0)
-    r.store('streak')
-    r.op('MOVE_ALT', 0)
-    r.op('ZERO_PRI', 0)
-    r.op('JSLEQ', 'factory_streak')  # 0 <= streak
-    r.set('streak', 0)
-    r.p.label('factory_streak')
-    r.sysreq('WorkSet', WORK_STREAK, 'streak')
+    r.op('JNZ', 'factory_resume')    # paused Factory challenge: keep the rentals and streak, as Emerald
+    r.sysreq('WorkSet', patch.WORK_FSTREAK, 0)  # a new challenge starts at round 1
+    r.sysreq('WorkSet', WORK_STREAK, 0)
     r.sysreq('GlobalCall', GLOBAL_DRAFT)
     r.sysreq('GlobalGetChildParam', 0)
     r.op('JZER', 'factory_back')
@@ -553,20 +555,22 @@ def reception_routine(p):
     r.sysreq('WorkSet', WORK_SELECT_RESULT, 1)
     r.sysreq('WorkSet', WORK_SELECT_TYPE, 0)
     r.sysreq('WorkSet', WORK_SELECT_X, 0)
-    r.sysreq('SetRank', 0)
     r.call(CHALLENGE, 0, 0, 0)
     r.op('EQ_P_C_PRI', 1)
     r.op('JNZ', 'factory_back')      # declined the confirmation
-    r.sysreq('GetMyWinCount', 0, 0)
+    r.sysreq('GetMyWinCount', 0, 0)  # the Factory streak (route still set)
     r.op('MOVE_ALT', 0)
     r.op('ZERO_PRI', 0)
     r.op('JSLESS', 'factory_kept')   # 0 < streak: paused, keep the rentals for the resume
     r.sysreq('WorkSet', patch.WORK_IV, 0)
     r.p.label('factory_kept')
+    r.sysreq('WorkSet', patch.WORK_ROUTE, 0)
     r.op('ZERO_PRI', 0)
     r.ret()
     r.p.label('factory_back')
     r.sysreq('WorkSet', patch.WORK_IV, 0)
+    r.sysreq('WorkSet', patch.WORK_FSTREAK, 0)
+    r.sysreq('WorkSet', patch.WORK_ROUTE, 0)
     r.const(1)
     r.ret()
 
@@ -646,16 +650,24 @@ def _index(p, label):
     return p.items.index(('label', label))
 
 
-def _clear(p):
+def _clear(p, *also):
+    """WorkSet(WORK_IV, 0) and WorkSet(w, 0) for each extra work."""
     body = Program(p.script)
     body.native_hashes = p.native_hashes
-    body.sysreq('WorkSet', patch.WORK_IV, 0)
+    for work in (patch.WORK_IV, *also):
+        body.sysreq('WorkSet', work, 0)
     return body.items
 
 
 def reception(p):
     """Insert the menu entry, the dispatch to factory_reception and the Factory clears into script 517."""
     start, native = _index(p, 'L14f4'), p.native('ListMenuAdd')
+    create = next(i for i in range(start, len(p.items)) if isinstance(p.items[i], Op)
+                  and p.items[i].op == OP['SYSREQ_N'] and p.items[i].args[0] == p.native('BattleInstWorkCreate'))
+    route = Program(p.script)
+    route.native_hashes = p.native_hashes
+    route.sysreq('WorkSet', patch.WORK_ROUTE, 0)  # every reception starts with the Maison's own streaks
+    p.items[create + 1:create + 1] = route.items
     adds = [i for i in range(start, _index(p, RECEPTION_RESULT)) if isinstance(p.items[i], Op)
             and p.items[i].op == OP['SYSREQ_N'] and p.items[i].args[0] == native]
     if len(adds) != 4:
@@ -678,7 +690,8 @@ def reception(p):
     dispatch.emit('STOR_P_S_PRI', RECEPTION_AGAIN)
     dispatch.emit('JUMP', RECEPTION_NEXT)
     dispatch.label('factory_not_chosen')
-    p.items[at + 3:at + 3] = _clear(p)            # option 0, the Maison's own challenge
+    p.items[at + 3:at + 3] = _clear(p, patch.WORK_FSTREAK)   # option 0: the Maison's own challenge abandons
+                                                              # a paused Factory
     p.items[at + 1:at + 1] = dispatch.items
 
     at = _index(p, CLEANUP)

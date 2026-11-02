@@ -540,3 +540,33 @@ Siguiente paso:
    la entrada anterior).
 2. Luego, F6: isla del Frente. El Pase del Frente lo da un marinero del puerto de
    Calagua tras la Liga; destino en el ferry; zona nueva con la geometría del Resort.
+
+## 2026-11-02 15:28 — Claude Code (Opus 5.5) — F4: racha propia de la Fábrica
+Estado: en curso
+Hecho:
+- `code.bin`: los 4 accesores de la racha de Individual de la Mansión (`0x45cdc4`,
+  `0x45cf14`, `0x45cfb8`, `0x45d03c`) se desvían a los works 16437 (racha) y 16439
+  (récord) mientras el work 16438 = 1 y el rango es Normal (`rental.s`
+  `FACTORY_SLOT`).
+- Script: la Fábrica activa el desvío durante el desafío, empieza en racha 0 y lo limpia
+  al volver y en cada recepción.
+- `reports/frontier.md` §15 y PLAN F4.
+Evidencia: `reports/frontier.md` §15. Partidas `work/frontier/lab/f4j_saved.sav`
+(`becfbd96…`), `f4j_paused.sav` (`7195a65c…`) y `f4j_after_loss.sav` (`355e5928…`),
+con la Mansión en 20/20 en las tres. `python -m pytest -q` → 128 passed.
+`use_gdbstub` en `false`.
+Commits: ver `git log` («Battle Frontier F4: the Factory keeps its own streak»).
+Decisiones:
+- Desvío en `code.bin` en lugar de copiar y restaurar la racha desde el script, porque
+  cubre también los guardados que la Mansión hace dentro de su bucle.
+- Límite aceptado: una partida guardada durante el desafío deja 16438 = 1 hasta la
+  siguiente recepción.
+Siguiente paso: F4 está completa para Nivel 50 Individual, salvo detalles:
+- sexo del alquiler al azar en cada combate;
+- el rival no excluye las especies del jugador;
+- el rival sale de los tramos de entrenador de la Mansión, no del nivel de la ronda.
+Propongo cerrar F4 y empezar F6 (isla del Frente), dejando esos detalles para F5. Primer
+paso de F6:
+1. medir el flag de campeón de la Liga;
+2. medir el menú de destinos del ferry de Calagua (script compartido 79);
+3. medir un hueco de objeto clave libre para el Pase del Frente (como el Mapa Viejo).

@@ -547,3 +547,63 @@ build nuevo.
 - La partida de la derrota (`f4i_after_loss.sav`, `d080c541…`) tiene PB 4 (+3 en la
   ronda 1), 16410 = 0, racha 0 y récord 7.
 - El mensaje de PB no quedó en captura: los toques de pantalla lo pasaron.
+
+## 15. F4: racha propia de la Fábrica (Azahar, 2026-11-02)
+
+**Accesores de la racha de la Mansión** (lectura de `code.bin`; base = partida +
+`0x195e0`; `r1` = tipo, `r2` = rango; tablas de saltos por tipo):
+
+| Función | Individual | Instrucción sustituida |
+|---|---|---|
+| sumar 1 (`AddWinCount` → `0x1e3024`) | `0x45cdc4` | `add r1, r0, r2, lsl #1`, luego `+0x1c4` actual y `+0x1c8` récord |
+| leer (`GetMyWinCount`, `0x45cee8`) | `0x45cf14` | `add r0, r0, r2, lsl #1` |
+| poner a 0 (`ClearWinCount` → `0x45cf8c`) | `0x45cfb8` | `add r0, r0, r2, lsl #1` |
+| leer récord (`0x45d010`) | `0x45d03c` | `add r0, r0, r2, lsl #1` |
+
+En la partida son `0x1BBC0` (actual, Normal), `0x1BBC2` (Súper), `0x1BBC4` (récord,
+Normal) y `0x1BBC6`.
+
+**Desvío** (`frontier/asm/rental.s`, macro `FACTORY_SLOT`):
+- Cada instrucción se sustituye por un salto a un trozo que, con rango Normal y el work
+  16438 ≠ 0, apunta la base para que `+0x1c4` sea el work 16437 (racha de la Fábrica) y
+  `+0x1c8` el 16439 (récord). Si no, ejecuta la instrucción original.
+- Solo usa `ip` y las banderas, que el código siguiente vuelve a fijar.
+- Todo lo de la Mansión que lee o escribe la racha de Individual Normal actúa sobre la
+  de la Fábrica: número de combate, tramos de entrenador, PB, récords, `ClearWinCount`
+  al perder.
+- Tests Unicorn de las cuatro funciones completas: sin desvío, rango Súper, y desvío con
+  récord nuevo.
+- Hook total: 496 bytes.
+
+**Script** (`factory.reception_routine`):
+- `factory_reception` hace `SetRank(0)` y 16438 = 1 durante el desafío. Al volver lo
+  pone a 0.
+- Una inscripción nueva pone 16437 = 0, como en Esmeralda (cada desafío empieza en la
+  ronda 1). Una reanudación la conserva.
+- Volver al menú, cancelar o rechazar ponen a 0 16410, 16437 y 16438.
+- La recepción pone 16438 = 0 justo después de `BattleInstWorkCreate`, por si una
+  partida guardada a mitad de desafío lo dejó en 1.
+- «Combatir» (opción 0) abandona una Fábrica pausada: 16410 = 16437 = 0.
+- El sorteo ya no lee la racha de la Mansión: recibe 16429 = 0 al inscribirse y la
+  racha de la Fábrica tras cada victoria.
+
+**Prueba** (`main-maison-maison20`, `b442b8dd…`: `main-maison` con racha y récord de
+Individual Normal en 20):
+- «Fábrica Batalla» → sorteo → «¿Quieres participar…?» sin «Tu racha… asciende a 20».
+- Partida guardada antes del combate (`f4j_saved.sav`, `becfbd96…`): Mansión 20/20,
+  Fábrica 0, 16438 = 1.
+- Combate 1 ganado y sin mensaje de PB. Intercambio rechazado. «El próximo combate será
+  el número 2» (`f4j_next.png`).
+- Pausa (`f4j_paused.sav`, `7195a65c…`): Fábrica 1, récord de la Fábrica 1, Mansión
+  20/20.
+- Reanudación: «Tu racha… asciende a 1» (`f4j_resume.png`). Combate 2 y retirada.
+- Partida de la derrota (`f4j_after_loss.sav`, `355e5928…`): 16410 = 0, Fábrica 0,
+  récord de la Fábrica 1, Mansión 20/20.
+
+**Limitación conocida**: una partida guardada durante el desafío (al guardar antes del
+combate, al pausar o al perder) queda con 16438 = 1. Hasta que vuelvas a hablar con la
+recepcionista, las lecturas de la racha de Individual Normal de la Mansión van a las de
+la Fábrica.
+- Solo las hacen los scripts de la Mansión, salvo lo que no se haya visto: no se ha
+  medido si la tarjeta de entrenador o el PSS muestran esa racha.
+- La recepción lo limpia al entrar.

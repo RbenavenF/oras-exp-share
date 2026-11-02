@@ -130,9 +130,9 @@ def test_patch_only_touches_site_padding_and_text_row(patched):
     site = fp.SITE - fp.BASE
     cave = fp.CAVE - fp.BASE
     text = fp.GLOBAL_ROW - fp.BASE + 8
-    rival = fp.RIVAL_SITE - fp.BASE
+    singles = [va - fp.BASE for va in (fp.RIVAL_SITE, *fp.STREAK_SITES)]
     assert all(site <= i < site + 20 or cave <= i < cave + len(hook) or text <= i < text + 2
-               or rival <= i < rival + 4 for i in diff)
+               or any(s <= i < s + 4 for s in singles) for i in diff)
     assert struct.unpack_from('<8H', code, fp.GLOBAL_ROW - fp.BASE) == (9770, 9779, 5, 1, fp.TEXT_FACTORY, 0, 0, 0)
     assert len(code) == len(original)
 
@@ -176,3 +176,51 @@ def test_rival_sets_untouched_while_the_factory_is_inactive(patched):
     code, _, _ = patched
     uc, rivals = run_rival(code, 1, iv=0)
     assert uc.reg_read(REGS['r4']) == 0x1A7 and rivals == [0xBEEF] * 3
+
+
+ENTRY = {'inc': 0x45CD98, 'get': 0x45CEE8, 'clear': 0x45CF8C, 'record': 0x45D010}
+
+
+def run_streak(code, func, rank, route, maison=(5, 9, 40, 70), factory=(3, 30)):
+    """Run a Maison Singles streak accessor; maison = (current N, current S, record N, record S)."""
+    uc = Uc(UC_ARCH_ARM, UC_MODE_ARM)
+    uc.mem_map(0x100000, (len(code) + 0xFFF) & ~0xFFF)
+    uc.mem_write(0x100000, code)
+    uc.mem_map(STACK - 0x10000, 0x10000)
+    uc.mem_map(SAVE, 0x20000)
+    base = SAVE + fp.MAISON_BASE
+    uc.mem_write(base + 0x1C4, struct.pack('<4H', *maison))
+    uc.mem_write(work_address(fp.WORK_ROUTE), struct.pack('<H', route))
+    uc.mem_write(work_address(fp.WORK_FSTREAK), struct.pack('<H', factory[0]))
+    uc.mem_write(work_address(fp.WORK_FRECORD), struct.pack('<H', factory[1]))
+    for name, value in {'r0': base, 'r1': 0, 'r2': rank, 'r3': 0x33, 'sp': STACK - 0x100, 'lr': 0xDEAD0000}.items():
+        uc.reg_write(REGS[name], value)
+    uc.mem_map(0xDEAD0000, 0x1000)
+    uc.emu_start(ENTRY[func], 0xDEAD0000, count=200)
+    maison_after = struct.unpack('<4H', uc.mem_read(base + 0x1C4, 8))
+    factory_after = tuple(struct.unpack('<H', uc.mem_read(work_address(n), 2))[0]
+                          for n in (fp.WORK_FSTREAK, fp.WORK_FRECORD))
+    return uc.reg_read(REGS['r0']), maison_after, factory_after
+
+
+@pytest.mark.parametrize('rank, route', [(0, 0), (1, 0), (1, 1)])
+def test_maison_streaks_untouched_without_the_factory_route(patched, rank, route):
+    code, _, _ = patched
+    assert run_streak(code, 'get', rank, route)[0] == (5, 9)[rank]
+    assert run_streak(code, 'record', rank, route)[0] == (40, 70)[rank]
+    _, maison, factory = run_streak(code, 'inc', rank, route)
+    assert maison == ((6, 9, 40, 70) if rank == 0 else (5, 10, 40, 70)) and factory == (3, 30)
+    _, maison, factory = run_streak(code, 'clear', rank, route)
+    assert maison == ((0, 9, 40, 70) if rank == 0 else (5, 0, 40, 70)) and factory == (3, 30)
+
+
+def test_factory_route_uses_its_own_streak_and_record(patched):
+    code, _, _ = patched
+    assert run_streak(code, 'get', 0, 1)[0] == 3
+    assert run_streak(code, 'record', 0, 1)[0] == 30
+    _, maison, factory = run_streak(code, 'inc', 0, 1)
+    assert maison == (5, 9, 40, 70) and factory == (4, 30)
+    _, maison, factory = run_streak(code, 'inc', 0, 1, factory=(30, 30))
+    assert maison == (5, 9, 40, 70) and factory == (31, 31)          # new Factory record
+    _, maison, factory = run_streak(code, 'clear', 0, 1)
+    assert maison == (5, 9, 40, 70) and factory == (0, 30)

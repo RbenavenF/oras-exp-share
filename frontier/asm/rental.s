@@ -108,3 +108,37 @@ rival_hook:
     add     r0, r0, r7, lsl #1
     strh    r4, [r0]
     bx      lr
+
+@ Battle Factory streak, separate from the Maison's. The Maison keeps the Singles streaks in its save block at
+@ base + 0x1c4 + 2*rank (current) and base + 0x1c8 + 2*rank (record), base = save + 0x195e0. Its four accessors
+@ for Singles (increment 0x45cdc4, get 0x45cf14, set 0x45cfb8, get record 0x45d03c) all start with
+@ add OUT, r0, r2, lsl #1 (r0 = base, r2 = rank); each is replaced by a branch here. While saved work WORK_ROUTE
+@ is set (the zone script sets it for a Factory challenge) and the rank is Normal, OUT points so that +0x1c4 is
+@ saved work WORK_FSTREAK and +0x1c8 is WORK_FRECORD (WORK_FSTREAK + 2). Only ip and the flags are used; the
+@ flags are set again by the code each accessor resumes into. The works are reached from r0:
+@ &work[N] = base - 0x195e0 + 0x13144 + 2*(N - 0x4000).
+    .macro FACTORY_SLOT out, resume
+    cmp     r2, #0
+    bne     1f
+    sub     ip, r0, #(ROUTE_DELTA & 0xff00)
+    sub     ip, ip, #(ROUTE_DELTA & 0xff)
+    ldrh    ip, [ip]
+    cmp     ip, #0
+    beq     1f
+    sub     \out, r0, #(SLOT_DELTA & 0xff00)
+    sub     \out, \out, #(SLOT_DELTA & 0xff)
+    b       \resume
+1:
+    add     \out, r0, r2, lsl #1    @ original instruction
+    b       \resume
+    .endm
+
+    .global streak_inc, streak_get, streak_set, streak_record
+streak_inc:
+    FACTORY_SLOT r1, STREAK_INC_RESUME
+streak_get:
+    FACTORY_SLOT r0, STREAK_GET_RESUME
+streak_set:
+    FACTORY_SLOT r0, STREAK_SET_RESUME
+streak_record:
+    FACTORY_SLOT r0, STREAK_RECORD_RESUME

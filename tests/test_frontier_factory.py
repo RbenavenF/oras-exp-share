@@ -128,11 +128,12 @@ def test_drafts_vary_with_the_clock_and_saved_state(game):
     assert offered(a, table) != offered(b, table)
 
 
-def reception(game, chosen, declined=False, streak_before=0, streak_after=0, iv=0):
-    """iv: WORK_IV on entry (0 = new sign-up). The stubbed draft writes IV 21 when it reports a choice."""
+def reception(game, chosen, declined=False, streak_before=0, streak_after=0, iv=0, fstreak=0):
+    """iv: WORK_IV on entry (0 = new sign-up). The stubbed draft writes IV 21 when it reports a choice.
+    GetMyWinCount answers streak_after (after the challenge); streak_before is never asked any more."""
     *_, script, labels = game
-    works, log = {fp.WORK_IV: iv}, []
-    wins = [streak_before, streak_after]
+    works, log = {fp.WORK_IV: iv, fp.WORK_FSTREAK: fstreak}, []
+    wins = [streak_after]
 
     def challenge(vm, args):
         log.append(('challenge', args, dict(works)))
@@ -141,7 +142,8 @@ def reception(game, chosen, declined=False, streak_before=0, streak_after=0, iv=
     stubs = natives({
         'WorkGet': lambda vm, a: works.get(a[0], 0),
         'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
-        'GlobalCall': lambda vm, a: log.append(('global', a)) or (chosen and works.__setitem__(fp.WORK_IV, 21)),
+        'GlobalCall': lambda vm, a: log.append(('global', a, dict(works)))
+        or (chosen and works.__setitem__(fp.WORK_IV, 21)),
         'GlobalGetChildParam': lambda vm, a: chosen,
         'SetRank': lambda vm, a: log.append(('rank', a)),
         'GetMyWinCount': lambda vm, a: wins.pop(0),
@@ -152,22 +154,33 @@ def reception(game, chosen, declined=False, streak_before=0, streak_after=0, iv=
 
 def test_reception_plays_the_challenge(game):
     result, works, log = reception(game, chosen=1)
-    assert result == 0 and log[0] == ('global', [factory.GLOBAL_DRAFT])
+    assert result == 0 and log[1][:2] == ('global', [factory.GLOBAL_DRAFT])
     assert ('rank', [0]) in log
     _, args, seen = next(e for e in log if e[0] == 'challenge')
     assert args == [0, 0, 0] and seen[0x800C] == 1 and seen[0x800D] == 0 and seen[0x800E] == 0
     assert seen[fp.WORK_IV] == 21 and works[fp.WORK_IV] == 0      # lost: Factory cleared
 
 
-@pytest.mark.parametrize('before, passed', [(0, 0), (12, 12), (-1, 0)])
-def test_reception_passes_the_streak_to_the_draft(game, before, passed):
-    _, works, log = reception(game, chosen=0, streak_before=before)
-    assert works[factory.WORK_STREAK] == passed and log[0] == ('global', [factory.GLOBAL_DRAFT])
+@pytest.mark.parametrize('maison', [0, 12])
+def test_a_new_factory_challenge_starts_its_own_streak_at_zero(game, maison):
+    _, works, log = reception(game, chosen=0, streak_after=maison, fstreak=5)
+    draft = next(e for e in log if e[0] == 'global')
+    assert works[factory.WORK_STREAK] == 0 and draft[1] == [factory.GLOBAL_DRAFT]
+    assert draft[2][fp.WORK_ROUTE] == 1 and draft[2][fp.WORK_FSTREAK] == 0 and log[0] == ('rank', [0])
+
+
+@pytest.mark.parametrize('chosen, declined, after', [(1, False, 0), (1, False, 3), (0, False, 0), (1, True, 0)])
+def test_the_streak_route_covers_only_the_challenge(game, chosen, declined, after):
+    _, works, log = reception(game, chosen=chosen, declined=declined, streak_after=after)
+    for e in log:
+        if e[0] == 'challenge':
+            assert e[2][fp.WORK_ROUTE] == 1
+    assert works[fp.WORK_ROUTE] == 0
 
 
 def test_reception_resumes_a_paused_factory_without_a_draft(game):
-    result, works, log = reception(game, chosen=0, streak_before=4, iv=21)  # paused: WORK_IV != 0 on entry
-    assert result == 0 and not [e for e in log if e[0] == 'global']
+    result, works, log = reception(game, chosen=0, streak_after=4, iv=21, fstreak=4)  # paused: WORK_IV != 0
+    assert result == 0 and not [e for e in log if e[0] == 'global'] and works[fp.WORK_FSTREAK] == 4
     assert [e for e in log if e[0] == 'challenge'][0][1] == [0, 0, 0] and works[fp.WORK_IV] == 21
 
 
