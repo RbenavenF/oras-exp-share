@@ -428,3 +428,15 @@ Resort Batalla).
 Siguiente paso: el de la entrada «F4: inscripción en la Fábrica» (cambio tras la victoria,
 sorteo cada 7 victorias, derrota, pausa y reanudación). Para F6 habrá que medir el flag de
 campeón y el menú de destinos del ferry (script compartido 79).
+
+## 2026-11-02 13:35 — Claude Code (Opus 5.5) — Propuestas de la isla aceptadas
+Estado: en curso
+Hecho: el usuario acepta las propuestas («propón algo y tira, lo mejoraremos»): entrega el
+pase un marinero del puerto de Calagua con la Liga ganada; la isla es una zona nueva con la
+geometría clonada del exterior del Resort Batalla. PLAN §5.6 actualizado.
+Evidencia: mensaje del usuario en la sesión.
+Commits: ver `git log` («Battle Frontier: island proposals accepted»).
+Decisiones: zona nueva sí (como Isla Suprema); mapa 3D hecho a mano no (habría que modelar
+terreno, texturas y colisiones y convertirlos al formato del juego; fuera de alcance por
+ahora).
+Siguiente paso: el de la entrada «F4: inscripción en la Fábrica».

@@ -167,14 +167,15 @@ La Mansión ya resuelve lo difícil: elegir rival de `maisontr`, generar su equi
    - **Viaje**: en el **ferry** de Calagua, no en la barca de Arenque: con el pase, el
      ferry ofrece un destino nuevo, «Isla del Frente», como el S.S. Marea de Esmeralda.
      El ferry retail es el script compartido 79 (`reports/faraway.md`).
-   - Propuesta pendiente: quién entrega el pase. Por defecto, un marinero del puerto de
-     Calagua al hablarle con la Liga ganada.
+   - **Entrega**: un marinero del puerto de Calagua, al hablarle con la Liga ganada
+     (propuesta aceptada por el usuario; se puede cambiar más adelante).
    - **Activación**: el mod de Luma hace de DLC. La zona y los scripts van siempre en el
      paquete, y el pase decide si el ferry ofrece el destino. ORAS no tiene código para
      contenido descargable de verdad: un título de DLC aparte no lo leería nadie, así
      que no es una vía.
-   - **Zona**: isla clonada de un mapa de ORAS (el exterior del Resort Batalla es el
-     candidato natural), con puertas a interiores clonados. Ya probado con
+   - **Zona**: zona nueva propia (como Isla Suprema en el evento de Mew), con la geometría
+     clonada del exterior del Resort Batalla (propuesta aceptada) y puertas a interiores
+     clonados. Ya probado con
      CTRMap-F5: clonar zonas, mapa y área propios, entidades (`faraway/java`). Un mapa
      3D nuevo con el trazado de Esmeralda no es realista; se compone con mapas de ORAS.
    - **Interiores**: la Fábrica y la Torre sobre clones de la Mansión (salas de
