@@ -659,3 +659,53 @@ uid 0, modelo 300).
 **Puerto de Calagua (zona 317)**: 3 NPC. uid 0: empleado del ferry (caso 5). uid 1:
 modelo 309, flag 1050, sin script. uid 2: marinero, modelo 232, caso 4. El caso 4 dice
 la línea 23 del texto 523 sin la Liga y la 24 con ella.
+
+## 17. F6: Pase del Frente y destino nuevo del ferry (Azahar, 2026-11-02)
+
+Código: `frontier/island.py`, integrado en `frontier/overlay.py`. Tests:
+`tests/test_frontier_island.py`, que ejecuta en `scripts/pawn_vm.py` (ahora con `SWITCH`)
+el menú del ferry y el marinero. Tres roturas a mano (sin la entrada del menú, sin
+cambiar la llegada, con el salto del marinero invertido) hacen fallar 2, 1 y 4 tests.
+
+- **Objeto 701**: nombre, plurales y descripción en las entradas 113–117 de los textos
+  de juego (ES; los demás idiomas, EN). Solo cambia la línea 701.
+- **Marinero** (zona 317, evento 4): el caso apunta a una rutina nueva.
+  - Con el flag 2720 y sin el objeto 701, dice la línea de presentación, da el pase con
+    la rutina de entrega del compartido 10 (`0xC0C`) y dice la línea final.
+  - En otro caso llama a su rutina retail.
+  - Las dos líneas se añaden al final del texto 523: 30–31 sobre el retail, 44–45
+    sobre el puerto del evento de Mew. Funciona con los dos puertos (test con el puerto
+    de Mew construido en memoria).
+- **Ferry** (compartido 79):
+  - En Portual y Calagua, antes de «Me quedo aquí»: `ItemGetNum(701)` → si lo tienes,
+    `ListMenuAdd(16, 4, 0)`.
+  - Valor 4 en la tabla de destinos: copia del caso del Resort (`0xcb8`–`0xe84`) con
+    la línea 17 y la llegada `island.ARRIVAL`.
+  - **Provisional**: la llegada es la del Resort (212, 53, 2, 34, 2) hasta que exista la
+    zona de la isla.
+  - Textos: líneas 16–17 añadidas al texto 11.
+
+**Prueba en Azahar** (`work/frontier/lab/f6_champion_ticket.sav`, `936975ed…`: la
+partida de laboratorio `main` en la Ruta 102 con 2720 = 1 y el Ticket del Barco).
+- Montaje: `faraway/dev_overlay.sh 317 0` (warp de desarrollo al puerto de Calagua) y
+  `frontier/overlay.py`. Al laboratorio va `work/frontier/labroot`: el overlay de
+  desarrollo con la build del Frente encima.
+- Marinero: «Oye, ¿tú no eres quien ha ganado la Liga?», tres páginas, y «Ruben ha
+  obtenido un Pase del Frente» (`f6_give.png`). Después, «Ruben mete el Pase del Frente
+  en el Bolsillo Objetos Clave» y «Enséñale el ticket al empleado del ferry y elige la
+  Isla del Frente…» (`f6_sailor_last.png`).
+- Segunda vez: la línea retail 24, «El ferry S.S. Marea ya está en funcionamiento»
+  (`f6_sailor_again.png`).
+- Empleado del ferry: ticket y «¿Adónde te gustaría ir?». El menú muestra Resort
+  Batalla, Ciudad Portual, **Isla del Frente** y Me quedo aquí (`f6_ferry_menu.png`).
+- Isla del Frente: «Muy bien, rumbo a la Isla del Frente.», Sí/No
+  (`f6_ferry_confirm.png`, `f6_ferry_yesno.png`). Sí: fundido y llegada al muelle del
+  Resort (destino provisional).
+  - Esta partida no había visitado el Resort, así que salta la escena retail de Blasco
+    en su primera visita (`f6_arrival.png`). Es del Resort, no del ferry nuevo.
+
+**No probado**:
+- guardar la partida con el pase;
+- otros idiomas;
+- el menú de Portual (solo el test de la VM);
+- la consola.

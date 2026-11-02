@@ -1,0 +1,162 @@
+"""Frontier Pass, Lilycove sailor and ferry destination (frontier/island.py), run in scripts/pawn_vm.py.
+
+Natives and every routine the code under test calls are stubbed: this checks the generated logic (menus, gates,
+the item given, the arrival point), not GF's VM or the game (that is the Azahar test in reports/frontier.md).
+"""
+from pathlib import Path
+import sys
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path[:0] = [str(ROOT / 'scripts'), str(ROOT / 'frontier')]
+import island  # noqa: E402
+import overlay  # noqa: E402
+from formats import garc_entries, lz11_decompress, zo_files  # noqa: E402
+from pawn import OP, Script, decode, gf_hash, s32  # noqa: E402
+from pawn_vm import VM  # noqa: E402
+
+ZERO = lambda vm, a: 0  # noqa: E731
+
+
+class Natives(dict):
+    """Named stubs; any other native returns 0 (talk eyes, sounds, waits)."""
+
+    def __init__(self, table, log):
+        super().__init__({s32(gf_hash(name)): fn for name, fn in table.items()})
+        self.log = log
+
+    def __missing__(self, key):
+        return ZERO
+
+
+def stub_calls(script, labels, keep, special):
+    """A stub for every CALL target except the labels in `keep`; `special`: {label: fn}."""
+    targets = {ins.address + ins.args[0] for ins in decode(script.code) if ins.op == OP['CALL']}
+    calls = {t: ZERO for t in targets if t not in {labels[k] for k in keep}}
+    calls.update({labels[k]: fn for k, fn in special.items()})
+    return calls
+
+
+@pytest.fixture(scope='module')
+def scripts():
+    if not overlay.ZONES.exists():
+        pytest.skip('Local baseline required')
+    shared = (overlay.ROMFS / overlay.SHARED).read_bytes()
+    ferry = overlay.shared_script(shared, island.FERRY_SCRIPT)
+    shared10 = overlay.shared_script(shared, island.SHARED10)
+    zones = overlay.ZONES.read_bytes()
+    _, _, offset, length = garc_entries(zones)[island.ZONE_HARBOR]
+    harbor = Script.parse(zo_files(lz11_decompress(zones[offset:offset + length]))[2])
+    return ferry, shared10, harbor
+
+
+@pytest.fixture(scope='module')
+def ferry(scripts):
+    retail = scripts[0]
+    program = island.ferry_program(retail)
+    labels = program.layout()
+    script = program.build_script(f'L{retail.main:x}')
+    assert Script.parse(script.build(pad=False)).build(pad=False) == script.build(pad=False)
+    return script, labels
+
+
+def sail(ferry, zone, has_pass, choice=None, yes=1, npc=0):
+    script, labels = ferry
+    items = {736: 1, island.ITEM_PASS: int(has_pass)}
+    log = {'menu': [], 'msg': [], 'trip': []}
+    natives = Natives({
+        'ItemGetNum': lambda vm, a: items.get(a[0], 0),
+        'FlagGet': lambda vm, a: int(a[0] == island.FLAG_CHAMPION),
+        'ListMenuAdd': lambda vm, a: log['menu'].append((a[0], a[1])),
+    }, log)
+    calls = stub_calls(script, labels, [island.FERRY_MENU], {
+        'Ld8': lambda vm, a: log['msg'].append(a[0]),
+        'L7c8': lambda vm, a: 3 if choice is None else choice,
+        'L260': lambda vm, a: yes,
+        island.MAPCHANGE: lambda vm, a: log['trip'].append(tuple(a)),
+    })
+    VM(script, natives, calls).run(labels[island.FERRY_MENU], npc, zone)
+    return log
+
+
+@pytest.mark.parametrize('zone, retail', [(317, [(6, 0), (7, 1)]), (275, [(6, 0), (8, 2)])])
+def test_the_pass_adds_the_island_in_lilycove_and_slateport(ferry, zone, retail):
+    assert sail(ferry, zone, False)['menu'] == retail + [island.MENU_CANCEL]
+    assert sail(ferry, zone, True)['menu'] == retail + [(island.LINE_ISLAND, island.MENU_ISLAND), island.MENU_CANCEL]
+
+
+def test_other_harbors_keep_their_menu(ferry):
+    assert sail(ferry, 212, True)['menu'] == [(7, 1), (8, 2), island.MENU_CANCEL]
+
+
+def test_island_trip(ferry):
+    log = sail(ferry, 317, True, island.MENU_ISLAND)
+    assert island.LINE_ISLAND_GO in log['msg'] and island.RESORT_CONFIRM_LINE not in log['msg']
+    assert log['trip'] == [(*island.ARRIVAL, 0)]
+    declined = sail(ferry, 317, True, island.MENU_ISLAND, yes=0)
+    assert declined['trip'] == [] and 13 in declined['msg']        # «Estaremos a tu disposición…»
+
+
+def test_retail_trips_unchanged(ferry):
+    assert sail(ferry, 317, True, 0)['trip'] == [(*island.RESORT_ARRIVAL, 0)]
+    assert sail(ferry, 317, True, 1)['trip'] == [(216, 37, 56, 9, 1, 0)]     # Slateport, through the cabin
+
+
+def harbor_run(scripts, base, champion, has_pass, event=None):
+    ferry, shared10, _ = scripts
+    lines = (30, 31)
+    program = island.harbor_program(base, ferry, shared10, lines)
+    labels = program.layout()
+    script = program.build_script(f'L{base.main:x}')
+    items = {island.ITEM_PASS: int(has_pass)}
+    log = {'msg': [], 'give': [], 'retail': 0}
+
+    def give(vm, a):
+        log['give'].append(tuple(a))
+        items[a[0]] = items.get(a[0], 0) + a[1]
+
+    def retail(vm, a):
+        log['retail'] += 1
+
+    natives = Natives({
+        'FlagGet': lambda vm, a: int(champion and a[0] == island.FLAG_CHAMPION),
+        'ItemGetNum': lambda vm, a: items.get(a[0], 0),
+    }, log)
+    _, retail_label = island.sailor_target(island.Program.from_script(base), f'L{base.main:x}')
+    calls = stub_calls(script, labels, ['frontier_sailor'], {
+        'frmsg_d8': lambda vm, a: log['msg'].append(a[0]),
+        f'frgive_{island.ev.GIVE_ROUTINE:x}': give,
+        retail_label: retail,
+    })
+    vm = VM(script, natives, calls)
+    if event is None:
+        vm.run(labels['frontier_sailor'])
+    else:
+        vm.write(144, event)                     # the dispatcher reads the event id from data address 144
+        vm.run(labels[f'L{base.main:x}'])
+    return log
+
+
+@pytest.mark.parametrize('champion, has_pass, given', [(False, False, False), (True, False, True), (True, True, False)])
+def test_sailor_gives_the_pass_once_to_a_champion(scripts, champion, has_pass, given):
+    log = harbor_run(scripts, scripts[2], champion, has_pass)
+    if given:
+        assert log['give'] == [(island.ITEM_PASS, 1, 1)] and log['msg'] == [30, 31] and log['retail'] == 0
+    else:
+        assert log['give'] == [] and log['msg'] == [] and log['retail'] == 1
+
+
+def test_event_4_reaches_the_new_sailor(scripts):
+    assert harbor_run(scripts, scripts[2], True, False, event=island.SAILOR_EVENT)['give'] == [(island.ITEM_PASS, 1, 1)]
+
+
+def test_sailor_on_top_of_the_mew_harbor(scripts):
+    """The Mew event's harbor (more cases, its own transplanted helpers) still gets the sailor."""
+    sys.path.append(str(ROOT / 'faraway'))
+    import event as ev
+    ferry, shared10, harbor = scripts
+    mew = ev.harbor_script(harbor, ferry, shared10)
+    assert len(mew.code) > len(harbor.code)
+    assert harbor_run(scripts, mew, True, False)['give'] == [(island.ITEM_PASS, 1, 1)]
+    assert harbor_run(scripts, mew, True, False, event=ev.EV_GIVER)['give'] == []

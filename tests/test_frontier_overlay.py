@@ -1,4 +1,4 @@
-"""Battle Factory zone script and text changes (frontier/overlay.py) on the local dump."""
+"""Battle Factory and Frontier Pass archive changes (frontier/overlay.py) on the local dump."""
 from pathlib import Path
 import sys
 
@@ -19,17 +19,19 @@ def built():
     return fbuild.ZONES.read_bytes(), fbuild.build()
 
 
-def test_only_zone_517_changes(built):
+def test_only_the_maison_and_harbor_scripts_change(built):
+    import island
     before, (archives, _) = built
     after = archives['a/0/1/3']
     a, b = garc_entries(before), garc_entries(after)
     assert len(a) == len(b)
     changed = [i for i, (x, y) in enumerate(zip(a, b)) if before[x[2]:x[2] + x[3]] != after[y[2]:y[2] + y[3]]]
-    assert changed == [fbuild.ZONE_MAISON]
-    _, _, offset, length = b[fbuild.ZONE_MAISON]
-    files = zo_files(lz11_decompress(after[offset:offset + length]))
-    old = zo_files(lz11_decompress(before[a[fbuild.ZONE_MAISON][2]:][:a[fbuild.ZONE_MAISON][3]]))
-    assert files[:2] == old[:2] and files[3:] == old[3:]
+    assert changed == [island.ZONE_HARBOR, fbuild.ZONE_MAISON]
+    for zone in changed:
+        _, _, offset, length = b[zone]
+        files = zo_files(lz11_decompress(after[offset:offset + length]))
+        old = zo_files(lz11_decompress(before[a[zone][2]:][:a[zone][3]]))
+        assert files[:2] == old[:2] and files[3:] == old[3:] and files[2] != old[2]
 
 
 def test_party_select_checks_the_factory_state(built):
@@ -52,33 +54,57 @@ def test_party_select_checks_the_factory_state(built):
 def test_texts_append_the_option_and_the_factory_entry(built):
     from formats import text_lines, words_to_text
     import factory
+    import island
     _, (archives, _) = built
+    assert fbuild.harbor_lines(fbuild.ROMFS) == (30, 31)
     for lang, path in factory.STORYTEXT.items():
+        code = factory.LANG[lang]
         after = archives[path]
         before = (fbuild.ROMFS / path).read_bytes()
         a, b = garc_entries(before), garc_entries(after)
         assert len(b) == len(a) + 1 == fp.TEXT_FACTORY + 1
         for x, y in zip(a, b):
             old, new = before[x[2]:x[2] + x[3]], after[y[2]:y[2] + y[3]]
-            if x[0] != factory.TEXT_ZONE:
+            appended = {factory.TEXT_ZONE: [factory.OPTION[code]], island.TEXT_HARBOR: island.SAILOR[code],
+                        island.FERRY_TEXT: island.FERRY[code]}.get(x[0])
+            if appended is None:
                 assert old == new
                 continue
             old_lines, new_lines = text_lines(old)[0], text_lines(new)[0]
-            assert len(old_lines) == factory.TEXT_LINES and new_lines[:-1] == old_lines
-            assert words_to_text(new_lines[-1]) == factory.OPTION[factory.LANG[lang]]
+            assert new_lines[:len(old_lines)] == old_lines
+            assert [words_to_text(w) for w in new_lines[len(old_lines):]] == appended
         e = b[-1]
         lines = [words_to_text(w) for w in text_lines(after[e[2]:e[2] + e[3]])[0]]
         assert lines[:3] == factory.PICK[factory.LANG[lang]] and len(lines) == factory.LINE_S + 784
 
 
-def test_shared_archive_changes_only_script_5(built):
+def test_game_texts_rename_only_the_pass(built):
     import factory
+    import island
+    from formats import text_lines, words_to_text
+    _, (archives, _) = built
+    for lang, path in factory.GAMETEXT.items():
+        before, after = (fbuild.ROMFS / path).read_bytes(), archives[path]
+        a, b = garc_entries(before), garc_entries(after)
+        assert len(a) == len(b)
+        for x, y in zip(a, b):
+            old, new = text_lines(before[x[2]:x[2] + x[3]])[0], text_lines(after[y[2]:y[2] + y[3]])[0]
+            diff = [k for k, (u, v) in enumerate(zip(old, new)) if u != v]
+            key = next((k for k, entry in island.GAMETEXT_ITEM.items() if entry == x[0]), None)
+            assert len(old) == len(new) and diff == ([] if key is None else [island.ITEM_PASS])
+            if key:
+                assert words_to_text(new[island.ITEM_PASS]) == island.ITEM[factory.LANG[lang]][key]
+
+
+def test_shared_archive_changes_scripts_5_and_79(built):
+    import factory
+    import island
     _, (archives, (_, script5)) = built
     before, after = (fbuild.ROMFS / fbuild.SHARED).read_bytes(), archives[fbuild.SHARED]
     a, b = garc_entries(before), garc_entries(after)
     assert len(a) == len(b)
     changed = [x[0] for x, y in zip(a, b) if before[x[2]:x[2] + x[3]] != after[y[2]:y[2] + y[3]]]
-    assert changed == [factory.SHARED_SCRIPT]
+    assert changed == [factory.SHARED_SCRIPT, island.FERRY_SCRIPT]
     assert after[b[5][2]:b[5][2] + b[5][3]] == script5
 
 

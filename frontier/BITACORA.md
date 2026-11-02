@@ -656,3 +656,43 @@ Decisiones:
   ferry.
 Siguiente paso: implementar el pase (texto del objeto, entrega del marinero) y el destino
 nuevo del ferry; probarlo en Azahar con destino provisional, y después clonar la isla.
+
+## 2026-11-02 21:11 — Claude Code — F6: Pase del Frente, marinero y destino nuevo del ferry
+Estado: hecho (destino provisional)
+Hecho:
+- `frontier/island.py`:
+  - el objeto 701 pasa a ser «Pase del Frente» / «Frontier Pass»;
+  - el marinero de Calagua (zona 317, evento 4) lo da una vez a quien tiene el flag 2720;
+  - el ferry (compartido 79) ofrece «Isla del Frente» en Calagua y Portual a quien
+    lleva el pase, con un caso nuevo copiado del caso del Resort.
+- Integrado en `frontier/overlay.py`: zonas 517+317, compartidos 5+79, textos 523 y 11,
+  textos de juego 113–117.
+- `scripts/pawn_vm.py` admite `SWITCH`.
+- Tests nuevos en `tests/test_frontier_island.py`; actualizados los de
+  `test_frontier_overlay.py`.
+Evidencia:
+- `python -m pytest -q tests` → 139 passed.
+- Roturas a mano del menú, la llegada y el marinero: los tests fallan.
+- Azahar, partida `f6_champion_ticket.sav` (`936975ed…`), `faraway/dev_overlay.sh 317 0` y
+  `work/frontier/labroot`:
+  - el marinero da el pase al Bolsillo Objetos Clave; la segunda vez dice la línea
+    retail;
+  - el menú del ferry muestra «Isla del Frente»; Sí lleva al muelle del Resort.
+- Capturas `work/frontier/lab/f6_*.png`. Detalle en `reports/frontier.md` §17.
+- No probado: guardar con el pase, Portual en el emulador, otros idiomas, consola.
+Commits: el de esta entrada.
+Decisiones:
+- La zona 317 y el compartido 79 se modifican por contenido, no por hash, para
+  convivir con el puerto del evento de Mew.
+- Las líneas del marinero van al final del texto 523, con el número que toque.
+- El viaje a la isla deja 16707 = 3, como el del Resort.
+- La llegada es provisional, `island.ARRIVAL` = la del Resort.
+- **Aviso para el laboratorio**: el warp de desarrollo apunta ahora al puerto de Calagua.
+  Para volver a probar la Fábrica, `faraway/dev_overlay.sh 517 0` y regenerar la build.
+Siguiente paso: la zona de la isla.
+1. Elegir una zona libre con `ZoneRepurposeScanner`, como la 473/474 de Mew.
+2. Clonarla del exterior del Resort (zona 212) con mapa y área propios, como hace
+   `faraway/java/faraway/Build.java`. Nombre de lugar «Isla del Frente».
+3. Poner un empleado de ferry con uid 0 que llame a `GlobalCall(10430)` para la vuelta.
+4. Puerta de la Mansión → zona 517 (la Fábrica) de momento.
+5. Cambiar `island.ARRIVAL` y probar ida y vuelta en Azahar.

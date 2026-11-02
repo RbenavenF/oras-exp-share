@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
-"""Battle Factory build: the Battle Maison zone script (517) changes, its texts and the code.bin patch.
+"""Battle Frontier build: the Battle Maison (517) and Lilycove harbor (317) zone scripts, the shared scripts, their
+texts and the code.bin patch.
 
-Current scope (F4, in progress):
-- the receptionist's «Battle Factory» option (zone 517) and the draft of 6 rentals and choice of 3 in shared
-  script 5 (a/0/2/9), with its texts in a new story text entry (frontier/factory.py);
-- while the Factory is active (saved work patch.WORK_IV != 0) the Maison's party selection routine
-  (script 517 0x457c, BattleHouse_CallPartySelectApp) is skipped and answers "accepted" (work 0x800C = 1),
-  and the code.bin hook (frontier/patch.py) builds the battle party from the rentals.
+Current scope:
+- F4, the Battle Factory: the receptionist's «Battle Factory» option (zone 517) and the draft of 6 rentals and
+  choice of 3 in shared script 5 (a/0/2/9), with its texts in a new story text entry (frontier/factory.py);
+  while the Factory is active (saved work patch.WORK_IV != 0) the Maison's party selection routine (script 517
+  0x457c, BattleHouse_CallPartySelectApp) is skipped and answers "accepted" (work 0x800C = 1), and the code.bin
+  hook (frontier/patch.py) builds the battle party from the rentals;
+- F6, the Frontier Pass (frontier/island.py): item 701 renamed in the game texts, the Lilycove sailor (zone 317)
+  hands it to a champion, and the ferry (shared script 79) offers «Isla del Frente» to its holder.
 
 Inputs come from --romfs, file by file, falling back to the Repolished baseline (the laboratory passes the
-Faraway dev overlay's, which carries the Route 102 warp and v0.5's texts): a/0/1/3, checked by SHA-256 of its
-zone 517 entry (only zone 517's script, ZO file 2, is replaced); a/0/2/9, checked by SHA-256 of entry 5;
-the story texts a/0/7/9-a/0/8/6 (text 619 must have factory.TEXT_LINES lines and gets one; the archive must
-have patch.TEXT_FACTORY entries and gets the new one) and the game texts a/0/7/1-8 (species and item names).
-Output under work/: romfs/a/0/1/3, romfs/a/0/2/9, the eight story texts and code.ips.
+Faraway dev overlay's, which carries the Route 102 warp, v0.5's texts and the Mew event's harbor): a/0/1/3,
+checked by SHA-256 of its zone 517 entry (only the scripts of zones 517 and 317, ZO file 2, are replaced; zone
+317 is checked by content, as it may carry the Mew event); a/0/2/9, checked by SHA-256 of entry 5 and by
+content for entry 79; the story texts a/0/7/9-a/0/8/6 (text 619 must have factory.TEXT_LINES lines and gets
+one; the archive must have patch.TEXT_FACTORY entries and gets the new one; 523 and 11 get lines appended) and
+the game texts a/0/7/1-8 (species and item names read; item 701's name and description replaced).
+Output under work/: romfs/a/0/1/3, romfs/a/0/2/9, the eight story and eight game texts, and code.ips.
 
 Usage: python frontier/overlay.py --out work/frontier/build [--romfs DIR]
 """
@@ -26,11 +31,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / 'scripts'), str(ROOT / 'frontier')]
 from formats import (build_text, garc_entries, lz11_compress, lz11_decompress, rebuild_garc,  # noqa: E402
-                     text_to_words, zo_build, zo_files)
+                     text_lines, text_to_words, words_to_text, zo_build, zo_files)
 from pawn import OP, Op, Program, Script  # noqa: E402
 import build_patch  # noqa: E402
 import data as fd  # noqa: E402
 import factory  # noqa: E402
+import island  # noqa: E402
 import patch  # noqa: E402
 
 ROMFS = ROOT / 'baseline/oras/repolished/romfs'
@@ -80,24 +86,65 @@ def source(romfs, rel):
     return (path if path.exists() else ROMFS / rel).read_bytes()
 
 
+def line_count(data, entry):
+    _, _, offset, length = next(e for e in garc_entries(data) if e[0] == entry)
+    return len(text_lines(data[offset:offset + length])[0])
+
+
+def harbor_lines(romfs):
+    """Story text 523 line numbers of the sailor's texts: appended after the lines already there (30 retail; more
+    when the Mew event's harbor is underneath). Every language must agree, as the script uses one number."""
+    counts = {line_count(source(romfs, path), island.TEXT_HARBOR) for path in factory.STORYTEXT.values()}
+    if len(counts) != 1:
+        raise ValueError(f'text {island.TEXT_HARBOR} has different line counts per language: {counts}')
+    base = counts.pop()
+    return tuple(range(base, base + len(island.SAILOR['en'])))
+
+
 def texts(romfs, sets, table):
-    """{romfs path: story text archive}: the option line appended to text 619 and the new Factory text entry."""
+    """{romfs path: text archive}: story texts (the option line appended to text 619, the new Factory text entry,
+    the sailor's lines in 523, the island destination in 11) and game texts (the pass's name and description)."""
     out = {}
+    sailor = harbor_lines(romfs)
     for lang, path in factory.STORYTEXT.items():
+        code = factory.LANG[lang]
         data = source(romfs, path)
         if len(garc_entries(data)) != patch.TEXT_FACTORY:
             raise ValueError(f'{path}: expected {patch.TEXT_FACTORY} text entries')
         spec = {'path': path, 'texts': [{'entry': factory.TEXT_ZONE, 'line': factory.TEXT_LINES, 'append': True,
-                                         'after': factory.OPTION[factory.LANG[lang]]}]}
+                                         'after': factory.OPTION[code]}]}
+        spec['texts'] += [{'entry': island.TEXT_HARBOR, 'line': line, 'append': True, 'after': text}
+                          for line, text in zip(sailor, island.SAILOR[code])]
+        spec['texts'] += [{'entry': island.FERRY_TEXT, 'line': island.FERRY_TEXT_LINES + k, 'append': True,
+                           'after': text} for k, text in enumerate(island.FERRY[code])]
         data = build_patch.guarded_texts(data, spec)
         lines = factory.lines_for(lang, source(romfs, factory.GAMETEXT[lang]), sets, table)
         words = [text_to_words(line) for line in lines]
         out[path] = rebuild_garc(data, {}, append=[build_text(words, [0] * len(words))])
+        game = factory.GAMETEXT[lang]
+        g = source(romfs, game)
+        changes = []
+        for key, entry in island.GAMETEXT_ITEM.items():
+            _, _, offset, length = next(e for e in garc_entries(g) if e[0] == entry)
+            before = text_lines(g[offset:offset + length])[0][island.ITEM_PASS]
+            changes.append({'entry': entry, 'line': island.ITEM_PASS, 'before': words_to_text(before),
+                            'after': island.ITEM[code][key]})
+        out[game] = build_patch.guarded_texts(g, {'path': game, 'texts': changes})
     return out
 
 
+def shared_script(data, index):
+    _, _, offset, length = garc_entries(data)[index]
+    raw = data[offset:offset + length]
+    script = Script.parse(raw)
+    if script.build(pad=False) != raw:
+        raise ValueError(f'shared script {index} does not round-trip')
+    return script
+
+
 def shared(romfs, zone_script, cells, levels):
-    """(shared script archive, new shared script 5)."""
+    """(shared script archive, new shared script 5): the Factory's draft and swap in 5, the ferry's island
+    destination in 79."""
     data = source(romfs, SHARED)
     _, _, offset, length = garc_entries(data)[factory.SHARED_SCRIPT]
     raw = data[offset:offset + length]
@@ -108,7 +155,23 @@ def shared(romfs, zone_script, cells, levels):
         raise ValueError('shared script 5 does not round-trip')
     program = factory.shared_program(retail, zone_script, cells, levels)
     script = program.build_script(f'L{retail.main:x}').build(pad=False)
-    return rebuild_garc(data, {(factory.SHARED_SCRIPT, 0): script}), script
+    ferry = shared_script(data, island.FERRY_SCRIPT)
+    ferry_new = island.ferry_program(ferry).build_script(f'L{ferry.main:x}').build(pad=False)
+    return rebuild_garc(data, {(factory.SHARED_SCRIPT, 0): script, (island.FERRY_SCRIPT, 0): ferry_new}), script
+
+
+def harbor(romfs, data):
+    """Zone 317 ZO files with the sailor who gives the pass (from the zone archive `data`)."""
+    _, _, offset, length = garc_entries(data)[island.ZONE_HARBOR]
+    files = zo_files(lz11_decompress(data[offset:offset + length]))
+    retail = Script.parse(files[2])
+    if retail.build() != files[2]:
+        raise ValueError(f'zone {island.ZONE_HARBOR} script does not round-trip')
+    shared_data = source(romfs, SHARED)
+    ferry, shared10 = shared_script(shared_data, island.FERRY_SCRIPT), shared_script(shared_data, island.SHARED10)
+    program = island.harbor_program(retail, ferry, shared10, harbor_lines(romfs))
+    files[2] = program.build_script(f'L{retail.main:x}').build()
+    return files
 
 
 def maison_retail(data):
@@ -130,10 +193,12 @@ def build(romfs=ROMFS):
     sets, table, levels, cells = rentals()
     data = source(romfs, 'a/0/1/3')
     files, retail = maison_retail(data)
-    offset = garc_entries(data)[ZONE_MAISON][2]
     files[2] = maison_script(retail).build()
-    entry = next((e, s) for e, s, o, n in garc_entries(data) if o == offset)
-    out = {'a/0/1/3': rebuild_garc(data, {entry: lz11_compress(zo_build(files))})}
+    zones = {}
+    for zone, zone_files_ in ((ZONE_MAISON, files), (island.ZONE_HARBOR, harbor(romfs, data))):
+        offset = garc_entries(data)[zone][2]
+        zones[next((e, s) for e, s, o, n in garc_entries(data) if o == offset)] = lz11_compress(zo_build(zone_files_))
+    out = {'a/0/1/3': rebuild_garc(data, zones)}
     out[SHARED], script5 = shared(romfs, retail, cells, levels)
     out.update(texts(romfs, sets, table))
     return out, (files[2], script5)

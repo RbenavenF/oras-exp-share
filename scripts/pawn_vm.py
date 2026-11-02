@@ -5,7 +5,7 @@ of Pawn's amx.c: data and stack share one cell-addressed memory (data at 0, stac
 top), PROC pushes FRM, RETN pops FRM, the return address and the argument byte count, SYSREQ_N pops its
 arguments. It checks the logic of generated code, not GF's VM: what it shows still has to run in Azahar.
 """
-from pawn import OPCODES, decode
+from pawn import OPCODES, Program, decode
 
 MASK = 0xFFFFFFFF
 
@@ -92,6 +92,11 @@ class VM:
                 pri = s32(self.natives[self.script.natives[index][1]](self, params) or 0)
             elif name == 'JUMP':
                 nxt = cip + arg
+            elif name == 'SWITCH':          # CASETBL count, default, (value, target)...: first match, else default
+                table = self.code[cip + arg]
+                targets = [t for _, t in Program._targets(table)]
+                values = table.args[2::2]
+                nxt = next((t for v, t in zip(values, targets[1:]) if s32(v) == pri), targets[0])
             elif name in ('JZER', 'JNZ', 'JEQ', 'JNEQ', 'JSLESS', 'JSLEQ', 'JSGRTR', 'JSGEQ'):
                 taken = {'JZER': pri == 0, 'JNZ': pri != 0, 'JEQ': pri == alt, 'JNEQ': pri != alt,
                          'JSLESS': pri < alt, 'JSLEQ': pri <= alt, 'JSGRTR': pri > alt, 'JSGEQ': pri >= alt}[name]
