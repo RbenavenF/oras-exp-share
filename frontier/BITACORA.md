@@ -440,3 +440,18 @@ Decisiones: zona nueva sí (como Isla Suprema); mapa 3D hecho a mano no (habría
 terreno, texturas y colisiones y convertirlos al formato del juego; fuera de alcance por
 ahora).
 Siguiente paso: el de la entrada «F4: inscripción en la Fábrica».
+
+## 2026-11-02 13:40 — Claude Code (Opus 5.5) — Distribución de la isla como en Esmeralda
+Estado: en curso
+Hecho: el usuario pide que, aunque los edificios y el aspecto sean de ORAS, la isla siga la
+distribución del Frente de Esmeralda. PLAN §5.6 lo recoge, con la vía prevista: el catálogo
+de edificios del fork de CTRMap-F5 (`oras_buildings*.tsv`, `MapPainter`, que recorta un
+edificio retail y lo estampa en otro mapa).
+Evidencia: lectura del catálogo, 58 entradas curadas y unas 3500 automáticas; sin
+pruebas nuevas. No usado aún en el proyecto ni en consola.
+Commits: ver `git log` («Battle Frontier: Emerald layout for the island»).
+Decisiones: distribución original de Esmeralda con piezas de ORAS; interiores clonados por
+ahora.
+Siguiente paso: el de la entrada «F4: inscripción en la Fábrica». En F6, primero una prueba
+pequeña: estampar un edificio con puerta en una zona clonada y entrar en él, en Azahar y
+en consola.

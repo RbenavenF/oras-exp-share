@@ -178,6 +178,14 @@ La Mansión ya resuelve lo difícil: elegir rival de `maisontr`, generar su equi
      clonados. Ya probado con
      CTRMap-F5: clonar zonas, mapa y área propios, entidades (`faraway/java`). Un mapa
      3D nuevo con el trazado de Esmeralda no es realista; se compone con mapas de ORAS.
+   - **Distribución**: la del Frente de Esmeralda (petición del usuario, 2026-11-02): la
+     Torre en el centro, las demás instalaciones alrededor y los caminos como en el
+     original, con edificios y piezas de ORAS. Vía prevista: el catálogo de edificios del
+     fork de CTRMap-F5 (`tools/CTRMap-F5/src/ctrmap/resources/oras_buildings*.tsv`,
+     `MapPainter`). Ese catálogo recorta la geometría de un edificio retail del volcado
+     y la estampa en otro mapa. **No usado aún en este proyecto ni probado en consola**
+     (el evento de Mew solo pintó hierba). Hay que comprobar colisiones, puertas y
+     memoria.
    - **Interiores**: la Fábrica y la Torre sobre clones de la Mansión (salas de
      combate); el resto, sobre interiores de ORAS que encajen.
 
