@@ -517,3 +517,33 @@ victoria):
 
 **Intercambio rechazado** (`f4f_no_swap.png`): «No cambiar» tras ganar mantiene el equipo
 y sigue al menú de continuar.
+
+## 14. F4: PB por ronda como en Esmeralda (Azahar, 2026-11-02)
+
+**Cómo los da la Mansión** (`work/frontier/survey/zone517.lst`):
+- Tras cada victoria se llama a `0x3de4(rango, tipo, jefe)`. Calcula los PB por tramo de
+  racha: Normal 1 o 2; Súper de 2 a 7; jefe 20 o 50.
+- `0x3f4c` los suma con `0x30` (`PlayerGetBP` + `PlayerSetBP` + `RecordAdd 34`) y dice
+  «Ruben ha obtenido N PB.».
+
+**Cambio** (`factory.battle_points`), insertado tras crear los locales de `0x3de4`
+(`0x3e04`):
+- Con la Fábrica activa, la racha sale de `GetMyWinCount(0, 0)`.
+- Si no es múltiplo de 7, la rutina sale sin PB y sin mensaje.
+- Si lo es, da `BATTLE_POINTS[ronda − 1]` (3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, el
+  último repetido) y sigue en `0x3f4c` con el mensaje retail.
+- La Mansión sin la Fábrica no cambia (tests `test_factory_battle_points_*`,
+  `test_maison_battle_points_unchanged`).
+- Sin el +10 tras el As del Frente (F5).
+
+**PB en la partida** (medido): `0x4230`, `u16`; también cambia `0x1f488`. Las dos subieron
+de 1 a 2 con la 7.ª victoria del build anterior (1 PB de la Mansión) y de 1 a 4 con el
+build nuevo.
+
+**Prueba** (`f4h_paused_streak6_legend.sav`, build nuevo):
+- Reanudación, combate 7 ganado (Latias cayó ante Snubbull; Tornadus ganó) y sorteo de
+  la ronda 2.
+- Continuar → combate 8 con Klefki, Octillery y Cacturne del nivel 2. Perdido.
+- La partida de la derrota (`f4i_after_loss.sav`, `d080c541…`) tiene PB 4 (+3 en la
+  ronda 1), 16410 = 0, racha 0 y récord 7.
+- El mensaje de PB no quedó en captura: los toques de pantalla lo pasaron.

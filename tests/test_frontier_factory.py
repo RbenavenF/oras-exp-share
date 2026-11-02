@@ -295,3 +295,33 @@ def test_after_win_is_called_from_the_battle_loop(game):
     ins = decode(script.code)
     calls = [x for x in ins if x.op == OP['CALL'] and x.address + x.args[0] == labels['factory_after_win']]
     assert len(calls) == 1 and labels[factory.AFTER_BATTLE] < calls[0].address < labels[factory.AFTER_BATTLE] + 0x20
+
+
+def battle_points_run(game, streak, iv=21):
+    *_, script, labels = game
+    log = []
+    stubs = natives({
+        'WorkGet': lambda vm, a: iv if a[0] == fp.WORK_IV else 0,
+        'GetMyWinCount': lambda vm, a: streak,
+        'GetWinCount': lambda vm, a: 99,
+    })
+    calls = {labels['L30']: lambda vm, a: log.append(('bp', a[0]))}
+    for name in ('Lfc', 'L2c8', 'L634', 'L5d4', 'L618'):
+        calls[labels[name]] = lambda vm, a: 0
+    stubs[s32(gf_hash('WordSetNumber'))] = lambda vm, a: log.append(('number', a[1]))
+    VM(script, stubs, calls).run(labels[factory.BATTLE_POINTS], 0, 0, 0)
+    return log
+
+
+@pytest.mark.parametrize('streak, bp', [(7, 3), (14, 3), (21, 4), (49, 6), (91, 9), (700, 9)])
+def test_factory_battle_points_at_the_end_of_a_round(game, streak, bp):
+    assert battle_points_run(game, streak) == [('bp', bp), ('number', bp)]
+
+
+@pytest.mark.parametrize('streak', [1, 6, 8, 13, 20])
+def test_no_factory_battle_points_inside_a_round(game, streak):
+    assert battle_points_run(game, streak) == []
+
+
+def test_maison_battle_points_unchanged(game):
+    assert battle_points_run(game, 7, iv=0) == [('bp', 2), ('number', 2)]       # GetWinCount 99 > 10: 2 BP

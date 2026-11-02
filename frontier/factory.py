@@ -74,6 +74,8 @@ RECEPTION_RESULT, RECEPTION_AGAIN, RECEPTION_NEXT = 'L1634', -4, 'L1810'
 CLEANUP = 'L1458'
 AFTER_BATTLE = 'L2264'          # battle loop: local -8 = 1 after a win; then the continue / pause menu (0x3b90)
 LOST = 'L2210'                  # battle loop, lost battle: record (0x3fdc, which saves the game), ClearWinCount
+BATTLE_POINTS = 'L3de4'         # (rank, type, boss): BP by streak bracket into local -8, then 0x3f4c adds and says it
+BATTLE_POINTS_GIVE = 'L3f4c'
 OPTION = {'es': 'Fábrica Batalla', 'en': 'Battle Factory'}
 PICK = {'es': ['Elige tu primer Pokémon de alquiler.', 'Elige tu segundo Pokémon de alquiler.',
                'Elige tu tercer Pokémon de alquiler.'],
@@ -597,6 +599,49 @@ def after_win_routine(p):
     r.ret()
 
 
+def battle_points(p):
+    """Factory BP as Emerald: none for battles 1-6 of a round; after the 7th, BATTLE_POINTS[round - 1] (clamped).
+    Inserted in the Maison's BP routine 0x3de4 once its locals exist (-4 win count, -8 BP); the Maison's own
+    brackets stay for the Maison. No Frontier Brain bonus yet (F5)."""
+    start = _index(p, BATTLE_POINTS)
+    at = next(i for i in range(start, len(p.items)) if isinstance(p.items[i], Op)
+              and p.items[i].op == OP['STOR_P_S_PRI'] and p.items[i].args == [-4])
+    if p.items[at + 1].op != OP['PUSH_P_C'] or p.items[at + 1].args != [0]:
+        raise ValueError('BP routine locals not found at 0x3e04')
+    table = p.data_block('factory_bp', list(fd.BATTLE_POINTS))
+    b = Program(p.script)
+    b.native_hashes = p.native_hashes
+    b.sysreq('WorkGet', patch.WORK_IV)
+    b.emit('JZER', 'factory_bp_retail')
+    b.sysreq('GetMyWinCount', 0, 0)
+    b.emit('STOR_P_S_PRI', -4)
+    b.emit('MOVE_ALT', 0)
+    b.emit('CONST_P_PRI', fd.STAGES_PER_ROUND)
+    b.emit('SDIV_ALT', 0)                    # rounds won = streak / 7
+    b.emit('STOR_P_S_PRI', -8)
+    b.emit('SMUL_P_C', fd.STAGES_PER_ROUND)
+    b.emit('LOAD_P_S_ALT', -4)
+    b.emit('SUB_ALT', 0)                     # streak - 7 * rounds
+    b.emit('JNZ', 'factory_bp_none')
+    b.emit('LOAD_P_S_PRI', -8)
+    b.emit('ADD_P_C', -1)
+    b.emit('CONST_P_ALT', len(fd.BATTLE_POINTS) - 1)
+    b.emit('JSLEQ', 'factory_bp_index')
+    b.emit('CONST_P_PRI', len(fd.BATTLE_POINTS) - 1)
+    b.label('factory_bp_index')
+    b.emit('SMUL_P_C', 4)
+    b.emit('ADD_P_C', table)
+    b.emit('LOAD_I', 0)
+    b.emit('STOR_P_S_PRI', -8)
+    b.emit('JUMP', BATTLE_POINTS_GIVE)
+    b.label('factory_bp_none')
+    b.emit('STACK_P', 8)
+    b.emit('ZERO_PRI', 0)
+    b.emit('RETN', 0)
+    b.label('factory_bp_retail')
+    p.items[at + 2:at + 2] = b.items
+
+
 def _index(p, label):
     return p.items.index(('label', label))
 
@@ -654,5 +699,6 @@ def reception(p):
     if p.items[at + 1].op != OP['ZERO_P_S'] or p.items[at + 1].args != [-8]:
         raise ValueError('lost-battle path not found at 0x2210')
     p.items[at + 1:at + 1] = _clear(p)
+    battle_points(p)
     reception_routine(p)
     after_win_routine(p)

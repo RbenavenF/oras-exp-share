@@ -520,3 +520,23 @@ Siguiente paso:
 2. PB por ronda de Esmeralda (3, 3, 4, … al ganar el 7.º) en lugar de los de la
    Mansión por combate.
 3. Después, F6: isla del Frente.
+
+## 2026-11-02 15:10 — Claude Code (Opus 5.5) — F4: PB por ronda
+Estado: en curso
+Hecho:
+- `factory.battle_points` inserta en la rutina de PB de la Mansión (`0x3de4`) la regla
+  de Esmeralda: con la Fábrica activa, PB solo en la 7.ª victoria de cada ronda
+  (`data.BATTLE_POINTS`).
+- Tests en el intérprete: 121 en total.
+- En Azahar, la ronda 1 da 3 PB: los PB de la partida (`0x4230`) pasan de 1 a 4. El
+  build anterior daba 1.
+- `reports/frontier.md` §14 y PLAN F4.
+Evidencia: `reports/frontier.md` §14; `work/frontier/lab/f4i_after_loss.sav`
+(`d080c541…`). `python -m pytest -q` → 121 passed. `use_gdbstub` en `false`.
+Commits: ver `git log` («Battle Frontier F4: Battle Points per round, as Emerald»).
+Decisiones: los PB se dan con el mensaje retail de la Mansión.
+Siguiente paso:
+1. Racha propia de la Fábrica (sigue compartida con Individual Normal de la Mansión; ver
+   la entrada anterior).
+2. Luego, F6: isla del Frente. El Pase del Frente lo da un marinero del puerto de
+   Calagua tras la Liga; destino en el ferry; zona nueva con la geometría del Resort.
