@@ -33,6 +33,13 @@ Reproducir la Fábrica Batalla de Pokémon Esmeralda dentro de ORAS Repolished 1
 encadenada con los mods ya entregados (Repartir Exp. equipable y racha DexNav, v0.5;
 evento de Mew opcional). Después, el resto de instalaciones del Frente.
 
+**Visión final (usuario, 2026-11-02)**: una expansión tipo evento o DLC. Un objeto, u
+otra condición, desbloquea una zona nueva que sea un clon del Frente Batalla de
+Esmeralda: una isla con sus edificios, a la que se llega como al evento de Mew (objeto
+→ viaje → zona propia; `reports/faraway.md`). La Fábrica dentro de la Mansión (F4–F5)
+es el banco de pruebas de las mecánicas; la ubicación definitiva es esa zona (F6). La
+propuesta concreta y lo que falta decidir están en §5.6.
+
 Reglas de la Fábrica que vamos a reproducir. Contrastadas el 2026-11-01 con
 pret/pokeemerald `731ad5bf` (`src/battle_factory.c`, `src/battle_factory_screen.c`,
 `src/frontier_util.c`, scripts de `BattleFactoryLobby`/`PreBattleRoom`/`BattleRoom`);
@@ -150,10 +157,23 @@ La Mansión ya resuelve lo difícil: elegir rival de `maisontr`, generar su equi
    `code.bin` o en un CRO, o ampliar con el exheader que acepte Luma; **ninguna de
    estas vías está comprobada todavía**). El parche se genera como hasta ahora:
    IPS/bytes con comprobación de hash y bytes de entrada.
-6. **Ubicación**: primera versión, un NPC nuevo en la zona 517 que ofrece «Fábrica
-   Batalla» y usa las salas de la Mansión. Al final, edificio propio en el Resort
-   (zona clonada, puerta en el exterior), aprovechando el cartel «proyecto Frente de
-   Batalla» del texto 625.
+6. **Ubicación**: primera versión, la opción «Fábrica Batalla» de la recepcionista de la
+   zona 517, que usa las salas de la Mansión (hecho, `reports/frontier.md` §11).
+   Destino (visión del usuario, §1): una zona de expansión desbloqueada por un objeto.
+   Propuesta, **pendiente de que el usuario la confirme**:
+   - **Objeto**: un objeto clave nuevo, «Pase del Frente» (p. ej.), en un hueco de
+     objeto libre, como el Mapa Viejo del evento de Mew.
+   - **Entrega**: un NPC después de la Liga o del Episodio Delta (p. ej. en el Resort
+     Batalla, junto al cartel «proyecto Frente de Batalla» del texto 625, o en un
+     puerto).
+   - **Viaje**: barco desde Calagua o Portual, como el ferry del evento de Mew (escena
+     de la barca, cambio de mapa con `_MapChangeCore`).
+   - **Zona**: isla clonada de un mapa de ORAS (el exterior del Resort Batalla es el
+     candidato natural), con puertas a interiores clonados. Ya probado con
+     CTRMap-F5: clonar zonas, mapa y área propios, entidades (`faraway/java`). Un mapa
+     3D nuevo con el trazado de Esmeralda no es realista; se compone con mapas de ORAS.
+   - **Interiores**: la Fábrica y la Torre sobre clones de la Mansión (salas de
+     combate); el resto, sobre interiores de ORAS que encajen.
 
 ## 6. Fases
 
@@ -198,14 +218,25 @@ Plan, bitácora, `frontier/survey.py`, pausa documentada del evento de Mew.
 ### F5 — Jefe, récords, Doble y Nivel Libre
 Jefe en los combates 21 y 42 con símbolos, cartel de récords, el resto de modalidades.
 
-### F6 — Edificio propio, textos y paquete
-- Zona clonada en el Resort y textos ES/EN.
+### F6 — Isla del Frente: objeto, viaje, zona y Fábrica en su edificio
+- Objeto clave, su entrega, el viaje y la isla con el edificio de la Fábrica (§5.6),
+  reutilizando lo del evento de Mew (`faraway/`). Textos ES/EN.
 - Paquete Luma `dist/oras-frontier-…` encadenado con v0.5 (y Mew si se quiere).
 - Partida de prueba para Checkpoint y plan de prueba en consola.
 
-### Después
-Resto del Frente: Torre (≈ la Mansión), Palacio, Arena, Domo, Pirámide y Tubo.
-Se planifican cuando la Fábrica esté en consola.
+### Después: el resto del Frente
+Estimación inicial, sin medir; se planifica cuando la Fábrica esté en consola:
+- **Torre Batalla**: casi la Mansión tal cual, con tu equipo. Lo más fácil.
+- **Domo Batalla**: torneo de 16 con cuadro. Combates de la Mansión, y el cuadro y el
+  orden en script. Medio.
+- **Tubo Batalla**: salas con eventos (curas, combates, estados). Script y combates
+  sueltos. Medio.
+- **Arena Batalla**: 3 turnos y juicio por mente, técnica y cuerpo. Hay que tocar el
+  motor de combate. Difícil.
+- **Palacio Batalla**: el Pokémon elige solo sus movimientos según la naturaleza.
+  Motor de combate o IA. Difícil.
+- **Pirámide Batalla**: mazmorra con encuentros salvajes, objetos y oscuridad. Zona
+  propia y mucho script. Lo más difícil.
 
 ## 7. Riesgos y decisiones abiertas
 

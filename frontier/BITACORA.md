@@ -392,3 +392,22 @@ Siguiente paso:
 2. Cada 7 victorias, sorteo nuevo de 6 del nivel siguiente (en el bucle `0x1e1c`, tras
    `AddWinCount`).
 3. Comprobar en Azahar la derrota sola, la pausa y la reanudación.
+
+## 2026-11-02 13:10 — Claude Code (Opus 5.5) — Visión final: expansión con isla del Frente
+Estado: en curso
+Hecho:
+- El usuario fija el destino del proyecto: una expansión tipo evento o DLC. Un objeto
+  (u otra condición) desbloquea una zona nueva que es un clon del Frente Batalla de
+  Esmeralda.
+- PLAN §1 (visión), §5.6 (propuesta de ubicación: objeto clave, entrega, barco, isla
+  clonada, interiores), F6 (isla, objeto y viaje) y «Después» (las 6 instalaciones
+  restantes con dificultad estimada) actualizados.
+Evidencia: mensaje del usuario en la sesión; sin mediciones nuevas.
+Commits: ver `git log` («Battle Frontier: record the expansion-island goal in the plan»).
+Decisiones:
+- La Fábrica sigue desarrollándose dentro de la Mansión (F4–F5) como banco de pruebas, y
+  se traslada a la isla en F6.
+- Pendiente del usuario: nombre del objeto, quién lo entrega y cuándo, desde qué puerto
+  se viaja y qué mapa sirve de base para la isla (§5.6).
+Siguiente paso: el de la entrada anterior (cambio tras la victoria, sorteo cada 7
+victorias, derrota, pausa y reanudación en Azahar).
