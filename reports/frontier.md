@@ -1187,3 +1187,64 @@ Cada una hay que verificarla antes de usarla, como 209 y 213 en §18.
 **Sin probar**:
 - la consola;
 - por qué no se dibujan la choza y la casa de Lanette.
+
+## 25. F6-TORRE: Torre v1, rutas y exclusión mutua (2026-11-03, en verificación)
+
+Implementación en `frontier/tower.py`, desde el script **retail** de 517; integración en
+`overlay.facility_scripts`, `island_build.CLONES/DOORS`. Individual, rango Normal, equipo propio
+con la selección y el ajuste de nivel de la Mansión. Ruta 2: works 16441 (racha), 16442
+(desafío activo), 16443 (récord). Los PB se dan cada siete victorias según
+`data.FRONTIER_BP['tower']`. `factory.busy_check` impide entrar en un desafío si otra
+instalación tiene su `patch.ACTIVE_WORK` distinto de cero, en ambas recepciones.
+
+**Zona 329, comprobaciones de §18**:
+- `frontier/zone_check.py 329`, salida `work/frontier/tower/zone_check.txt`: sin warps
+  retail entrantes; máscara original 0x243. Los dos operandos 329 no son destinos: el
+  compartido 57 (`0xBD0`, llamada a `0x77C`) lo usa como flag de objeto; la zona 275
+  (`0x3FB0`) como entrenador. El escáner marca también `JUMP`, que no implica cambio de mapa.
+- 36 palabras alineadas con valor 329 en código/CRO, frente a 48 para 209 y 45 para 213;
+  el recuento es orientativo, no una demostración de ausencia de usos calculados.
+- Build completa del 2026-11-03: clon de 517 con área propia 233, texto 619, parent 279
+  (`ZoneHeader.parentMapOf`: u16 de cabecera +0x1C & 0x3FF), máscara parcheada 0x343.
+  ZO 15.832 bytes, por debajo de los 17.248 medidos. 213 conserva área 232 y máscara 0x343.
+- Fuentes: `work/frontier/build-island/java.log`, `work/frontier/tower/build-codex.log` y
+  `build-evidence.json` (hashes de todos los archivos generados y máscaras/cabeceras).
+- Carga y recepción de 329 observadas por Claude y repetidas por Codex desde una partida
+  guardada allí. Salida medida por GDB (`faraway/walk.sh pos`): (19,47), captura
+  `work/frontier/lab/f6tc_tower_exit.png`.
+
+**Relevo de `bdae3b7`**:
+- La selección de equipo rechazaba todos los Pokémon hasta ejecutar primero la selección
+  de modalidad de la Mansión (`0x12A0`, `_CallTrialDownloadApp`). Corregido en ese commit,
+  conservando la rutina de selección de equipo `0x457C` intacta.
+- La sesión de Claude jugó desde una copia con racha editada a 6 y equipo fuerte generado
+  por `frontier/lab_tower.py`. Guardó en 329 antes de combatir (`f6t_saved_329.sav`,
+  SHA256 `33bb1d0fae0a68699340624aabb6422750126bb5cf4743d437e1edde21992db7`) y pausó
+  con racha/récord 12 y 1 PB (`f6t_paused12.sav`,
+  `df1b162bf818a9a27b9862646f297336fe4e36d7a57c7eed72db411934d2155a`).
+  Es evidencia heredada de seis victorias, incluido el final de ronda 7, no una ronda
+  iniciada desde cero. Comandos/resultados recuperados en
+  `work/frontier/tower/previous-transcript.txt`.
+
+**Azahar, repetido por Codex con la build completa**:
+- Cargar `f6t_paused12.sav`, recepción, selección de los tres Pokémon propios, combates
+  13 y 14 ganados; el juego ofrece el combate 15 y entrega **2 PB** al terminar el 14
+  (`f6tc_tower_bp2.png`, `f6tc_next15.png`). Los Pokémon fuertes están al nivel 50 en combate.
+- Pausa elegida en el menú y guardada: `f6tc_paused14.sav`, SHA256
+  `eb6d1fa2ce58e3dafaec9847d36b344bfecff622cf05ba9b46f8f7ee799d4eb9`:
+  zona 329, works 16441/16442/16443 = 14/1/14, ruta guardada 2, **PB 3**.
+  Fábrica 16410/16437/16439 = 0/0/0; los cuatro u16 de Mansión en 0x1BBC0 siguen a cero
+  y todo su bloque 0x1BA00–0x1BC00 es idéntico al de racha 12.
+- Equipo: no se sustituye por alquileres. Entre los guardados 6 y 12 solo cambian los
+  PS actuales (+0xF0 del PK6 descifrado) de dos Pokémon curados. Entre 12 y 14 cambia
+  el PK6 del tercer Pokémon en +0xCC–0xD0 y su checksum: son intensidad, recuerdo, variable
+  y sentimiento del entrenador original según [PKHeX, PK6.cs](https://github.com/kwsch/PKHeX/blob/master/PKHeX.Core/PKM/PK6.cs).
+  No se afirma identidad byte a byte de todo el bloque del equipo.
+  Especies, objetos, movimientos, EXP y EV/IV se conservan.
+- Mediciones de partidas: `work/frontier/tower/snapshot.py` y `save-evidence.jsonl`,
+  basadas en `save_event`/`save_fixture`, con validación de checksums.
+
+**Pendiente de completar**: derrota, exclusión en ambos sentidos con la build final,
+regresión de entrada/salida y victoria por ruta 1 de la Fábrica. Sin probar en consola.
+Los textos y las reglas de equipo son los de la Mansión; el jefe y el comportamiento
+por encima de la racha 19 siguen sin probarse en esta instalación.

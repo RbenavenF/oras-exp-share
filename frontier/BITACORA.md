@@ -1294,3 +1294,22 @@ Commits: `9dc2dc8`, `bdae3b7`; recuperación documental en el commit de esta ent
 Decisiones: conservar la implementación y volver a probar los casos pendientes con la build recién generada.
 Siguiente paso: reanudar `f6t_paused12.sav`, comprobar derrota, ambas salidas y exclusión en ambos sentidos;
 victoria con la ruta 1 de la Fábrica. Documentar §25 y completar aceptación antes de marcar done.
+
+## 2026-11-03 23:49 — Codex — F6-TORRE: reanudación, dos victorias, PB y pausa verificados
+Estado: en curso
+Hecho: cargada la partida pausada 12 en la build completa, elegidos los tres Pokémon propios y ganados los
+combates 13 y 14. El 14 entrega 2 PB; se ofrece el 15. Pausa guardada con racha/récord 14, activo 1, ruta 2,
+PB totales 3. Mansión y Fábrica conservan sus rachas a cero. Salida de la Torre medida en (19,47).
+Añadido `reports/frontier.md` §25 con comprobación de zona, evidencia heredada y pruebas nuevas.
+Evidencia: `work/frontier/lab/f6tc_tower_bp2.png`, `f6tc_next15.png`, `f6tc_tower_exit.png`;
+`f6tc_paused14.sav` SHA256 `eb6d1fa2ce58e3dafaec9847d36b344bfecff622cf05ba9b46f8f7ee799d4eb9`;
+lector/checksums y registro en `work/frontier/tower/snapshot.py`, `save-evidence.jsonl`.
+`python -m pytest -q tests`: 212 passed (10,95 s), `work/frontier/tower/tests-round14.log`.
+El bloque de Mansión es idéntico. El equipo conserva especies/objetos/movimientos/EXP/EV/IV; varían PS por cura
+(en el ensayo anterior) y recuerdos del entrenador original (PK6 +0xCC–0xD0, fuente PKHeX enlazada en §25).
+Commits: el de esta entrada; anterior `2951a31`.
+Decisiones: no confundir los cambios retail de recuerdos/curación con una sustitución por alquileres.
+El laboratorio requiere una terminal persistente en Codex: al cerrarse la llamada que lo inicia, termina su
+namespace de procesos. No mandar Ctrl-C al shell del laboratorio: también lo cierra. Arranque/control/GDB/parada
+van por el mismo `exec_command` interactivo. Se recargó `f6tc_paused14.sav` después de cerrar uno de esos shells.
+Siguiente paso: completar derrota, rechazos en ambos sentidos y entrada/salida/victoria de Fábrica; aún no probado.
