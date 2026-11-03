@@ -1267,3 +1267,30 @@ Commits: el de esta entrada.
 **Estado del laboratorio**: parado; `use_gdbstub` en `false`. **Turno: libre.**
 Siguiente paso: `frontier/orch/frontier-orch auto` otra vez. Claude reanuda F6-TORRE: build y
 pruebas de Azahar.
+
+## 2026-11-03 23:38 — Codex — F6-TORRE: auditoría del relevo y recuperación de pruebas
+Estado: en curso
+Hecho:
+- Revisados `git status --short`, `git diff` y último commit (`bfe7d31`, toma de turno del supervisor).
+  No hay cambios versionados a medias. Los cinco archivos sin seguimiento de consultas de encuentros,
+  evoluciones e iniciales se conservan sin tocarlos. No se cambia REPARTO: el turno es del orquestador.
+- Recuperado el hito `bdae3b7`: selección de modalidad antes de elegir equipo, texto de rechazo más corto y
+  `lab_tower.py`. La sesión anterior sí llegó a jugar después de ese commit, aunque no escribió su entrada.
+  Extracto de sus comandos/resultados: `work/frontier/tower/previous-transcript.txt` (sesión Claude
+  `450b9107-992a-4571-9d30-063066c3155f`).
+- Inspeccionadas con `save_event` las partidas originales del laboratorio anterior:
+  `f6t_saved_329.sav` SHA256 `33bb1d0fae0a68699340624aabb6422750126bb5cf4743d437e1edde21992db7`
+  (zona 329, racha/récord Torre 6, ruta 2, activo 1, PB 0) y `f6t_paused12.sav`
+  SHA256 `df1b162bf818a9a27b9862646f297336fe4e36d7a57c7eed72db411934d2155a`
+  (zona 329, racha/récord 12, ruta 2, activo 1, PB 1). Fábrica 16437 y Mansión 0x1BBC0 a cero.
+  Evidencia heredada de seis victorias, incluido el final de ronda 7, y guardado al pausar; no se afirma
+  que Codex haya jugado esos combates. El punto de partida fue una copia con racha editada a 6.
+Evidencia:
+- `source scripts/env.sh && python -m pytest -q tests`: 212 passed (9,93 s).
+- Build completa ejecutada: `python frontier/overlay.py --out work/frontier/build --romfs
+  work/faraway/dev/overlay/romfs`; registro `work/frontier/tower/build-codex.log`; 329 clonado de 517,
+  área propia 233; hook 572 bytes.
+Commits: `9dc2dc8`, `bdae3b7`; recuperación documental en el commit de esta entrada.
+Decisiones: conservar la implementación y volver a probar los casos pendientes con la build recién generada.
+Siguiente paso: reanudar `f6t_paused12.sav`, comprobar derrota, ambas salidas y exclusión en ambos sentidos;
+victoria con la ruta 1 de la Fábrica. Documentar §25 y completar aceptación antes de marcar done.
