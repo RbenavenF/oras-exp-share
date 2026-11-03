@@ -843,3 +843,51 @@ igual. El cambio de prueba se deshizo.
 - ganar una ronda de la Fábrica en 213;
 - guardar desde el menú en el muelle 209;
 - la consola.
+
+## 20. F6: ferris, guardado en el muelle y una ronda ganada en la isla (Azahar, 2026-11-03)
+
+Overlay `work/frontier/build` (el mismo `code.ips` que §19). Capturas en
+`work/frontier/lab/f6f_*`.
+
+**Probado en Azahar**:
+- **Guardar desde el menú en el muelle 209**:
+  - el resumen de guardado muestra «Isla del Frente» (`f6f_save_prompt.png`);
+  - partida `f6f_saved_pier.sav` (`91b41949…`), hecha a partir de `f6e_saved_213.sav`;
+  - al arrancar con ella se aparece en el muelle (37,44), con control libre
+    (`f6f_pier_reload.png`).
+- **Vuelta a Calagua**: el empleado de la isla → «Ciudad Calagua» → «Muy bien, rumbo a
+  Ciudad Calagua.» → llegada al puerto de Calagua (`f6f_lilycove.png`). Allí el ferry
+  ofrece Resort Batalla, Ciudad Portual, Isla del Frente y «Me quedo aquí»
+  (`f6f_lilycove_menu.png`).
+- **Ferry de Portual**:
+  - con el warp de desarrollo al puerto de Portual (zona 275, warp 0) y `f6_pass.sav`,
+    el empleado (17,24) ofrece Resort Batalla, Ciudad Calagua, Isla del Frente y «Me
+    quedo aquí» (`f6f_slateport_menu.png`);
+  - «Isla del Frente» → «Muy bien, rumbo a la Isla del Frente.» (`f6f_slateport_go.png`)
+    → llegada al muelle (53,34) (`f6f_slateport_arrival.png`).
+- **Ronda ganada en la sala 213** (desde `f6f_saved_pier.sav`):
+  - alquileres Larvitar, Venipede y Carvanha contra Glameow, Chespin y Swinub;
+  - victoria (`f6f_win.png`);
+  - la recepcionista ofrece el cambio. Se dio Larvitar (`f6f_swap_give.png`) y se tomó
+    Glameow (`f6f_swap_take.png`);
+  - «El próximo combate será el número 2» con Continuar / Pausar / Guardar vídeo
+    (`f6f_next_battle.png`);
+  - el combate 2 empieza con Glameow contra Skorupi (`f6f_battle2.png`).
+
+**Trampas del laboratorio** (medidas en esta sesión):
+- `work/frontier/build` se genera sobre el overlay de desarrollo (`--romfs
+  work/faraway/dev/overlay/romfs`) y su `a/0/1/3` lleva el warp de la Ruta 102. Tras
+  `faraway/dev_overlay.sh ZONA WARP` hay que volver a ejecutar
+  `python frontier/overlay.py --out work/frontier/build --romfs work/faraway/dev/overlay/romfs`.
+  Si no, el warp sigue llevando a la zona anterior (pasó con 275 → seguía en 213).
+- Teclas del perfil del laboratorio (`qt-config.ini`):
+  - A = `a`, B = `s`, X = `z`, Y = `x`;
+  - cruceta: `t` arriba, `g` abajo, `f` izquierda, `h` derecha;
+  - `b` es HOME, no B.
+- A velocidad 300 %, una pulsación de cruceta de 0,25 s se repite en los menús. Con
+  0,08 s mueve una sola entrada.
+- El trayecto Calagua → Portual pasa por el camarote del S.S. Marea. No se completó
+  por esa vía: el camarote en (30,7) no era el del jugador. Para Portual se usó el
+  warp de desarrollo.
+
+**Sin probar**: la consola.

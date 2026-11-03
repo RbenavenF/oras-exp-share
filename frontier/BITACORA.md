@@ -835,3 +835,37 @@ Siguiente paso:
    - guardar desde el menú en el muelle 209.
 2. Seguir la F6: distribución de Esmeralda con el catálogo de edificios de CTRMap,
    textos ES/EN y el paquete Luma encadenado con v0.5.
+
+## 2026-11-03 03:1x — Claude Code — F6: ferris, guardado en el muelle y ronda ganada en la isla
+Estado: hecho (la F6 sigue en curso)
+Hecho: se probaron en Azahar los cuatro puntos pendientes de la entrada anterior.
+- **Guardar desde el menú en el muelle 209**: guarda, y la partida carga en el muelle.
+- **Isla → Calagua**: llega al puerto de Calagua.
+- **Ferry de Portual**: ofrece «Isla del Frente» y lleva a la isla.
+- **Ronda ganada en 213**:
+  - victoria;
+  - cambio de alquiler (Larvitar → Glameow);
+  - el combate 2 empieza con Glameow.
+No hubo cambios de código.
+Evidencia: `reports/frontier.md` §20, con las capturas `work/frontier/lab/f6f_*` y la
+partida `f6f_saved_pier.sav` (`91b41949…`).
+Commits: el de esta entrada.
+Decisiones:
+- La isla queda funcional de punta a punta: ida y vuelta por ambos ferris, guardado, y
+  Fábrica completa con victoria y cambio.
+- Se pasa a la parte visual de la F6.
+**Estado del laboratorio**:
+- warp de desarrollo → 213, con `work/frontier/build` regenerado sobre él;
+- `use_gdbstub` en `false`;
+- lab parado.
+Trampas anotadas en §20:
+- `overlay.py` hereda el warp de desarrollo;
+- la tecla B es `s`;
+- las pulsaciones largas se repiten a 300 %.
+Siguiente paso: seguir la F6.
+1. Distribución de Esmeralda con el catálogo de edificios de CTRMap-F5. Primero medir
+   qué modelos de edificio y qué zonas exteriores sirven de donante para un exterior con
+   varias puertas: Fábrica y, más adelante, las otras instalaciones.
+2. Textos ES/EN.
+3. Paquete Luma encadenado con v0.5.
+4. Plan de prueba en consola.
