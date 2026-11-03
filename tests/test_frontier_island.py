@@ -196,12 +196,12 @@ def test_every_island_clone_gets_its_donors_native_groups():
 
 
 def test_plaza_plan_links_only_the_factory():
-    """Seven facility buildings, none with a door prop (they hang the load), one door: the Factory's, into 213."""
+    """Seven facility buildings with their door props (§23), one door warp: the Factory's, into 213."""
     import island_build
     lines = island_build.plan('s').splitlines()
     buildings = [line for line in lines if line.startswith('plaza.building.')]
     doors = [line for line in lines if line.startswith('plaza.door.')]
-    assert len(buildings) == 7 and all(line.endswith('|nodoorprop') for line in buildings)
+    assert len(buildings) == 7 and all(line.split('=', 1)[1].count('|') == 2 for line in buildings)
     factory = list(island_build.FACILITIES).index('Factory')
     assert doors == [f'plaza.door.{factory}={island_build.ZONE_HALL},0']
     assert buildings[factory].startswith(f'plaza.building.{factory}=Gym|')
@@ -209,17 +209,13 @@ def test_plaza_plan_links_only_the_factory():
     assert f'zone.{island_build.ZONE_HALL}.warp.0=0,{island_build.ZONE_ISLAND},0' in lines
 
 
-def test_island_area_over_the_measured_limit_is_refused():
+def test_island_load_budget_over_the_measured_one_is_refused():
+    """§23: Plaza's last "load budget" line is checked against LOAD_BUDGET; a log without one is refused too."""
     import island_build
-    from formats import rebuild_garc
-    build = ROOT / 'work/frontier/build/romfs'
-    if not (build / island_build.AREA_ARCHIVE).exists():
-        pytest.skip('Local island build required (python frontier/overlay.py --out work/frontier/build)')
-    archives = {rel: (build / rel).read_bytes() for rel in ('a/0/1/3', island_build.AREA_ARCHIVE)}
-    assert island_build.check_area(archives) <= island_build.AREA_LIMIT
-    area = island_build.island_area(archives['a/0/1/3'])
-    entry = next((e, s) for i, (e, s, o, n) in enumerate(garc_entries(archives[island_build.AREA_ARCHIVE])) if i == area)
-    archives[island_build.AREA_ARCHIVE] = rebuild_garc(archives[island_build.AREA_ARCHIVE],
-                                                       {entry: bytes(island_build.AREA_LIMIT + 1)})
+    line = 'load budget {} bytes: world pack 1, prop pack 2, models 3 (864 3)'
+    log = '\n'.join([line.format(10 ** 7), 'pack ok', line.format(island_build.LOAD_BUDGET)]) + '\n'
+    assert island_build.check_budget(log) == island_build.LOAD_BUDGET   # the last line counts
     with pytest.raises(ValueError, match='measured to load'):
-        island_build.check_area(archives)
+        island_build.check_budget(log + line.format(island_build.LOAD_BUDGET + 1) + '\n')
+    with pytest.raises(ValueError, match='no load budget'):
+        island_build.check_budget('pack ok\n')

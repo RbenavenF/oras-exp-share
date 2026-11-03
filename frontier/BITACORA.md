@@ -965,3 +965,52 @@ Siguiente paso:
    - barandillas del muelle sobre la explanada;
    - cerca de la casa de Lavacalda en (33–34, 58).
 3. Textos ES/EN, paquete Luma y plan de consola.
+
+## 2026-11-03 08:xx — Claude Code — F6: puertas animadas en la plaza; el cuelgue era una textura fuera del paquete del mapa
+Estado: hecho (la F6 sigue en curso)
+Hecho:
+- **Causa medida del cuelgue** de §21, que corrige sus dos conclusiones:
+  - el pintor de CTRMap-F5 da por presente una textura del edificio si está en el paquete
+    de props del área (fichero 1) y no la copia al del mapa (fichero 11);
+  - el juego solo busca las texturas del mapa en el fichero 11, y se cuelga.
+  - La provoca el prop de puerta (`chip_mado_a`, `poke_gym_mado`) y también el paquete de
+    props original del puerto (`c102_09_mado`, en v6, v10 y v12, sin props).
+- **Arreglo en nuestro código** (CTRMap-F5 no se toca):
+  - `FrontierPlaza.keepWorldTexturesInWorldPack` copia esas texturas al fichero 11 y se
+    niega si alguna sigue faltando;
+  - `Plaza` lo llama tras el pintado.
+- **Cota nueva**: la de tamaño de área (386.675) queda refutada. `LOAD_BUDGET = 2724608`
+  sobre la suma que imprime `Plaza` (paquete del mapa + props + modelos de las regiones).
+  Sustituye a `AREA_LIMIT`/`check_area`.
+- **Puertas**:
+  - los siete edificios llevan su prop de puerta (sin `nodoorprop`);
+  - `island_build` exige que se coloquen y que la copia de texturas se haya hecho.
+- Nueva herramienta de solo lectura `faraway/java/faraway/WorldTextures.java`.
+Evidencia:
+- `reports/frontier.md` §23: tablas, partición del prop y fix11.
+- **Azahar**: la isla carga con las puertas; se entra en 213 y se vuelve a (20,58); la
+  maqueta no deja pasar (`f6i_*`).
+- `python -m pytest -q tests` → 145 passed.
+- **Roturas a mano**:
+  - sin la copia de texturas, la build se niega nombrando las dos texturas;
+  - dos mutaciones de `check_budget`: cada una falla su test.
+Commits: el de esta entrada.
+Decisiones:
+- `LOAD_BUDGET` es lo mayor medido que carga, no el límite del motor: las áreas originales
+  tienen paquetes mayores.
+- La distribución sigue con tres modelos; ahora caben más distintos (v10f, con cuatro,
+  carga).
+**Estado del laboratorio**:
+- warp de desarrollo → 213;
+- `work/frontier/build` contiene la plaza con puertas;
+- `use_gdbstub` en `false`;
+- lab parado.
+Siguiente paso:
+1. Elegir un edificio distinto por instalación dentro de `LOAD_BUDGET`. Medir con
+   `lab_plaza.sh` y `WorldTextures`.
+2. Por qué cuelgan v6 y v14, sin hueco de texturas y por encima de la cota.
+3. Defectos visibles:
+   - barandillas del muelle sobre la explanada;
+   - cerca de la casa de Lavacalda en (33–34, 58).
+4. Textos ES/EN, paquete Luma y plan de consola.
+5. Avisar al autor de CTRMap-F5 del fallo de `missingIn` (solo si el usuario quiere).

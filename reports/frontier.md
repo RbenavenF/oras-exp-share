@@ -1019,3 +1019,103 @@ Capturas en `work/frontier/lab/f6h_*`.
 - la consola;
 - ganar una ronda entrando por la puerta nueva. La victoria y el intercambio se
   probaron en la misma sala en §20, entrando por el warp antiguo del muelle.
+
+## 23. F6: el cuelgue de las puertas era una textura fuera de su paquete; la cota del área, refutada (Azahar, 2026-11-03)
+
+Corrige las dos conclusiones de §21. Variantes de la plaza en `work/frontier/plaza-exp/` y
+capturas `work/frontier/lab/f6g_*` y `f6i_*`. Los scripts de medida de esta sección
+estaban en el directorio temporal de la sesión y no se conservan; lo que queda es lo que
+se repite con `faraway/run.sh WorldTextures GAME WS 209`.
+
+**Causa**:
+- Un área tiene dos paquetes de texturas:
+  - fichero 11 del contenedor AD, el del mapa;
+  - fichero 1, el de los props.
+- El juego busca las texturas de los modelos del mapa solo en el fichero 11.
+- El traslado de texturas del pintor de CTRMap-F5 da una textura por presente si está en
+  cualquiera de los dos (`BchTexturePack.missingIn`, `tools/CTRMap-F5/src/ctrmap/formats/h3d/BchTexturePack.java:584`,
+  llamado desde `planCarry`, línea 508).
+- Si la textura de un edificio solo está en el paquete de props, no se copia al del mapa
+  y la isla se cuelga al cargar.
+- Pasa de dos maneras:
+  - el prop de puerta importa al paquete de props una textura que el edificio también
+    usa: `chip_mado_a` (casa de Lavacalda) y `poke_gym_mado` (Gimnasio);
+  - el paquete de props del área original del puerto ya tiene la textura: `c102_09_mado`
+    en v6, v10 y v12, que no llevaban ningún prop.
+
+**Medidas** (`WorldTextures` lista las texturas de los modelos del mapa que faltan en el
+fichero 11; control: en el área sin pintar, v0, la lista sale vacía):
+
+| Variante | Resultado | Fuera del paquete del mapa |
+| --- | --- | --- |
+| v0, v5, v7, v8, v11, v13, v15 | cargan | ninguna |
+| v3 (casa con prop de puerta) | cuelga | `chip_mado_a` (solo en props) |
+| v2 (Gimnasio con prop) | cuelga | `poke_gym_mado` (solo en props) |
+| v6, v10, v12 | cuelgan | `c102_09_mado` (solo en props) |
+| v14 | cuelga | ninguna |
+
+**Partición del prop de puerta** (variantes hechas a mano sobre v3/v5; control: la lista de
+props generada con la referencia 0x3a coincide byte a byte con la de v3):
+- «solo registro» (v3 sin el prop colocado): cuelga;
+- «solo colocación» (v5 con un prop del modelo 0x53, registrado de origen): carga (brillo
+  118,9; v5 en el mismo montaje: 118,7);
+- **fix11** (v3 entero con el fichero 11 de v5, que tiene `chip_mado_a`): carga (119,8).
+  Solo difiere de v3 en el fichero 11.
+- La entrada que el pintor añade al registro de props es idéntica byte a byte a las de las
+  áreas originales con esos modelos (áreas 9–24, 202, 203).
+- Mientras cuelga, el hilo principal está en un bucle de espera, y un hilo de carga en
+  `svc 0x32` (SendSyncRequest) en 0x1f76a4 (gdb, `info threads`).
+
+**Arreglo** (en nuestro código; CTRMap-F5 es de su autor y no se ha tocado):
+- `FrontierPlaza.keepWorldTexturesInWorldPack` copia al fichero 11 las texturas de los
+  modelos del mapa que solo tiene el fichero 1;
+- después vuelve a preguntar y se niega si falta alguna;
+- `Plaza` lo ejecuta tras el pintado;
+- `island_build` exige su línea en el registro.
+- Con el arreglo, v3 y v10 cargan (v3f, v10f). v6 y v14 siguen colgándose.
+
+**La cota de §21 (386.675 bytes de área empaquetada), refutada**: v10f carga con 467.609 bytes
+y v14f se cuelga con 458.007. Se cambia por la suma que imprime `Plaza` («load budget»):
+paquete del mapa + paquete de props + modelos de todas las regiones de la isla, sin
+comprimir.
+
+| Variante | Resultado | Presupuesto | Paquete del mapa |
+| --- | --- | --- | --- |
+| v0 | carga | 1.849.472 | 342.272 |
+| v5 / v3f | carga | 2.078.208 / 2.080.768 | 420.224 / 418.176 |
+| v13 (siete veces la misma casa) | carga | 2.411.392 | 420.224 |
+| v15 (Gimnasio + dos casas repetidas) | carga | 2.527.872 | 544.128 |
+| v10f (cuatro edificios distintos) | carga | 2.724.608 | 827.136 |
+| v14f (siete de dos pueblos) | cuelga | 2.986.112 | 903.168 |
+| v6f (siete distintos) | cuelga | 3.396.352 | 1.256.704 |
+
+- `island_build.LOAD_BUDGET = 2724608`: lo mayor medido que carga.
+- No es el límite real del motor: hay áreas originales con paquetes del mapa mayores (área
+  11: 1.418.112) y regiones originales con modelos de hasta 1.349.504 bytes (región 389).
+  Lo más probable es un presupuesto de memoria conjunto, que no se ha medido.
+- Las dos casas de Férrica (las únicas comunes a v6 y v14) cargan solas (brillo 118,7 y
+  118,9).
+
+**Build** (`python frontier/overlay.py --out work/frontier/build --romfs work/faraway/dev/overlay/romfs`):
+- los siete edificios llevan su prop de puerta (sin `nodoorprop`);
+- copia `chip_mado_a` y `poke_gym_mado` al paquete del mapa;
+- presupuesto 2.540.160 bytes.
+
+**Probado en Azahar** (desde `f6h_saved_plaza.sav`):
+- la isla carga; el Gimnasio muestra su puerta de cristal (`f6i_boot.png`);
+- empujando contra ella se entra en la sala 213 (20,28), y al salir se aparece en (20,58)
+  (`f6i_back.png`);
+- la puerta de la Pirámide (maqueta) sigue sin dejar pasar (31,58; `f6i_mock.png`).
+
+**Guardas probadas rompiéndolas**:
+- sin la copia en `keepWorldTexturesInWorldPack`, la build se niega: «zone 209's map draws
+  with textures its world pack lacks {chip_mado_a=true, poke_gym_mado=true}…»;
+- `check_budget` con `> LOAD_BUDGET + 1` y con la primera línea en vez de la última: falla
+  `test_island_load_budget_over_the_measured_one_is_refused` en los dos casos.
+- La exigencia de las líneas «Swinging-door prop(s) placed» y «world textures copied» en el
+  registro no se ha probado rompiéndola.
+
+**Sin probar**:
+- ver la animación de apertura de la puerta (la captura cayó en el fundido);
+- la causa del cuelgue de v6 y v14;
+- la consola.

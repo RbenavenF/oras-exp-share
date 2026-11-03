@@ -13,6 +13,8 @@ import java.util.Properties;
  * game. The plan names the zone, the painted rectangle, the buildings and which doors lead where:
  *   plaza.zone=209   plaza.rect=x0,y0,x1,y1   plaza.building.N=name|x|y[|nodoorprop,nopassengers]   plaza.door.N=zone,warp
  *   plaza.heightof=W (the zone's warp whose height the door warps take; all old warps are replaced)
+ * After the paint every map-model texture is kept in the area's world pack (FrontierPlaza.keepWorldTexturesInWorldPack,
+ * reports/frontier.md §23), and the last line is the load budget island_build checks.
  */
 public final class Plaza {
 
@@ -51,8 +53,10 @@ public final class Plaza {
 		String report = FrontierPlaza.paint(zone, Integer.parseInt(rect[0].trim()), Integer.parseInt(rect[1].trim()),
 				Integer.parseInt(rect[2].trim()), Integer.parseInt(rect[3].trim()), spots);
 		System.out.println("apply: " + report.replace("\n", " | "));
+		System.out.println(FrontierPlaza.keepWorldTexturesInWorldPack(zone));
 		System.out.println("pack " + Workspace.packArchives((p, what) -> { }));
 		System.out.println(FrontierPlaza.linkDoors(zone, Integer.parseInt(plan.getProperty("plaza.heightof").trim()), doors, targets));
 		System.out.println("pack " + Workspace.packArchives((p, what) -> { }));
+		System.out.println(FrontierPlaza.loadBudget(zone));
 	}
 }

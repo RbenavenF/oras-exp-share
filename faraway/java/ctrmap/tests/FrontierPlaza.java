@@ -182,6 +182,104 @@ public final class FrontierPlaza {
 		return out.toString().trim();
 	}
 
+	/**
+	 * The texture names the zone's map models draw with that its area's WORLD pack (AD subfile 11) lacks,
+	 * each mapped to whether the area's PROP pack (subfile 1) holds it. The game looks a map model's
+	 * textures up in the world pack only (reports/frontier.md §23: the painter's carry counts a name the
+	 * door-prop import put into the prop pack as present, the house's window is then in neither for the
+	 * map, and the island hangs on load).
+	 */
+	public static java.util.Map<String, Boolean> worldTexturesOutsideWorldPack(int zone) throws Exception {
+		ctrmap.LoadedZone loaded = open(zone);
+		ctrmap.formats.containers.AD ad = new ctrmap.formats.containers.AD(Workspace.getWorkspaceFile(
+				ArchiveType.AREA_DATA, ctrmap.AreaForker.currentArea(zone)), Workspace.session());
+		java.util.Set<String> world = packNames(ad.getFile(11)), prop = packNames(ad.getFile(1));
+		java.util.Map<String, Boolean> out = new java.util.TreeMap<>();
+		for (int region : regions(loaded)) {
+			ctrmap.formats.containers.GR gr = new ctrmap.formats.containers.GR(
+					Workspace.getWorkspaceFile(ArchiveType.FIELD_DATA, region), Workspace.session());
+			ctrmap.formats.h3d.BchMapModel m = new ctrmap.formats.h3d.BchMapModel(gr.getFile(1));
+			for (int mesh = 0; mesh < m.meshes.size(); mesh++) {
+				for (String t : m.getMaterialTextureNames(m.getMeshMaterialIndex(mesh))) {
+					if (!world.contains(t)) {
+						out.put(t, prop.contains(t));
+					}
+				}
+			}
+		}
+		return out;
+	}
+
+	/**
+	 * Copies into the world pack every map-model texture that only the prop pack holds, then asks
+	 * {@link #worldTexturesOutsideWorldPack} again and refuses if any name is still outside it. The caller packs.
+	 */
+	public static String keepWorldTexturesInWorldPack(int zone) throws Exception {
+		java.util.List<String> moved = new ArrayList<>();
+		for (java.util.Map.Entry<String, Boolean> e : worldTexturesOutsideWorldPack(zone).entrySet()) {
+			if (e.getValue()) {
+				moved.add(e.getKey());
+			}
+		}
+		if (!moved.isEmpty()) {
+			ctrmap.formats.containers.AD ad = new ctrmap.formats.containers.AD(Workspace.getWorkspaceFile(
+					ArchiveType.AREA_DATA, ctrmap.AreaForker.currentArea(zone)), Workspace.session());
+			ad.storeFile(11, ctrmap.formats.h3d.BchTexturePack.importTextures(ad.getFile(11), ad.getFile(1), moved));
+		}
+		java.util.Map<String, Boolean> left = worldTexturesOutsideWorldPack(zone);
+		if (!left.isEmpty()) {
+			throw new IllegalStateException("zone " + zone + "'s map draws with textures its world pack lacks " + left
+					+ " (true: only the prop pack holds it); the game hangs loading such an area");
+		}
+		return "world textures copied from the prop pack: " + moved.size() + " " + moved;
+	}
+
+	/**
+	 * The load quantity reports/frontier.md §23 measured: the area's world pack (AD subfile 11) plus its prop pack
+	 * (1) plus the map models (GR subfile 1) of all the zone's regions, unpacked bytes.
+	 */
+	public static String loadBudget(int zone) throws Exception {
+		ctrmap.LoadedZone loaded = open(zone);
+		ctrmap.formats.containers.AD ad = new ctrmap.formats.containers.AD(Workspace.getWorkspaceFile(
+				ArchiveType.AREA_DATA, ctrmap.AreaForker.currentArea(zone)), Workspace.session());
+		int world = ad.getFile(11).length, prop = ad.getFile(1).length, models = 0;
+		StringBuilder each = new StringBuilder();
+		for (int region : regions(loaded)) {
+			int m = new ctrmap.formats.containers.GR(Workspace.getWorkspaceFile(ArchiveType.FIELD_DATA, region),
+					Workspace.session()).getFile(1).length;
+			models += m;
+			each.append(each.length() == 0 ? "" : ", ").append(region).append(' ').append(m);
+		}
+		return "load budget " + (world + prop + models) + " bytes: world pack " + world + ", prop pack " + prop
+				+ ", models " + models + " (" + each + ")";
+	}
+
+	static java.util.Set<String> packNames(byte[] pack) {
+		java.util.Set<String> names = new java.util.HashSet<>();
+		if (pack != null && ctrmap.formats.h3d.BchTexturePack.isTexturePack(pack)) {
+			for (ctrmap.formats.h3d.BchTexturePack.Texture t : ctrmap.formats.h3d.BchTexturePack.parse(pack)) {
+				names.add(t.name);
+			}
+		}
+		return names;
+	}
+
+	/** Every region id the zone's map matrix holds, each once. */
+	static java.util.Set<Integer> regions(ctrmap.LoadedZone loaded) throws Exception {
+		byte[] mm = java.nio.file.Files.readAllBytes(Workspace.getWorkspaceFile(ArchiveType.MAP_MATRIX,
+				loaded.open().header.mapmatrixID).toPath());
+		ctrmap.formats.mapmatrix.MapMatrix.Grid grid = ctrmap.formats.mapmatrix.MapMatrix.Grid.of(mm);
+		java.util.Set<Integer> out = new java.util.TreeSet<>();
+		for (int y = 0; y < grid.height; y++) {
+			for (int x = 0; x < grid.width; x++) {
+				if (grid.id(x, y) != 0xFFFF) {
+					out.add(grid.id(x, y));
+				}
+			}
+		}
+		return out;
+	}
+
 	static final class Host implements MapPainter.Host {
 
 		final List<String> said = new ArrayList<>();

@@ -19,8 +19,10 @@ First functional island (provisional geometry, reports/frontier.md §18):
   square with one catalogue building per Emerald facility (FACILITIES). Composite Apply: tiles outside the square
   keep the harbor's sea and pier. The painter wires no door; Plaza replaces the island's warps with one door warp,
   the Factory's, into the hall 213 (whose exit, warp 0, comes back to it). The other six buildings are mocks with no
-  warp. No building gets its swinging-door prop: with one, the island hangs on load (black screen, 0 FPS; the same
-  house loads without it; reports/frontier.md §21). Walking south from the dock leads onto the square.
+  warp. Every building keeps its swinging-door prop. After the paint, Plaza copies into the area's world pack any
+  map-model texture only its prop pack holds (the painter counts those as present, and the island then hangs on
+  load; reports/frontier.md §23), and prints the load budget, which must stay within LOAD_BUDGET. Walking south from
+  the dock leads onto the square.
 Both slots were chosen with CTRMap-F5's ZoneRepurposeScanner (empty, no incoming warps, no script or shared script
 sends the player there; §18); both keep their placeholder entity scripts (517's is empty as well).
 
@@ -28,6 +30,7 @@ The staged copy holds the archives CTRMap reads (faraway/build.py STAGED), from 
 Repolished baseline as fallback, with the overlay's own archives (zones 517/317 etc.) on top, so the clones inherit
 the patched scripts. Only the zone archives may change; anything else is an error.
 """
+import re
 import shutil
 import subprocess
 import sys
@@ -56,8 +59,8 @@ CLONES = {ZONE_ISLAND: DONOR_ISLAND, ZONE_HALL: DONOR_HALL}   # slot: donor; als
 
 PLAZA_RECT = (1, 0, 39, 38)    # cell-local tiles x0, y0, x1, y1 of the island's own cell (0,1) painted as path
 # Emerald facility: (catalogue building, anchor x, y). Only the Factory has a door (into the hall 213). Two house
-# models repeat: every distinct building carries its textures into the island's area, and past AREA_LIMIT the island
-# hangs on load (reports/frontier.md §21); a repeated model carries nothing new.
+# models repeat: every distinct building carries its textures into the island's area and grows the load budget
+# (below); a repeated model carries nothing new.
 FACILITIES = {
     'Tower': ('Dewford shingle house', 16, 2),
     'Dome': ('Lavaridge house', 4, 13),
@@ -67,8 +70,10 @@ FACILITIES = {
     'Arena': ('Lavaridge house', 17, 25),
     'Palace': ('Dewford shingle house', 28, 25),
 }
-AREA_ARCHIVE = 'a/0/1/4'   # area data, one entry per area id
-AREA_LIMIT = 386675        # largest island area entry measured to load in Azahar; 458007 and up hung (§21)
+# Plaza's "load budget": the island area's world pack + prop pack + the map models of all the island's regions,
+# unpacked. The largest measured to load in Azahar; 2986112 and up hung (reports/frontier.md §23). A measured bound,
+# not the engine's limit, which was not found: retail areas hold larger texture packs.
+LOAD_BUDGET = 2724608
 DOORS = {'Factory': (ZONE_HALL, 0)}   # facility: (zone, warp) its door leads to (island warps follow FACILITIES order)
 
 
@@ -117,7 +122,7 @@ def plan(scripts):
         'plaza.heightof=0',            # the pier's warp: the painted square lies at the pier's ground
     ]
     for i, (facility, (name, x, y)) in enumerate(FACILITIES.items()):
-        lines.append(f'plaza.building.{i}={name}|{x}|{y}|nodoorprop')   # door props hang the load (§21)
+        lines.append(f'plaza.building.{i}={name}|{x}|{y}')
         if facility in DOORS:
             lines.append(f'plaza.door.{i}=' + ','.join(map(str, DOORS[facility])))
     return '\n'.join(lines) + '\n'
@@ -173,8 +178,10 @@ def build(archives, source, work):
     painted = f'Painted map applied to zone {ZONE_ISLAND}' in text
     if not painted or f'{len(FACILITIES)} door(s) left unwired' not in text:
         raise ValueError(f'the plaza was not painted: {text}')
-    if 'Swinging-door prop' in text:
-        raise ValueError(f'the plaza placed door props, which hang the island on load: {text}')
+    if 'Swinging-door prop(s) placed' not in text:
+        raise ValueError(f'the plaza placed no door props: {text}')
+    if 'world textures copied from the prop pack:' not in text:
+        raise ValueError(f'Plaza did not keep the map textures in the world pack (§23): {text}')
     for i, facility in enumerate(f for f in FACILITIES if f in DOORS):   # Plaza adds door warps in building order
         name = FACILITIES[facility][0]
         if f'warp {i} door of {name} at tile' not in text:
@@ -186,21 +193,17 @@ def build(archives, source, work):
             if rel not in ZONE_ARCHIVES:
                 raise ValueError(f'Java build changed {rel}')
             out[rel] = new
-    check_area(out)
+    check_budget(text)
     out.update(place_names(out, source))
     return out, text
 
 
-def island_area(zones):
-    """The island zone's area id (header offset 2)."""
-    _, _, offset, length = garc_entries(zones)[ZONE_ISLAND]
-    header = zo_files(lz11_decompress(zones[offset:offset + length]))[0]
-    return int.from_bytes(header[2:4], 'little')
-
-
-def check_area(archives):
-    """Refuses an island area entry over AREA_LIMIT; returns its size."""
-    _, _, _, area = garc_entries(archives[AREA_ARCHIVE])[island_area(archives['a/0/1/3'])]
-    if area > AREA_LIMIT:
-        raise ValueError(f'the island area is {area} bytes, over the {AREA_LIMIT} measured to load (§21)')
-    return area
+def check_budget(text):
+    """The load budget Plaza printed (its last such line); refuses one over LOAD_BUDGET or a log without one."""
+    found = re.findall(r'^load budget (\d+) bytes', text, re.M)
+    if not found:
+        raise ValueError('Plaza printed no load budget')
+    budget = int(found[-1])
+    if budget > LOAD_BUDGET:
+        raise ValueError(f'the island load budget is {budget} bytes, over the {LOAD_BUDGET} measured to load (§23)')
+    return budget
