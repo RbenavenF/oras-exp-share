@@ -26,7 +26,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-Claude Code, desde 2026-11-03 11:xx (trabajo común del integrador)
+libre (último: Claude Code, 2026-11-03, trabajo común hecho)
 
 ## Instalaciones
 
@@ -74,8 +74,11 @@ Lo piden varios diseños. Va primero y lo hace quien tenga el turno:
 7. ~~Tabla de PB~~ (hecho: `data.FRONTIER_BP`, las siete columnas de pokeemerald `731ad5bf`; la Fábrica daba 9 PB
    en vez de 10–15 desde la ronda 15).
 
-Pendiente de este bloque: probar en Azahar la Fábrica con el `code.bin` nuevo (racha por ruta). Los tests Unicorn
-ejecutan los bytes del gancho en sus direcciones, pero no el juego.
+Probado en Azahar con el `code.bin` nuevo: una ronda de la Fábrica empieza, combate y termina en derrota sin
+colgarse; después la racha de la Mansión, la de la Fábrica y los works de la Torre siguen a 0 y `WORK_IV` = 0
+(`work/frontier/lab/f6k_after_loss.sav`). Comprobación débil (ya estaban a 0). **Sin probar en el juego**: una
+victoria que suba la racha con la ruta nueva; la cubren los tests Unicorn y se mira en la primera ronda ganada de
+la Torre.
 
 ## Works asignados
 

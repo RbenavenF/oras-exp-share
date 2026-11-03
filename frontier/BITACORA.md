@@ -1102,3 +1102,45 @@ Siguiente paso:
 2. Torre (Claude Code), según `reports/diseno/torre.md`, empezando por verificar la zona
    329.
 3. Codex, cuando el usuario lo abra: la instalación que le toque según `REPARTO.md`.
+
+## 2026-11-03 13:xx — Claude Code — F6: trabajo común del integrador (racha por instalación, clones genéricos, PB)
+Estado: hecho (la F6 sigue en curso)
+Hecho:
+- **Tabla de PB**: `data.FRONTIER_BP` tiene ya las siete columnas de pokeemerald `731ad5bf`,
+  leídas con un parser y comprobadas contra la fuente. La Fábrica se cortaba en la ronda 13:
+  daba 9 PB en vez de 10–15 desde la ronda 15.
+- **Racha por instalación**:
+  - `WORK_ROUTE` elige la instalación por su valor (`patch.STREAK_ROUTES`, tabla
+    `slot_deltas` en `rental.s`);
+  - los valores desconocidos dejan la racha de la Mansión;
+  - cada instalación tiene su trío de works: racha, «desafío a medias» y récord
+    (`REPARTO.md`).
+- **Clones genéricos** en `island_build`: `CLONES`, `KEEP_TEXT`, `NATIVE_DONORS`,
+  `native_donors()` y `build(..., zone_scripts)`.
+- **Exclusión mutua**: queda fijada la convención (`patch.ACTIVE_WORK`); se programará con la
+  Torre.
+Evidencia:
+- `python -m pytest -q tests` → 159 passed.
+- **Roturas a mano** (cada una falla su test):
+  - quitar la comprobación de rutas;
+  - desplazar el índice de la tabla;
+  - devolver solo `CLONES`;
+  - aceptar el script de la isla.
+- **Build**: el gancho pasa de 496 a 572 bytes; la sala, a ZO 15.748.
+- **Azahar**: una ronda de la Fábrica con el `code.bin` nuevo empieza y acaba en derrota sin
+  colgarse; las rachas siguen a 0 (`f6k_after_loss.sav`). Sin probar en el juego: una
+  victoria que suba la racha (la cubren los tests Unicorn).
+Commits: `07b36bd`, `79d8a40` y el de esta entrada.
+Decisiones: la exclusión mutua se programa con la segunda instalación, porque antes no hay
+nada que excluir ni manera de probarla.
+**Estado del laboratorio**:
+- warp de desarrollo → 213;
+- `work/frontier/build` con el `code.bin` nuevo;
+- `use_gdbstub` en `false`;
+- lab parado.
+- **Turno: libre.**
+Siguiente paso:
+1. Codex: Domo, Tubo o Pirámide según `REPARTO.md`.
+2. Claude Code: Torre (`reports/diseno/torre.md`), con la exclusión mutua y una ronda ganada
+   en Azahar.
+Una sola herramienta a la vez.
