@@ -7,13 +7,14 @@ an own streak and record, BP per round as Emerald, pause and resume as the Maiso
 reports/frontier.md §1):
 - reception (0x14f4): patch.WORK_ROUTE = 0 right after BattleInstWorkCreate (a save made during a challenge can
   hold the route), as the Factory;
-- menu result (0x1634): option 0 («Combatir») calls `tower_reception` instead of the Maison's mode selection app;
-  its result is the «back to the menu» local (-4), as the Factory's option;
+- menu result (0x1634): option 0 («Combatir») calls `tower_reception` instead of the Maison's inline flow; its
+  result is the «back to the menu» local (-4), as the Factory's option;
 - `tower_reception`: refuses (text 619 line factory.LINE_BUSY) while another facility has a challenge in progress
-  (patch.ACTIVE_WORK, frontier/REPARTO.md); else SetRank(0), WORK_ROUTE = ROUTE (the code.bin streak hooks then
+  (patch.ACTIVE_WORK, frontier/REPARTO.md); else the Maison's mode selection app as at 0x1640 (the party selection
+  screen needs it), back to the menu unless Singles was accepted; then SetRank(0), WORK_ROUTE = ROUTE (the code.bin streak hooks then
   point the Maison's Singles Normal streak and record at the Tower's works, patch.STREAK_ROUTES), a new challenge
   (ACTIVE = 0) starts its streak at 0, ACTIVE = 1 for the challenge (so the save the challenge makes holds it), the
-  Maison challenge routine 0x18f8(rank 0, Singles, 0), then ACTIVE stays 1 only if the streak is not 0 (paused) and
+  Maison challenge routine 0x18f8(rank 0, Singles, work 0x800E), then ACTIVE stays 1 only if the streak is not 0 (paused) and
   WORK_ROUTE = 0;
 - lost battle (0x2210, before the record is saved) and the «did not save» cleanup (0x1458): ACTIVE = 0;
 - BP (0x3de4): with WORK_ROUTE = ROUTE, none for battles 1-6 of a round and data.FRONTIER_BP['tower'][round - 1]
@@ -40,13 +41,31 @@ ROUTE = patch.ROUTE[FACILITY]
 STREAK, ACTIVE, RECORD = (patch.STREAK_ROUTES[ROUTE][1] + k for k in range(3))
 TOWER_BP = fd.FRONTIER_BP[FACILITY]
 MENU_BATTLE = 0                  # «Combatir»: the Maison's own challenge
+MODE_APP, MSG_MODE = 'L12a0', 6  # 0x16fc: CALL 0x12a0 (_CallTrialDownloadApp) after message 6
+SUPER_FLAGS = (385, 386, 387, 388, 389)   # its last five arguments, FlagGet of each (0x1680-0x16e0)
 RECEPTION_MENU = [53, 54, 74, 55]
 
 
 def reception_routine(p):
     """tower_reception() -> 1 = back to the reception menu, 0 = challenge played."""
-    r = factory.Routine(p, 'tower_reception', [])
+    r = factory.Routine(p, 'tower_reception', [f'flag{f}' for f in SUPER_FLAGS] + ['x'])
     factory.busy_check(r, FACILITY, 'tower_refused')
+    # The Maison's own mode selection, as 0x1640-0x1704: message 6, then the app (0x12a0, _CallTrialDownloadApp).
+    # The party selection screen needs it: without it every Pokémon is refused (seen in Azahar, §25).
+    r.call(f'L{factory.MSG:x}', MSG_MODE, 1, 0, 256, 0)
+    r.call(f'L{factory.MSG_WAIT:x}')
+    r.call(f'L{factory.MSG_CLOSE:x}', 0)
+    for f in SUPER_FLAGS:
+        r.sysreq('FlagGet', f)
+        r.store(f'flag{f}')
+    r.call(MODE_APP, 0, factory.WORK_SELECT_RESULT, factory.WORK_SELECT_TYPE, factory.WORK_SELECT_X,
+           *(f'flag{f}' for f in SUPER_FLAGS))
+    r.sysreq('WorkGet', factory.WORK_SELECT_RESULT)
+    r.op('JZER', 'tower_refused')               # mode screen cancelled
+    r.sysreq('WorkGet', factory.WORK_SELECT_TYPE)
+    r.op('JNZ', 'tower_refused')                # v1: Singles only (the streak route covers Singles)
+    r.sysreq('WorkGet', factory.WORK_SELECT_X)
+    r.store('x')
     r.sysreq('SetRank', 0)                      # the streak route covers rank Normal only
     r.sysreq('WorkSet', patch.WORK_ROUTE, ROUTE)
     r.sysreq('WorkGet', ACTIVE)
@@ -54,10 +73,7 @@ def reception_routine(p):
     r.sysreq('WorkSet', STREAK, 0)              # a new challenge starts at battle 1
     r.p.label('tower_resume')
     r.sysreq('WorkSet', ACTIVE, 1)
-    r.sysreq('WorkSet', factory.WORK_SELECT_RESULT, 1)
-    r.sysreq('WorkSet', factory.WORK_SELECT_TYPE, 0)
-    r.sysreq('WorkSet', factory.WORK_SELECT_X, 0)
-    r.call(factory.CHALLENGE, 0, 0, 0)
+    r.call(factory.CHALLENGE, 0, 0, 'x')
     r.op('EQ_P_C_PRI', 1)
     r.op('JNZ', 'tower_declined')
     r.sysreq('GetMyWinCount', 0, 0)             # the Tower streak (route still set)

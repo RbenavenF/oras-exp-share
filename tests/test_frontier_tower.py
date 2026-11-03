@@ -68,7 +68,7 @@ def test_tower_menu_is_the_maisons_and_party_selection_is_retail(built):
     assert routine(tower.tower_program(retail)) == routine(Program.from_script(retail))
 
 
-def reception(built, active=None, declined=False, streak_after=0, tower_active=0, tower_streak=0):
+def reception(built, active=None, declined=False, streak_after=0, tower_active=0, tower_streak=0, mode=(1, 0, 7)):
     """Runs tower_reception. `active`: {facility: value} of other facilities' ACTIVE_WORK."""
     _, _, script, labels, _, _ = built
     works = {fp.ACTIVE_WORK[f]: v for f, v in (active or {}).items()}
@@ -80,13 +80,20 @@ def reception(built, active=None, declined=False, streak_after=0, tower_active=0
         log.append(('challenge', args, dict(works)))
         return 1 if declined else 0
 
+    def app(vm, args):
+        log.append(('app', args))
+        works.update({0x800C: mode[0], 0x800D: mode[1], 0x800E: mode[2]})
+        return 0
+
     stubs = natives({
         'WorkGet': lambda vm, a: works.get(a[0], 0),
         'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
+        'FlagGet': lambda vm, a: a[0] - 380,
         'SetRank': lambda vm, a: log.append(('rank', a)),
         'GetMyWinCount': lambda vm, a: log.append(('wins', dict(works))) or wins[0],
     })
-    calls = {labels[factory.CHALLENGE]: challenge, labels[f'L{factory.MSG:x}']: lambda vm, a: log.append(('msg', a))}
+    calls = {labels[factory.CHALLENGE]: challenge, labels[f'L{factory.MSG:x}']: lambda vm, a: log.append(('msg', a)),
+             labels[tower.MODE_APP]: app}
     calls.update({labels[m]: (lambda vm, a: 0) for m in MSG - {f'L{factory.MSG:x}'}})
     result = VM(script, stubs, calls).run(labels['tower_reception'])
     return result, works, log
@@ -95,8 +102,10 @@ def reception(built, active=None, declined=False, streak_after=0, tower_active=0
 def test_a_new_tower_challenge(built):
     result, works, log = reception(built, tower_streak=9)
     assert result == 0 and ('rank', [0]) in log
+    assert ('msg', [tower.MSG_MODE, 1, 0, 256, 0]) in log
+    assert ('app', [0, 0x800C, 0x800D, 0x800E, 5, 6, 7, 8, 9]) in log      # as 0x16fc: flags 385-389
     _, args, seen = next(e for e in log if e[0] == 'challenge')
-    assert args == [0, 0, 0] and seen[0x800C] == 1 and seen[0x800D] == 0 and seen[0x800E] == 0
+    assert args == [0, 0, 7]                                              # rank 0, Singles, work 0x800E
     assert seen[fp.WORK_ROUTE] == tower.ROUTE == 2 and seen[tower.ACTIVE] == 1 and seen[tower.STREAK] == 0
     assert works[fp.WORK_ROUTE] == 0 and works[tower.ACTIVE] == 0      # lost: no challenge in progress
     assert all(e[1][fp.WORK_ROUTE] == 2 for e in log if e[0] == 'wins')  # the streak read is the Tower's
@@ -116,10 +125,17 @@ def test_declining_goes_back_to_the_menu(built, active, streak, kept):
     assert result == 1 and works[tower.ACTIVE] == kept and works[fp.WORK_ROUTE] == 0
 
 
+@pytest.mark.parametrize('mode', [(0, 0, 0), (1, 1, 0), (1, 4, 0)])
+def test_only_accepted_singles_start_a_challenge(built, mode):
+    result, works, log = reception(built, mode=mode, tower_streak=5)
+    assert result == 1 and not [e for e in log if e[0] in ('challenge', 'rank')]
+    assert works[tower.STREAK] == 5 and fp.WORK_ROUTE not in works
+
+
 @pytest.mark.parametrize('other', [f for f in fp.ACTIVE_WORK if f != 'tower'])
 def test_tower_refuses_while_another_facility_is_in_progress(built, other):
     result, works, log = reception(built, active={other: 21 if other == 'factory' else 1}, tower_streak=5)
-    assert result == 1 and not [e for e in log if e[0] in ('challenge', 'rank')]
+    assert result == 1 and not [e for e in log if e[0] in ('challenge', 'rank', 'app')]
     assert ('msg', [factory.LINE_BUSY, 1, 0, 256, 0]) in log
     assert works[tower.STREAK] == 5 and fp.WORK_ROUTE not in works
 
