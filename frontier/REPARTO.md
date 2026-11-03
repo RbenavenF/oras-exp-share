@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-libre (último: Claude Code, 2026-11-03, arreglo del supervisor)
+frontier-orch (orquestador automático), desde 2026-11-03 23:34
 
 ## Instalaciones
 
