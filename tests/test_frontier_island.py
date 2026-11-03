@@ -209,6 +209,21 @@ def test_plaza_plan_links_only_the_factory():
     assert f'zone.{island_build.ZONE_HALL}.warp.0=0,{island_build.ZONE_ISLAND},0' in lines
 
 
+def test_plaza_buildings_are_distinct_and_drawn(monkeypatch):
+    """§24: one distinct building per facility, none the game leaves undrawn; plan() refuses either mistake."""
+    import island_build
+    names = [name for name, _, _ in island_build.FACILITIES.values()]
+    assert len(set(names)) == 7 and not island_build.NOT_DRAWN & set(names)
+    repeated = dict(island_build.FACILITIES, Palace=island_build.FACILITIES['Tower'])
+    monkeypatch.setattr(island_build, 'FACILITIES', repeated)
+    with pytest.raises(ValueError, match='distinct and drawn'):
+        island_build.plan('s')
+    undrawn = dict(island_build.FACILITIES, Palace=('Pacifidlog stilt hut', 28, 25))
+    monkeypatch.setattr(island_build, 'FACILITIES', undrawn)
+    with pytest.raises(ValueError, match='distinct and drawn'):
+        island_build.plan('s')
+
+
 def test_island_load_budget_over_the_measured_one_is_refused():
     """§23: Plaza's last "load budget" line is checked against LOAD_BUDGET; a log without one is refused too."""
     import island_build

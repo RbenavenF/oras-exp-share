@@ -232,7 +232,7 @@ Plan, bitácora, `frontier/survey.py`, pausa documentada del evento de Mew.
 ### F5 — Jefe, récords, Doble y Nivel Libre
 Jefe en los combates 21 y 42 con símbolos, cartel de récords, el resto de modalidades.
 
-### F6 — Isla del Frente: objeto, viaje, zona y Fábrica en su edificio (en curso; pase, marinero, ferris, isla 209, plaza con la Fábrica enlazada y seis maquetas, y Fábrica en la sala clonada 213 probados en Azahar, también una ronda completa entrando por la puerta, guardar en la explanada y las puertas animadas, `reports/frontier.md` §16–§23)
+### F6 — Isla del Frente: objeto, viaje, zona y Fábrica en su edificio (en curso; pase, marinero, ferris, isla 209, plaza con la Fábrica enlazada y seis maquetas, y Fábrica en la sala clonada 213 probados en Azahar, también una ronda completa entrando por la puerta, guardar en la explanada, las puertas animadas y la plaza fija con siete edificios distintos, `reports/frontier.md` §16–§24)
 - Objeto clave, su entrega, el viaje y la isla con el edificio de la Fábrica (§5.6),
   reutilizando lo del evento de Mew (`faraway/`). Textos ES/EN.
 - Paquete Luma `dist/oras-frontier-…` encadenado con v0.5 (y Mew si se quiere).
@@ -240,8 +240,9 @@ Jefe en los combates 21 y 42 con símbolos, cartel de récords, el resto de moda
 
 ### Después: el resto del Frente
 **Un edificio por agente** (petición del usuario, 2026-11-03). Cada instalación ya tiene su
-edificio de maqueta en la plaza (`island_build.FACILITIES`, `reports/frontier.md` §21). Para
-activarla hay que:
+edificio en la plaza, en un sitio fijo (`island_build.FACILITIES`, tabla de puertas en
+`reports/frontier.md` §24). El agente de una instalación trabaja dentro de su edificio y no
+cambia la plaza. Para activarla hay que:
 1. añadir su puerta en `DOORS`;
 2. darle interior (un clon, como 213 para la Fábrica, con sus nativas vía `CLONES`);
 3. escribir su lógica.
@@ -249,7 +250,16 @@ activarla hay que:
 Los edificios comparten `island_build.py`, `patch.py` y el área de la isla, que tiene una
 cota de carga medida (`LOAD_BUDGET`, `reports/frontier.md` §23). Por eso los agentes trabajan uno detrás de otro, o en
 paralelo solo para leer, y un único integrador escribe en esos ficheros (norma de
-CTRMap-F5: agentes que no pueden editar los ficheros de otros no editan a la vez).
+CTRMap-F5: agentes que no pueden editar los ficheros de otros no editan a la vez). Además,
+el laboratorio de Azahar es uno solo.
+
+Reparto entre agente e integrador:
+- **El integrador** asigna a cada instalación su zona de interior antes de empezar, de las
+  «likely free» de §24, para que dos agentes no elijan la misma. También es quien toca
+  `DOORS`, `CLONES` y `patch.py`.
+- **Cada agente** verifica su zona como en §18 y escribe la lógica en un módulo propio
+  (`frontier/<instalación>.py`) con sus tests. Entrega una entrada de bitácora y lo que el
+  integrador tiene que añadir a los ficheros compartidos.
 
 Estimación inicial, sin medir; se planifica cuando la Fábrica esté en consola:
 - **Torre Batalla**: casi la Mansión tal cual, con tu equipo. Lo más fácil.

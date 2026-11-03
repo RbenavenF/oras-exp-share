@@ -1014,3 +1014,47 @@ Siguiente paso:
    - cerca de la casa de Lavacalda en (33–34, 58).
 4. Textos ES/EN, paquete Luma y plan de consola.
 5. Avisar al autor de CTRMap-F5 del fallo de `missingIn` (solo si el usuario quiere).
+
+## 2026-11-03 10:xx — Claude Code — F6: plaza fija con un edificio distinto por instalación
+Estado: hecho (la F6 sigue en curso)
+Hecho:
+- **Coste de cada edificio** del catálogo medido sin emulador (`frontier/lab_building_costs.sh`).
+- **Distribución fija** (`island_build.FACILITIES`), con un edificio distinto por instalación:
+  - Torre: Férrica, tejado plano;
+  - Domo: casa de Pardal;
+  - Fábrica: Gimnasio;
+  - Pirámide: casa de tejas de Azuliza;
+  - Tubo: cabaña de la Ruta 124;
+  - Arena: casa de paja del Resort;
+  - Palacio: Férrica, dos plantas.
+  - Presupuesto 2.665.344 bytes, por debajo de `LOAD_BUDGET`.
+- **Edificios que no se dibujan**: la choza de Pacifidlog y la casa de Lanette se colocan
+  pero el juego no las dibuja. `island_build.NOT_DRAWN` los rechaza, y `plan()` exige siete
+  edificios distintos.
+- **PLAN**: reparto entre agente e integrador para «un edificio por agente». El integrador
+  asigna las zonas de interior y toca los ficheros compartidos; cada agente trabaja en su
+  módulo.
+Evidencia:
+- `reports/frontier.md` §24: tabla de costes, tabla de puertas y frentes, capturas
+  `work/frontier/lab/f6j_*`.
+- **Azahar**: se ven los siete edificios; las seis maquetas bloquean desde su frente; la
+  Fábrica entra y sale con la build definitiva.
+- El área y las regiones de la build son idénticas byte a byte a las de la variante
+  recorrida.
+- `python -m pytest -q tests` → 146 passed. Las dos mitades de la guarda nueva fallan su
+  test al romperlas a mano.
+Commits: el de esta entrada.
+Decisiones:
+- Fuera el Centro Pokémon y la Tienda (se confundirían con los de verdad).
+- Los modelos siguen siendo provisionales; lo fijo es el sitio y la puerta de cada
+  instalación.
+**Estado del laboratorio**:
+- warp de desarrollo → 213;
+- `work/frontier/build` contiene la plaza fija;
+- `use_gdbstub` en `false`;
+- lab parado.
+Siguiente paso:
+1. Desplegar los agentes por edificio cuando el usuario dé el sí, con el número de agentes
+   y el coste dichos antes (norma de CTRMap-F5). Plan en PLAN §6, «Después».
+2. Defectos visibles: tejado azul de la casa de Azuliza, barandillas del muelle.
+3. Textos ES/EN, paquete Luma y plan de consola.

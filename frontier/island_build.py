@@ -58,18 +58,23 @@ CLERK = (300, 300, 2, 0, 54, 34, 0, 2)   # model, MoveModel, event, flag, x, y, 
 CLONES = {ZONE_ISLAND: DONOR_ISLAND, ZONE_HALL: DONOR_HALL}   # slot: donor; also the native groups each copies
 
 PLAZA_RECT = (1, 0, 39, 38)    # cell-local tiles x0, y0, x1, y1 of the island's own cell (0,1) painted as path
-# Emerald facility: (catalogue building, anchor x, y). Only the Factory has a door (into the hall 213). Two house
-# models repeat: every distinct building carries its textures into the island's area and grows the load budget
-# (below); a repeated model carries nothing new.
+# Emerald facility: (catalogue building, anchor x, y). Only the Factory has a door (into the hall 213); the others are
+# mocks. One distinct building each, among the cheapest catalogue houses besides the Gym (each one's load budget
+# alone, reports/frontier.md §24); the seven together stay within LOAD_BUDGET. Left out: the Pokemon Center and the
+# Mart (the player would take a facility for one), and the Pacifidlog stilt hut and Lanette's house (cut and placed,
+# but the game draws neither; §24). The layout is fixed: each facility's agent works inside its own building.
 FACILITIES = {
-    'Tower': ('Dewford shingle house', 16, 2),
-    'Dome': ('Lavaridge house', 4, 13),
+    'Tower': ('Rustboro flat-roof house', 16, 2),
+    'Dome': ('Fallarbor house', 4, 13),
     'Factory': ('Gym', 16, 13),
-    'Pyramid': ('Lavaridge house', 30, 13),
-    'Pike': ('Dewford shingle house', 3, 25),
-    'Arena': ('Lavaridge house', 17, 25),
-    'Palace': ('Dewford shingle house', 28, 25),
+    'Pyramid': ('Dewford shingle house', 30, 13),
+    'Pike': ('Route 124 treasure cabin', 3, 25),
+    'Arena': ('Battle Resort thatched house', 17, 25),
+    'Palace': ('Rustboro two-story house', 28, 25),
 }
+# Catalogue buildings the painter cuts and places but the game does not draw on the island (collision and door prop
+# only; Azahar, reports/frontier.md §24). plan() refuses them.
+NOT_DRAWN = {'Pacifidlog stilt hut', "Route 114 Lanette's house"}
 # Plaza's "load budget": the island area's world pack + prop pack + the map models of all the island's regions,
 # unpacked. The largest measured to load in Azahar; 2986112 and up hung (reports/frontier.md §23). A measured bound,
 # not the engine's limit, which was not found: retail areas hold larger texture packs.
@@ -121,6 +126,9 @@ def plan(scripts):
         f'plaza.zone={ZONE_ISLAND}', 'plaza.rect=' + ','.join(map(str, PLAZA_RECT)),
         'plaza.heightof=0',            # the pier's warp: the painted square lies at the pier's ground
     ]
+    names = [name for name, _, _ in FACILITIES.values()]
+    if len(set(names)) != len(names) or NOT_DRAWN & set(names):
+        raise ValueError(f'plaza buildings must be distinct and drawn (not {sorted(NOT_DRAWN)}): {names}')
     for i, (facility, (name, x, y)) in enumerate(FACILITIES.items()):
         lines.append(f'plaza.building.{i}={name}|{x}|{y}')
         if facility in DOORS:

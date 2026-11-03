@@ -1119,3 +1119,71 @@ comprimir.
 - ver la animación de apertura de la puerta (la captura cayó en el fundido);
 - la causa del cuelgue de v6 y v14;
 - la consola.
+
+## 24. F6: la plaza fija, con un edificio distinto por instalación (Azahar, 2026-11-03)
+
+**Coste de cada edificio** (`frontier/lab_building_costs.sh`, sin emulador; salida en
+`work/frontier/survey/building_costs.txt`). Es el presupuesto de carga (§23) con el edificio
+solo, con su puerta, en (16,13). Con solo el camino: 1.945.984 bytes; margen hasta
+`LOAD_BUDGET`: 778.624. Lo que añade cada uno, en KB:
+
+| Edificio | KB | Edificio | KB |
+| --- | --- | --- | --- |
+| Tienda | 79 | Casa de Pardal | 108 |
+| Casa de Lanette (Ruta 114) | 92 | Centro Pokémon | 115 |
+| Cabaña de la Ruta 124 | 99 | Casa de la playa (Ruta 109) | 116 |
+| Choza de Pacifidlog | 102 | Casa de Lavacalda | 135 |
+| Casa de paja del Resort | 106 | Casa de tejas de Azuliza | 142 |
+| Férrica, tejado plano | 106 | Gimnasio | 145 |
+| Férrica, dos plantas | 155 | Sala de Concursos | 312 |
+| Casa cúpula de Arrecípolis | 410 | | |
+
+Los costes no se suman exactamente: los edificios del mismo área de origen comparten
+texturas. Por ejemplo, las dos casas de Férrica juntas cuestan menos que por separado.
+
+**Edificios que no se dibujan**:
+- la choza de Pacifidlog y la casa de Lanette se cortan y se colocan (1.470 y 1.108
+  triángulos según el pintor), pero en la isla solo se ve su suelo, el felpudo y la puerta;
+- su colisión sí bloquea (`f6j_pyramid.png`, `f6j_palace.png`);
+- no se ha investigado por qué. `island_build.NOT_DRAWN` los rechaza.
+
+**Distribución fija** (`island_build.FACILITIES`; casillas globales de la zona 209):
+
+| Instalación | Edificio | Puerta | Frente |
+| --- | --- | --- | --- |
+| Torre | Férrica, tejado plano | (19,46) | (19,47) |
+| Domo | Casa de Pardal | (6,56) | (6,57) |
+| Fábrica | Gimnasio → sala 213 | (20,57) | (20,58) |
+| Pirámide | Casa de tejas de Azuliza | (32,57) | (32,58) |
+| Tubo | Cabaña de la Ruta 124 | (5,69) | (5,70) |
+| Arena | Casa de paja del Resort | (20,69) | (20,70) |
+| Palacio | Férrica, dos plantas | (31,69) | (31,70) |
+
+- Presupuesto 2.665.344 bytes (`load budget` del registro de la build).
+- La copia de texturas de §23 actúa: `battle01_object_a_dif01`, `build02`,
+  `c102_09_mado` y `poke_gym_mado`. Sin ella, la isla se colgaría.
+- El área 231 y las regiones 862–865 de la build son idénticas byte a byte a las de la
+  variante `fix7b` recorrida en el emulador.
+
+**Probado en Azahar** (capturas `work/frontier/lab/f6j_*`; posición por gdb):
+- La isla carga (brillo 119,8) y se ven los siete edificios.
+- Se llega al frente de cada puerta por la explanada.
+- Las seis maquetas bloquean: se empuja desde el frente y la posición no cambia.
+  - Domo, Tubo, Arena y Torre, con la variante `fix7`;
+  - Pirámide y Palacio, con `fix7b`.
+- La Fábrica, con la build definitiva: se entra en la sala y al salir se vuelve delante
+  de la puerta (`f6j_final_hall.png`, `f6j_final_back.png`).
+
+**Defectos visibles** (sin arreglar):
+- la casa de Azuliza sale con el tejado azul (probablemente texturas con el mismo nombre
+  que otra del área);
+- las barandillas del muelle original al este de la explanada;
+- las dos casas de Férrica se parecen.
+
+**Zonas para los interiores**: el escáner de §18 (`work/frontier/island/repurpose.txt`) da 46
+zonas «likely free» por debajo de 536 (las únicas que ejecutan scripts), aparte de 209 y 213.
+Cada una hay que verificarla antes de usarla, como 209 y 213 en §18.
+
+**Sin probar**:
+- la consola;
+- por qué no se dibujan la choza y la casa de Lanette.
