@@ -934,3 +934,34 @@ Siguiente paso:
    - barandillas del muelle sobre la explanada;
    - cerca de la casa de Lavacalda en (33–34, 58).
 4. Textos ES/EN, paquete Luma y plan de consola.
+
+## 2026-11-03 06:xx — Claude Code — F6: ronda por la puerta de la Fábrica y guardado en la explanada
+Estado: hecho (la F6 sigue en curso)
+Hecho:
+- Prueba de la partida completa con la build de `ea733e9`, sin cambios de código:
+  - muelle → explanada → puerta de la Fábrica → sala 213;
+  - inscripción en la Fábrica con la recepcionista de la derecha (hablándole desde 23,25);
+  - combate 1 contra Gothorita y Kricketune, perdido; la limpieza devuelve el equipo
+    propio;
+  - salida a la explanada, guardado allí y recarga en (20,59) con control libre.
+Evidencia:
+- `reports/frontier.md` §22 y capturas `work/frontier/lab/f6h_*`.
+- Partida `work/frontier/lab/f6h_saved_plaza.sav` (`00a9a98f…`).
+- El final del combate no se capturó: se pulsó A de más. La derrota se deduce del
+  equipo propio en el menú después (`f6h_party_after.png`).
+Commits: el de esta entrada.
+Decisiones:
+- No se repite la victoria por la puerta nueva: la sala, el script y la zona son los de §20,
+  donde ya se ganó y se hizo el intercambio.
+**Estado del laboratorio**:
+- warp de desarrollo → 213;
+- `work/frontier/build` contiene la plaza;
+- `use_gdbstub` en `false`;
+- lab parado.
+Siguiente paso:
+1. Medir por qué cuelga el prop de puerta y cuál es el límite real del área. Sin eso, no
+   hay modelos distintos por instalación.
+2. Defectos visibles:
+   - barandillas del muelle sobre la explanada;
+   - cerca de la casa de Lavacalda en (33–34, 58).
+3. Textos ES/EN, paquete Luma y plan de consola.

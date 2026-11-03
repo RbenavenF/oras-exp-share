@@ -973,3 +973,49 @@ Conclusiones:
 - guardar en la explanada;
 - combatir en 213 tras entrar por la puerta nueva. Es el mismo script y la misma zona que
   en §19–§20.
+
+## 22. F6: partida completa por la puerta de la Fábrica (Azahar, 2026-11-03)
+
+Overlay `work/frontier/build` del commit `ea733e9`, montado como en §21 (overlay de desarrollo
+debajo, `code.ips` de la build). Partida de inicio: `f6f_saved_pier.sav` (`91b41949…`).
+Capturas en `work/frontier/lab/f6h_*`.
+
+**Probado en Azahar**:
+- Del muelle (37,44) a la explanada y a la casilla (20,58). Empujando hacia arriba se entra
+  en la sala 213 y se aparece en (20,31) (`f6h_hall.png`).
+- La recepcionista de la izquierda (17,25) es la del registro de la Mansión («¿Quieres
+  consultar tus resultados?»). La de los combates es la de la derecha: se le habla desde
+  (23,25) mirando arriba.
+- Su menú ofrece «Fábrica Batalla». Se sortean seis alquileres: Honedge (Garra Rápida),
+  Snorunt (Roca Helada), Omanyte (Baya Tamar), Geodude (Roca Suave)…
+  - se eligieron los tres primeros que ofrecía cada lista;
+  - «¿Quieres participar en Combates Individuales?» → guardar → Sí.
+- **Combate 1**: Honedge contra Gothorita (`f6h_battle1.png`). Rival: Gothorita y Kricketune
+  como mínimo. Honedge y Snorunt cayeron; salió Omanyte.
+- **Fin de la ronda**: no se capturó. Se pulsó A de más y se volvió a abrir el menú normal
+  de la Mansión («Combate Individual»). Se salió con la flecha táctil y «¿Prefieres no
+  participar?» → Sí.
+  - Después, el equipo es el propio del jugador (Torchic, Beldum, Poochyena, Cascoon,
+    Silcoon, Shroomish; `f6h_party_after.png`). Es decir, la ronda terminó en derrota y la
+    limpieza devolvió el equipo, como en §12.
+- Salida de la sala: desde (20,31), empujando hacia abajo se aparece en la explanada
+  delante de la puerta (`f6h_plaza_out.png`).
+- **Guardar en la explanada**: el resumen muestra «Isla del Frente» (`f6h_save_prompt.png`).
+  Partida `f6h_saved_plaza.sav` (`00a9a98f…`).
+- **Recarga**: con esa partida se aparece en (20,59), delante de la Fábrica, con control
+  libre: se baja a (20,60) (`f6h_plaza_reload.png`).
+
+**Trampas del laboratorio** (medidas en esta sesión):
+- En la explanada, una pulsación de cruceta de 0,08 s avanza unas dos casillas (de 37,44 a
+  37,75 con 16 pulsaciones). Con `HOLD=0.04 faraway/walk.sh` avanza una.
+- B no cierra el menú táctil de la Mansión. Se toca la flecha con
+  `python scripts/azahar_lab.py input mousemove 735 690 mousedown 1 sleep 0.2 mouseup 1`
+  (coordenadas de la ventana del laboratorio). `click 1` es demasiado corto.
+- Para usar `faraway/walk.sh pos` hay que poner `use_gdbstub=true` y
+  `use_gdbstub\default=false` antes de arrancar, y lanzar `faraway/gdbctl.sh start`.
+  Al acabar se devuelven a `false` y `true`.
+
+**Sin probar**:
+- la consola;
+- ganar una ronda entrando por la puerta nueva. La victoria y el intercambio se
+  probaron en la misma sala en §20, entrando por el warp antiguo del muelle.
