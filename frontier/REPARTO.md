@@ -26,12 +26,17 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-libre (último: Claude Code, 2026-11-03)
+Claude Code, desde 2026-11-03 11:xx (trabajo común del integrador)
 
 ## Instalaciones
 
 Diseños en `reports/diseno/`, hechos por agentes de solo lectura el 2026-11-03 (sus reglas de Esmeralda están sin
-fijar a un commit de pokeemerald). Dueño provisional hasta que lo confirme el usuario.
+fijar a un commit de pokeemerald). Dueños confirmados por el usuario el 2026-11-03.
+
+Decisiones del usuario (2026-11-03):
+- Palacio y Arena: primero sin su mecánica especial (etapa A, como la Torre); la mecánica del motor, después.
+- Tubo v1: los PP no se arrastran, los estados ignoran inmunidades y no hay salvajes (van a la v2).
+- La tabla de PB de la Fábrica se revisa en el trabajo común.
 
 | Instalación | Dueño | Estado | Interior (por verificar) | Diseño | Dificultad v1 (según su diseño) |
 | --- | --- | --- | --- | --- | --- |
