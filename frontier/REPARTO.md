@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-libre (último: Codex, 2026-11-03, consulta Trapinch/DexNav documentada; sin cambios del juego)
+frontier-orch (orquestador automático), desde 2026-11-03 21:00
 
 ## Instalaciones
 
