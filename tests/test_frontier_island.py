@@ -209,6 +209,20 @@ def test_plaza_plan_links_only_the_factory():
     assert f'zone.{island_build.ZONE_HALL}.warp.0=0,{island_build.ZONE_ISLAND},0' in lines
 
 
+def test_each_interior_exits_to_its_own_door(monkeypatch):
+    """Plaza numbers the island's door warps in FACILITIES order; an interior's exit must follow its door's number,
+    not a fixed 0 (with the Tower or Dome open, the Factory's door is no longer warp 0)."""
+    import island_build
+    lines = island_build.plan('s').splitlines()
+    assert f'zone.{island_build.ZONE_HALL}.warp.0=0,{island_build.ZONE_ISLAND},0' in lines
+    monkeypatch.setattr(island_build, 'DOORS', {'Tower': (329, 0), **island_build.DOORS, 'Palace': (340, 0)})
+    lines = island_build.plan('s').splitlines()
+    exits = sorted(line for line in lines if '.warp.0=0,' in line)
+    assert exits == sorted([f'zone.329.warp.0=0,{island_build.ZONE_ISLAND},0',
+                            f'zone.{island_build.ZONE_HALL}.warp.0=0,{island_build.ZONE_ISLAND},1',
+                            f'zone.340.warp.0=0,{island_build.ZONE_ISLAND},2'])
+
+
 def test_plaza_buildings_are_distinct_and_drawn(monkeypatch):
     """§24: one distinct building per facility, none the game leaves undrawn; plan() refuses either mistake."""
     import island_build

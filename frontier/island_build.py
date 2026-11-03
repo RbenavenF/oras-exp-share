@@ -113,6 +113,11 @@ def island_script(donor):
     return p.build_script(main)
 
 
+def door_warp(facility):
+    """The island warp of a facility's door: Plaza adds one per door, in FACILITIES order (FrontierPlaza.linkDoors)."""
+    return [f for f in FACILITIES if f in DOORS].index(facility)
+
+
 def plan(scripts):
     lines = [
         f'scripts={scripts}',
@@ -122,13 +127,14 @@ def plan(scripts):
         f'zones={ZONE_ISLAND},{ZONE_HALL}',
         f'zone.{ZONE_ISLAND}.clearNpcs=1', f'zone.{ZONE_ISLAND}.clearTriggers=1',
         f'zone.{ZONE_ISLAND}.npc.0=' + ','.join(str(v) for v in CLERK),
-        f'zone.{ZONE_HALL}.warp.0=0,{ZONE_ISLAND},0',
         f'plaza.zone={ZONE_ISLAND}', 'plaza.rect=' + ','.join(map(str, PLAZA_RECT)),
         'plaza.heightof=0',            # the pier's warp: the painted square lies at the pier's ground
     ]
     names = [name for name, _, _ in FACILITIES.values()]
     if len(set(names)) != len(names) or NOT_DRAWN & set(names):
         raise ValueError(f'plaza buildings must be distinct and drawn (not {sorted(NOT_DRAWN)}): {names}')
+    for facility, (zone, _) in DOORS.items():   # each interior's exit (its warp 0) comes back to its own door
+        lines.append(f'zone.{zone}.warp.0=0,{ZONE_ISLAND},{door_warp(facility)}')
     for i, (facility, (name, x, y)) in enumerate(FACILITIES.items()):
         lines.append(f'plaza.building.{i}={name}|{x}|{y}')
         if facility in DOORS:
@@ -190,9 +196,9 @@ def build(archives, source, work):
         raise ValueError(f'the plaza placed no door props: {text}')
     if 'world textures copied from the prop pack:' not in text:
         raise ValueError(f'Plaza did not keep the map textures in the world pack (§23): {text}')
-    for i, facility in enumerate(f for f in FACILITIES if f in DOORS):   # Plaza adds door warps in building order
+    for facility in DOORS:
         name = FACILITIES[facility][0]
-        if f'warp {i} door of {name} at tile' not in text:
+        if f'warp {door_warp(facility)} door of {name} at tile' not in text:
             raise ValueError(f'the {facility} door was not linked: {text}')
     out = dict(archives)
     for rel in STAGED:

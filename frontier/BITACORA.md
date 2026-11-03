@@ -1058,3 +1058,47 @@ Siguiente paso:
    y el coste dichos antes (norma de CTRMap-F5). Plan en PLAN §6, «Después».
 2. Defectos visibles: tejado azul de la casa de Azuliza, barandillas del muelle.
 3. Textos ES/EN, paquete Luma y plan de consola.
+
+## 2026-11-03 11:xx — Claude Code — F6: diseños por instalación y reparto con Codex
+Estado: hecho (la F6 sigue en curso)
+Hecho:
+- **Diseños**: seis agentes de diseño de solo lectura, con el sí del usuario. Uno por
+  instalación: Torre, Domo, Pirámide, Tubo, Arena y Palacio. Sus informes están en
+  `reports/diseno/*.md`; los copié yo, porque los agentes no escribieron en el repo.
+  - Coste medido de los seis: unos 1,0 M de tokens (148–180 mil cada uno).
+- **Fallo latente que señalaron cuatro diseños, arreglado**:
+  - la salida de cada interior vuelve ahora a su propia puerta (`island_build.door_warp`);
+  - antes estaba fijada al warp 0.
+  - El plan actual tiene las mismas 21 líneas que antes, comparado con el de `HEAD`.
+- **`frontier/REPARTO.md`**:
+  - turno único de escritura y laboratorio;
+  - dueño por instalación;
+  - zonas asignadas por verificar;
+  - trabajo común del integrador.
+- `AGENTS.md`: leer REPARTO y tomar el turno al empezar.
+Evidencia:
+- `python -m pytest -q tests` → 147 passed.
+- Romper `door_warp` a mano hace fallar `test_each_interior_exits_to_its_own_door`.
+Commits: el de esta entrada.
+Decisiones:
+- **Reparto provisional, por confirmar con el usuario**:
+  - Claude Code lleva las instalaciones que son un clon de 517 con equipo propio: Torre,
+    Palacio y Arena.
+  - Codex lleva las que necesitan zonas y ganchos nuevos: Domo, Tubo y Pirámide.
+- Las reglas de Esmeralda de los diseños están sin fijar a un commit de pokeemerald; hay que
+  contrastarlas antes de usarlas como constantes.
+- Dos avisos de los diseños, sin verificar:
+  - la tabla de PB de la Fábrica (posible 1 PB de menos desde la ronda 15);
+  - el agente de la Torre descargó pokeemerald fuera del repo (en el directorio temporal de
+    la sesión).
+**Estado del laboratorio**:
+- warp de desarrollo → 213;
+- `work/frontier/build` contiene la plaza fija;
+- `use_gdbstub` en `false`;
+- lab parado.
+Siguiente paso:
+1. Integrador: trabajo común de `REPARTO.md`, puntos 2–7 (ruta de racha por valor, registro
+   de works, clones genéricos, máscara de nativas aparte, exclusión mutua, tabla de PB).
+2. Torre (Claude Code), según `reports/diseno/torre.md`, empezando por verificar la zona
+   329.
+3. Codex, cuando el usuario lo abra: la instalación que le toque según `REPARTO.md`.

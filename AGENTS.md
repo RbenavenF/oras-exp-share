@@ -3,7 +3,9 @@
 ## Proyecto activo: Frente de Batalla (desde 2026-11-01)
 Empezamos por la Fábrica Batalla. Al iniciar cualquier sesión (Claude Code o Codex):
 1. Lee `frontier/PLAN.md` y las últimas entradas de `frontier/BITACORA.md`.
-2. Continúa por el «Siguiente paso» de la última entrada.
+2. Lee `frontier/REPARTO.md`: quién tiene el turno, qué instalación es de quién y sus normas. Toma el turno (y haz
+   commit) antes de escribir nada.
+3. Continúa por el «Siguiente paso» de la última entrada.
 
 Trazabilidad obligatoria, porque se alterna entre Claude Code y Codex:
 - En cada hito con commit y **antes de terminar la sesión**, añade una entrada al
