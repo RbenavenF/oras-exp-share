@@ -23,6 +23,9 @@ mismo commit que cambia lo que describe.
    en un `git worktree` aparte, sin `work/` ni laboratorio, solo en el módulo propio; el integrador lo une después.
 7. **Codex no lo lanza Claude**: lo abre el usuario y le dice qué instalación lleva. Los agentes de Claude solo se
    lanzan con el sí del usuario y el coste dicho (norma de CTRMap-F5).
+8. **Modo automático**: `frontier/orch/frontier-orch auto` reparte las tareas de `frontier/orch/tasks.json` entre los
+   dos, reanuda sin «continúa» y pasa la tarea al otro cuando uno agota su cuota (`frontier/orch/README.md`).
+   Mientras corre, tiene el turno: no abras otra sesión que escriba.
 
 ## Turno
 

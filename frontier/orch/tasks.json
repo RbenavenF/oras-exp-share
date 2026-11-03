@@ -1,0 +1,64 @@
+{
+  "tasks": [
+    {
+      "id": "F6-TORRE",
+      "title": "Torre Batalla v1 en su edificio de la plaza (Individual Nivel 50, equipo propio, racha y PB propios) y la exclusión mutua entre instalaciones",
+      "owner": "claude",
+      "design": "reports/diseno/torre.md",
+      "accept": "puerta (19,46) → interior propio (zona de REPARTO, verificada como §18) → salida a (19,47); recepción con equipo propio; ronda con racha por la ruta 2 y PB de data.FRONTIER_BP['tower']; pausa, reanudación y derrota; la Torre y la Fábrica se niegan si la otra tiene un desafío a medias (patch.ACTIVE_WORK); la Fábrica sigue entrando y saliendo por su puerta; una ronda ganada en Azahar (también comprueba la racha por ruta de la Fábrica pendiente en REPARTO); tests de suite en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F6-DOMO",
+      "title": "Domo Batalla v1 (torneo de 4 rondas, ver el equipo rival, elegir 2 de 3)",
+      "owner": "codex",
+      "design": "reports/diseno/domo.md",
+      "accept": "lo que pide la v1 de reports/diseno/domo.md, con su puerta (6,56) → interior → salida a (6,57); exclusión mutua respetada; Fábrica y Torre sin regresiones; probado en Azahar lo que el diseño marca; tests en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F6-PALACIO-A",
+      "title": "Palacio Batalla etapa A (como la Torre, sin que los Pokémon elijan solos)",
+      "owner": "claude",
+      "design": "reports/diseno/palacio.md",
+      "accept": "etapa A del diseño, con puerta (31,69) → interior → salida a (31,70), ruta 3 y PB de FRONTIER_BP['palace']; exclusión mutua; sin regresiones; probado en Azahar; tests en verde. La etapa B (motor) es otra tarea.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F6-TUBO",
+      "title": "Tubo Batalla v1 (14 salas con 3 puertas y pistas; PS y estado persisten; sin salvajes, PP no persisten, estados sin inmunidades)",
+      "owner": "codex",
+      "design": "reports/diseno/tubo.md",
+      "accept": "v1 del diseño con las decisiones del usuario de REPARTO.md, puerta (5,69) → vestíbulo → salida a (5,70); exclusión mutua; sin regresiones; probado en Azahar; tests en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F6-ARENA-A",
+      "title": "Arena Batalla escalón A (como la Torre, sin límite de turnos ni juicio)",
+      "owner": "claude",
+      "design": "reports/diseno/arena.md",
+      "accept": "escalón A del diseño, con puerta (20,69) → interior → salida a (20,70), ruta 4 y PB de FRONTIER_BP['arena']; exclusión mutua; sin regresiones; probado en Azahar; tests en verde. El escalón B (motor) es otra tarea.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F6-PIRAMIDE",
+      "title": "Pirámide Batalla v1 (7 pisos fijos con entrenadores; sin oscuridad, salvajes ni objetos)",
+      "owner": "codex",
+      "design": "reports/diseno/piramide.md",
+      "accept": "experimento 0 del diseño hecho y documentado; v1 con puerta (32,57) → vestíbulo → pisos → vuelta, salida a (32,58); exclusión mutua; sin regresiones; probado en Azahar; tests en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    }
+  ]
+}

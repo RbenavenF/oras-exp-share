@@ -1167,3 +1167,45 @@ discrepan: Serebii redondea el máximo a +20/+30; se usa el detalle +19/+29
 de Bulbapedia, coherente con contador 0–99 documentado en reports/dexnav.md.
 Siguiente paso: Frente según REPARTO (Codex: Domo, Tubo o Pirámide; Claude:
 Torre y exclusión mutua). No se inició ninguna instalación en esta consulta.
+
+## 2026-11-03 14:xx — Claude Code — Orquestador frontier-orch (Claude y Codex sin «continúa»)
+Estado: hecho
+Hecho:
+- Petición del usuario: dejarlo todo listo para lanzar una orden y que Claude y Codex trabajen
+  solos, pasándose la tarea cuando uno agota su cuota.
+- **`frontier/orch/frontier_orch.py`** (lanzador `frontier/orch/frontier-orch`):
+  - comandos `auto`, `once`, `status` y `release`;
+  - tareas en `tasks.json`: Torre, Domo, Palacio A, Tubo, Arena A y Pirámide, con dueño,
+    diseño y criterios;
+  - configuración en `config.json`; uso en `README.md`.
+- **Qué hace**:
+  - tiene el turno de REPARTO mientras corre;
+  - reanuda en la misma sesión mientras la tarea siga abierta;
+  - si un agente agota su cuota, lo deja en espera y relevo al otro con aviso de revisar el
+    estado a medias;
+  - pasa los tests cuando el agente marca `done`;
+  - se para si la tarea queda `blocked`, sin progreso o al llegar a `max_runs`;
+  - limpia el laboratorio tras cada ejecución.
+Evidencia:
+- `tests/test_frontier_orch.py` (14, con agentes falsos). `python -m pytest -q tests` → 173
+  passed, más el test de `after_run`.
+- **Roturas a mano**, cada una falla su test: sin espera tras el límite, sin freno por falta de
+  progreso, sin aceptación.
+- **Con las herramientas reales**, en un repositorio de prueba:
+  - Claude 2.1.316 y Codex 0.166.0 hacen cada uno su tarea con commits, sin intervención, y
+    el supervisor termina con «all tasks done»;
+  - la primera prueba mostró que el sandbox de Codex deja `.git` en solo lectura (no podía
+    hacer commit); arreglado con `writable_roots`;
+  - la reanudación de Codex hace commit;
+  - Codex arranca y para el laboratorio de Azahar (pantalla de título).
+- **Sin probar con las herramientas reales**: un límite de uso verdadero y gdb desde el
+  sandbox de Codex.
+Commits: el de esta entrada.
+Decisiones:
+- Permisos: Claude `--permission-mode auto --permission-prompts none` (`-p` no admite
+  bypass); Codex `workspace-write` con `.git` y la red abiertos.
+- El supervisor, no el agente, decide el relevo; el agente puede morir sin escribir su
+  resumen.
+**Estado del laboratorio**: parado; `use_gdbstub` en `false`. **Turno: libre.**
+Siguiente paso: que el usuario lance `frontier/orch/frontier-orch auto`. Empieza por F6-TORRE
+(Claude).

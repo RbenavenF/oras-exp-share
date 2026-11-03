@@ -6,6 +6,8 @@ Empezamos por la Fábrica Batalla. Al iniciar cualquier sesión (Claude Code o C
 2. Lee `frontier/REPARTO.md`: quién tiene el turno, qué instalación es de quién y sus normas. Toma el turno (y haz
    commit) antes de escribir nada.
 3. Continúa por el «Siguiente paso» de la última entrada.
+   Si te ejecuta el supervisor `frontier/orch/frontier-orch` (tu mensaje lo dice), él tiene el turno por ti y tu
+   tarea es la que te nombra en `frontier/orch/tasks.json` (`frontier/orch/README.md`).
 
 Trazabilidad obligatoria, porque se alterna entre Claude Code y Codex:
 - En cada hito con commit y **antes de terminar la sesión**, añade una entrada al
