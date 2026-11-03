@@ -223,6 +223,24 @@ def test_each_interior_exits_to_its_own_door(monkeypatch):
                             f'zone.340.warp.0=0,{island_build.ZONE_ISLAND},2'])
 
 
+def test_facility_clones_are_generic(monkeypatch, tmp_path):
+    """A facility clone added to CLONES gets its place, its zones= entry, its story text if in KEEP_TEXT and its
+    native donor if in NATIVE_DONORS; build() refuses a script for a zone that is not a facility clone."""
+    import island_build
+    monkeypatch.setattr(island_build, 'CLONES', {**island_build.CLONES, 329: 517, 141: 192})
+    monkeypatch.setattr(island_build, 'KEEP_TEXT', {*island_build.KEEP_TEXT, 329})
+    monkeypatch.setattr(island_build, 'NATIVE_DONORS', {141: 517})
+    lines = island_build.plan('s').splitlines()
+    assert f'zones={island_build.ZONE_ISLAND},{island_build.ZONE_HALL},329,141' in lines
+    assert {f'place.329={island_build.PLACE}', f'place.141={island_build.PLACE}', 'keeptext.329=1'} <= set(lines)
+    assert 'keeptext.141=1' not in lines
+    assert island_build.native_donors()[141] == 517 and island_build.native_donors()[329] == 517
+    for stray in (island_build.ZONE_ISLAND, 600):
+        with pytest.raises(ValueError, match='not facility clones'):
+            island_build.build({}, None, tmp_path / 'w', {stray: b''})
+    assert not (tmp_path / 'w').exists()          # refused before anything is staged
+
+
 def test_plaza_buildings_are_distinct_and_drawn(monkeypatch):
     """§24: one distinct building per facility, none the game leaves undrawn; plan() refuses either mistake."""
     import island_build

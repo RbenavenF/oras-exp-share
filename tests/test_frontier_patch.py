@@ -181,8 +181,10 @@ def test_rival_sets_untouched_while_the_factory_is_inactive(patched):
 ENTRY = {'inc': 0x45CD98, 'get': 0x45CEE8, 'clear': 0x45CF8C, 'record': 0x45D010}
 
 
-def run_streak(code, func, rank, route, maison=(5, 9, 40, 70), factory=(3, 30)):
-    """Run a Maison Singles streak accessor; maison = (current N, current S, record N, record S)."""
+def run_streak(code, func, rank, route, maison=(5, 9, 40, 70), factory=(3, 30), streak=None):
+    """Run a Maison Singles streak accessor; maison = (current N, current S, record N, record S). factory is the
+    (streak, record) of the facility whose streak work is `streak` (default the Factory's)."""
+    streak = fp.WORK_FSTREAK if streak is None else streak
     uc = Uc(UC_ARCH_ARM, UC_MODE_ARM)
     uc.mem_map(0x100000, (len(code) + 0xFFF) & ~0xFFF)
     uc.mem_write(0x100000, code)
@@ -191,19 +193,19 @@ def run_streak(code, func, rank, route, maison=(5, 9, 40, 70), factory=(3, 30)):
     base = SAVE + fp.MAISON_BASE
     uc.mem_write(base + 0x1C4, struct.pack('<4H', *maison))
     uc.mem_write(work_address(fp.WORK_ROUTE), struct.pack('<H', route))
-    uc.mem_write(work_address(fp.WORK_FSTREAK), struct.pack('<H', factory[0]))
-    uc.mem_write(work_address(fp.WORK_FRECORD), struct.pack('<H', factory[1]))
+    uc.mem_write(work_address(streak), struct.pack('<H', factory[0]))
+    uc.mem_write(work_address(streak + 2), struct.pack('<H', factory[1]))
     for name, value in {'r0': base, 'r1': 0, 'r2': rank, 'r3': 0x33, 'sp': STACK - 0x100, 'lr': 0xDEAD0000}.items():
         uc.reg_write(REGS[name], value)
     uc.mem_map(0xDEAD0000, 0x1000)
     uc.emu_start(ENTRY[func], 0xDEAD0000, count=200)
     maison_after = struct.unpack('<4H', uc.mem_read(base + 0x1C4, 8))
     factory_after = tuple(struct.unpack('<H', uc.mem_read(work_address(n), 2))[0]
-                          for n in (fp.WORK_FSTREAK, fp.WORK_FRECORD))
+                          for n in (streak, streak + 2))
     return uc.reg_read(REGS['r0']), maison_after, factory_after
 
 
-@pytest.mark.parametrize('rank, route', [(0, 0), (1, 0), (1, 1)])
+@pytest.mark.parametrize('rank, route', [(0, 0), (1, 0), (1, 1), (0, len(fp.STREAK_ROUTES) + 1), (0, 0xFFFF)])
 def test_maison_streaks_untouched_without_the_factory_route(patched, rank, route):
     code, _, _ = patched
     assert run_streak(code, 'get', rank, route)[0] == (5, 9)[rank]
@@ -224,6 +226,20 @@ def test_factory_route_uses_its_own_streak_and_record(patched):
     assert maison == (5, 9, 40, 70) and factory == (31, 31)          # new Factory record
     _, maison, factory = run_streak(code, 'clear', 0, 1)
     assert maison == (5, 9, 40, 70) and factory == (0, 30)
+
+
+@pytest.mark.parametrize('route', sorted(fp.STREAK_ROUTES))
+def test_each_route_uses_its_facilitys_streak_and_record(patched, route):
+    """WORK_ROUTE = r points the Normal Singles streak at STREAK_ROUTES[r]'s works, and at no other route's."""
+    code, _, _ = patched
+    streak = fp.STREAK_ROUTES[route][1]
+    assert run_streak(code, 'get', 0, route, streak=streak)[0] == 3
+    assert run_streak(code, 'record', 0, route, streak=streak)[0] == 30
+    _, maison, own = run_streak(code, 'inc', 0, route, streak=streak, factory=(30, 30))
+    assert maison == (5, 9, 40, 70) and own == (31, 31)
+    for other, (_, works) in fp.STREAK_ROUTES.items():
+        if other != route:      # another facility's works stay as they were
+            assert run_streak(code, 'inc', 0, route, streak=works, factory=(7, 8))[2] == (7, 8)
 
 
 def zone_mask(code, zone):

@@ -219,7 +219,7 @@ def main():
         archives, log = island_build.build(archives, lambda rel: source(args.romfs, rel),
                                            out.parent / (out.name + '-island'))
         print(''.join(line + '\n' for line in log.splitlines() if line.startswith(('zone ', 'pack'))), end='')
-    code, hook, _ = patch.build({} if args.no_island else island_build.CLONES)
+    code, hook, _ = patch.build({} if args.no_island else island_build.native_donors())
     if out.exists():
         shutil.rmtree(out)
     for path, blob in archives.items():

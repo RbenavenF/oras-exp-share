@@ -61,6 +61,16 @@ SAVE_WORKS = 0x13144                  # saved works in the save data (WorkGet 0x
 # Maison Singles streak accessors: site -> (stub, resume). Each site is add OUT, r0, r2, lsl #1.
 STREAK_SITES = {0x45CDC4: ('streak_inc', 0xE0801082), 0x45CF14: ('streak_get', 0xE0800082),
                 0x45CFB8: ('streak_set', 0xE0800082), 0x45D03C: ('streak_record', 0xE0800082)}
+# Streak routes: the value of saved work WORK_ROUTE -> (facility, its streak work S); its record is S + 2 (the
+# accessors read the record at slot + 0x1c8) and S + 1 is the facility's own (state, free for its owner). 0 is the
+# Maison's own streak. Works free per frontier/ids.py (2026-11-03); assigned in frontier/REPARTO.md.
+STREAK_ROUTES = {1: ('factory', WORK_FSTREAK), 2: ('tower', 16441), 3: ('palace', 16461), 4: ('arena', 16465),
+                 5: ('dome', 16473), 6: ('pike', 16477), 7: ('pyramid', 16481)}
+ROUTE = {facility: route for route, (facility, _) in STREAK_ROUTES.items()}
+# A facility's «challenge in progress» work (started or paused; 0 = none): the Factory's rental IV, for the others
+# the work between their streak and record. A reception refuses while another facility's is not 0 (REPARTO.md).
+ACTIVE_WORK = {facility: WORK_IV if facility == 'factory' else streak + 1
+               for facility, streak in STREAK_ROUTES.values()}
 ABILITY_SHIFT, ABILITY_RANDOM = 10, 3
 # GlobalCall range table (rodata, 86 rows of u16 first id, last id, shared script, flag, story text, 0, 0, 0
 # from 0x587678): the row for ids 9770-9779 (shared script 5, a retail placeholder) gets the Factory text.
@@ -77,10 +87,15 @@ MAISON_NATIVE_ZONES = (448, 517, 520)
 CONSTANTS = {'WORK_IV': WORK_IV, 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'RENTAL_LEVEL': 50,
              'RENTALS': len(WORK_SETS), 'WORK_RIVAL': WORK_RIVAL[0],
              'ROUTE_DELTA': MAISON_BASE - SAVE_WORKS - 2 * (WORK_ROUTE - 0x4000),
-             'SLOT_DELTA': MAISON_BASE - SAVE_WORKS - 2 * (WORK_FSTREAK - 0x4000) + 0x1C4}
+             'ROUTES': len(STREAK_ROUTES),
+             **{f'SLOT_DELTA_{route}': MAISON_BASE - SAVE_WORKS - 2 * (streak - 0x4000) + 0x1C4
+                for route, (_, streak) in STREAK_ROUTES.items()}}
 assert WORK_FRECORD == WORK_FSTREAK + 2      # the accessors read the record at slot + 0x1c8
-for _name in ('ROUTE_DELTA', 'SLOT_DELTA'):
-    assert CONSTANTS[_name] < 0x10000          # two subs: bits 8-15 and 0-7
+assert sorted(STREAK_ROUTES) == list(range(1, 8))   # rental.s has seven slot_deltas words
+assert 0 < CONSTANTS['ROUTE_DELTA'] < 0x10000          # two subs: bits 8-15 and 0-7
+_streak_works = [w for _, s in STREAK_ROUTES.values() for w in (s, s + 1, s + 2)]
+assert len(set(_streak_works)) == len(_streak_works) and WORK_ROUTE == WORK_FSTREAK + 1
+assert all(0 < CONSTANTS[f'SLOT_DELTA_{r}'] for r in STREAK_ROUTES)
 
 
 def word(data, va):

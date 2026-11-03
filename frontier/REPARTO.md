@@ -59,13 +59,35 @@ Avisos sobre las zonas:
 Lo piden varios diseños. Va primero y lo hace quien tenga el turno:
 1. ~~Salida de cada interior a su propia puerta~~ (hecho: `island_build.door_warp`, test
    `test_each_interior_exits_to_its_own_door`).
-2. Ruta de racha por valor en `rental.s`/`patch.py`: `WORK_ROUTE` 1 Fábrica, 2 Torre, 3 Palacio, 4 Arena…, cada uno
-   con su `SLOT_DELTA` (works de racha y récord consecutivos).
-3. Registro de works, flags y líneas de texto por instalación (en este fichero y en `frontier/ids.py`).
-4. `island_build`: clones genéricos (lista de zonas, `keeptext`/`place`, `scripts/zone<N>.bin` y la comprobación
-   `zone N cloned from` para cada clon).
-5. Máscara de nativas separada del donante geométrico (`NATIVE_DONORS`), para el Tubo y la Pirámide.
-6. Exclusión mutua: una recepción se niega si otra instalación tiene un desafío a medias (`WORK_IV` de la Fábrica,
-   y los works de estado de las demás).
-7. Comprobar la tabla de PB de la Fábrica contra pokeemerald: el diseño de la Torre dice que `data.BATTLE_POINTS` se
-   queda en 9 desde la ronda 13 y Esmeralda sigue subiendo (sin verificar).
+2. ~~Ruta de racha por valor~~ (hecho: `patch.STREAK_ROUTES`, tabla `slot_deltas` de `rental.s`; tests Unicorn
+   `test_each_route_uses_its_facilitys_streak_and_record`). Una instalación pone `WORK_ROUTE` = `patch.ROUTE[...]`
+   durante su desafío y 0 al salir; el script no llama a `AddWinCount` aparte.
+3. ~~Registro de works~~ (hecho para racha, estado y récord; tabla de abajo). Los demás works, flags y líneas de
+   texto se piden aquí y se apuntan en la tabla antes de usarlos.
+4. ~~Clones genéricos~~ (hecho: `island_build.CLONES`, `KEEP_TEXT`, `NATIVE_DONORS`, `build(..., zone_scripts)`;
+   test `test_facility_clones_are_generic`). Para añadir una zona: `CLONES[N] = donante`, `KEEP_TEXT` si conserva el
+   texto 619, `NATIVE_DONORS[N] = 517` si su donante no es 517, y su script en `zone_scripts` desde `overlay.py`.
+5. ~~Máscara de nativas aparte~~ (hecho: `island_build.native_donors()`, que `overlay.py` pasa a `patch.build`).
+6. Exclusión mutua: **convención fijada** (`patch.ACTIVE_WORK`: el work «desafío a medias» de cada instalación; la
+   Fábrica usa `WORK_IV`). La recepción de cada instalación se niega si el de otra no es 0. Se programa con la
+   segunda instalación (la Torre), en la Fábrica y en ella a la vez, con su texto.
+7. ~~Tabla de PB~~ (hecho: `data.FRONTIER_BP`, las siete columnas de pokeemerald `731ad5bf`; la Fábrica daba 9 PB
+   en vez de 10–15 desde la ronda 15).
+
+Pendiente de este bloque: probar en Azahar la Fábrica con el `code.bin` nuevo (racha por ruta). Los tests Unicorn
+ejecutan los bytes del gancho en sus direcciones, pero no el juego.
+
+## Works asignados
+
+| Instalación | Ruta (`WORK_ROUTE`) | Racha | Desafío a medias | Récord | Otros |
+| --- | --- | --- | --- | --- | --- |
+| Fábrica | 1 | 16437 | 16410 (`WORK_IV`) | 16439 | 16411–16413 alquileres, 16433–16435 rival, 16438 ruta (común) |
+| Torre | 2 | 16441 | 16442 | 16443 | |
+| Palacio | 3 | 16461 | 16462 | 16463 | |
+| Arena | 4 | 16465 | 16466 | 16467 | |
+| Domo | 5 | 16473 | 16474 | 16475 | |
+| Tubo | 6 | 16477 | 16478 | 16479 | |
+| Pirámide | 7 | 16481 | 16482 | 16483 | |
+
+Libres para pedir (según `python frontier/ids.py`, 2026-11-03): 16485–16487, 16493–16495, 16649–16651,
+16653–16655, 16657–16659, 16661–16663, 16669–16671, 16673–16675 y más; 16665 y 16667 son del evento de Mew.

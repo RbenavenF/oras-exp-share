@@ -55,7 +55,17 @@ PLACE = 279                    # empty odd location-name slot in all 8 languages
 PLACE_TEXT = 90                # game text entry of location names
 PLACE_NAME = {'es': 'Isla del Frente', 'en': 'Frontier Island'}
 CLERK = (300, 300, 2, 0, 54, 34, 0, 2)   # model, MoveModel, event, flag, x, y, height, face: zone 212's NPC 0
-CLONES = {ZONE_ISLAND: DONOR_ISLAND, ZONE_HALL: DONOR_HALL}   # slot: donor; also the native groups each copies
+CLONES = {ZONE_ISLAND: DONOR_ISLAND, ZONE_HALL: DONOR_HALL}   # slot: donor of its map, area, entities and script
+# Facility zones are added here by the integrator (frontier/REPARTO.md). Every clone gets the place name PLACE; one in
+# KEEP_TEXT keeps its donor's story text (the Maison's 619 for a 517 clone); one in NATIVE_DONORS registers that
+# zone's native groups instead of its donor's (a floor cloned from a cave that runs Maison battles needs 517's).
+KEEP_TEXT = {ZONE_HALL}
+NATIVE_DONORS = {}
+
+
+def native_donors():
+    """slot: zone whose native groups it registers (patch.zone_natives)."""
+    return {**CLONES, **NATIVE_DONORS}
 
 PLAZA_RECT = (1, 0, 39, 38)    # cell-local tiles x0, y0, x1, y1 of the island's own cell (0,1) painted as path
 # Emerald facility: (catalogue building, anchor x, y). Only the Factory has a door (into the hall 213); the others are
@@ -122,9 +132,9 @@ def plan(scripts):
     lines = [
         f'scripts={scripts}',
         'clones=' + ','.join(f'{donor}:{slot}' for slot, donor in CLONES.items()),
-        f'place.{ZONE_ISLAND}={PLACE}', f'place.{ZONE_HALL}={PLACE}',
-        f'keeptext.{ZONE_HALL}=1',
-        f'zones={ZONE_ISLAND},{ZONE_HALL}',
+        *(f'place.{slot}={PLACE}' for slot in CLONES),
+        *(f'keeptext.{slot}=1' for slot in CLONES if slot in KEEP_TEXT),
+        'zones=' + ','.join(map(str, CLONES)),
         f'zone.{ZONE_ISLAND}.clearNpcs=1', f'zone.{ZONE_ISLAND}.clearTriggers=1',
         f'zone.{ZONE_ISLAND}.npc.0=' + ','.join(str(v) for v in CLERK),
         f'plaza.zone={ZONE_ISLAND}', 'plaza.rect=' + ','.join(map(str, PLAZA_RECT)),
@@ -156,9 +166,14 @@ def place_names(archives, source):
     return out
 
 
-def build(archives, source, work):
+def build(archives, source, work, zone_scripts=None):
     """{romfs path: archive}: `archives` plus the zone archives the Java build changed and the place name.
-    `source(rel)` reads an input archive; `work` is a scratch directory under work/."""
+    `source(rel)` reads an input archive; `work` is a scratch directory under work/. `zone_scripts` = {clone: script
+    bytes} for facility zones (a clone without one keeps its donor's script); the island's is built here."""
+    zone_scripts = dict(zone_scripts or {})
+    stray = set(zone_scripts) - set(CLONES) | ({ZONE_ISLAND} & set(zone_scripts))
+    if stray:
+        raise ValueError(f'zone scripts for zones that are not facility clones: {sorted(stray)}')
     if work.exists():
         shutil.rmtree(work)
     game = work / 'game'
@@ -178,6 +193,10 @@ def build(archives, source, work):
     if Script.parse(raw).build() != raw:
         raise ValueError('island script does not round-trip')
     (scripts / f'zone{ZONE_ISLAND}.bin').write_bytes(raw)
+    for slot, script in zone_scripts.items():
+        if Script.parse(script).build() != script:
+            raise ValueError(f'zone {slot} script does not round-trip')
+        (scripts / f'zone{slot}.bin').write_bytes(script)
     (work / 'plan.properties').write_text(plan(scripts))
     log = work / 'java.log'
     with log.open('w') as stream:
@@ -186,7 +205,7 @@ def build(archives, source, work):
         subprocess.run([str(ROOT / 'faraway/run.sh'), 'Plaza', str(game), str(work / 'ws'),
                         str(work / 'plan.properties')], stdout=stream, stderr=subprocess.STDOUT, check=True)
     text = log.read_text()
-    for zone in (ZONE_ISLAND, ZONE_HALL):
+    for zone in CLONES:
         if f'zone {zone} cloned from' not in text:
             raise ValueError(f'Java build did not clone zone {zone}: {text}')
     painted = f'Painted map applied to zone {ZONE_ISLAND}' in text
