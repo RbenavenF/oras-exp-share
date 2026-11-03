@@ -28,7 +28,9 @@ def test_parse_trainer():
 def test_emerald_rules():
     assert [fd.fixed_iv(r) for r in range(1, 10)] == [3, 6, 9, 12, 15, 21, 31, 31, 31]
     assert fd.fixed_iv(1, last_battle=True) == 6 and fd.fixed_iv(6, last_battle=True) == 31
-    assert [fd.battle_points(r) for r in (1, 2, 3, 13, 20)] == [3, 3, 4, 9, 9]
+    # pokeemerald 731ad5bf sBattlePointAwards, Factory singles: round 15 gives 10, rounds 25+ give 15
+    assert [fd.battle_points(r) for r in (1, 2, 3, 13, 14, 15, 20, 25, 30, 99)] == [3, 3, 4, 9, 9, 10, 12, 15, 15, 15]
+    assert all(len(column) == 30 for column in fd.FRONTIER_BP.values())
     assert fd.battle_points(3, brain=True) == 14
     assert fd.brain_battle(21, 0) == 'silver' and fd.brain_battle(42, 0) is None
     assert fd.brain_battle(42, 1) == 'gold' and fd.brain_battle(21, 1) is None

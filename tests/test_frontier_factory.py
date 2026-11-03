@@ -326,7 +326,7 @@ def battle_points_run(game, streak, iv=21):
     return log
 
 
-@pytest.mark.parametrize('streak, bp', [(7, 3), (14, 3), (21, 4), (49, 6), (91, 9), (700, 9)])
+@pytest.mark.parametrize('streak, bp', [(7, 3), (14, 3), (21, 4), (49, 6), (91, 9), (105, 10), (175, 15), (700, 15)])
 def test_factory_battle_points_at_the_end_of_a_round(game, streak, bp):
     assert battle_points_run(game, streak) == [('bp', bp), ('number', bp)]
 

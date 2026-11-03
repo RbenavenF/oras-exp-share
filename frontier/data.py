@@ -56,9 +56,21 @@ LEVEL_50 = 50
 # sFixedIVTable: (normal, last battle of the round). Index = round - 1, clamped (BUGFIX behaviour:
 # retail reads past the table for round 9 and gets random IVs).
 FIXED_IVS = [(3, 6), (6, 9), (9, 12), (12, 15), (15, 18), (21, 31), (31, 31), (31, 31)]
-# sBattlePointAwards[][FRONTIER_FACILITY_FACTORY][FRONTIER_MODE_SINGLES], given when a round is won;
-# index = round - 1, clamped; +10 after the Frontier Brain (frontier_util.c GiveBattlePoints).
-BATTLE_POINTS = [3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9]
+# sBattlePointAwards[round - 1][facility][first mode] of pret/pokeemerald 731ad5bf src/frontier_util.c (30 rows; the
+# round index is clamped to the last), given when a round is won; +10 after the Frontier Brain (GiveBattlePoints).
+# First mode: Singles, except Arena, Pike and Pyramid, which have one. Copied by a parser of that file, 2026-11-03
+# (reports/frontier.md §25). The Factory's used to stop at round 13 and gave too few BP from round 15.
+FRONTIER_BP = {
+    'tower': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] + [15] * 16,
+    'dome': [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15],
+    'palace': [4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14] + [15] * 8,
+    'arena': [1, 1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] + [15] * 10,
+    'factory': [3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14] + [15] * 6,
+    'pike': [1, 1, 2, 2, 2, 4, 4, 4, 8, 8, 8, 8, 10, 10, 10, 10, 12, 12, 12, 12, 12, 14, 14, 14, 14, 15, 15, 15, 15,
+             15],
+    'pyramid': [5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14] + [15] * 10,
+}
+BATTLE_POINTS = FRONTIER_BP['factory']
 BRAIN_BONUS = 10
 # sFrontierBrainStreakAppearances[FACTORY] = {21, 42, 21, 1}: battle 21 (silver), 42 (gold), then every 21.
 BRAIN_BATTLES = (21, 42, 21)
