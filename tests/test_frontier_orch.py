@@ -92,6 +92,34 @@ def test_both_limited_waits_for_the_first_cooldown(repo):
     assert any('no agent available' in line for line in log)
 
 
+def test_an_expired_login_hands_over_and_keeps_that_agent_out(repo):
+    """Measured 2026-11-03: Claude's OAuth session expired after 37 min; the supervisor retried it twice in a second
+    and blocked the task. Now the other agent inherits the task and the logged-out one is not run again."""
+    outcome, calls, tasks, orch, log = run(repo, [['claude', 'auth'], ['codex', 'done'], ['codex', 'done']])
+    assert [c[0] for c in calls] == ['claude', 'codex', 'codex'] and outcome == 'done'
+    assert calls[1][2].startswith('AVISO DE RELEVO: la sesión anterior (claude)')
+    assert orch.state['needs_login'] == {'claude': True}
+    assert any('not logged in' in line for line in log)
+
+
+def test_both_logged_out_stops_instead_of_waiting(repo):
+    outcome, calls, *_ , log = run(repo, [['claude', 'auth'], ['codex', 'auth']])
+    assert outcome == 'stop' and len(calls) == 2
+    assert any('need a login' in line for line in log)
+
+
+def test_a_restart_lets_the_logged_out_agent_back(repo):
+    run(repo, [['claude', 'auth'], ['codex', 'auth']])
+    outcome, calls, *_ = run(repo, [['claude', 'done'], ['codex', 'done']])
+    assert outcome == 'done' and [c[0] for c in calls][-2:] == ['claude', 'codex']
+
+
+def test_the_run_log_is_written_while_the_agent_works(repo):
+    outcome, calls, tasks, orch, log = run(repo, [['claude', 'done'], ['codex', 'done']])
+    text = sorted((repo / 'work/orch/logs').glob('*claude*'))[0].read_text()
+    assert '--- output' in text and '"session_id"' in text and '--- exit 0' in text
+
+
 def test_failed_acceptance_reopens_the_task(repo):
     cfg = json.loads((repo / 'frontier/orch/config.json').read_text())
     cfg['acceptance'] = [['false']]
@@ -134,3 +162,26 @@ def test_a_held_turn_is_refused(repo):
 ])
 def test_parse_tells_a_usage_limit_from_other_errors(kind, out, code, limited):
     assert fo.parse(kind, out, '', code)['limited'] is limited
+
+
+@pytest.mark.parametrize('kind, out, code, auth', [
+    ('claude', json.dumps({'type': 'result', 'is_error': True, 'api_error_status': None,
+                           'result': 'Failed to authenticate: OAuth session expired and could not be refreshed'}), 1,
+     True),
+    ('claude', 'stderr noise\n{"type":"system"}\n' + json.dumps({'type': 'result', 'is_error': True,
+                                                                   'result': 'Not logged in · Please run /login'}),
+     1, True),
+    ('claude', json.dumps({'type': 'result', 'is_error': False, 'result': 'fixed the OAuth docs'}), 0, False),
+    ('claude', json.dumps({'type': 'result', 'is_error': True, 'api_error_status': 429, 'result': 'usage limit'}), 1,
+     False),
+    ('codex', '{"type":"error","message":"Not logged in. Run codex login."}', 1, True),
+])
+def test_parse_tells_an_expired_login(kind, out, code, auth):
+    assert fo.parse(kind, out, '', code)['auth'] is auth
+
+
+def test_parse_reads_the_result_of_a_stream_json_run():
+    out = '\n'.join([json.dumps({'type': 'system', 'session_id': 's'}), json.dumps({'type': 'assistant'}),
+                     json.dumps({'type': 'result', 'is_error': False, 'result': 'ok', 'session_id': 's'})])
+    assert fo.parse('claude', out, '', 0) == {'session': 's', 'error': False, 'limited': False, 'auth': False,
+                                               'message': 'ok'}

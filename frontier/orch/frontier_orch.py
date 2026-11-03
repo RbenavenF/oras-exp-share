@@ -28,6 +28,8 @@ from pathlib import Path
 
 LIMIT = re.compile(r'usage limit|rate.?limit|quota|limit reached|too many requests|\b429\b|out of credits'
                    r'|insufficient.{0,20}credit', re.I)
+AUTH = re.compile(r'failed to authenticate|oauth|not logged in|/login|log ?in again|unauthori[sz]ed|\b401\b'
+                  r'|authentication (?:failed|required|error)|invalid api key', re.I)
 TURN = re.compile(r'(## Turno\n\n)(.*)\n')
 HOLDER = 'frontier-orch'
 
@@ -42,7 +44,7 @@ class Orch:
         self.now, self.sleep, self.out = now, sleep, out
         self.work.mkdir(parents=True, exist_ok=True)
         self.state = json.loads(self.state_path.read_text()) if self.state_path.exists() else {}
-        for key in ('sessions', 'cooldown', 'no_progress', 'handoff'):
+        for key in ('sessions', 'cooldown', 'no_progress', 'handoff', 'needs_login'):
             self.state.setdefault(key, {})
         self.state.setdefault('runs', 0)
 
@@ -147,15 +149,18 @@ class Orch:
         log = self.work / 'logs' / f'{stamp}-{agent}-{task["id"]}.log'
         log.parent.mkdir(parents=True, exist_ok=True)
         self.out(f'[{stamp}] {agent} {"resumes" if resumed else "starts"} {task["id"]} (log {log})')
-        try:
-            proc = subprocess.run(cmd, cwd=self.root, stdin=subprocess.DEVNULL, capture_output=True, text=True,
-                                  timeout=self.cfg['run_timeout_minutes'] * 60)
-            stdout, stderr, code = proc.stdout, proc.stderr, proc.returncode
-        except subprocess.TimeoutExpired as e:
-            stdout, stderr, code = (e.stdout or ''), (e.stderr or '') + '\n[timeout]', -1
-            stdout = stdout.decode() if isinstance(stdout, bytes) else stdout
-            stderr = stderr.decode() if isinstance(stderr, bytes) else stderr
-        log.write_text(f'$ {" ".join(cmd[:3])} ...\nexit {code}\n--- stdout\n{stdout}\n--- stderr\n{stderr}\n')
+        with log.open('w') as f:        # written as the agent works: tail -f it to follow a run live
+            f.write(f'$ {" ".join(cmd[:3])} ...\n--- output (stdout and stderr)\n')
+            f.flush()
+            proc = subprocess.Popen(cmd, cwd=self.root, stdin=subprocess.DEVNULL, stdout=f, stderr=subprocess.STDOUT)
+            try:
+                code = proc.wait(timeout=self.cfg['run_timeout_minutes'] * 60)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                code = proc.wait()
+                f.write('\n[frontier-orch: timeout]\n')
+            f.write(f'\n--- exit {code}\n')
+        stdout, stderr = log.read_text(errors='replace'), ''
         for cleanup in self.cfg.get('after_run', []):   # outside the agents' sandboxes, e.g. a lab left running
             done = subprocess.run(cleanup, cwd=self.root, capture_output=True, text=True)
             with log.open('a') as f:
@@ -186,10 +191,17 @@ class Orch:
         before = self.snapshot()        # after the status change, so a run that changes nothing counts as none
         result = self.run(agent, task, resuming)
         self.state['runs'] += 1
-        if result['limited']:
-            self.state['cooldown'][agent] = self.now() + self.cfg['cooldown_minutes'] * 60
-            self.state['handoff'][task['id']] = {'from': agent, 'reason': 'límite de uso: ' + result['message'][:200]}
-            self.out(f'  {agent} hit a usage limit; cooled down {self.cfg["cooldown_minutes"]} min')
+        if result['limited'] or result['auth']:
+            if result['auth']:      # waiting does not fix it: out until the user logs in and restarts auto
+                self.state['needs_login'][agent] = True
+                self.state['cooldown'][agent] = self.now() + 10 * 365 * 86400
+                reason = 'sesión caducada o sin login: ' + result['message'][:200]
+                self.out(f'  {agent} is not logged in ({result["message"][:120]}); run its login, then auto again')
+            else:
+                self.state['cooldown'][agent] = self.now() + self.cfg['cooldown_minutes'] * 60
+                reason = 'límite de uso: ' + result['message'][:200]
+                self.out(f'  {agent} hit a usage limit; cooled down {self.cfg["cooldown_minutes"]} min')
+            self.state['handoff'][task['id']] = {'from': agent, 'reason': reason}
             self.save_state()
             return 'ran'
         self.state['handoff'].pop(task['id'], None)
@@ -213,7 +225,7 @@ class Orch:
             self.set_task(task['id'], status='in_progress',
                           notes=(now.get('notes', '') + f'\n[frontier-orch] aceptación fallida: {why}').strip())
             self.out(f'  {task["id"]} claimed done but acceptance failed; back to in_progress')
-        if result['error'] and not result['limited']:
+        if result['error']:
             self.out(f'  {agent} ended with an error: {result["message"][:200]}')
         if self.snapshot() == before:
             n = self.state['no_progress'].get(task['id'], 0) + 1
@@ -231,6 +243,9 @@ class Orch:
 
     def auto(self, max_runs=None):
         max_runs = max_runs or self.cfg['max_runs']
+        for agent in list(self.state['needs_login']):   # a restart means the user logged in again
+            self.state['cooldown'].pop(agent, None)
+        self.state['needs_login'] = {}
         self.take_turn()
         try:
             for _ in range(max_runs):
@@ -239,7 +254,11 @@ class Orch:
                     self.out('all tasks done' if outcome == 'done' else 'stopped: needs the user')
                     return outcome
                 if outcome == 'wait':
-                    wake = min(self.state['cooldown'].values())
+                    timed = [w for a, w in self.state['cooldown'].items() if a not in self.state['needs_login']]
+                    if not timed:
+                        self.out('stopped: ' + ', '.join(self.state['needs_login']) + ' need a login')
+                        return 'stop'
+                    wake = min(timed)
                     self.out(f'  no agent available; waiting until {time.ctime(wake)}')
                     self.sleep(max(60, wake - self.now()))
             self.out(f'stopped after {max_runs} runs (max_runs)')
@@ -250,17 +269,23 @@ class Orch:
 
 
 def parse(kind, stdout, stderr, code):
-    """{'session', 'error', 'limited', 'message'} from one CLI run."""
+    """{'session', 'error', 'limited', 'auth', 'message'} from one CLI run (stdout may hold stderr lines too)."""
     session, error, message = None, code != 0, ''
     if kind == 'claude':
-        try:
-            data = json.loads(stdout.strip().splitlines()[-1]) if stdout.strip() else {}
-        except json.JSONDecodeError:
-            data = {}
+        data = {}
+        for line in reversed(stdout.strip().splitlines()):     # the result event (json or stream-json)
+            try:
+                ev = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(ev, dict) and ev.get('type', 'result') == 'result':
+                data = ev
+                break
         session = data.get('session_id')
         error = error or bool(data.get('is_error'))
         message = str(data.get('result') or '') + ' ' + str(data.get('api_error_status') or '')
         limited = error and (data.get('api_error_status') == 429 or bool(LIMIT.search(message + stderr)))
+        auth = error and (data.get('api_error_status') == 401 or bool(AUTH.search(message + stderr)))
     else:
         for line in stdout.splitlines():
             try:
@@ -273,7 +298,10 @@ def parse(kind, stdout, stderr, code):
                 error = True
                 message += ' ' + json.dumps(ev.get('error') or ev.get('message') or ev)
         limited = error and bool(LIMIT.search(message + stderr))
-    return {'session': session, 'error': error, 'limited': bool(limited), 'message': (message or stderr).strip()}
+        auth = error and bool(AUTH.search(message + stderr))
+    auth = bool(auth) and not limited
+    return {'session': session, 'error': error, 'limited': bool(limited), 'auth': auth,
+            'message': (message or stderr).strip()}
 
 
 def main():
@@ -283,17 +311,22 @@ def main():
     ap.add_argument('--max-runs', type=int)
     args = ap.parse_args()
     orch = Orch(args.root)
-    lock = open(orch.work / 'orch.lock', 'w')
-    try:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except BlockingIOError:
-        raise SystemExit('another frontier-orch is running')
+    if args.action != 'status':     # status only reads, so it works while auto runs
+        lock = open(orch.work / 'orch.lock', 'w')
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise SystemExit('another frontier-orch is running')
     if args.action == 'status':
         for t in orch.tasks():
             print(f'{t["id"]:14} {t["status"]:11} owner {t["owner"]:6} {t["title"]}')
         for agent in orch.cfg['agents']:
             left = orch.state['cooldown'].get(agent, 0) - orch.now()
-            print(f'{agent}: ' + ('available' if left <= 0 else f'cooling down {left / 60:.0f} min'))
+            print(f'{agent}: ' + ('needs a login' if agent in orch.state['needs_login'] else
+                                  'available' if left <= 0 else f'cooling down {left / 60:.0f} min'))
+        logs = sorted((orch.work / 'logs').glob('*.log'))
+        if logs:
+            print(f'last run log (tail -f to follow it): {logs[-1]}')
         print(f'turn: {orch.turn()}; runs so far: {orch.state["runs"]}')
     elif args.action == 'release':
         orch.release_turn()

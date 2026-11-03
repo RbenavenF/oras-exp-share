@@ -7,7 +7,8 @@
         "-p",
         "{prompt}",
         "--output-format",
-        "json",
+        "stream-json",
+        "--verbose",
         "--permission-mode",
         "auto",
         "--permission-prompts",
@@ -20,7 +21,8 @@
         "-p",
         "{prompt}",
         "--output-format",
-        "json",
+        "stream-json",
+        "--verbose",
         "--permission-mode",
         "auto",
         "--permission-prompts",
@@ -77,7 +79,7 @@
   "no_progress_limit": 2,
   "run_timeout_minutes": 180,
   "brief": "Eres {agent}, ejecutado por el orquestador frontier-orch sin nadie delante. Tu tarea es {id}: {title}. Diseño: {design}. Dueño de la tarea: {owner}.\n\nAntes de nada, lee AGENTS.md (y CLAUDE.md si existe), frontier/PLAN.md, las últimas entradas de frontier/BITACORA.md, frontier/REPARTO.md y el diseño. El orquestador tiene el turno de REPARTO.md por ti: no lo cambies; las demás normas de REPARTO y AGENTS valen igual.\n\nTrabaja hacia hitos verificables. En cada hito: tests, commit con tu pie de AGENTS.md y entrada de bitácora (PLAN §8). Lo que no hayas ejecutado se marca como no probado. Si se te acaba el tiempo o la cuota a mitad, el orquestador pasará la tarea al otro agente: deja el trabajo en un estado que se pueda retomar y escríbelo.\n\nCriterios de aceptación: {accept}\n\nCuando se cumplan todos, pon \"status\": \"done\" en tu tarea de frontier/orch/tasks.json, con \"evidence\" (commits y pruebas) y haz commit; el orquestador pasará los tests. Si necesitas una decisión del usuario o estás bloqueado de verdad, pon \"status\": \"blocked\" y en \"notes\" la pregunta concreta, y haz commit. Si no, sigue trabajando: deja \"status\": \"in_progress\".\n\nNo lances subagentes. No hagas push. No toques inputs/ ni la partida original. Un solo laboratorio de Azahar: páralo al acabar.",
-  "_notes": "Codex: workspace-write deja .git en solo lectura; writable_roots lo abre para los commits (medido 2026-11-03). network_access: gdb habla con Azahar por localhost. Claude: -p rechaza bypassPermissions; auto decide cada acción y --permission-prompts none deniega lo que pediría confirmación, sin colgarse. Codex corre en su propio espacio de PID: un laboratorio que deje abierto no lo para el otro agente, por eso after_run lo para desde fuera tras cada ejecución.",
+  "_notes": "Codex: workspace-write deja .git en solo lectura; writable_roots lo abre para los commits (medido 2026-11-03). network_access: gdb habla con Azahar por localhost. Claude: -p rechaza bypassPermissions; auto decide cada acción y --permission-prompts none deniega lo que pediría confirmación, sin colgarse. Codex corre en su propio espacio de PID: un laboratorio que deje abierto no lo para el otro agente, por eso after_run lo para desde fuera tras cada ejecución. Claude va con stream-json (necesita --verbose) para que el registro se lea en directo. Una sesión caducada («Failed to authenticate: OAuth…», medido 2026-11-03 a los 37 min) deja al agente fuera hasta el próximo auto y pasa la tarea al otro.",
   "after_run": [
     [
       "bash",

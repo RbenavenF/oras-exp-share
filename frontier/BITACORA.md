@@ -1234,3 +1234,36 @@ Decisiones: la línea de rechazo va en el texto 619, que comparten 517, 213 y 32
 confirmación con un desafío pausado, lo deja pausado.
 Siguiente paso: build con la isla (`python frontier/overlay.py --out work/frontier/build --romfs
 work/faraway/dev/overlay/romfs`) y pruebas en Azahar de la tarea F6-TORRE.
+
+## 2026-11-03 22:xx — Claude Code — frontier-orch: primera ejecución real y arreglo del relevo por sesión caducada
+Estado: hecho (F6-TORRE sigue en curso)
+Hecho:
+- **Primera ejecución de `frontier-orch auto` lanzada por el usuario**, a las 21:00, sobre
+  F6-TORRE:
+  - Claude trabajó 37 minutos (165 turnos; coste equivalente 11,27 USD según su JSON) e hizo
+    dos commits:
+    - `9dc2dc8`: script de la Torre en la zona 329, exclusión mutua con la Fábrica e
+      integración;
+    - `bdae3b7`: selección de modo antes del desafío, visto en Azahar.
+  - Luego caducó su sesión: «Failed to authenticate: OAuth session expired and could not be
+    refreshed».
+  - El supervisor lo trató como error normal, reintentó dos veces en un segundo y bloqueó la
+    tarea por «2 ejecuciones sin cambios». No quedó nada a medias sin commit; el laboratorio,
+    parado.
+- **Arreglo del supervisor**:
+  - una sesión caducada o sin login deja al agente fuera hasta el próximo `auto`, y el otro
+    hereda la tarea con aviso de relevo;
+  - si los dos están sin login, se para y lo dice;
+  - `status` funciona con `auto` en marcha;
+  - el registro de cada ejecución se escribe en directo (Claude con `stream-json`).
+- F6-TORRE reabierta, con una nota de dónde se quedó; su sesión de Claude se conserva para
+  reanudarla.
+Evidencia:
+- `work/orch/logs/20261103-210029-claude-F6-TORRE.log` y los dos de 21:37.
+- `tests/test_frontier_orch.py` (24); `python -m pytest -q tests` → 212 passed.
+- Romper el relevo por login hace fallar `test_an_expired_login_hands_over_and_keeps_that_agent_out`.
+- `claude -p --output-format stream-json --verbose` real, interpretado bien por `parse`.
+Commits: el de esta entrada.
+**Estado del laboratorio**: parado; `use_gdbstub` en `false`. **Turno: libre.**
+Siguiente paso: `frontier/orch/frontier-orch auto` otra vez. Claude reanuda F6-TORRE: build y
+pruebas de Azahar.

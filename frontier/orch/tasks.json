@@ -7,7 +7,7 @@
       "design": "reports/diseno/torre.md",
       "accept": "puerta (19,46) → interior propio (zona de REPARTO, verificada como §18) → salida a (19,47); recepción con equipo propio; ronda con racha por la ruta 2 y PB de data.FRONTIER_BP['tower']; pausa, reanudación y derrota; la Torre y la Fábrica se niegan si la otra tiene un desafío a medias (patch.ACTIVE_WORK); la Fábrica sigue entrando y saliendo por su puerta; una ronda ganada en Azahar (también comprueba la racha por ruta de la Fábrica pendiente en REPARTO); tests de suite en verde.",
       "status": "in_progress",
-      "notes": "",
+      "notes": "La ejecución del 2026-11-03 21:00 se cortó a los 37 min porque caducó la sesión de Claude (no por falta de progreso; el bloqueo lo puso el supervisor por error). Último hito: bdae3b7 (selección de modo de la Mansión antes del desafío, visto en Azahar), sin entrada de bitácora propia. Falta: build con la isla y las pruebas de Azahar de los criterios (puerta, ronda ganada, pausa, derrota, exclusión, regresión de la Fábrica).",
       "evidence": ""
     },
     {

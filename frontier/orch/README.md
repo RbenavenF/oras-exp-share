@@ -29,12 +29,20 @@ Para pararlo: Ctrl+C. El turno de `REPARTO.md` se devuelve al salir. Si el super
    - hay `no_progress_limit` (2) ejecuciones seguidas sin ningún cambio en el repositorio;
    - se llega a `max_runs` (40).
 9. **Tras cada ejecución**, `after_run` para cualquier laboratorio de Azahar que haya quedado abierto.
+10. **Si un agente pierde la sesión** («Failed to authenticate: OAuth session expired…», medido el 2026-11-03 a los 37
+    minutos):
+    - queda fuera hasta el próximo `auto` y el otro hereda la tarea;
+    - si los dos están sin login, se para y lo dice;
+    - tras hacer login (`/login` en Claude, `codex login`), vuelve a lanzar `auto`.
+
+Para seguir una ejecución en directo: `frontier/orch/frontier-orch status` (funciona con `auto` en marcha) da el
+registro actual; `tail -f` sobre él.
 
 Registros de cada ejecución en `work/orch/logs/`; estado (sesiones, esperas) en `work/orch/state.json`.
 
 ## Permisos (decididos y medidos el 2026-11-03)
 
-- **Claude**: `-p --permission-mode auto --permission-prompts none`.
+- **Claude**: `-p --output-format stream-json --verbose --permission-mode auto --permission-prompts none`.
   - `-p` no admite `bypassPermissions`;
   - en modo `auto` el propio Claude Code decide cada acción;
   - lo que pediría confirmación se deniega en vez de quedarse esperando.

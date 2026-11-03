@@ -2,7 +2,7 @@
 
 Pops the next action from $FAKE_PLAN (a JSON list of [kind, action]); appends (kind, session, prompt head) to
 $FAKE_CALLS. Actions: commit (a change and a commit), dirty (an uncommitted change), done / blocked (set the first
-in_progress task's status and commit), limit (print the CLI's usage-limit output), noop.
+in_progress task's status and commit), limit / auth (print the CLI's usage-limit / expired-login output), noop.
 """
 import json
 import os
@@ -42,6 +42,10 @@ elif action in ('done', 'blocked'):
 
 if kind == 'claude':
     sid = session or str(uuid.uuid4())
+    if action == 'auth':     # what Claude Code printed when its OAuth session expired (2026-11-03)
+        print(json.dumps({'type': 'result', 'is_error': True, 'api_error_status': None, 'session_id': sid,
+                          'result': 'Failed to authenticate: OAuth session expired and could not be refreshed'}))
+        sys.exit(1)
     if action == 'limit':
         print(json.dumps({'type': 'result', 'is_error': True, 'api_error_status': 429,
                           'result': "You've hit your usage limit", 'session_id': sid}))
@@ -49,6 +53,9 @@ if kind == 'claude':
     print(json.dumps({'type': 'result', 'is_error': False, 'result': 'ok', 'session_id': sid}))
 else:
     print(json.dumps({'type': 'thread.started', 'thread_id': session or 'codex-' + uuid.uuid4().hex[:8]}))
+    if action == 'auth':
+        print(json.dumps({'type': 'error', 'message': 'Not logged in. Run codex login.'}))
+        sys.exit(1)
     if action == 'limit':
         print(json.dumps({'type': 'turn.failed', 'error': {'message': 'You have hit your usage limit.'}}))
         sys.exit(1)
