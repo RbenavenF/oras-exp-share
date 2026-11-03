@@ -26,7 +26,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-Codex, 2026-11-03 15:59 — consulta de Trapinch/DexNav; solo documentación, sin laboratorio.
+libre (último: Codex, 2026-11-03, consulta Trapinch/DexNav documentada; sin cambios del juego)
 
 ## Instalaciones
 

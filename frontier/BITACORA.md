@@ -1144,3 +1144,26 @@ Siguiente paso:
 2. Claude Code: Torre (`reports/diseno/torre.md`), con la exclusión mutua y una ronda ganada
    en Azahar.
 Una sola herramienta a la vez.
+
+## 2026-11-03 16:xx — Codex — Nivel de Trapinch con DexNav
+Estado: hecho
+Hecho: consulta del usuario, sin avanzar instalaciones ni cambiar el juego.
+Trapinch en Ruta 111, zona 35: slots normales 5 y 6, niveles 20 y 22,
+idénticos en limpio y Repolished. Aplicando la regla documentada del DexNav,
+el máximo es 22 + 19 por racha + 10 por bonus = 51.
+Evidencia: `source scripts/env.sh`; Python importando
+`scripts/inspect_encounters.py:inspect_location`, para clean/repolished y
+`Ruta 111`, filtrando species == Trapinch. Hashes comprobados por el lector.
+Regla externa: https://bulbapedia.bulbagarden.net/wiki/DexNav, apartados
+Chaining/Boost/Search Level: +1 por cinco encuentros, máximo +19 con 95–99,
+reinicio cada 100; bonus +10 cada quinto encuentro o aleatorio (4 %).
+El nivel de búsqueda mejora otras propiedades, no añade niveles directamente.
+`reports/dexnav.md` confirma que v0.5 solo hace visible la racha.
+No probado un Trapinch de nivel 51 en emulador/consola ni reanalizada la rutina
+de niveles: el resultado combina la tabla local con la regla publicada.
+Commits: 5daf5c3 toma de turno; cierre en el commit de esta entrada.
+Decisiones: consulta documental; se devuelve el turno libre. Las fuentes
+discrepan: Serebii redondea el máximo a +20/+30; se usa el detalle +19/+29
+de Bulbapedia, coherente con contador 0–99 documentado en reports/dexnav.md.
+Siguiente paso: Frente según REPARTO (Codex: Domo, Tubo o Pirámide; Claude:
+Torre y exclusión mutua). No se inició ninguna instalación en esta consulta.
