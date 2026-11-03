@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-libre (último: frontier-orch, 2026-11-03 21:37)
+Claude Code, desde 2026-11-03 22:xx (arreglo del supervisor tras la caducidad de la sesión)
 
 ## Instalaciones
 
