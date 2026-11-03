@@ -26,7 +26,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-libre (último: Claude Code, 2026-11-03, trabajo común hecho)
+Codex, 2026-11-03 15:59 — consulta de Trapinch/DexNav; solo documentación, sin laboratorio.
 
 ## Instalaciones
 
