@@ -3,23 +3,30 @@
 First functional island (provisional geometry, reports/frontier.md §18):
 - zone 209 «Isla del Frente»: clone of the Battle Resort harbor (212) with its own map and area. Its NPCs and
   triggers are dropped (Wally's arrival scene and family) and the ferry clerk comes back as NPC uid 0 running the
-  harbor's own event 2 (GlobalCall 10430): from a zone that is neither Slateport nor Lilycove the ferry offers
-  both, which is the way back. Walking north off the pier (warp 0) enters zone 213. The harbor's script keeps
-  events -1 (empty), 1 (arrival) and 2 (the clerk) and drops 3 (Wally's trigger). Event 1 runs on arrival: while
-  work 16615 is 0 it plays Wally's first-visit scene, which moves NPCs 1-3 the island does not have (the game
-  hangs, seen in Azahar); otherwise it jumps to 0x3f28: horn, fade-in, WorkSet(16707, 0). Without event 1 the
-  screen stays white (also seen). The island's event 1 always takes the 0x3f28 path.
+  harbor's own event 2 (GlobalCall 10430): from a zone that is neither Slateport nor Lilycove the ferry offers both,
+  which is the way back. The pier's north warp is replaced by the plaza's Factory door (below). The harbor's script
+  keeps events -1 (empty), 1 (arrival) and 2 (the clerk) and drops 3 (Wally's trigger). Event 1 runs on arrival:
+  while work 16615 is 0 it plays Wally's first-visit scene, which moves NPCs 1-3 the island does not have (the game
+  hangs, seen in Azahar); otherwise it jumps to 0x3f28: horn, fade-in, WorkSet(16707, 0). Without event 1 the screen
+  stays white (also seen). The island's event 1 always takes the 0x3f28 path.
 - zone 213: clone of the Battle Maison hall (517), the one that holds the Factory, with the Maison's story text
-  (619) and the Factory-patched script; its exit (warp 0) leads back to the pier. code.bin registers the Maison
-  natives only in zones 448, 517 and 520 (per-zone native groups, frontier/patch.py ZONE_NATIVES): without 517's
-  groups every event of the hall fails and the game hangs, so overlay.py passes CLONES to patch.build, which
-  gives every clone its donor's groups.
-Both slots were chosen with CTRMap-F5's ZoneRepurposeScanner (empty, no incoming warps, no script or shared
-script sends the player there; §18); both keep their placeholder entity scripts (517's is empty as well).
+  (619) and the Factory-patched script; its exit (warp 0) leads back to the Factory door on the plaza. code.bin
+  registers the Maison natives only in zones 448, 517 and 520 (per-zone native groups, frontier/patch.py
+  ZONE_NATIVES): without 517's groups every event of the hall fails and the game hangs, so overlay.py passes CLONES
+  to patch.build, which gives every clone its donor's groups.
+- The plaza (PLAZA_*, faraway/java/ctrmap/tests/FrontierPlaza.java): after the clones, CTRMap-F5's map painter
+  repaints part of the island's own map cell (cell 0,1: the south half of the pier and the sea around it) as a path
+  square with one catalogue building per Emerald facility (FACILITIES). Composite Apply: tiles outside the square
+  keep the harbor's sea and pier. The painter wires no door; Plaza replaces the island's warps with one door warp,
+  the Factory's, into the hall 213 (whose exit, warp 0, comes back to it). The other six buildings are mocks with no
+  warp. No building gets its swinging-door prop: with one, the island hangs on load (black screen, 0 FPS; the same
+  house loads without it; reports/frontier.md §21). Walking south from the dock leads onto the square.
+Both slots were chosen with CTRMap-F5's ZoneRepurposeScanner (empty, no incoming warps, no script or shared script
+sends the player there; §18); both keep their placeholder entity scripts (517's is empty as well).
 
 The staged copy holds the archives CTRMap reads (faraway/build.py STAGED), from --romfs file by file with the
-Repolished baseline as fallback, with the overlay's own archives (zones 517/317 etc.) on top, so the clones
-inherit the patched scripts. Only the zone archives may change; anything else is an error.
+Repolished baseline as fallback, with the overlay's own archives (zones 517/317 etc.) on top, so the clones inherit
+the patched scripts. Only the zone archives may change; anything else is an error.
 """
 import shutil
 import subprocess
@@ -46,6 +53,23 @@ PLACE_TEXT = 90                # game text entry of location names
 PLACE_NAME = {'es': 'Isla del Frente', 'en': 'Frontier Island'}
 CLERK = (300, 300, 2, 0, 54, 34, 0, 2)   # model, MoveModel, event, flag, x, y, height, face: zone 212's NPC 0
 CLONES = {ZONE_ISLAND: DONOR_ISLAND, ZONE_HALL: DONOR_HALL}   # slot: donor; also the native groups each copies
+
+PLAZA_RECT = (1, 0, 39, 38)    # cell-local tiles x0, y0, x1, y1 of the island's own cell (0,1) painted as path
+# Emerald facility: (catalogue building, anchor x, y). Only the Factory has a door (into the hall 213). Two house
+# models repeat: every distinct building carries its textures into the island's area, and past AREA_LIMIT the island
+# hangs on load (reports/frontier.md §21); a repeated model carries nothing new.
+FACILITIES = {
+    'Tower': ('Dewford shingle house', 16, 2),
+    'Dome': ('Lavaridge house', 4, 13),
+    'Factory': ('Gym', 16, 13),
+    'Pyramid': ('Lavaridge house', 30, 13),
+    'Pike': ('Dewford shingle house', 3, 25),
+    'Arena': ('Lavaridge house', 17, 25),
+    'Palace': ('Dewford shingle house', 28, 25),
+}
+AREA_ARCHIVE = 'a/0/1/4'   # area data, one entry per area id
+AREA_LIMIT = 386675        # largest island area entry measured to load in Azahar; 458007 and up hung (§21)
+DOORS = {'Factory': (ZONE_HALL, 0)}   # facility: (zone, warp) its door leads to (island warps follow FACILITIES order)
 
 
 ISLAND_EVENTS = {-1, 1, 2}      # zone 212's events the island keeps: -1 empty, 1 arrival, 2 the ferry clerk
@@ -87,10 +111,15 @@ def plan(scripts):
         f'keeptext.{ZONE_HALL}=1',
         f'zones={ZONE_ISLAND},{ZONE_HALL}',
         f'zone.{ZONE_ISLAND}.clearNpcs=1', f'zone.{ZONE_ISLAND}.clearTriggers=1',
-        f'zone.{ZONE_ISLAND}.warp.0=0,{ZONE_HALL},0',
         f'zone.{ZONE_ISLAND}.npc.0=' + ','.join(str(v) for v in CLERK),
         f'zone.{ZONE_HALL}.warp.0=0,{ZONE_ISLAND},0',
+        f'plaza.zone={ZONE_ISLAND}', 'plaza.rect=' + ','.join(map(str, PLAZA_RECT)),
+        'plaza.heightof=0',            # the pier's warp: the painted square lies at the pier's ground
     ]
+    for i, (facility, (name, x, y)) in enumerate(FACILITIES.items()):
+        lines.append(f'plaza.building.{i}={name}|{x}|{y}|nodoorprop')   # door props hang the load (§21)
+        if facility in DOORS:
+            lines.append(f'plaza.door.{i}=' + ','.join(map(str, DOORS[facility])))
     return '\n'.join(lines) + '\n'
 
 
@@ -135,10 +164,21 @@ def build(archives, source, work):
     with log.open('w') as stream:
         subprocess.run([str(ROOT / 'faraway/run.sh'), 'Build', str(game), str(work / 'ws'),
                         str(work / 'plan.properties')], stdout=stream, stderr=subprocess.STDOUT, check=True)
+        subprocess.run([str(ROOT / 'faraway/run.sh'), 'Plaza', str(game), str(work / 'ws'),
+                        str(work / 'plan.properties')], stdout=stream, stderr=subprocess.STDOUT, check=True)
     text = log.read_text()
     for zone in (ZONE_ISLAND, ZONE_HALL):
         if f'zone {zone} cloned from' not in text:
             raise ValueError(f'Java build did not clone zone {zone}: {text}')
+    painted = f'Painted map applied to zone {ZONE_ISLAND}' in text
+    if not painted or f'{len(FACILITIES)} door(s) left unwired' not in text:
+        raise ValueError(f'the plaza was not painted: {text}')
+    if 'Swinging-door prop' in text:
+        raise ValueError(f'the plaza placed door props, which hang the island on load: {text}')
+    for i, facility in enumerate(f for f in FACILITIES if f in DOORS):   # Plaza adds door warps in building order
+        name = FACILITIES[facility][0]
+        if f'warp {i} door of {name} at tile' not in text:
+            raise ValueError(f'the {facility} door was not linked: {text}')
     out = dict(archives)
     for rel in STAGED:
         new = (game / rel).read_bytes()
@@ -146,5 +186,21 @@ def build(archives, source, work):
             if rel not in ZONE_ARCHIVES:
                 raise ValueError(f'Java build changed {rel}')
             out[rel] = new
+    check_area(out)
     out.update(place_names(out, source))
     return out, text
+
+
+def island_area(zones):
+    """The island zone's area id (header offset 2)."""
+    _, _, offset, length = garc_entries(zones)[ZONE_ISLAND]
+    header = zo_files(lz11_decompress(zones[offset:offset + length]))[0]
+    return int.from_bytes(header[2:4], 'little')
+
+
+def check_area(archives):
+    """Refuses an island area entry over AREA_LIMIT; returns its size."""
+    _, _, _, area = garc_entries(archives[AREA_ARCHIVE])[island_area(archives['a/0/1/3'])]
+    if area > AREA_LIMIT:
+        raise ValueError(f'the island area is {area} bytes, over the {AREA_LIMIT} measured to load (§21)')
+    return area

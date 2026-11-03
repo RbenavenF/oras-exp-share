@@ -689,6 +689,24 @@ Commits: sin commit.
 Decisiones: lectura sin modificar el juego; ningún inicial en estas tablas.
 Siguiente paso: retomar F6 (flag de campeón, ferry y hueco del Pase del Frente).
 
+## 2026-11-03 03:30 — Codex — Encuentros de Ruta 115
+Estado: hecho
+Hecho: consulta del usuario, Repolished zona 42, EN offset 0x21cc. Hierba:
+Swablu 17–20 (40 %), Taillow 17–20 (40 %), Wingull 20 (10 %), Jigglypuff
+18 (9 %) o 20 (1 %). Hordas: cinco Swablu al nivel 10 (100 %).
+Surf: Tentacool 20/25 (65 %), Wingull 20 (30 %), Pelipper 25/30 (5 %).
+Caña Vieja: Magikarp 10/15 (65 %), Tentacool 5 (35 %).
+Caña Buena: Magikarp/Tentacool/Wailmer 25 (60/35/5 %).
+Supercaña: Wailmer 30/35/40 (100 %). Especiales DexNav: Pidove, Misdreavus,
+Clefairy, base 20; desbloqueo no medido. Sin banco de Golpe Roca.
+Evidencia: `source scripts/env.sh`;
+`python scripts/inspect_encounters.py 'Ruta 115' > work/ruta-115-encounters.json`.
+Hashes comprobados por el lector; pesos por método según pk3DS, como en consultas
+anteriores. Sin ejecución nueva en Azahar/consola.
+Commits: sin commit.
+Decisiones: lectura sin modificar el juego.
+Siguiente paso: retomar F6 (flag de campeón, ferry y hueco del Pase del Frente).
+
 ## 2026-11-02 20:56 — Claude Code — F6: medidas del pase, el ferry y el puerto
 Estado: hecho
 Hecho: medidos los tres datos que pedía el paso anterior. Detalle en
@@ -869,3 +887,50 @@ Siguiente paso: seguir la F6.
 2. Textos ES/EN.
 3. Paquete Luma encadenado con v0.5.
 4. Plan de prueba en consola.
+
+## 2026-11-03 05:xx — Claude Code — F6: plaza de la isla con la Fábrica enlazada y seis maquetas
+Estado: hecho (la F6 sigue en curso)
+Hecho:
+- **Plaza**: la mitad sur del muelle de la isla (celda 0,1 de la zona 209) se repinta como
+  explanada con 7 edificios del catálogo de CTRMap-F5, uno por instalación de Esmeralda.
+  - Solo la Fábrica (el Gimnasio) tiene puerta: casilla (20,57) → sala 213. La salida de
+    213 vuelve a la puerta.
+  - Las otras seis son maquetas sin warp.
+  - El warp del extremo norte del muelle a 213 desaparece.
+- **Código**:
+  - `faraway/java/ctrmap/tests/FrontierPlaza.java` (pinta y pone la puerta);
+  - `faraway/java/faraway/Plaza.java` (lee el plan);
+  - `island_build`: `FACILITIES`, `DOORS`, `PLAZA_RECT`, `AREA_LIMIT`, `check_area`.
+  - El plan de la plaza se ejecuta tras la build de los clones.
+- Laboratorio: `frontier/lab_plaza_base.py` y `frontier/lab_plaza.sh`, para probar variantes
+  de plaza.
+Evidencia:
+- `reports/frontier.md` §21: tabla de 15 variantes y capturas `f6g_*`.
+- `python -m pytest -q tests` → 145 passed. Hay 2 tests nuevos. Tres roturas a mano (guarda
+  de área, prop de puerta, segunda puerta) fallan cada una en su test.
+- **Azahar**: la isla carga; entrar y salir por la puerta de la Fábrica funciona; la
+  maqueta no deja pasar; se vuelve al ferry.
+Commits: el de esta entrada.
+Decisiones:
+- **Sin props de puerta**: con prop, la isla se cuelga al cargar (v3/v2 frente a v5/v7).
+- **Límite de área**: el área de la isla debe quedar por debajo de 386.675 bytes (lo mayor
+  medido que carga; desde 458.007 cuelga). Por eso solo hay tres modelos (Gimnasio y dos
+  casas repetidas).
+- Distribución provisional, aproximada a Esmeralda: la Torre al norte, tres edificios en
+  medio y tres al sur. Los modelos, para más adelante.
+- **Agentes por edificio**: plan en PLAN §6, «Después». Van en serie, con un integrador
+  para los ficheros compartidos.
+**Estado del laboratorio**:
+- warp de desarrollo → 213;
+- `work/frontier/build` contiene la plaza;
+- `use_gdbstub` en `false`;
+- lab parado.
+Siguiente paso:
+1. Probar la partida completa por la puerta nueva: combate en 213 y guardar en la
+   explanada.
+2. Medir por qué cuelga el prop de puerta y cuál es el límite real del área. Sin eso, no
+   hay modelos distintos por instalación.
+3. Defectos visibles:
+   - barandillas del muelle sobre la explanada;
+   - cerca de la casa de Lavacalda en (33–34, 58).
+4. Textos ES/EN, paquete Luma y plan de consola.

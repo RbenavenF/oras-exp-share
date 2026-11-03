@@ -193,3 +193,33 @@ def test_every_island_clone_gets_its_donors_native_groups():
     for slot, donor in island_build.CLONES.items():
         assert mask(slot) == mask(donor)
     assert mask(island_build.ZONE_HALL) & patch.NATIVES_MAISON
+
+
+def test_plaza_plan_links_only_the_factory():
+    """Seven facility buildings, none with a door prop (they hang the load), one door: the Factory's, into 213."""
+    import island_build
+    lines = island_build.plan('s').splitlines()
+    buildings = [line for line in lines if line.startswith('plaza.building.')]
+    doors = [line for line in lines if line.startswith('plaza.door.')]
+    assert len(buildings) == 7 and all(line.endswith('|nodoorprop') for line in buildings)
+    factory = list(island_build.FACILITIES).index('Factory')
+    assert doors == [f'plaza.door.{factory}={island_build.ZONE_HALL},0']
+    assert buildings[factory].startswith(f'plaza.building.{factory}=Gym|')
+    assert not any(line.startswith(f'zone.{island_build.ZONE_ISLAND}.warp.') for line in lines)
+    assert f'zone.{island_build.ZONE_HALL}.warp.0=0,{island_build.ZONE_ISLAND},0' in lines
+
+
+def test_island_area_over_the_measured_limit_is_refused():
+    import island_build
+    from formats import rebuild_garc
+    build = ROOT / 'work/frontier/build/romfs'
+    if not (build / island_build.AREA_ARCHIVE).exists():
+        pytest.skip('Local island build required (python frontier/overlay.py --out work/frontier/build)')
+    archives = {rel: (build / rel).read_bytes() for rel in ('a/0/1/3', island_build.AREA_ARCHIVE)}
+    assert island_build.check_area(archives) <= island_build.AREA_LIMIT
+    area = island_build.island_area(archives['a/0/1/3'])
+    entry = next((e, s) for i, (e, s, o, n) in enumerate(garc_entries(archives[island_build.AREA_ARCHIVE])) if i == area)
+    archives[island_build.AREA_ARCHIVE] = rebuild_garc(archives[island_build.AREA_ARCHIVE],
+                                                       {entry: bytes(island_build.AREA_LIMIT + 1)})
+    with pytest.raises(ValueError, match='measured to load'):
+        island_build.check_area(archives)

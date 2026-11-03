@@ -232,13 +232,25 @@ Plan, bitácora, `frontier/survey.py`, pausa documentada del evento de Mew.
 ### F5 — Jefe, récords, Doble y Nivel Libre
 Jefe en los combates 21 y 42 con símbolos, cartel de récords, el resto de modalidades.
 
-### F6 — Isla del Frente: objeto, viaje, zona y Fábrica en su edificio (en curso; pase, marinero, ferry, isla 209 y Fábrica en la sala clonada 213 probados en Azahar, `reports/frontier.md` §16–§19)
+### F6 — Isla del Frente: objeto, viaje, zona y Fábrica en su edificio (en curso; pase, marinero, ferris, isla 209, plaza con la Fábrica enlazada y seis maquetas, y Fábrica en la sala clonada 213 probados en Azahar, `reports/frontier.md` §16–§21)
 - Objeto clave, su entrega, el viaje y la isla con el edificio de la Fábrica (§5.6),
   reutilizando lo del evento de Mew (`faraway/`). Textos ES/EN.
 - Paquete Luma `dist/oras-frontier-…` encadenado con v0.5 (y Mew si se quiere).
 - Partida de prueba para Checkpoint y plan de prueba en consola.
 
 ### Después: el resto del Frente
+**Un edificio por agente** (petición del usuario, 2026-11-03). Cada instalación ya tiene su
+edificio de maqueta en la plaza (`island_build.FACILITIES`, `reports/frontier.md` §21). Para
+activarla hay que:
+1. añadir su puerta en `DOORS`;
+2. darle interior (un clon, como 213 para la Fábrica, con sus nativas vía `CLONES`);
+3. escribir su lógica.
+
+Los edificios comparten `island_build.py`, `patch.py` y el área de la isla, que tiene un
+límite de texturas (`AREA_LIMIT`). Por eso los agentes trabajan uno detrás de otro, o en
+paralelo solo para leer, y un único integrador escribe en esos ficheros (norma de
+CTRMap-F5: agentes que no pueden editar los ficheros de otros no editan a la vez).
+
 Estimación inicial, sin medir; se planifica cuando la Fábrica esté en consola:
 - **Torre Batalla**: casi la Mansión tal cual, con tu equipo. Lo más fácil.
 - **Domo Batalla**: torneo de 16 con cuadro. Combates de la Mansión, y el cuadro y el

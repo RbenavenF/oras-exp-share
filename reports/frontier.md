@@ -891,3 +891,85 @@ Overlay `work/frontier/build` (el mismo `code.ips` que §19). Capturas en
   warp de desarrollo.
 
 **Sin probar**: la consola.
+
+## 21. F6: la plaza de la isla, con la Fábrica enlazada y seis maquetas (Azahar, 2026-11-03)
+
+**Qué es.** La mitad sur del muelle de la isla y el mar de alrededor (celda propia 0,1 de la
+zona 209, región 864) se repintan como una explanada de camino. Encima van 7 edificios del
+catálogo de CTRMap-F5, uno por instalación de Esmeralda (`island_build.FACILITIES`).
+- **Pintor**: el de CTRMap-F5 en modo compuesto (`faraway/java/ctrmap/tests/FrontierPlaza.java`,
+  `faraway/java/faraway/Plaza.java`). Las casillas fuera del rectángulo conservan el mar y el
+  muelle del puerto.
+- **Puertas**: el pintor no cablea ninguna (`DoorWiring.SKIP`). `Plaza` sustituye los warps
+  de la isla por uno solo: la puerta del Gimnasio (la Fábrica), casilla (20,57) → zona 213,
+  warp 0. La salida de 213 (su warp 0) vuelve a la puerta.
+- **Maquetas**: las otras seis puertas no tienen warp.
+- Se entra en la explanada bajando desde el embarcadero; el empleado del ferry sigue en
+  (54,34).
+
+| Instalación | Edificio | Ancla (local) |
+| --- | --- | --- |
+| Torre | Dewford shingle house | 16,2 |
+| Domo | Lavaridge house | 4,13 |
+| Fábrica | Gym (puerta → 213) | 16,13 |
+| Pirámide | Lavaridge house | 30,13 |
+| Tubo | Dewford shingle house | 3,25 |
+| Arena | Lavaridge house | 17,25 |
+| Palacio | Dewford shingle house | 28,25 |
+
+**Dos límites medidos** (variantes con `frontier/lab_plaza.sh`, base sin plaza de
+`frontier/lab_plaza_base.py`; arranque con `f6f_saved_pier.sav`; «cuelgue» = pantalla negra a
+0 FPS al cargar la isla):
+
+| Variante | Resultado | Área 231 (`a/0/1/4`) | Región 864 (`a/0/3/9`) |
+| --- | --- | --- | --- |
+| v0 sin plaza | carga | 253.933 | 49.502 |
+| v1 solo camino | carga | 269.123 | 71.065 |
+| v4 camino + abeto | carga | 323.871 | 76.571 |
+| v3 casa de Lavacalda **con** prop de puerta | cuelga | 296.234 | 98.187 |
+| v5 la misma casa **sin** prop de puerta | carga | 297.475 | 98.165 |
+| v2 Gimnasio con prop | cuelga | 293.874 | 101.474 |
+| v7 Gimnasio sin prop | carga | 292.994 | 101.449 |
+| v8 Sala de Concursos sin prop | carga | 365.535 | 94.617 |
+| v11 Sala de Concursos + Gimnasio | carga | 386.675 | 123.952 |
+| v10 cuatro edificios distintos | cuelga | 467.393 | 181.548 |
+| v14 siete de dos pueblos | cuelga | 458.007 | 258.497 |
+| v6 / v12 siete distintos (v12 sin pasajeros) | cuelga | 625.239 / 557.461 | 265.694 / 251.184 |
+| v13 siete veces la misma casa | carga | 297.475 | 225.492 |
+| v15 Gimnasio + dos casas repetidas (la elegida) | carga | 333.123 | 222.687 |
+
+Conclusiones:
+1. **El prop de puerta cuelga la carga** aunque el área sea pequeña: compárense v3 con v5 y
+   v2 con v7. No se ha investigado el porqué (registro de props del área 231, o sus
+   texturas). Por eso ningún edificio lleva prop (`|nodoorprop` en el plan, y
+   `island_build` lo rechaza). La puerta sin prop funciona igual: en retail la casilla de
+   la puerta del Gimnasio de Azuliza también es `21000001` (bloqueada) y el warp salta al
+   empujar contra ella.
+2. **Las texturas que cada edificio arrastra al área tienen un límite**:
+   - el tamaño de la región no es el límite: v13 carga con 225.492 bytes de región, y v10
+     cuelga con 181.548;
+   - el área sí lo marca: carga hasta 386.675 bytes y cuelga desde 458.007;
+   - hay áreas retail más grandes (hasta 871.676), así que el límite real (memoria de
+     texturas, número de texturas…) no se ha medido. Se usa la cota medida:
+     `island_build.AREA_LIMIT = 386675`, y la build se niega a pasarla;
+   - un modelo repetido no arrastra texturas nuevas: de ahí las dos casas repetidas.
+
+**Probado en Azahar** (overlay `work/frontier/build`; capturas en `work/frontier/lab/f6g_*`):
+- la isla carga en el muelle con la explanada y las casas a la vista (`f6g_plaza1.png`);
+- delante de la Fábrica (`f6g_factory_front.png`), empujando hacia arriba se entra en la
+  sala 213 (`f6g_hall.png`);
+- al salir de 213 se aparece en (20,58), delante de la puerta (`f6g_back.png`);
+- la puerta de la Pirámide (maqueta) no deja pasar (`f6g_mock.png`);
+- desde la explanada se vuelve al embarcadero y el empleado del ferry habla
+  (`f6g_clerk.png`).
+
+**Defectos visibles** (sin arreglar):
+- las barandillas del muelle original siguen dibujadas sobre la explanada (son de las
+  celdas vecinas);
+- la cerca que viene con la casa de Lavacalda bloquea (33–34, 58).
+
+**Sin probar**:
+- la consola;
+- guardar en la explanada;
+- combatir en 213 tras entrar por la puerta nueva. Es el mismo script y la misma zona que
+  en §19–§20.
