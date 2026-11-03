@@ -39,6 +39,7 @@ import factory  # noqa: E402
 import island  # noqa: E402
 import island_build  # noqa: E402
 import patch  # noqa: E402
+import tower  # noqa: E402
 
 ROMFS = ROOT / 'baseline/oras/repolished/romfs'
 ZONES = ROMFS / 'a/0/1/3'
@@ -113,7 +114,9 @@ def texts(romfs, sets, table):
         if len(garc_entries(data)) != patch.TEXT_FACTORY:
             raise ValueError(f'{path}: expected {patch.TEXT_FACTORY} text entries')
         spec = {'path': path, 'texts': [{'entry': factory.TEXT_ZONE, 'line': factory.TEXT_LINES, 'append': True,
-                                         'after': factory.OPTION[code]}]}
+                                         'after': factory.OPTION[code]},
+                                        {'entry': factory.TEXT_ZONE, 'line': factory.LINE_BUSY, 'append': True,
+                                         'after': factory.BUSY[code]}]}
         spec['texts'] += [{'entry': island.TEXT_HARBOR, 'line': line, 'append': True, 'after': text}
                           for line, text in zip(sailor, island.SAILOR[code])]
         spec['texts'] += [{'entry': island.FERRY_TEXT, 'line': island.FERRY_TEXT_LINES + k, 'append': True,
@@ -189,6 +192,12 @@ def maison_retail(data):
     return files, retail
 
 
+def facility_scripts(romfs=ROMFS):
+    """{interior zone: zone script} of the facilities whose interior runs its own script (island_build.build)."""
+    _, retail = maison_retail(source(romfs, 'a/0/1/3'))
+    return {tower.ZONE: tower.zone_script(retail)}
+
+
 def build(romfs=ROMFS):
     """{romfs path: archive} for a/0/1/3, a/0/2/9 and the story texts; (zone 517 script, shared script 5)."""
     sets, table, levels, cells = rentals()
@@ -217,7 +226,7 @@ def main():
     archives, (zone_script, script5) = build(args.romfs)
     if not args.no_island:
         archives, log = island_build.build(archives, lambda rel: source(args.romfs, rel),
-                                           out.parent / (out.name + '-island'))
+                                           out.parent / (out.name + '-island'), facility_scripts(args.romfs))
         print(''.join(line + '\n' for line in log.splitlines() if line.startswith(('zone ', 'pack'))), end='')
     code, hook, _ = patch.build({} if args.no_island else island_build.native_donors())
     if out.exists():

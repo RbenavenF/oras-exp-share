@@ -55,11 +55,13 @@ PLACE = 279                    # empty odd location-name slot in all 8 languages
 PLACE_TEXT = 90                # game text entry of location names
 PLACE_NAME = {'es': 'Isla del Frente', 'en': 'Frontier Island'}
 CLERK = (300, 300, 2, 0, 54, 34, 0, 2)   # model, MoveModel, event, flag, x, y, height, face: zone 212's NPC 0
-CLONES = {ZONE_ISLAND: DONOR_ISLAND, ZONE_HALL: DONOR_HALL}   # slot: donor of its map, area, entities and script
+ZONE_TOWER = 329              # the Tower's interior (frontier/tower.py; REPARTO.md; checked by frontier/zone_check.py)
+CLONES = {ZONE_ISLAND: DONOR_ISLAND, ZONE_HALL: DONOR_HALL,   # slot: donor of its map, area, entities and script
+          ZONE_TOWER: DONOR_HALL}
 # Facility zones are added here by the integrator (frontier/REPARTO.md). Every clone gets the place name PLACE; one in
 # KEEP_TEXT keeps its donor's story text (the Maison's 619 for a 517 clone); one in NATIVE_DONORS registers that
 # zone's native groups instead of its donor's (a floor cloned from a cave that runs Maison battles needs 517's).
-KEEP_TEXT = {ZONE_HALL}
+KEEP_TEXT = {ZONE_HALL, ZONE_TOWER}
 NATIVE_DONORS = {}
 
 
@@ -89,7 +91,7 @@ NOT_DRAWN = {'Pacifidlog stilt hut', "Route 114 Lanette's house"}
 # unpacked. The largest measured to load in Azahar; 2986112 and up hung (reports/frontier.md §23). A measured bound,
 # not the engine's limit, which was not found: retail areas hold larger texture packs.
 LOAD_BUDGET = 2724608
-DOORS = {'Factory': (ZONE_HALL, 0)}   # facility: (zone, warp) its door leads to (island warps follow FACILITIES order)
+DOORS = {'Tower': (ZONE_TOWER, 0), 'Factory': (ZONE_HALL, 0)}   # facility: (zone, warp) its door leads to (island warps follow FACILITIES order)
 
 
 ISLAND_EVENTS = {-1, 1, 2}      # zone 212's events the island keeps: -1 empty, 1 arrival, 2 the ferry clerk

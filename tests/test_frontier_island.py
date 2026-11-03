@@ -186,36 +186,43 @@ def test_every_island_clone_gets_its_donors_native_groups():
     if not patch.REPOLISHED.exists():
         pytest.skip('Local baseline required')
     assert f'clones={island_build.DONOR_ISLAND}:{island_build.ZONE_ISLAND},' \
-           f'{island_build.DONOR_HALL}:{island_build.ZONE_HALL}\n' in island_build.plan('s')
+           f'{island_build.DONOR_HALL}:{island_build.ZONE_HALL},' \
+           f'{island_build.DONOR_HALL}:{island_build.ZONE_TOWER}\n' in island_build.plan('s')
     code = bytearray(patch.REPOLISHED.read_bytes())
     patch.zone_natives(code, island_build.CLONES)
     mask = lambda zone: int.from_bytes(code[patch.ZONE_NATIVES - patch.BASE + 4 * zone:][:4], 'little')
     for slot, donor in island_build.CLONES.items():
         assert mask(slot) == mask(donor)
-    assert mask(island_build.ZONE_HALL) & patch.NATIVES_MAISON
+    assert mask(island_build.ZONE_HALL) & patch.NATIVES_MAISON and mask(island_build.ZONE_TOWER) & patch.NATIVES_MAISON
 
 
-def test_plaza_plan_links_only_the_factory():
-    """Seven facility buildings with their door props (§23), one door warp: the Factory's, into 213."""
+def test_plaza_plan_links_the_tower_and_the_factory():
+    """Seven facility buildings with their door props (§23), two door warps: the Tower's into 329 (island warp 0, it
+    comes first in FACILITIES) and the Factory's into 213 (warp 1); each interior's exit comes back to its door."""
     import island_build
     lines = island_build.plan('s').splitlines()
     buildings = [line for line in lines if line.startswith('plaza.building.')]
     doors = [line for line in lines if line.startswith('plaza.door.')]
     assert len(buildings) == 7 and all(line.split('=', 1)[1].count('|') == 2 for line in buildings)
-    factory = list(island_build.FACILITIES).index('Factory')
-    assert doors == [f'plaza.door.{factory}={island_build.ZONE_HALL},0']
+    factory, tower = (list(island_build.FACILITIES).index(f) for f in ('Factory', 'Tower'))
+    assert doors == [f'plaza.door.{tower}={island_build.ZONE_TOWER},0',
+                     f'plaza.door.{factory}={island_build.ZONE_HALL},0']
     assert buildings[factory].startswith(f'plaza.building.{factory}=Gym|')
     assert not any(line.startswith(f'zone.{island_build.ZONE_ISLAND}.warp.') for line in lines)
-    assert f'zone.{island_build.ZONE_HALL}.warp.0=0,{island_build.ZONE_ISLAND},0' in lines
+    assert f'zone.{island_build.ZONE_TOWER}.warp.0=0,{island_build.ZONE_ISLAND},0' in lines
+    assert f'zone.{island_build.ZONE_HALL}.warp.0=0,{island_build.ZONE_ISLAND},1' in lines
+    assert f'keeptext.{island_build.ZONE_TOWER}=1' in lines
 
 
 def test_each_interior_exits_to_its_own_door(monkeypatch):
     """Plaza numbers the island's door warps in FACILITIES order; an interior's exit must follow its door's number,
     not a fixed 0 (with the Tower or Dome open, the Factory's door is no longer warp 0)."""
     import island_build
+    monkeypatch.setattr(island_build, 'DOORS', {'Factory': (island_build.ZONE_HALL, 0)})
     lines = island_build.plan('s').splitlines()
     assert f'zone.{island_build.ZONE_HALL}.warp.0=0,{island_build.ZONE_ISLAND},0' in lines
-    monkeypatch.setattr(island_build, 'DOORS', {'Tower': (329, 0), **island_build.DOORS, 'Palace': (340, 0)})
+    monkeypatch.setattr(island_build, 'DOORS', {'Tower': (329, 0), 'Factory': (island_build.ZONE_HALL, 0),
+                                                'Palace': (340, 0)})
     lines = island_build.plan('s').splitlines()
     exits = sorted(line for line in lines if '.warp.0=0,' in line)
     assert exits == sorted([f'zone.329.warp.0=0,{island_build.ZONE_ISLAND},0',

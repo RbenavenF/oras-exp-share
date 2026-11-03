@@ -1209,3 +1209,28 @@ Decisiones:
 **Estado del laboratorio**: parado; `use_gdbstub` en `false`. **Turno: libre.**
 Siguiente paso: que el usuario lance `frontier/orch/frontier-orch auto`. Empieza por F6-TORRE
 (Claude).
+
+## 2026-11-03 21:xx — Claude Code (Opus 5.5) — F6-TORRE: Torre v1 en código y exclusión mutua (frontier-orch)
+Estado: en curso
+Hecho:
+- **Zona 329 comprobada sin emulador** (`frontier/zone_check.py`, salida en `work/frontier/tower/zone_check.txt`):
+  máscara de nativas 0x243, sin warps de entrada, y sus dos literales en scripts no son zonas: el compartido 57
+  (`0x77c`: `ItemAddCheck` y dos `FlagSet`, el 329 es un flag de objeto) y la zona 275 (`_CallTrainerBattleCore`,
+  el 329 es un entrenador). Palabras alineadas = 329 en el código: 36, frente a 48 (209) y 45 (213), ya verificadas.
+- **`frontier/tower.py`**: script de la zona 329 desde el 517 **retail** (sin la Fábrica): ruta 0 tras
+  `BattleInstWorkCreate`; «Combatir» → `tower_reception` (rango Normal, ruta 2, racha nueva a 0, 16442 = 1 durante
+  el desafío y después solo si la racha no es 0, ruta a 0 al volver); 16442 = 0 en la derrota (`0x2210`) y la
+  limpieza (`0x1458`); PB de `data.FRONTIER_BP['tower']` cada 7 con ruta 2. Selección de equipo `0x457c` intacta.
+  Script 14.892 bytes, ZO 15.684 (≤ 17.248).
+- **Exclusión mutua** (`factory.busy_check`): la Torre y la Fábrica se niegan, sin tocar nada, si el
+  `patch.ACTIVE_WORK` de otra instalación no es 0, con la línea nueva 189 del texto 619 (`factory.LINE_BUSY`).
+- **Integración**: `island_build.CLONES[329] = 517`, `KEEP_TEXT`, `DOORS['Tower'] = (329, 0)` (la Torre es ahora el
+  warp 0 de la isla y la Fábrica el 1, por `door_warp`); `overlay.facility_scripts()` pasa el script de 329.
+Evidencia: `python -m pytest -q tests` → 199 passed (26 nuevos en `tests/test_frontier_tower.py`). Roturas a mano:
+sin `busy_check` en la Fábrica falla `test_factory_refuses_while_the_tower_is_in_progress`; sin la comprobación de
+racha tras el desafío falla `test_a_new_tower_challenge`. **No probado en Azahar todavía.**
+Commits: el de esta entrada.
+Decisiones: la línea de rechazo va en el texto 619, que comparten 517, 213 y 329; la Torre, al rechazar una
+confirmación con un desafío pausado, lo deja pausado.
+Siguiente paso: build con la isla (`python frontier/overlay.py --out work/frontier/build --romfs
+work/faraway/dev/overlay/romfs`) y pruebas en Azahar de la tarea F6-TORRE.

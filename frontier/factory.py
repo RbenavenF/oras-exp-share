@@ -61,6 +61,13 @@ LINE_SWAP_GIVE, LINE_SWAP_TAKE, LINE_NO_SWAP = 3, 4, 5
 LINE_N = 6
 NORMAL_LINES = 208
 LINE_S = LINE_N + NORMAL_LINES
+# Text 619 line after LINE_OPTION: the refusal every facility reception shows while another facility has a
+# challenge in progress (patch.ACTIVE_WORK; frontier/REPARTO.md). Zone 517's clones keep text 619.
+LINE_BUSY = TEXT_LINES + 1
+BUSY = {'es': 'Tienes un desafío a medias en otra instalación del Frente de Batalla.\n'
+              'Termínalo allí antes de empezar otro.',
+        'en': 'You have a challenge in progress at another Battle Frontier facility.\n'
+              'Please finish it there first.'}
 MENU_FACTORY = 4                 # value of the new reception menu entry
 WORK_SELECT_RESULT, WORK_SELECT_TYPE, WORK_SELECT_X = 0x800C, 0x800D, 0x800E
 LCG_MUL, LCG_ADD = 0x41C64E6D, 0x6073
@@ -533,6 +540,23 @@ def shared_program(shared, zone, cells, levels):
     return p
 
 
+def busy_check(r, facility, back):
+    """Emit into Routine `r` (a zone 517 script): if any other facility's patch.ACTIVE_WORK is not 0, say LINE_BUSY
+    with zone 517's message routines and jump to `back`. The mutual exclusion between facilities (REPARTO.md)."""
+    free, busy = r.new_label('free'), r.new_label('busy')
+    for other, work in patch.ACTIVE_WORK.items():
+        if other != facility:
+            r.sysreq('WorkGet', work)
+            r.op('JNZ', busy)
+    r.op('JUMP', free)
+    r.p.label(busy)
+    r.call(f'L{MSG:x}', LINE_BUSY, 1, 0, 256, 0)
+    r.call(f'L{MSG_WAIT:x}')
+    r.call(f'L{MSG_CLOSE:x}', 0)
+    r.op('JUMP', back)
+    r.p.label(free)
+
+
 def reception_routine(p):
     """factory_reception() -> 1 = back to the reception menu, 0 = challenge played.
 
@@ -540,8 +564,9 @@ def reception_routine(p):
     Normal streak and record at the Factory's own works (patch.WORK_FSTREAK / WORK_FRECORD), so every Maison
     streak read and write (battle number, trainer brackets, BP, records, ClearWinCount after a loss) applies
     to the Factory. Cleared when the challenge returns, and at every reception (a save made during the
-    challenge can hold it)."""
+    challenge can hold it). Refused, with nothing changed, while another facility has a challenge in progress."""
     r = Routine(p, 'factory_reception', [])
+    busy_check(r, 'factory', 'factory_refused')
     r.sysreq('SetRank', 0)                      # the streak route covers rank Normal only
     r.sysreq('WorkSet', patch.WORK_ROUTE, 1)
     r.sysreq('WorkGet', patch.WORK_IV)
@@ -571,6 +596,7 @@ def reception_routine(p):
     r.sysreq('WorkSet', patch.WORK_IV, 0)
     r.sysreq('WorkSet', patch.WORK_FSTREAK, 0)
     r.sysreq('WorkSet', patch.WORK_ROUTE, 0)
+    r.p.label('factory_refused')     # another facility's challenge in progress: nothing changed
     r.const(1)
     r.ret()
 

@@ -51,7 +51,7 @@ def test_party_select_checks_the_factory_state(built):
     assert head  # the retail call is still there after the skip
 
 
-def test_texts_append_the_option_and_the_factory_entry(built):
+def test_texts_append_the_option_the_refusal_and_the_factory_entry(built):
     from formats import text_lines, words_to_text
     import factory
     import island
@@ -65,7 +65,7 @@ def test_texts_append_the_option_and_the_factory_entry(built):
         assert len(b) == len(a) + 1 == fp.TEXT_FACTORY + 1
         for x, y in zip(a, b):
             old, new = before[x[2]:x[2] + x[3]], after[y[2]:y[2] + y[3]]
-            appended = {factory.TEXT_ZONE: [factory.OPTION[code]], island.TEXT_HARBOR: island.SAILOR[code],
+            appended = {factory.TEXT_ZONE: [factory.OPTION[code], factory.BUSY[code]], island.TEXT_HARBOR: island.SAILOR[code],
                         island.FERRY_TEXT: island.FERRY[code]}.get(x[0])
             if appended is None:
                 assert old == new
