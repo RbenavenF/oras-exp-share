@@ -628,6 +628,67 @@ se conservan y las que se sustituyen; no modificar el juego en esta revisión.
 Siguiente paso: si se solicita, investigar/corregir la evolución de Mienfoo sobre
 una copia. Frente pendiente: F6 (flag de campeón, ferry y hueco del Pase del Frente).
 
+## 2026-11-02 23:49 — Codex — Encuentros de Ruta 114
+Estado: hecho
+Hecho: consulta del usuario sobre Ruta 114 en Repolished 1.7.6. Zona 41,
+lugar 230, paquete EN offset 0x20c8; las zonas 387–389 no tienen encuentros.
+Hierba: Swablu 16–18 (35 %), Lombre 16–19 (20 %), Nuzleaf 16–19 (20 %),
+Zangoose 17–19 (10 %), Seviper 17 (10 %), Surskit 19 (5 %).
+Hordas: cinco Swablu 9 (95 %) o cinco Surskit 9 (5 %).
+Surf: Marill 15 (50 %), Azumarill 20 (30 %) o 25 (1 %), Surskit 20 (15 %),
+Masquerain 25 (4 %). Golpe Roca: Geodude, niveles 5/10/15/20.
+Caña Vieja: Magikarp 10 (60 %) o 15 (5 %), Goldeen 5 (35 %).
+Caña Buena: Magikarp/Goldeen/Barboach 25 (60/35/5 %).
+Supercaña: Barboach 35/30/40 (60/35/5 %).
+Especiales DexNav: Skorupi, Misdreavus y Tympole, nivel base 19; desbloqueo no medido.
+Evidencia: `source scripts/env.sh`;
+`python scripts/inspect_encounters.py 'Ruta 114' > work/ruta-114-encounters.json`.
+Hashes comprobados por el lector. Pesos Surf/pesca contrastados con etiquetas
+de `tools/pk3DS/pk3DS.WinForms/Subforms/Gen6/RSWE.Designer.cs` y su orden en RSWE.cs.
+Porcentajes relativos al método. Sin prueba nueva en emulador/consola.
+Commits: sin commit.
+Decisiones: lectura de datos sin modificar el juego.
+Siguiente paso: retomar F6 (flag de campeón, ferry y hueco del Pase del Frente).
+
+## 2026-11-03 00:28 — Codex — Disponibilidad de otros iniciales
+Estado: hecho
+Hecho: revisión solicitada por el usuario. `reports/iniciales-repolished.md`
+recoge la comparación: ninguna de las 54 especies de familias iniciales aparece
+en los encuentros de las 536 zonas. Regalos y scripts sin cambios respecto al
+original; Repolished no añade los dos iniciales de Hoenn no elegidos.
+Evidencia: `inspect_encounters.inspect_location('repolished', '')` guardado en
+`work/all-encounters.json`; filtro por nombres ES y rangos de Pokédex → 0 resultados.
+Hashes verificados contra manifiesto. Comparación de DllField.cro, a/0/2/9 y
+subarchivos de todas las zonas: solo cambian los encuentros de estas últimas.
+Tabla de regalos leída según pk3DS. Condiciones originales de Abedul contrastadas
+con Bulbapedia (enlace en el informe). Sin ejecución nueva de eventos.
+Commits: sin commit.
+Decisiones: distinguir otros iniciales de Hoenn de los regalos de otras regiones;
+no considerar accesible un regalo solo porque exista un registro heredado.
+Siguiente paso: retomar F6 (flag de campeón, ferry y hueco del Pase del Frente).
+
+## 2026-11-03 01:03 — Codex — Encuentros de Cascada Meteoro
+Estado: hecho
+Hecho: consulta del usuario. Repolished, zonas 71–74. Normales: zona 71,
+Zubat 16–19 (70 %), Lunatone/Solrock 16–18 (15 % cada uno); zonas 72–73,
+Golbat 37–40 (70 %), Lunatone/Solrock 37–40 (15 % cada uno); zona 74,
+Golbat 37–40 (45 %), Bagon 37–40 (35 %), Lunatone/Solrock 37–40 (10 % cada uno).
+Hordas: Zubat 9 en zona 71, Zubat 20 en 72–73; en 74, Zubat 20 (95 %) o
+Bagon 20 (5 %). Especiales DexNav: Deino/Druddigon/Clefairy, base 19 en 71,
+40 en 72–74; condiciones de desbloqueo no medidas.
+Surf: en 71 Zubat/Goldeen/Golbat (80/16/4 %); en 72–74
+Golbat/Goldeen/Barboach (80/15/5 %). Pesca: Caña Vieja Magikarp/Goldeen
+(65/35 %), Caña Buena Magikarp/Goldeen/Barboach (60/35/5 %); Supercaña
+Barboach (100 %) en 71, Barboach/Whiscash (95/5 %) en 72–74.
+Evidencia: `source scripts/env.sh`;
+`python scripts/inspect_encounters.py 'Cascada Meteoro' > work/cascada-meteoro-encounters.json`.
+Hashes validados por el lector; agregación por especie y assert de suma 100 %
+en cada tabla normal correctos. EN offsets 0x3e3c/0x3f40/0x4044/0x4148.
+Sin prueba nueva en Azahar/consola; no se han medido los requisitos de acceso a salas.
+Commits: sin commit.
+Decisiones: lectura sin modificar el juego; ningún inicial en estas tablas.
+Siguiente paso: retomar F6 (flag de campeón, ferry y hueco del Pase del Frente).
+
 ## 2026-11-02 20:56 — Claude Code — F6: medidas del pase, el ferry y el puerto
 Estado: hecho
 Hecho: medidos los tres datos que pedía el paso anterior. Detalle en
@@ -736,3 +797,41 @@ Siguiente paso:
    517 la elegiría un script según un work puesto al entrar desde la isla (disparador +
    `_MapChangeCore`), en vez del warp fijo a 516.
 3. Probar la vuelta en ferry desde la isla y guardar en la isla.
+
+## 2026-11-03 01:26 — Claude Code — F6: resuelto el cuelgue de la sala clonada
+Estado: hecho (la F6 sigue en curso)
+Hecho:
+- Causa: `code.bin` registra las nativas por zona. En `0x587d58` hay una máscara por
+  zona y el bit 8 (nativas de la Mansión) solo está en 448, 517 y 520. El script de 517 en
+  213 cargaba sin 44 nativas y `amx_Exec` fallaba en cada evento, con cualquier NPC.
+- `frontier/patch.py` `zone_natives`: cada clon toma la máscara de su donante, con
+  comprobación de la tabla. `island_build.CLONES` sirve de lista de clones y de máscaras.
+- `frontier/zone_natives.py`: inspección de solo lectura de la tabla y de un volcado AMX.
+Evidencia:
+- `reports/frontier.md` §19: direcciones, volcado gdb y capturas `f6e_*`.
+- `python -m pytest -q tests` → 143 passed. Hay 3 tests nuevos y dos roturas a mano, que
+  fallan.
+- Azahar, en 213:
+  - la recepcionista habla;
+  - la Fábrica sortea alquileres, guarda y combate;
+  - al perder se vuelve a 213.
+- La partida guardada en 213 (`f6e_saved_213.sav`, `c013ad56…`) carga en 213.
+- Salida al muelle; ferry de la isla → Portual.
+Commits: el de esta entrada.
+Decisiones:
+- Descartado el campo `0x18` de la cabecera: con 213 = 12 seguía colgándose. El cambio se
+  deshizo.
+- Se mantiene la sala clonada 213. No hace falta llevar la isla a la 517 real (opción 2 del
+  paso anterior).
+**Estado del laboratorio**:
+- warp de desarrollo → 213;
+- `use_gdbstub` en `false`;
+- lab parado.
+Siguiente paso:
+1. Sin probar todavía:
+   - vuelta a Calagua desde la isla;
+   - la entrada de la isla en el ferry de Portual;
+   - ganar una ronda de la Fábrica en 213;
+   - guardar desde el menú en el muelle 209.
+2. Seguir la F6: distribución de Esmeralda con el catálogo de edificios de CTRMap,
+   textos ES/EN y el paquete Luma encadenado con v0.5.

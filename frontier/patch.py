@@ -67,6 +67,13 @@ ABILITY_SHIFT, ABILITY_RANDOM = 10, 3
 GLOBAL_ROW = 0x587AA8
 GLOBAL_ROW_BEFORE = (9770, 9779, 5, 1, 618, 0, 0, 0)
 TEXT_FACTORY = 637                  # new story text entry (the retail archives have 637 entries, 0-636)
+# Native groups per zone (rodata, one u32 bit mask per zone id from 0x587d58; the zone-script loader 0x3ff5a4
+# hands it to the registrar 0x3fbc80, one amx_Register 0x506190 per bit). Bit 8 is the Maison group (DllField.cro
+# table 0xf8b44, BattleInstWorkCreate...), set only for zones 448, 517 and 520. A zone script naming a native its
+# zone does not register fails amx_Exec 0x503310 on every event and the game hangs (reports/frontier.md §19).
+ZONE_NATIVES, ZONE_COUNT = 0x587D58, 536
+NATIVES_DEFAULT, NATIVES_MAISON = 0x243, 0x100
+MAISON_NATIVE_ZONES = (448, 517, 520)
 CONSTANTS = {'WORK_IV': WORK_IV, 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'RENTAL_LEVEL': 50,
              'RENTALS': len(WORK_SETS), 'WORK_RIVAL': WORK_RIVAL[0],
              'ROUTE_DELTA': MAISON_BASE - SAVE_WORKS - 2 * (WORK_ROUTE - 0x4000),
@@ -101,7 +108,20 @@ def assemble():
         return binary.read_bytes(), symbols
 
 
-def build():
+def zone_natives(code, clones):
+    """Give each clone zone ({slot: donor}) its donor's native groups, on the measured table only."""
+    masks = struct.unpack_from(f'<{ZONE_COUNT}I', code, ZONE_NATIVES - BASE)
+    maison = tuple(z for z, m in enumerate(masks) if m & NATIVES_MAISON)
+    if maison != MAISON_NATIVE_ZONES or any(m & NATIVES_DEFAULT != NATIVES_DEFAULT for m in masks):
+        sys.exit(f'zone native table {ZONE_NATIVES:#x} differs: Maison group in zones {maison}')
+    for slot, donor in clones.items():
+        if masks[slot] != NATIVES_DEFAULT:
+            sys.exit(f'zone {slot} native groups {masks[slot]:#x}, expected the default {NATIVES_DEFAULT:#x}')
+        struct.pack_into('<I', code, ZONE_NATIVES - BASE + 4 * slot, masks[donor])
+
+
+def build(native_clones=None):
+    """Patched code.bin, the hook and the site words. `native_clones`: {zone: donor} for zone_natives."""
     for path, expected in HASHES.items():
         if sha256(path) != expected:
             sys.exit(f'{path.relative_to(ROOT)}: unexpected sha256')
@@ -135,6 +155,7 @@ def build():
     if row != GLOBAL_ROW_BEFORE:
         sys.exit(f'GlobalCall row {GLOBAL_ROW:#x} differs: {row}')
     struct.pack_into('<H', code, GLOBAL_ROW - BASE + 8, TEXT_FACTORY)
+    zone_natives(code, native_clones or {})
     return bytes(code), hook, site
 
 

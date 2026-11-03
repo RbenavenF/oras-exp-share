@@ -770,3 +770,76 @@ Pase del Frente; warp de desarrollo al puerto, con gdb para leer la casilla):
 - salir de 213 a 209;
 - guardar en la isla;
 - la consola.
+
+## 19. F6: el cuelgue de la sala clonada, resuelto (Azahar, 2026-11-03)
+
+**Causa medida: los grupos de nativas se registran por zona.** La sala 213 ejecuta el
+script de 517, que llama a nativas de la Mansión, y el juego solo las registra en las
+zonas 448, 517 y 520.
+- `code.bin` `0x587d58`: una máscara `u32` por zona (536 entradas, indexadas por el
+  número de zona).
+- El cargador de scripts de zona (`0x3ff5a4`) la pasa a `0x3fbc80`, que hace un
+  `amx_Register` (`0x506190`) por cada bit.
+- Bit 8 (`0x100`): el captador `0x19c908`, que salta a `DllField.cro+0x95e6c`, devuelve
+  la tabla de 50 nativas de `0xf8b44` (`BattleInstWorkCreate` … `TrialHouse_GetDLItem`).
+- Valores: 0x243 por defecto; 0x343 solo en 448, 517 y 520.
+- Los otros dos usos de la tabla son de los scripts compartidos. `0x3fb230` busca el id de
+  `GlobalCall` en la tabla de rangos `0x587678` y toma `0x587bd8[grupo]`. Ningún grupo
+  compartido lleva el bit 8.
+
+**Cómo se midió (gdb, lab con `f6_pass.sav`):**
+- En el cuelgue, `amx_Exec` (`0x503310`) llama sin cesar a `amx_Register(amx, NULL, 0)`:
+  1.605 llamadas desde `0x50334c` tras cargar la zona. Comprueba el flag `NTVREG`
+  (`0x1000`), que nunca llega a ponerse.
+- Rompiendo en la rama de nativa no encontrada (`0x5062c4`, error 19), en la tabla de
+  nativas del AMX cargado (14.937 bytes, 120 nativas) hay 44 sin resolver. Las 44 son del
+  grupo de la Mansión (`_CallTrialDownloadApp`, `BattleInstWorkCreate`, `SetTrainer`,
+  `StartBattle`…). Las otras 76 resuelven. Se reproduce con `python frontier/zone_natives.py
+  --amx work/frontier/lab/gdb-f6e-natives213.txt` (sin `--amx`, solo las tablas estáticas).
+- Al cargar 213 se registran 9 tablas: `0x3aaef8`–`0x3aaf20` y `0x3fbca8`/`0x3fbcc4`/
+  `0x3fbd50`/`0x3fbda0`. La máscara recibida es 0x243.
+- Por eso cuelga cualquier NPC de 213, no solo la recepcionista: el NPC 7 en (27,13)
+  también lo hacía.
+- Lo que se formateaba en la pila (`0x08d73c4c`) es la dirección de la entrada sin
+  resolver. No es un error del juego.
+
+**Descartado (medido):** el campo `0x18` de la cabecera de zona es un índice único por
+zona (permutación de 0–537 en las 536 zonas). Con 213 = 12, como 517, el cuelgue sigue
+igual. El cambio de prueba se deshizo.
+
+**Arreglo**:
+- `frontier/patch.py` `zone_natives(code, clones)` copia a cada clon la máscara de su
+  donante. Antes comprueba que la tabla es la medida (bit 8 exactamente en 448, 517 y
+  520; todas las máscaras con 0x243) y que el clon tiene la máscara por defecto.
+- `island_build.CLONES` (`{209: 212, 213: 517}`) es a la vez la lista de clones del plan de
+  CTRMap y la de máscaras. `overlay.py` se la pasa a `patch.build`.
+- Tests:
+  - `test_zone_natives_*`: solo cambia la palabra de 213, y la tabla inesperada se
+    rechaza;
+  - `test_every_island_clone_gets_its_donors_native_groups`.
+- Roturas a mano: sin la escritura, y sin la comprobación de la tabla. En cada caso falla
+  un test.
+
+**Probado en Azahar** (overlay `work/frontier/build`; capturas `work/frontier/lab/f6e_*`):
+- En 213 la recepcionista habla y su menú muestra «Fábrica Batalla» (`f6e_hall_menu.png`).
+  «Combatir» abre la pantalla de tipo de combate (`f6e_battletype.png`).
+- **Fábrica en 213:**
+  - «Elige tu primer/segundo Pokémon de alquiler» (`f6e_factory_draft.png`);
+  - Combates Individuales y guardado en la recepción;
+  - combate con los alquileres Cranidos, Larvitar y Snubbull (`f6e_battle_party.png`).
+  - Perdido el combate, se vuelve a la sala con «Isla del Frente» en pantalla
+    (`f6e_after_battle.png`), no a la Mansión real.
+- **Guardar y cargar en 213:** `f6e_saved_213.sav` (`c013ad56…`), guardada por la
+  Fábrica en la recepción de 213. Al arrancar con ella se aparece en la sala 213 delante
+  de la recepcionista, y habla.
+- Salida de 213 → muelle de la isla (37,22), con el nombre «Isla del Frente».
+- **Ferry de vuelta:** el empleado de la isla (54,34) ofrece Ciudad Portual, Ciudad
+  Calagua y «Me quedo aquí» (`f6e_island_ferry.png`). Se eligió Portual: viaje y llegada
+  al puerto de Portual (`f6e_slateport.png`).
+
+**Sin probar**:
+- el viaje de vuelta a Calagua desde la isla;
+- la entrada «Isla del Frente» del ferry de Portual (solo con `pawn_vm`);
+- ganar una ronda de la Fábrica en 213;
+- guardar desde el menú en el muelle 209;
+- la consola.

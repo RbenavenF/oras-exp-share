@@ -224,3 +224,31 @@ def test_factory_route_uses_its_own_streak_and_record(patched):
     assert maison == (5, 9, 40, 70) and factory == (31, 31)          # new Factory record
     _, maison, factory = run_streak(code, 'clear', 0, 1)
     assert maison == (5, 9, 40, 70) and factory == (0, 30)
+
+
+def zone_mask(code, zone):
+    return struct.unpack_from('<I', code, fp.ZONE_NATIVES - fp.BASE + 4 * zone)[0]
+
+
+def test_zone_natives_give_a_clone_its_donors_groups():
+    if not fp.REPOLISHED.exists():
+        pytest.skip('Local baseline required')
+    original = fp.REPOLISHED.read_bytes()
+    assert (zone_mask(original, 213), zone_mask(original, 517)) == (fp.NATIVES_DEFAULT, 0x343)
+    code = bytearray(original)
+    fp.zone_natives(code, {213: 517})
+    assert zone_mask(code, 213) & fp.NATIVES_MAISON
+    diff = [i for i in range(len(code)) if code[i] != original[i]]
+    word = fp.ZONE_NATIVES - fp.BASE + 4 * 213
+    assert diff and all(word <= i < word + 4 for i in diff)
+
+
+def test_zone_natives_refuse_an_unexpected_table():
+    if not fp.REPOLISHED.exists():
+        pytest.skip('Local baseline required')
+    code = bytearray(fp.REPOLISHED.read_bytes())
+    with pytest.raises(SystemExit):
+        fp.zone_natives(code, {517: 448})                # the slot is not a default zone
+    struct.pack_into('<I', code, fp.ZONE_NATIVES - fp.BASE + 4 * 520, fp.NATIVES_DEFAULT)
+    with pytest.raises(SystemExit):
+        fp.zone_natives(code, {213: 517})                # the Maison zones are not the measured ones

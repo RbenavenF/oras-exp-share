@@ -177,3 +177,19 @@ def test_island_script_keeps_arrival_and_clerk_without_the_scene():
     k = next(i for i, x in enumerate(ins) if x.op == OP['PUSH_P_C'] and x.args == [island_build.WORK_RESORT_SCENE])
     assert ins[k + 4].op == OP['JUMP']
     assert Script.parse(script.build()).build() == script.build()
+
+
+def test_every_island_clone_gets_its_donors_native_groups():
+    """A clone runs its donor's script, so it needs the donor's native groups (the hall hung without the Maison's)."""
+    import island_build
+    import patch
+    if not patch.REPOLISHED.exists():
+        pytest.skip('Local baseline required')
+    assert f'clones={island_build.DONOR_ISLAND}:{island_build.ZONE_ISLAND},' \
+           f'{island_build.DONOR_HALL}:{island_build.ZONE_HALL}\n' in island_build.plan('s')
+    code = bytearray(patch.REPOLISHED.read_bytes())
+    patch.zone_natives(code, island_build.CLONES)
+    mask = lambda zone: int.from_bytes(code[patch.ZONE_NATIVES - patch.BASE + 4 * zone:][:4], 'little')
+    for slot, donor in island_build.CLONES.items():
+        assert mask(slot) == mask(donor)
+    assert mask(island_build.ZONE_HALL) & patch.NATIVES_MAISON

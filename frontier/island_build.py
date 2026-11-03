@@ -10,7 +10,10 @@ First functional island (provisional geometry, reports/frontier.md §18):
   hangs, seen in Azahar); otherwise it jumps to 0x3f28: horn, fade-in, WorkSet(16707, 0). Without event 1 the
   screen stays white (also seen). The island's event 1 always takes the 0x3f28 path.
 - zone 213: clone of the Battle Maison hall (517), the one that holds the Factory, with the Maison's story text
-  (619) and the Factory-patched script; its exit (warp 0) leads back to the pier.
+  (619) and the Factory-patched script; its exit (warp 0) leads back to the pier. code.bin registers the Maison
+  natives only in zones 448, 517 and 520 (per-zone native groups, frontier/patch.py ZONE_NATIVES): without 517's
+  groups every event of the hall fails and the game hangs, so overlay.py passes CLONES to patch.build, which
+  gives every clone its donor's groups.
 Both slots were chosen with CTRMap-F5's ZoneRepurposeScanner (empty, no incoming warps, no script or shared
 script sends the player there; §18); both keep their placeholder entity scripts (517's is empty as well).
 
@@ -42,6 +45,7 @@ PLACE = 279                    # empty odd location-name slot in all 8 languages
 PLACE_TEXT = 90                # game text entry of location names
 PLACE_NAME = {'es': 'Isla del Frente', 'en': 'Frontier Island'}
 CLERK = (300, 300, 2, 0, 54, 34, 0, 2)   # model, MoveModel, event, flag, x, y, height, face: zone 212's NPC 0
+CLONES = {ZONE_ISLAND: DONOR_ISLAND, ZONE_HALL: DONOR_HALL}   # slot: donor; also the native groups each copies
 
 
 ISLAND_EVENTS = {-1, 1, 2}      # zone 212's events the island keeps: -1 empty, 1 arrival, 2 the ferry clerk
@@ -78,7 +82,7 @@ def island_script(donor):
 def plan(scripts):
     lines = [
         f'scripts={scripts}',
-        f'clones={DONOR_ISLAND}:{ZONE_ISLAND},{DONOR_HALL}:{ZONE_HALL}',
+        'clones=' + ','.join(f'{donor}:{slot}' for slot, donor in CLONES.items()),
         f'place.{ZONE_ISLAND}={PLACE}', f'place.{ZONE_HALL}={PLACE}',
         f'keeptext.{ZONE_HALL}=1',
         f'zones={ZONE_ISLAND},{ZONE_HALL}',
