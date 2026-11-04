@@ -1313,3 +1313,31 @@ El laboratorio requiere una terminal persistente en Codex: al cerrarse la llamad
 namespace de procesos. No mandar Ctrl-C al shell del laboratorio: también lo cierra. Arranque/control/GDB/parada
 van por el mismo `exec_command` interactivo. Se recargó `f6tc_paused14.sav` después de cerrar uno de esos shells.
 Siguiente paso: completar derrota, rechazos en ambos sentidos y entrada/salida/victoria de Fábrica; aún no probado.
+
+## 2026-11-04 02:xx — Claude Code (Opus 5.5) — F6-TORRE: derrota, exclusión en ambos sentidos, ruta 1 y works de la Fábrica movidos
+Estado: hecho
+Hecho:
+- **Relevo revisado**: `git status`/`git diff` limpios tras Codex (`2951a31`, `6576e48`); solo los cinco archivos
+  sin seguimiento de consultas ajenas, que no se tocan. Nada a medias.
+- **Derrota en la Torre** (Azahar): desde `f6tc_paused14.sav`, reanudar, combate 15 y huir. Partida de la derrota:
+  16441/16442/16443 = 0/0/14, PB 3, Mansión a cero.
+- **Rechazos**: Torre con la Fábrica pausada → «Tienes un desafío a medias en otra instalación…» (texto corto
+  completo). Fábrica con la Torre pausada ya visto en la sesión del 2026-11-03.
+- **Fallo de la Fábrica encontrado y corregido**: entrar en 213 o 329 pone a 0 los works 16410–16413 (medido
+  guardando desde el menú antes y después; recargar no los toca). Una Fábrica pausada se perdía al salir de la sala.
+  `WORK_IV` → 16489, alquileres → 16485–16487, generador → 16490; `rental.s` lee los alquileres por debajo de
+  `WORK_IV`; test nuevo que veta el bloque 0x4010–0x401F. REPARTO actualizado (tabla de works).
+- **Ruta 1 en el juego**: con el arreglo, Fábrica pausada → plaza → 329 (rechazo) → 213: reanuda sin sorteo, gana el
+  combate 1 y pausa con 16437 = 16439 = 1, Mansión a cero. Salida de 213 a (20,58); de 329 a (19,47).
+- `reports/frontier.md` §25 completado.
+Evidencia: `python -m pytest -q tests` → 213 passed. Partidas `work/frontier/lab/f6td_after_loss.sav` (`692f9d4a…`),
+`f6td_factory_paused1.sav` (`bc3c35e7…`), `f6t_factory_paused2.sav` (`c70f4519…`); capturas `f6td_*.png`;
+registros `work/frontier/tower/lab3.log`–`lab7.log`. Build `python frontier/overlay.py --out work/frontier/build
+--romfs work/faraway/dev/overlay/romfs` (hook 580 bytes).
+Commits: el de esta entrada.
+Decisiones: mover el estado de la Fábrica en vez de reescribirlo al entrar (no se sabe qué código borra el bloque).
+Las partidas antiguas con la Fábrica pausada en 16410 pierden ese desafío (no hay versión publicada con ellos).
+Sin probar: consola; jefe de la Mansión en la Torre; reinicio sin guardar en 329.
+**Estado del laboratorio**: parado; `use_gdbstub` en `false`.
+Siguiente paso: la siguiente tarea de `frontier/orch/tasks.json` (F6-DOMO, Codex). Para Palacio y Arena (Claude),
+copiar el patrón de `frontier/tower.py` (selección de modalidad incluida) y no usar works de 0x4010–0x401F.

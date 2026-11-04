@@ -45,7 +45,7 @@ from pawn import ARGC, CASETBL, OP, PACKED, Op, Program  # noqa: E402
 import data as fd  # noqa: E402
 import patch  # noqa: E402
 
-WORK_RNG = 16414                 # free saved works (frontier/ids.py): generator state between drafts,
+WORK_RNG = 16490                 # free saved works (frontier/ids.py): generator state between drafts,
 WORK_STREAK = 16429              # streak handed from the zone script to the draft
 SHARED_SCRIPT = 5                # a/0/2/9 entry: GlobalCall 9770-9779 (patch.GLOBAL_ROW)
 SHARED_PLACEHOLDER = 9770        # its only retail case

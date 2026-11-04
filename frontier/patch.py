@@ -51,8 +51,11 @@ FUNCTION_HEADS = {0x1EFC18: 0xE92D4030, 0x1EF904: 0xE92D4FF0, 0x3B645C: 0xE92D40
                   # ... and the EventWork getter 0x11fa90 (r0 + 2*N - 0x7ffc)
                   0x11FABC: 0xE2400B1F, 0x11FAC0: 0xE2400FFF}
 # Saved works, free in the retail scripts, entity data and code (frontier/ids.py) and 0 in the user's save.
-WORK_IV = 16410            # Factory state: rentals' IV 1-31; 0 = inactive (retail behaviour)
-WORK_SETS = (16411, 16412, 16413)   # rentals: bit 15 Super (0xb8) else Normal (0xb6), bits 10-11 ability
+# Works 16410-16413 held the Factory state until 2026-11-04: entering any Maison clone (213, 329) sets them to 0 (Azahar,
+# reports/frontier.md §25; works 0x4010-0x401F look like a block the game clears by range), so a paused Factory was lost
+# by walking out of its hall and back. The works below survive it (16442 is measured to; these by the same test).
+WORK_IV = 16489            # Factory state: rentals' IV 1-31; 0 = inactive (retail behaviour)
+WORK_SETS = (16485, 16486, 16487)   # rentals: bit 15 Super (0xb8) else Normal (0xb6), bits 10-11 ability
 SUPER = 0x8000                      # slot (3 = random), bits 0-9 set index
 WORK_RIVAL = (16433, 16434, 16435)  # last rival's set indices (maisonpkN/S of the rank; written by rival_hook)
 WORK_FSTREAK, WORK_ROUTE, WORK_FRECORD = 16437, 16438, 16439   # Factory streak / «route the streak» / record
@@ -84,12 +87,14 @@ TEXT_FACTORY = 637                  # new story text entry (the retail archives 
 ZONE_NATIVES, ZONE_COUNT = 0x587D58, 536
 NATIVES_DEFAULT, NATIVES_MAISON = 0x243, 0x100
 MAISON_NATIVE_ZONES = (448, 517, 520)
-CONSTANTS = {'WORK_IV': WORK_IV, 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'RENTAL_LEVEL': 50,
+CONSTANTS = {'WORK_IV': WORK_IV, 'WORK_SET0': WORK_SETS[0], 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'RENTAL_LEVEL': 50,
              'RENTALS': len(WORK_SETS), 'WORK_RIVAL': WORK_RIVAL[0],
              'ROUTE_DELTA': MAISON_BASE - SAVE_WORKS - 2 * (WORK_ROUTE - 0x4000),
              'ROUTES': len(STREAK_ROUTES),
              **{f'SLOT_DELTA_{route}': MAISON_BASE - SAVE_WORKS - 2 * (streak - 0x4000) + 0x1C4
                 for route, (_, streak) in STREAK_ROUTES.items()}}
+assert list(WORK_SETS) == [WORK_SETS[0] + k for k in range(3)] and 0 < WORK_IV - WORK_SETS[0] < 128   # rental.s: sub
+assert 0 < WORK_IV - WORK_RIVAL[0] < 128 and 2 * (WORK_IV - 0x4000) < 256                              # rental.s: imm8
 assert WORK_FRECORD == WORK_FSTREAK + 2      # the accessors read the record at slot + 0x1c8
 assert sorted(STREAK_ROUTES) == list(range(1, 8))   # rental.s has seven slot_deltas words
 assert 0 < CONSTANTS['ROUTE_DELTA'] < 0x10000          # two subs: bits 8-15 and 0-7

@@ -4,7 +4,7 @@
 @ Saved work WORK_IV (Factory state) = 0: the original branch, unchanged: r8 = player party,
 @   0x3b5d34(player party), return r0 = player party to 0x1e3d98 (the site moves it to r8 and the
 @   original copy loop at 0x1e3da0 runs).
-@ WORK_IV = 1..31: add the 3 rentals of saved works WORK_SET0..2 with that IV (whatever the player
+@ WORK_IV = 1..31: add the 3 rentals of saved works WORK_SET0..2 (contiguous, below WORK_IV) with that IV (whatever the player
 @   selected), store 3 as the selection count (work+0x48) and continue at the builder's common tail
 @   0x1e3ddc with r0 = 3, as the original loop does.
 @ Rental work value: bit 15 = Super archive (0xb8), else Normal (0xb6); bits 10-11 = ability slot
@@ -25,7 +25,8 @@ rental_hook:
     ldr     r0, [r0, #0x1c]         @ game data
     ldr     r1, [r0]                @ save data
     add     r8, r1, #0x13000
-    add     r8, r8, #(0x144 + 2 * (WORK_IV - 0x4000))   @ r8 = &work[WORK_IV]
+    add     r8, r8, #0x144
+    add     r8, r8, #(2 * (WORK_IV - 0x4000))   @ r8 = &work[WORK_IV]
     ldrh    r7, [r8]                @ IV, 0 = Factory inactive
     cmp     r7, #0
     bne     rentals
@@ -45,7 +46,7 @@ rentals:
     ldr     r0, [r4, #0x48]
     cmp     r6, r0
     bge     3f
-    add     r2, r8, #2
+    sub     r2, r8, #(2 * (WORK_IV - WORK_SET0))   @ &work[WORK_SET0]
     add     r2, r2, r6, lsl #1
     ldrh    r2, [r2]                @ rental work value
     tst     r2, #0x8000
@@ -100,11 +101,12 @@ rival_hook:
     ldr     r0, [r0, #0x1c]
     ldr     r0, [r0]                @ save data
     add     r0, r0, #0x13000
-    add     r0, r0, #(0x144 + 2 * (WORK_IV - 0x4000))
+    add     r0, r0, #0x144
+    add     r0, r0, #(2 * (WORK_IV - 0x4000))
     ldrh    r1, [r0]
     cmp     r1, #0
     bxeq    lr                      @ Factory inactive: retail behaviour
-    add     r0, r0, #(2 * (WORK_RIVAL - WORK_IV))
+    sub     r0, r0, #(2 * (WORK_IV - WORK_RIVAL))
     add     r0, r0, r7, lsl #1
     strh    r4, [r0]
     bx      lr

@@ -1188,7 +1188,7 @@ Cada una hay que verificarla antes de usarla, como 209 y 213 en §18.
 - la consola;
 - por qué no se dibujan la choza y la casa de Lanette.
 
-## 25. F6-TORRE: Torre v1, rutas y exclusión mutua (2026-11-03, en verificación)
+## 25. F6-TORRE: Torre v1, rutas y exclusión mutua (2026-11-03/04)
 
 Implementación en `frontier/tower.py`, desde el script **retail** de 517; integración en
 `overlay.facility_scripts`, `island_build.CLONES/DOORS`. Individual, rango Normal, equipo propio
@@ -1244,7 +1244,32 @@ instalación tiene su `patch.ACTIVE_WORK` distinto de cero, en ambas recepciones
 - Mediciones de partidas: `work/frontier/tower/snapshot.py` y `save-evidence.jsonl`,
   basadas en `save_event`/`save_fixture`, con validación de checksums.
 
-**Pendiente de completar**: derrota, exclusión en ambos sentidos con la build final,
-regresión de entrada/salida y victoria por ruta 1 de la Fábrica. Sin probar en consola.
-Los textos y las reglas de equipo son los de la Mansión; el jefe y el comportamiento
-por encima de la racha 19 siguen sin probarse en esta instalación.
+**Azahar, 2026-11-04 (Claude; build con los works nuevos de la Fábrica, capturas `work/frontier/lab/f6td_*`)**:
+- **Derrota**: desde `f6tc_paused14.sav`, reanudación (racha 14), equipo propio, combate 15 y «Huir» → «¿Quieres
+  abandonar…?» Sí. La partida que guarda la derrota (`f6td_after_loss.sav`, SHA256
+  `692f9d4a041545ecb6e2928b6f6a96b7068d12bc3c639fe3c2f4811593cf313c`): zona 329, 16441/16442/16443 = 0/0/14,
+  PB 3, Mansión 0x1BBC0 a cero. La ruta queda en 2 en esa partida hasta la siguiente recepción (limitación de §15).
+- **Fábrica → Torre** (sesión anterior de Claude, build `9dc2dc8`): con la Torre pausada (16442 = 1), elegir
+  «Fábrica Batalla» en 213 da «Tienes un desafío a medias…» y vuelve al menú (`f6t_factory_refused.png`); la línea
+  se cortaba y se acortó en `bdae3b7`.
+- **Torre → Fábrica**: con la Fábrica pausada, «Combatir» en 329 da el rechazo con el texto corto completo
+  (`f6td_tower_refused.png`); se sale a (19,47).
+- **Fallo encontrado y corregido: entrar en una sala de la Mansión borra 16410–16413.** Con
+  `f6t_factory_paused.sav` (16410 = 31 y tres alquileres) la Torre no rechazaba. Medido guardando desde el menú:
+  recargar en la plaza no cambia ningún work; entrar en 329, o en 213, sin hablar con nadie, pone 16410–16413 a 0 y
+  no cambia ningún otro work. Es decir, desde F6 una Fábrica pausada se perdía al salir de su sala y volver. Causa
+  no localizada (los scripts de 209, 213 y 329 no escriben esos works; probablemente el juego limpia por rango el
+  bloque 0x4010–0x401F, que `ids.py` no puede ver). Arreglo: `WORK_IV` = 16489, `WORK_SETS` = 16485–16487,
+  `factory.WORK_RNG` = 16490 (libres según `ids.py`); `rental.s` lee los alquileres por debajo de `WORK_IV`
+  (hook 580 bytes). `test_no_frontier_work_in_the_block_cleared_on_entering_a_hall` vigila el bloque.
+- **Con el arreglo** (`f6t_factory_paused2.sav`, SHA256 `c70f4519…`, plaza, Fábrica pausada con S922/S915/S940):
+  plaza → 329 (rechazo) → plaza → 213: «Fábrica Batalla» reanuda sin sorteo; combate 1 ganado con los alquileres;
+  «El próximo combate será el número 2»; Pausar. Partida `f6td_factory_paused1.sav`, SHA256
+  `bc3c35e7ebd2c92c5bdad3e38af14716f568907397cb77fdd0210e55efb2448f`: zona 213, 16489 = 31, alquileres intactos,
+  **16437 = 1, 16439 = 1** (racha de la Fábrica por la ruta 1), Torre 0/0, Mansión a cero, PB sin cambios.
+  Salida de 213 a (20,58) (`f6td_factory_exit.png`).
+- En ese intercambio el menú muestra «No cambiar» en cada fila: los conjuntos S922/S915/S940 puestos a mano no están
+  en ningún nivel de alquiler y no tienen línea de texto. Con alquileres sorteados se ven los nombres (§20).
+
+**Sin probar**: la consola; el jefe de la Mansión y los tramos por encima de la racha 19 en la Torre; reinicio sin
+guardar a mitad de desafío en 329. Los textos y las reglas de equipo son los de la Mansión.
