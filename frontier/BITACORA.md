@@ -1494,3 +1494,31 @@ Decisiones: la línea del campeón no se fotografió (pulsaciones de más); se d
 Sin probar: consola; jefe de la Mansión en la racha del Domo; reinicio sin guardar en 456.
 **Estado del laboratorio**: parado; `use_gdbstub` en `false`.
 Siguiente paso: la siguiente tarea de `frontier/orch/tasks.json` (F6-PALACIO-A, Claude).
+
+## 2026-11-04 1x:xx — Claude Code (Opus 5.5) — F6-PALACIO-A: Palacio etapa A en código (frontier-orch)
+Estado: en curso
+Hecho:
+- **Zona 340 comprobada sin emulador** (`python frontier/zone_check.py 340` → `work/frontier/palace/zone_check.txt`;
+  contexto con `work/frontier/palace/ctx.py` y `ctx2.py`): máscara 0x243, sin warps de entrada; sus cinco literales
+  en scripts no son zonas: compartido 57 `0xd10` (tabla de `@77c`, objeto y flags, como el 329), zonas 214/244/316
+  (argumento de rutinas que empiezan por `MdlAcmdInit`, animación de modelo) y zona 444 `0x23bc` (`@30`: `FlagSet`
+  1740 + N, un entrenador). Palabras alineadas = 340: 58 (209: 48, 213: 45).
+- **`frontier/tower.py` generalizado**: `reception_routine`, `battle_points` y `facility_program(retail, facility)`
+  toman la instalación (ruta, works y PB de `patch`/`data`, etiquetas con su nombre); `tower_program` llama a
+  `facility_program(retail, 'tower')`. El script de la Torre sale **idéntico byte a byte** al de `HEAD` (comparado
+  con el módulo anterior, 15.040 bytes).
+- **`frontier/palace.py`**: zona 340, ruta 3, works 16461/16462/16463, PB de `FRONTIER_BP['palace']`; el flujo de la
+  Torre (pantalla de modalidad y de equipo de la Mansión, `SetRank(0)`, racha nueva a 0, pausa, derrota y limpieza).
+  El jugador sigue dando las órdenes (etapa A).
+- **Integración**: `island_build.ZONE_PALACE = 340` en `CLONES`, `KEEP_TEXT` y `DOORS['Palace']` (warp 3 de la isla,
+  último en `FACILITIES`; Torre 0, Domo 1 y Fábrica 2 no cambian); `overlay.facility_scripts()` añade el 340. La
+  exclusión ya cubría el 16462 en todas las recepciones (`factory.busy_check` recorre `patch.ACTIVE_WORK`).
+Evidencia: `python -m pytest -q tests` → 326 passed (30 nuevos en `tests/test_frontier_palace.py`, tests de isla
+ampliados). Rotura a mano: construir el Palacio con la instalación `tower` → 25 de 30 fallan. **No probado en Azahar
+todavía.**
+Commits: el de esta entrada.
+Decisiones: se reutiliza la pantalla de modalidad aunque el diseño proponía saltarla: la Torre midió que sin ella el
+selector rechaza a todos (§25). Sin línea de texto «Palacio Batalla» (la Torre tampoco la tiene; desviación conocida).
+Siguiente paso: build (`python frontier/overlay.py --out work/frontier/build --romfs work/faraway/dev/overlay/romfs`)
+y en Azahar: puerta (31,69) → 340 → (31,70); guardar/cargar en 340; ronda de 7 con PB 4; pausa, reanudación,
+derrota; rechazos cruzados; Fábrica/Torre sin regresión.

@@ -188,36 +188,43 @@ def test_every_island_clone_gets_its_donors_native_groups():
     assert f'clones={island_build.DONOR_ISLAND}:{island_build.ZONE_ISLAND},' \
            f'{island_build.DONOR_HALL}:{island_build.ZONE_HALL},' \
            f'{island_build.DONOR_HALL}:{island_build.ZONE_TOWER},' \
-           f'{island_build.DONOR_HALL}:{island_build.ZONE_DOME}\n' in island_build.plan('s')
+           f'{island_build.DONOR_HALL}:{island_build.ZONE_DOME},' \
+           f'{island_build.DONOR_HALL}:{island_build.ZONE_PALACE}\n' in island_build.plan('s')
     code = bytearray(patch.REPOLISHED.read_bytes())
     patch.zone_natives(code, island_build.CLONES)
     mask = lambda zone: int.from_bytes(code[patch.ZONE_NATIVES - patch.BASE + 4 * zone:][:4], 'little')
     for slot, donor in island_build.CLONES.items():
         assert mask(slot) == mask(donor)
     assert all(mask(z) & patch.NATIVES_MAISON
-               for z in (island_build.ZONE_HALL, island_build.ZONE_TOWER, island_build.ZONE_DOME))
+               for z in (island_build.ZONE_HALL, island_build.ZONE_TOWER, island_build.ZONE_DOME,
+                         island_build.ZONE_PALACE))
 
 
-def test_plaza_plan_links_the_tower_the_dome_and_the_factory():
-    """Seven facility buildings with their door props (§23), three door warps in FACILITIES order: the Tower's into
-    329 (island warp 0), the Dome's into 456 (warp 1) and the Factory's into 213 (warp 2); each interior's exit comes
-    back to its door."""
+def test_plaza_plan_links_the_tower_the_dome_the_factory_and_the_palace():
+    """Seven facility buildings with their door props (§23), four door warps in FACILITIES order: the Tower's into
+    329 (island warp 0), the Dome's into 456 (warp 1), the Factory's into 213 (warp 2) and the Palace's into 340
+    (warp 3); each interior's exit comes back to its door."""
     import island_build
     lines = island_build.plan('s').splitlines()
     buildings = [line for line in lines if line.startswith('plaza.building.')]
     doors = [line for line in lines if line.startswith('plaza.door.')]
     assert len(buildings) == 7 and all(line.split('=', 1)[1].count('|') == 2 for line in buildings)
-    factory, tower, dome = (list(island_build.FACILITIES).index(f) for f in ('Factory', 'Tower', 'Dome'))
+    factory, tower, dome, palace = (list(island_build.FACILITIES).index(f)
+                                    for f in ('Factory', 'Tower', 'Dome', 'Palace'))
     assert doors == [f'plaza.door.{tower}={island_build.ZONE_TOWER},0',
                      f'plaza.door.{dome}={island_build.ZONE_DOME},0',
-                     f'plaza.door.{factory}={island_build.ZONE_HALL},0']
+                     f'plaza.door.{factory}={island_build.ZONE_HALL},0',
+                     f'plaza.door.{palace}={island_build.ZONE_PALACE},0']
+    assert buildings[palace].startswith(f'plaza.building.{palace}=Rustboro two-story house|28|25')
     assert buildings[dome].startswith(f'plaza.building.{dome}=Fallarbor house|')
     assert buildings[factory].startswith(f'plaza.building.{factory}=Gym|')
     assert not any(line.startswith(f'zone.{island_build.ZONE_ISLAND}.warp.') for line in lines)
     assert f'zone.{island_build.ZONE_TOWER}.warp.0=0,{island_build.ZONE_ISLAND},0' in lines
     assert f'zone.{island_build.ZONE_DOME}.warp.0=0,{island_build.ZONE_ISLAND},1' in lines
     assert f'zone.{island_build.ZONE_HALL}.warp.0=0,{island_build.ZONE_ISLAND},2' in lines
-    assert f'keeptext.{island_build.ZONE_TOWER}=1' in lines and f'keeptext.{island_build.ZONE_DOME}=1' in lines
+    assert f'zone.{island_build.ZONE_PALACE}.warp.0=0,{island_build.ZONE_ISLAND},3' in lines
+    assert all(f'keeptext.{z}=1' in lines
+               for z in (island_build.ZONE_TOWER, island_build.ZONE_DOME, island_build.ZONE_PALACE))
 
 
 def test_each_interior_exits_to_its_own_door(monkeypatch):
@@ -244,7 +251,8 @@ def test_facility_clones_are_generic(monkeypatch, tmp_path):
     monkeypatch.setattr(island_build, 'KEEP_TEXT', {*island_build.KEEP_TEXT, 329})
     monkeypatch.setattr(island_build, 'NATIVE_DONORS', {141: 517})
     lines = island_build.plan('s').splitlines()
-    assert f'zones={island_build.ZONE_ISLAND},{island_build.ZONE_HALL},329,{island_build.ZONE_DOME},141' in lines
+    assert f'zones={island_build.ZONE_ISLAND},{island_build.ZONE_HALL},329,{island_build.ZONE_DOME},' \
+           f'{island_build.ZONE_PALACE},141' in lines
     assert {f'place.329={island_build.PLACE}', f'place.141={island_build.PLACE}', 'keeptext.329=1'} <= set(lines)
     assert 'keeptext.141=1' not in lines
     assert island_build.native_donors()[141] == 517 and island_build.native_donors()[329] == 517

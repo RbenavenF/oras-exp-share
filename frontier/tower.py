@@ -46,10 +46,13 @@ SUPER_FLAGS = (385, 386, 387, 388, 389)   # its last five arguments, FlagGet of 
 RECEPTION_MENU = [53, 54, 74, 55]
 
 
-def reception_routine(p):
-    """tower_reception() -> 1 = back to the reception menu, 0 = challenge played."""
-    r = factory.Routine(p, 'tower_reception', [f'flag{f}' for f in SUPER_FLAGS] + ['x'])
-    factory.busy_check(r, FACILITY, 'tower_refused')
+def reception_routine(p, facility=FACILITY):
+    """<facility>_reception() -> 1 = back to the reception menu, 0 = challenge played. Any facility run as the Tower
+    in a 517 clone (route patch.ROUTE[facility], its streak and patch.ACTIVE_WORK); labels prefixed by its name."""
+    route = patch.ROUTE[facility]
+    streak, active, t = patch.STREAK_ROUTES[route][1], patch.ACTIVE_WORK[facility], facility
+    r = factory.Routine(p, f'{t}_reception', [f'flag{f}' for f in SUPER_FLAGS] + ['x'])
+    factory.busy_check(r, facility, f'{t}_refused')
     # The Maison's own mode selection, as 0x1640-0x1704: message 6, then the app (0x12a0, _CallTrialDownloadApp).
     # The party selection screen needs it: without it every Pokémon is refused (seen in Azahar, §25).
     r.call(f'L{factory.MSG:x}', MSG_MODE, 1, 0, 256, 0)
@@ -61,57 +64,58 @@ def reception_routine(p):
     r.call(MODE_APP, 0, factory.WORK_SELECT_RESULT, factory.WORK_SELECT_TYPE, factory.WORK_SELECT_X,
            *(f'flag{f}' for f in SUPER_FLAGS))
     r.sysreq('WorkGet', factory.WORK_SELECT_RESULT)
-    r.op('JZER', 'tower_refused')               # mode screen cancelled
+    r.op('JZER', f'{t}_refused')               # mode screen cancelled
     r.sysreq('WorkGet', factory.WORK_SELECT_TYPE)
-    r.op('JNZ', 'tower_refused')                # v1: Singles only (the streak route covers Singles)
+    r.op('JNZ', f'{t}_refused')                # v1: Singles only (the streak route covers Singles)
     r.sysreq('WorkGet', factory.WORK_SELECT_X)
     r.store('x')
     r.sysreq('SetRank', 0)                      # the streak route covers rank Normal only
-    r.sysreq('WorkSet', patch.WORK_ROUTE, ROUTE)
-    r.sysreq('WorkGet', ACTIVE)
-    r.op('JNZ', 'tower_resume')                 # paused challenge: keep the streak, as Emerald
-    r.sysreq('WorkSet', STREAK, 0)              # a new challenge starts at battle 1
-    r.p.label('tower_resume')
-    r.sysreq('WorkSet', ACTIVE, 1)
+    r.sysreq('WorkSet', patch.WORK_ROUTE, route)
+    r.sysreq('WorkGet', active)
+    r.op('JNZ', f'{t}_resume')                 # paused challenge: keep the streak, as Emerald
+    r.sysreq('WorkSet', streak, 0)              # a new challenge starts at battle 1
+    r.p.label(f'{t}_resume')
+    r.sysreq('WorkSet', active, 1)
     r.call(factory.CHALLENGE, 0, 0, 'x')
     r.op('EQ_P_C_PRI', 1)
-    r.op('JNZ', 'tower_declined')
-    r.sysreq('GetMyWinCount', 0, 0)             # the Tower streak (route still set)
+    r.op('JNZ', f'{t}_declined')
+    r.sysreq('GetMyWinCount', 0, 0)             # the facility streak (route still set)
     r.op('MOVE_ALT', 0)
     r.op('ZERO_PRI', 0)
-    r.op('JSLESS', 'tower_kept')                # 0 < streak: paused
-    r.sysreq('WorkSet', ACTIVE, 0)
-    r.p.label('tower_kept')
+    r.op('JSLESS', f'{t}_kept')                # 0 < streak: paused
+    r.sysreq('WorkSet', active, 0)
+    r.p.label(f'{t}_kept')
     r.sysreq('WorkSet', patch.WORK_ROUTE, 0)
     r.op('ZERO_PRI', 0)
     r.ret()
-    r.p.label('tower_declined')                 # declined or no team chosen: a paused challenge stays paused
+    r.p.label(f'{t}_declined')                 # declined or no team chosen: a paused challenge stays paused
     r.sysreq('GetMyWinCount', 0, 0)
     r.op('MOVE_ALT', 0)
     r.op('ZERO_PRI', 0)
-    r.op('JSLESS', 'tower_declined_kept')
-    r.sysreq('WorkSet', ACTIVE, 0)
-    r.p.label('tower_declined_kept')
+    r.op('JSLESS', f'{t}_declined_kept')
+    r.sysreq('WorkSet', active, 0)
+    r.p.label(f'{t}_declined_kept')
     r.sysreq('WorkSet', patch.WORK_ROUTE, 0)
-    r.p.label('tower_refused')
+    r.p.label(f'{t}_refused')
     r.const(1)
     r.ret()
 
 
-def battle_points(p):
-    """Tower BP as Emerald, inserted in the Maison's BP routine 0x3de4 once its locals exist (-4 win count, -8 BP),
-    while WORK_ROUTE = ROUTE (factory.battle_points does the same for the Factory)."""
+def battle_points(p, facility=FACILITY):
+    """BP of data.FRONTIER_BP[facility] as Emerald, inserted in the Maison's BP routine 0x3de4 once its locals exist (-4 win count, -8 BP),
+    while WORK_ROUTE = patch.ROUTE[facility] (factory.battle_points does the same for the Factory)."""
+    route, table_bp, t = patch.ROUTE[facility], fd.FRONTIER_BP[facility], facility
     start = factory._index(p, factory.BATTLE_POINTS)
     at = next(i for i in range(start, len(p.items)) if isinstance(p.items[i], Op)
               and p.items[i].op == OP['STOR_P_S_PRI'] and p.items[i].args == [-4])
     if p.items[at + 1].op != OP['PUSH_P_C'] or p.items[at + 1].args != [0]:
         raise ValueError('BP routine locals not found at 0x3e04')
-    table = p.data_block('tower_bp', list(TOWER_BP))
+    table = p.data_block(f'{t}_bp', list(table_bp))
     b = Program(p.script)
     b.native_hashes = p.native_hashes
     b.sysreq('WorkGet', patch.WORK_ROUTE)
-    b.emit('EQ_P_C_PRI', ROUTE)
-    b.emit('JZER', 'tower_bp_retail')
+    b.emit('EQ_P_C_PRI', route)
+    b.emit('JZER', f'{t}_bp_retail')
     b.sysreq('GetMyWinCount', 0, 0)
     b.emit('STOR_P_S_PRI', -4)
     b.emit('MOVE_ALT', 0)
@@ -121,23 +125,23 @@ def battle_points(p):
     b.emit('SMUL_P_C', fd.STAGES_PER_ROUND)
     b.emit('LOAD_P_S_ALT', -4)
     b.emit('SUB_ALT', 0)                     # streak - 7 * rounds
-    b.emit('JNZ', 'tower_bp_none')
+    b.emit('JNZ', f'{t}_bp_none')
     b.emit('LOAD_P_S_PRI', -8)
     b.emit('ADD_P_C', -1)
-    b.emit('CONST_P_ALT', len(TOWER_BP) - 1)
-    b.emit('JSLEQ', 'tower_bp_index')
-    b.emit('CONST_P_PRI', len(TOWER_BP) - 1)
-    b.label('tower_bp_index')
+    b.emit('CONST_P_ALT', len(table_bp) - 1)
+    b.emit('JSLEQ', f'{t}_bp_index')
+    b.emit('CONST_P_PRI', len(table_bp) - 1)
+    b.label(f'{t}_bp_index')
     b.emit('SMUL_P_C', 4)
     b.emit('ADD_P_C', table)
     b.emit('LOAD_I', 0)
     b.emit('STOR_P_S_PRI', -8)
     b.emit('JUMP', factory.BATTLE_POINTS_GIVE)
-    b.label('tower_bp_none')
+    b.label(f'{t}_bp_none')
     b.emit('STACK_P', 8)
     b.emit('ZERO_PRI', 0)
     b.emit('RETN', 0)
-    b.label('tower_bp_retail')
+    b.label(f'{t}_bp_retail')
     p.items[at + 2:at + 2] = b.items
 
 
@@ -148,8 +152,9 @@ def _ops(p, build):
     return body.items
 
 
-def tower_program(retail):
-    """Zone 517's retail script with the Tower (module docstring)."""
+def facility_program(retail, facility):
+    """Zone 517's retail script with `facility` run as the Tower (module docstring)."""
+    active = patch.ACTIVE_WORK[facility]
     p = Program.from_script(retail)
     start = factory._index(p, 'L14f4')
     create = next(i for i in range(start, len(p.items)) if isinstance(p.items[i], Op)
@@ -167,7 +172,7 @@ def tower_program(retail):
         raise ValueError('reception result check not found at 0x1634')
 
     def dispatch(b):                 # value 0 falls through here (others jump to 0x17b0)
-        b.call('tower_reception')
+        b.call(f'{facility}_reception')
         b.emit('STOR_P_S_PRI', factory.RECEPTION_AGAIN)
         b.emit('JUMP', factory.RECEPTION_NEXT)
     p.items[at + 3:at + 3] = _ops(p, dispatch)
@@ -175,14 +180,19 @@ def tower_program(retail):
     at = factory._index(p, factory.CLEANUP)
     if p.items[at + 1].op != OP['PROC']:
         raise ValueError('0x1458 is not a routine start')
-    p.items[at + 2:at + 2] = _ops(p, lambda b: b.sysreq('WorkSet', ACTIVE, 0))
+    p.items[at + 2:at + 2] = _ops(p, lambda b: b.sysreq('WorkSet', active, 0))
     at = factory._index(p, factory.LOST)  # before the loss is saved, so the save never holds a dead challenge
     if p.items[at + 1].op != OP['ZERO_P_S'] or p.items[at + 1].args != [-8]:
         raise ValueError('lost-battle path not found at 0x2210')
-    p.items[at + 1:at + 1] = _ops(p, lambda b: b.sysreq('WorkSet', ACTIVE, 0))
-    battle_points(p)
-    reception_routine(p)
+    p.items[at + 1:at + 1] = _ops(p, lambda b: b.sysreq('WorkSet', active, 0))
+    battle_points(p, facility)
+    reception_routine(p, facility)
     return p
+
+
+def tower_program(retail):
+    """Zone 517's retail script with the Tower (module docstring)."""
+    return facility_program(retail, FACILITY)
 
 
 def zone_script(retail):
