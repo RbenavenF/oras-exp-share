@@ -1427,3 +1427,44 @@ no son zonas: compartido 57 `0xD10` (tabla de `@77C`, objeto y flags, como el 32
 **Sin probar**: consola; una ronda de 7 entera empezada desde cero (las victorias 1–2 desde cero y la 7 desde la racha
 editada); el jefe de la Mansión en la racha del Palacio; reinicio sin guardar en 340; el Domo rechazando con el Palacio
 pausado (cubierto por la suite, `busy_check`). Textos y reglas de equipo de la Mansión.
+
+## 28. F6-TUBO: implementación y validación en curso (2026-11-04)
+
+Código inicial `23c471c`; recuperación del relevo y parche CRO `f5e6a2a`. Zona 458, clon de 517, ruta 6,
+works 16477/16478/16479. Las 14 salas se representan mediante un bucle de script con menú de tres puertas y pistas,
+en una sola zona (desviación del diseño de dos interiores). La sala 14 siempre es combate individual; el combate
+fuerte usa rango Súper de la Mansión. Selección de tres propios mediante su pantalla; al reanudar se eligen de nuevo
+ y los PS/estados se aplican por posición. PP restaurados en cada combate; sin inmunidades ni combates salvajes.
+
+**Retorno de PS**: H1 en `code.bin` 0x1e3110 aplica los works al equipo temporal; H2 en IsWin 0x1e5664 recoge los
+PS/estado de `[work+0x66c]`. La puerta de DllBattle.cro 0x15398 solo admitía competidores 0/1; el 2 (Mansión) no
+copiaba el resultado. `patch.battle_cro()` admite también 2, comprobando SHA256 completo y tres instrucciones,
+recalculando hashes CRO/CRR. Listado estático `work/frontier/pike/copy-back-disasm.txt`. Este cambio afecta a la
+copia temporal de todas las instalaciones de la Mansión: su regresión en juego sigue pendiente.
+
+**Azahar, Codex, build `work/frontier/pike/build-relevo.log`**:
+- Carga de `pk_saved_458.sav`, modalidad Individual y selección de los tres primeros Pokémon de laboratorio.
+  Pista «voces de gente» a la izquierda y tres puertas (`work/frontier/lab/pk_cx_room1.png`, `pk_cx_doors.png`);
+  la izquierda da combate individual (`pk_cx_event1.png`).
+- Primer combate ganado contra Shinx y otros dos; daño visible del último rival Boldore: 130/156 y luego 87/156
+  (`pk_cx_last_enemy.png`, `pk_cx_win1.png`; son capturas intermedias, no los PS finales). Tras ganar se continúa
+  directamente. La siguiente pista indica Pokémon a la izquierda, y da combate fuerte (`pk_cx_hard.png`).
+- Segundo combate comienza contra Hydreigon, **61/156 PS**, antes de atacar (`pk_cx_h2_hp.png`). Menú de ataques
+  **10/10, 10/10, 15/15, 30/30 PP** (`pk_cx_h2_pp.png`): daño conservado, PP restaurados. En esta ejecución no se
+  han editado los works ni usado GDB entre los dos combates.
+- Huir en el segundo combate → guardado automático `pk_cx_loss.sav`, SHA256
+  `7e6bfda38efa0cd0678bee8310835806a1e830aa4f797a547f0384727c02eb5f`: Tubo **0/0/1**, PS **61/156/184**,
+  estados 0/0/0, PB 0. Rachas de Fábrica, Torre, Palacio, Domo y Mansión a cero. Comparación de los seis PK6
+  descifrados con la entrada: solo cambia +0xF0 (PS actuales) de los huecos 0 y 1 por la curación de la Mansión;
+  todos los demás bytes idénticos (`work/frontier/pike/cx-party-comparison.json`).
+- Salida andando del interior a la cabaña del Tubo (`pk_cx_exit_walk.png`); guardar:
+  `pk_cx_exit.sav`, SHA256 `b80b64e18a5b259dfaaf7e3920a996d848a4bd58d2b640e6171b4e2d84e9df1a`,
+  zona 209 **(5.5,70.5)**, ruta 0. Pulsar arriba entra de nuevo (`pk_cx_entered.png`); guardar:
+  `pk_cx_entered_done.sav`, SHA256 `3b21f6214191a9e98aac73bf9c55ae479f4077031ef86e2d3d8b9b65ce7f726c`,
+  zona **458 (20.5,31.5)**. `pk_cx_entered.sav` era una captura prematura idéntica a la de salida y no demuestra entrada.
+- Hechos de las partidas en `work/frontier/pike/save-evidence.jsonl`; suite **398 passed** en
+  `tests-relevo-final.log`, incluyendo 8 pruebas nuevas del CRO (puerta ARM, identidad de entrada, hashes).
+
+Pendiente: estados y curas en esta build, ronda de 14/PB, pausa/reanudación con daño, exclusión en juego y regresión
+de Fábrica/Torre/Domo/Palacio con el CRO nuevo. Consola no probada. El veneno grave se representa actualmente como
+veneno normal (valor 5); los valores de estado del módulo requieren terminar su validación visual.

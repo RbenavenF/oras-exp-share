@@ -1635,3 +1635,17 @@ Decisiones: conservar la corrección del CRO y validarla en juego antes de decla
 el §28 citado por comentarios heredados (todavía no existía). La tarea sigue in_progress.
 Siguiente paso: medir PS/estado después de un combate y en el siguiente, curas, ronda de 14/PB, salida (5,70),
 exclusión y regresiones con la build nueva; registrar evidencia en reports/frontier.md §28.
+
+## 2026-11-04 16:23 — Codex — F6-TUBO: daño entre combates y puerta comprobados
+Estado: en curso
+Hecho: Azahar con el CRO nuevo: combate individual ganado, después combate fuerte que empieza con 61/156 PS y
+PP completos. Abandono en el segundo: guardado con racha/activo/récord 0/0/1 y PS 61/156/184. Salida andando a
+(5,70) y entrada a 458, verificadas en sendos guardados. Informe y limitaciones en reports/frontier.md §28.
+Evidencia: `work/frontier/pike/save-evidence.jsonl`, capturas `work/frontier/lab/pk_cx_*.png`, comparación PK6
+`cx-party-comparison.json` (solo +0xF0 de dos miembros cambia por curación). Suite 398 passed en
+`work/frontier/pike/tests-relevo-final.log` (misma implementación del commit anterior).
+Commits: f5e6a2a (CRO) y el de esta entrada (evidencia).
+Decisiones: fixture nueva `pk_cx_lastroom_fixture.sav`, basada en `pk_cx_loss.sav`, con racha/récord 13, activo 1,
+PS 100/90/184, estados 1/4/0 para medir sala 14, estados y PB. Es una prueba con racha editada, no 14 salas desde cero.
+Siguiente paso: continuar en la copia de sala 14; registrar PB y estados; después curas, exclusión y regresiones.
+Laboratorio activo durante este hito, bajo shell persistente; se parará al finalizar la sesión.
