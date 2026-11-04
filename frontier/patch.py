@@ -228,6 +228,39 @@ def build(native_clones=None):
     return bytes(code), hook, site
 
 
+# Battle Pike H2 needs the battle's result party in the battle setup (+0x4c) when IsWin reads it. The battle module
+# copies its party back there at the end (DllBattle.cro 0x15378, the copy at 0x156fc, after restoring the original
+# order) only for setup competitor 0 (wild) or 1 (trainer); the Maison's setup is 2 (0x1e0790: strb 2, [setup]), so
+# its copy kept the pre-battle state (static gate: work/frontier/pike/copy-back-disasm.txt). The patch lets 0-2 through. Competitor 2 then
+# also gets the part common to all three (order, form and max HP fixes on its own copy) and none of the parts
+# reserved to 0 or 1 (0x154b0, 0x1552c, 0x15708). The Maison's battle party is a copy it discards (§4, §6), so the
+# other facilities see no change. Applied over the mod's DllBattle.cro (v0.5, already patched elsewhere): CRO
+# hashes and the static.crr entry are updated as scripts/build_patch.py does.
+MOD_ROMFS = ROOT / 'dist/held-exp-share-v0.5/mods/000400000011C400/romfs'
+BATTLE_CRO, CRR = 'DllBattle.cro', '.crr/static.crr'
+BATTLE_CRO_SHA256 = '46153fa373b8166a3a65a31272008dc8d63207f3b2498752c69c1a0c74235519'
+COPY_BACK = 0x15398                         # file offset: cmp r1, #0; cmpne r1, #1; bne 0x1580c
+COPY_BACK_BEFORE = (0xE3510000, 0x13510001, 0x1A000119)
+COPY_BACK_AFTER = (0xE3510002, 0xE1A00000, 0x8A000119)   # cmp r1, #2; nop; bhi 0x1580c
+
+
+def battle_cro(romfs=MOD_ROMFS):
+    """{romfs path: bytes}: the mod's DllBattle.cro with the copy back for competitor 2, and its static.crr."""
+    from build_patch import rehash_cro, update_crr
+    original = (romfs / BATTLE_CRO).read_bytes()
+    import hashlib
+    if hashlib.sha256(original).hexdigest() != BATTLE_CRO_SHA256:
+        sys.exit(f'{BATTLE_CRO}: not the v0.5 one')
+    got = struct.unpack_from('<3I', original, COPY_BACK)
+    if got != COPY_BACK_BEFORE:
+        sys.exit(f'{BATTLE_CRO} {COPY_BACK:#x} differs: {[f"{w:08x}" for w in got]}')
+    changed = bytearray(original)
+    struct.pack_into('<3I', changed, COPY_BACK, *COPY_BACK_AFTER)
+    changed = rehash_cro(original, bytes(changed))
+    crr = update_crr((romfs / CRR).read_bytes(), original, changed)
+    return {BATTLE_CRO: changed, CRR: crr}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path, required=True)

@@ -243,7 +243,7 @@ def main():
     code, hook, _ = patch.build({} if args.no_island else island_build.native_donors())
     if out.exists():
         shutil.rmtree(out)
-    for path, blob in archives.items():
+    for path, blob in {**archives, **patch.battle_cro()}.items():
         (out / 'romfs' / path).parent.mkdir(parents=True, exist_ok=True)
         (out / 'romfs' / path).write_bytes(blob)
     clean = patch.CLEAN.read_bytes()

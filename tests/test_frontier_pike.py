@@ -491,3 +491,50 @@ def test_h2_is_iswin_on_other_routes(code, route):
 def test_h2_without_a_battle_party(code):
     r0, saved, calls = run_iswin(code, 6, [(1, 9, 1)] * 3, party=0)
     assert r0 == 1 and saved == [0] * 6 and calls == []
+
+
+@pytest.fixture(scope='module')
+def battle_module():
+    if not (fp.MOD_ROMFS / fp.BATTLE_CRO).exists():
+        pytest.skip('Local v0.5 mod required')
+    return fp.battle_cro()
+
+
+def test_battle_copy_back_changes_only_gate_and_validates_hashes(battle_module):
+    import hashlib
+    from build_patch import cro_hashes
+    original = (fp.MOD_ROMFS / fp.BATTLE_CRO).read_bytes()
+    changed = battle_module[fp.BATTLE_CRO]
+    assert len(changed) == len(original)
+    assert changed[:0x80] == b''.join(cro_hashes(changed))
+    assert all(i < 0x80 or fp.COPY_BACK <= i < fp.COPY_BACK + 12
+               for i, (a, b) in enumerate(zip(original, changed)) if a != b)
+    crr = battle_module[fp.CRR]
+    offset, count = struct.unpack_from('<II', crr, 0x350)
+    hashes = [crr[offset + 32*i:offset + 32*(i+1)] for i in range(count)]
+    assert hashes == sorted(hashes)
+    assert hashes.count(hashlib.sha256(changed[:0x80]).digest()) == 1
+    assert hashlib.sha256(original[:0x80]).digest() not in hashes
+
+
+@pytest.mark.parametrize('competitor', [0, 1, 2, 3, 255, 0xffffffff])
+def test_battle_copy_back_gate_preserves_other_competitor_types(battle_module, competitor):
+    from unicorn import Uc, UC_ARCH_ARM, UC_MODE_ARM
+    from unicorn.arm_const import UC_ARM_REG_R1, UC_ARM_REG_PC
+    uc = Uc(UC_ARCH_ARM, UC_MODE_ARM)
+    uc.mem_map(0x10000, 0x10000)
+    # Use file offsets as addresses: only relative instructions in this gate.
+    uc.mem_write(fp.COPY_BACK, battle_module[fp.BATTLE_CRO][fp.COPY_BACK:fp.COPY_BACK + 12])
+    uc.reg_write(UC_ARM_REG_R1, competitor)
+    uc.emu_start(fp.COPY_BACK, 0x20000, count=3)
+    assert uc.reg_read(UC_ARM_REG_PC) == (fp.COPY_BACK + 12 if competitor <= 2 else 0x1580c)
+
+
+def test_battle_copy_back_rejects_wrong_input(tmp_path):
+    if not (fp.MOD_ROMFS / fp.BATTLE_CRO).exists():
+        pytest.skip('Local v0.5 mod required')
+    original = bytearray((fp.MOD_ROMFS / fp.BATTLE_CRO).read_bytes())
+    original[-1] ^= 1
+    (tmp_path / fp.BATTLE_CRO).write_bytes(original)
+    with pytest.raises(SystemExit, match='not the v0.5 one'):
+        fp.battle_cro(tmp_path)

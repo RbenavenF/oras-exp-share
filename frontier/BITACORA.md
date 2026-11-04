@@ -1613,3 +1613,25 @@ siendo: el equipo de `[work+0x66c]` vivo al llamar a `IsWin`, su orden, y los va
 1 parálisis, 2 sueño, 3 congelación, 4 quemadura, 5 veneno; el tóxico se guarda como veneno).
 Siguiente paso: build y Azahar: puerta (5,69) → 458 → salida (5,70); desafío, salas, combate con daño y comprobar
 con el guardado (pausa) que los works de PS cambian y que el siguiente combate empieza con ese daño; estado visible.
+
+## 2026-11-04 16:14 — Codex — F6-TUBO: recuperación del relevo y parche de retorno del equipo
+Estado: en curso
+Hecho:
+- Revisados `git status`, `git diff` y último commit `23c471c`. Claude dejó cambios sin commit en
+  `frontier/patch.py`, `overlay.py` y `pike.py`: retorno del equipo en DllBattle.cro y gramática de pistas.
+  Se conservan y completan. Los cinco archivos ajenos sin seguimiento (informes y scripts de encuentros/evoluciones)
+  no se modifican. REPARTO sigue bajo el turno del orquestador.
+- El parche CRO amplía la puerta de copia de competidores 0/1 a 0/1/2 en offset 0x15398; overlay incluye CRO y
+  static.crr recalculados. Se exige el SHA256 completo del CRO v0.5, además de comprobar las tres instrucciones.
+- Ocho pruebas nuevas: ejecución ARM de la puerta para 0/1/2/3/255/0xffffffff, rechazo de entrada distinta,
+  límites de bytes modificados, hashes CRO y pertenencia ordenada en CRR.
+Evidencia: `work/frontier/pike/copy-back-disasm.txt` (Capstone sobre el CRO v0.5); build
+`work/frontier/pike/build-relevo.log`; suite inicial 390 passed (`tests-relevo.log`), pruebas del Tubo 72 passed
+(`tests-cro.log`). Los logs de Claude registran PS 156/156/184 en H2 y parálisis con valor 1; son evidencia heredada,
+no una validación del nuevo retorno de PS. Azahar con el parche nuevo aún no probado: el primer arranque con gdb no
+estableció conexión. Se reintenta en una shell persistente del laboratorio.
+Commits: el de esta entrada (recuperación de cambios tras 23c471c).
+Decisiones: conservar la corrección del CRO y validarla en juego antes de declarar persistencia; no dar por probado
+el §28 citado por comentarios heredados (todavía no existía). La tarea sigue in_progress.
+Siguiente paso: medir PS/estado después de un combate y en el siguiente, curas, ronda de 14/PB, salida (5,70),
+exclusión y regresiones con la build nueva; registrar evidencia en reports/frontier.md §28.
