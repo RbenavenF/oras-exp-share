@@ -46,7 +46,7 @@
       "owner": "claude",
       "design": "reports/diseno/arena.md",
       "accept": "escalón A del diseño, con puerta (20,69) → interior → salida a (20,70), ruta 4 y PB de FRONTIER_BP['arena']; exclusión mutua; sin regresiones; probado en Azahar; tests en verde. El escalón B (motor) es otra tarea.",
-      "status": "pending",
+      "status": "in_progress",
       "notes": "",
       "evidence": ""
     },

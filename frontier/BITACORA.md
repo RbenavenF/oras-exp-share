@@ -1675,3 +1675,28 @@ pantalla; una ronda de 14 desde cero; Fábrica, Torre y Domo en juego con el CRO
 **Estado del laboratorio**: parado; `use_gdbstub` en `false` (y `\default=true`).
 Siguiente paso: la siguiente tarea de `frontier/orch/tasks.json` (F6-ARENA-A, Claude). Antes de publicar un paquete, un
 combate de la Fábrica con el CRO nuevo (rama de alquileres).
+
+## 2026-11-04 1x:xx — Claude Code (Opus 5.5) — F6-ARENA-A: Arena etapa A en código (frontier-orch)
+Estado: en curso
+Hecho:
+- **Zona 457 comprobada sin emulador** (`python frontier/zone_check.py 457` → `work/frontier/arena/zone_check.txt`;
+  contexto con `work/frontier/arena/ctx.py` → `ctx.txt`): máscara 0x243, sin warps de entrada; sus tres literales en
+  scripts son el **objeto** 457, no la zona: compartido 27 `0x21a0` y zona 276 `0x9c0` (`PUSH_P_C 457` →
+  `ItemGetNum`; el «next map change» de la 276 es el `JUMP` de su `if`), zona 14 `0x453c` (argumento de `@119c` junto
+  al objeto 724, mismo patrón). 31 palabras alineadas = 457 en código/CRO, orientativo.
+- **`frontier/arena.py`**: zona 457, ruta 4, works 16465/16466/16467, PB de `FRONTIER_BP['arena']`;
+  `tower.facility_program(retail, 'arena')` (flujo de la Torre y del Palacio: pantalla de modalidad y de equipo de la
+  Mansión, `SetRank(0)`, pausa, derrota y limpieza). Sin límite de turnos ni juicio (etapa B).
+- **Integración**: `island_build.ZONE_ARENA = 457` en `CLONES`, `KEEP_TEXT` y `DOORS['Arena']`. Warps de la isla en
+  orden de `FACILITIES`: Torre 0, Domo 1, Fábrica 2, Tubo 3, **Arena 4, Palacio 5** (antes 4); la salida de cada
+  interior se deriva (`door_warp`). `overlay.facility_scripts()` añade el 457. La exclusión ya cubre el 16466
+  (`factory.busy_check` sobre `patch.ACTIVE_WORK`).
+Evidencia: `python -m pytest -q tests` → 430 passed (`work/frontier/arena/tests1.log`; 32 nuevos en
+`tests/test_frontier_arena.py`, isla ampliada). Rotura a mano: `FACILITY = 'palace'` en `arena.py` → 26 de 32 fallan.
+Build `work/frontier/arena/build.log` (457 clonada con área 237). **No probado en Azahar todavía.**
+Commits: el de esta entrada.
+Decisiones: mismo patrón que el Palacio (pantalla de modalidad incluida). Sin texto propio «Arena Batalla»
+(desviación conocida, como Torre y Palacio).
+Siguiente paso: Azahar desde `work/frontier/lab/pa_strong.sav` (plaza, (20,59)): bajar a la puerta (20,69) → 457 →
+salida (20,70); guardar en 457; victorias; racha editada a 6 para el 7.º con PB 1; pausa, reanudación, derrota;
+rechazos cruzados.
