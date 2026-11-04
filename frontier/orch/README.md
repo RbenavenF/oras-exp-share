@@ -3,6 +3,7 @@
 Un supervisor que ejecuta las tareas de `tasks.json` con Claude Code y Codex en modo no interactivo, de una en una.
 
 ```bash
+tmux new -d -s frente 'frontier/orch/frontier-orch auto; read -p "[frontier-orch terminado] Enter para cerrar"'
 frontier/orch/frontier-orch status     # tareas, cuotas en espera, turno
 frontier/orch/frontier-orch auto       # trabaja hasta acabar, bloquearse o quedarse sin progreso
 frontier/orch/frontier-orch once       # una sola ejecución de un agente
@@ -18,7 +19,8 @@ Para pararlo: Ctrl+C. El turno de `REPARTO.md` se devuelve al salir. Si el super
 3. Se la da a su dueño si tiene cuota. Si no, al otro agente.
 4. **Si la tarea sigue abierta**, la reanuda en la misma sesión con «Continúa la tarea…», sin que nadie escriba nada.
 5. **Si un agente agota su cuota**:
-   - lo deja en espera `cooldown_minutes` (30);
+   - lo deja en espera hasta la hora que da el aviso, más 2 minutos (Claude: «resets 6:30am»; Codex: «try again at
+     10:04 AM»). Si el aviso no da hora, `cooldown_minutes` (30);
    - pasa la tarea al otro con un aviso de relevo: revisar `git status`/`git diff`, porque puede haber cambios a
      medias.
 6. **Si los dos están en espera**, duerme hasta que el primero vuelva.
@@ -27,7 +29,7 @@ Para pararlo: Ctrl+C. El turno de `REPARTO.md` se devuelve al salir. Si el super
 8. **Se detiene y te espera** si:
    - una tarea queda `blocked` (el agente pone su pregunta en `notes`);
    - hay `no_progress_limit` (2) ejecuciones seguidas sin ningún cambio en el repositorio;
-   - se llega a `max_runs` (40).
+   - se llega a `max_runs` (40) ejecuciones de agente. Las esperas no cuentan.
 9. **Tras cada ejecución**, `after_run` para cualquier laboratorio de Azahar que haya quedado abierto.
 10. **Si un agente pierde la sesión** («Failed to authenticate: OAuth session expired…», medido el 2026-11-03 a los 37
     minutos):
@@ -38,7 +40,8 @@ Para pararlo: Ctrl+C. El turno de `REPARTO.md` se devuelve al salir. Si el super
 Para seguir una ejecución en directo: `frontier/orch/frontier-orch status` (funciona con `auto` en marcha) da el
 registro actual; `tail -f` sobre él.
 
-Registros de cada ejecución en `work/orch/logs/`; estado (sesiones, esperas) en `work/orch/state.json`.
+Registros de cada ejecución en `work/orch/logs/`; lo que dice el propio supervisor, en `work/orch/orch.log` (sobrevive
+a la terminal); estado (sesiones, esperas) en `work/orch/state.json`.
 
 ## Permisos (decididos y medidos el 2026-11-03)
 

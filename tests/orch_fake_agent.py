@@ -46,6 +46,10 @@ if kind == 'claude':
         print(json.dumps({'type': 'result', 'is_error': True, 'api_error_status': None, 'session_id': sid,
                           'result': 'Failed to authenticate: OAuth session expired and could not be refreshed'}))
         sys.exit(1)
+    if action == 'limit_reset':     # the 5-hour limit as Claude Code printed it on 2026-11-04
+        print(json.dumps({'type': 'result', 'is_error': True, 'api_error_status': None, 'session_id': sid,
+                          'result': "You've hit your 5-hour limit · resets 6:30am (Europe/Madrid)"}))
+        sys.exit(1)
     if action == 'limit':
         print(json.dumps({'type': 'result', 'is_error': True, 'api_error_status': 429,
                           'result': "You've hit your usage limit", 'session_id': sid}))

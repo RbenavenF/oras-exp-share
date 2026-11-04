@@ -1402,3 +1402,35 @@ Las cuatro rondas y dos combatientes contrastados con pokeemerald 731ad5bf (fuen
 Siguiente paso: ganar el torneo en el laboratorio activo (shell persistente de esta sesión), probar
 pausa/recarga, derrotas, salida, exclusión y regresiones; tareas aún in_progress. El laboratorio
 se parará antes de terminar la sesión. No probado todavía lo enumerado como pendiente en §26.
+
+## 2026-11-04 10:xx — Claude Code — frontier-orch: noche sin vigilancia, F6-TORRE hecha, arreglo de esperas
+Estado: hecho (F6-DOMO sigue en curso)
+Hecho:
+- **Noche del 3 al 4 con `frontier-orch auto`** (25 ejecuciones de agente; registros en
+  `work/orch/logs/`):
+  - Claude estaba en su límite de 5 horas a las 23:34 y Codex heredó F6-TORRE; trabajó hasta
+    su propio límite (`2951a31`, `6576e48`).
+  - Claude volvió a la 1:35 y la terminó (`c8fbd29`). Aceptada con la suite. Las pruebas de
+    Azahar están en `reports/frontier.md` §25 y en `evidence` de `tasks.json`; incluyen la
+    racha por ruta de la Fábrica, que estaba pendiente.
+  - F6-DOMO: código (`2326b25`, Claude) y entrada, inscripción y 2 contra 2 en Azahar
+    (`0c8eb59`, Codex).
+  - A las 5:17 el supervisor salió solo. Con los dos agentes en espera, cada espera contaba
+    como ejecución y agotó `max_runs` (40). tmux se cerró con él y su último mensaje se
+    perdió.
+- **Arreglo**:
+  - las esperas no cuentan en `max_runs`;
+  - la espera dura hasta la hora que imprime el aviso (Claude «resets 6:30am», Codex «try
+    again at 10:04 AM»), más 2 minutos;
+  - el supervisor escribe su salida en `work/orch/orch.log`;
+  - el patrón de límite reconoce «hit your 5-hour limit» aunque no llegue el 429 (en las
+    ejecuciones reales llegó).
+Evidencia:
+- `tests/test_frontier_orch.py` (32); `python -m pytest -q tests` → 296 passed.
+- **Roturas a mano** (cada una falla su test):
+  - contar las esperas;
+  - ignorar la hora de reposición;
+  - quitar el patrón nuevo.
+Commits: el de esta entrada.
+**Estado del laboratorio**: parado. **Turno: libre.**
+Siguiente paso: relanzar `frontier-orch auto`. F6-DOMO, con aviso de relevo de Codex.

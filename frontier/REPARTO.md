@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-Claude Code, desde 2026-11-04 10:3x (arreglo del supervisor: esperas y hora de reposición)
+libre (último: Claude Code, 2026-11-04, arreglo del supervisor)
 
 ## Instalaciones
 

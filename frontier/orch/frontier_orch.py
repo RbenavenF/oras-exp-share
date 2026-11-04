@@ -26,27 +26,39 @@ import time
 import uuid
 from pathlib import Path
 
-LIMIT = re.compile(r'usage limit|rate.?limit|quota|limit reached|too many requests|\b429\b|out of credits'
+LIMIT = re.compile(r'usage limit|hit your .{0,20}limit|rate.?limit|quota|limit reached|too many requests|\b429\b'
+                   r'|out of credits'
                    r'|insufficient.{0,20}credit', re.I)
 AUTH = re.compile(r'failed to authenticate|oauth|not logged in|/login|log ?in again|unauthori[sz]ed|\b401\b'
                   r'|authentication (?:failed|required|error)|invalid api key', re.I)
+# The reset time the CLIs print with a usage limit (measured 2026-11-04): Claude «resets 6:30am (Europe/Madrid)»,
+# Codex «try again at 10:04 AM». Local time of this machine.
+RESET = re.compile(r'(?:resets|try again at)\s+(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\b', re.I)
 TURN = re.compile(r'(## Turno\n\n)(.*)\n')
 HOLDER = 'frontier-orch'
 
 
 class Orch:
-    def __init__(self, root, now=time.time, sleep=time.sleep, out=print):
+    def __init__(self, root, now=time.time, sleep=time.sleep, out=None):
         self.root = Path(root).resolve()
         self.cfg = json.loads((self.root / 'frontier/orch/config.json').read_text())
         self.tasks_path = self.root / 'frontier/orch/tasks.json'
         self.work = self.root / 'work/orch'
         self.state_path = self.work / 'state.json'
-        self.now, self.sleep, self.out = now, sleep, out
+        self.now, self.sleep = now, sleep
         self.work.mkdir(parents=True, exist_ok=True)
+        self.out = out or self.say
         self.state = json.loads(self.state_path.read_text()) if self.state_path.exists() else {}
         for key in ('sessions', 'cooldown', 'no_progress', 'handoff', 'needs_login'):
             self.state.setdefault(key, {})
         self.state.setdefault('runs', 0)
+
+    def say(self, line):
+        """Print and keep in work/orch/orch.log, which survives the terminal (tmux closes with the supervisor)."""
+        print(line, flush=True)
+        stamp = datetime.datetime.fromtimestamp(self.now()).strftime('%Y-%m-%d %H:%M:%S')
+        with (self.work / 'orch.log').open('a') as f:
+            f.write(f'{stamp} {line}\n')
 
     # ---- files ------------------------------------------------------------------------------------------------
     def save_state(self):
@@ -198,9 +210,11 @@ class Orch:
                 reason = 'sesión caducada o sin login: ' + result['message'][:200]
                 self.out(f'  {agent} is not logged in ({result["message"][:120]}); run its login, then auto again')
             else:
-                self.state['cooldown'][agent] = self.now() + self.cfg['cooldown_minutes'] * 60
+                until = reset_time(result['message'], self.now())
+                self.state['cooldown'][agent] = until or self.now() + self.cfg['cooldown_minutes'] * 60
                 reason = 'límite de uso: ' + result['message'][:200]
-                self.out(f'  {agent} hit a usage limit; cooled down {self.cfg["cooldown_minutes"]} min')
+                self.out(f'  {agent} hit a usage limit; back at {time.ctime(self.state["cooldown"][agent])}'
+                         + ('' if until else ' (no reset time given: the default cooldown)'))
             self.state['handoff'][task['id']] = {'from': agent, 'reason': reason}
             self.save_state()
             return 'ran'
@@ -248,8 +262,10 @@ class Orch:
         self.state['needs_login'] = {}
         self.take_turn()
         try:
-            for _ in range(max_runs):
+            runs = 0
+            while runs < max_runs:      # agent runs; waiting for a cooldown does not count
                 outcome = self.step()
+                runs += outcome == 'ran'
                 if outcome in ('done', 'stop'):
                     self.out('all tasks done' if outcome == 'done' else 'stopped: needs the user')
                     return outcome
@@ -261,11 +277,28 @@ class Orch:
                     wake = min(timed)
                     self.out(f'  no agent available; waiting until {time.ctime(wake)}')
                     self.sleep(max(60, wake - self.now()))
-            self.out(f'stopped after {max_runs} runs (max_runs)')
+            if self.next_task() is None:
+                self.out('all tasks done')
+                return 'done'
+            self.out(f'stopped after {max_runs} agent runs (max_runs)')
             return 'max'
         finally:
             self.save_state()
             self.release_turn()
+
+
+def reset_time(message, now):
+    """The epoch at which a usage limit with a printed reset time ends (+2 min), or None. The next such clock time
+    after `now`, local time."""
+    m = RESET.search(message)
+    if not m:
+        return None
+    hour, minute = int(m.group(1)) % 12 + (12 if m.group(3).lower() == 'p' else 0), int(m.group(2) or 0)
+    base = datetime.datetime.fromtimestamp(now)
+    at = base.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    if at <= base:
+        at += datetime.timedelta(days=1)
+    return at.timestamp() + 120
 
 
 def parse(kind, stdout, stderr, code):

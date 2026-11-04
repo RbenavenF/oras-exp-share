@@ -120,6 +120,28 @@ def test_the_run_log_is_written_while_the_agent_works(repo):
     assert '--- output' in text and '"session_id"' in text and '--- exit 0' in text
 
 
+def test_waiting_for_a_cooldown_does_not_use_up_max_runs(repo):
+    """2026-11-04: both agents were limited at 05:17 and the waits used up max_runs=40 by 25 agent runs; the
+    supervisor exited (and tmux with it). Four agent runs fit in max_runs=4 whatever the waits."""
+    outcome, calls, *_ = run(repo, [['claude', 'limit'], ['codex', 'limit'], ['claude', 'done'], ['codex', 'done']],
+                             max_runs=4)
+    assert outcome == 'done' and len(calls) == 4
+
+
+def test_a_printed_reset_time_sets_the_cooldown(repo):
+    outcome, calls, tasks, orch, log = run(repo, [['claude', 'limit_reset'], ['codex', 'done'], ['codex', 'done']])
+    expected = fo.reset_time('resets 6:30am', 1_000_000.0)
+    assert orch.state['cooldown']['claude'] == expected
+    assert any('back at' in line for line in log)
+
+
+def test_the_supervisor_keeps_its_own_log(repo, tmp_path):
+    clock = Clock()
+    orch = fo.Orch(repo, now=clock.now, sleep=clock.sleep)
+    orch.say('hello there')
+    assert (repo / 'work/orch/orch.log').read_text().endswith('hello there\n')
+
+
 def test_failed_acceptance_reopens_the_task(repo):
     cfg = json.loads((repo / 'frontier/orch/config.json').read_text())
     cfg['acceptance'] = [['false']]
@@ -185,3 +207,22 @@ def test_parse_reads_the_result_of_a_stream_json_run():
                      json.dumps({'type': 'result', 'is_error': False, 'result': 'ok', 'session_id': 's'})])
     assert fo.parse('claude', out, '', 0) == {'session': 's', 'error': False, 'limited': False, 'auth': False,
                                                'message': 'ok'}
+
+
+@pytest.mark.parametrize('message, now, expect', [
+    ("You've hit your 5-hour limit · resets 6:30am (Europe/Madrid)", (5, 0), (0, 6, 32)),
+    ('You\u2019ve hit your usage limit. ... or try again at 10:04 AM.', (5, 17), (0, 10, 6)),
+    ("You've hit your 5-hour limit · resets 1am (Europe/Madrid)", (23, 40), (1, 1, 2)),
+    ('resets 11:50pm', (23, 55), (1, 23, 52)),
+    ("You've hit your usage limit", (5, 0), None),
+])
+def test_reset_time_from_the_limit_message(message, now, expect):
+    import datetime
+    base = datetime.datetime(2026, 11, 4, *now)
+    got = fo.reset_time(message, base.timestamp())
+    if expect is None:
+        assert got is None
+    else:
+        days, hour, minute = expect
+        assert datetime.datetime.fromtimestamp(got) == (base.replace(hour=hour, minute=minute)
+                                                        + datetime.timedelta(days=days))
