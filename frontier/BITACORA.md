@@ -1477,3 +1477,20 @@ Decisiones: dc_loss1.sav era una captura prematura y no es evidencia de derrota;
 Se recarga ahora la pausa real dc_paused3.sav para ganar la final.
 Siguiente paso: final ganada y PB; exclusión inversa, regresiones de Fábrica/Torre; parar laboratorio,
 completar evidence/status de la tarea solo si todo pasa. Tarea in_progress.
+
+## 2026-11-04 1x:xx — Claude Code (Opus 5.5) — F6-DOMO: final ganada con PB, exclusión inversa, Fábrica sin regresión; hecha
+Estado: hecho
+Hecho:
+- **Relevo revisado**: árbol limpio tras Codex (`f5f3b65`), solo los cinco archivos ajenos sin seguimiento; el código del
+  Domo no cambió desde `2326b25` (solo el supervisor). Nada a medias.
+- Azahar (build repetida): desde `dc_paused3.sav`, final ganada; `df_paused6.sav` con racha/activo/récord 6/1/6, PB 0 → 1
+  (solo la final), Mansión 20/20. Salida a (6,57). Torre se niega con el Domo pausado; Domo se niega con la Fábrica
+  pausada; la Fábrica reanuda por su warp 2 y combate con alquileres (GDB: rama de alquileres con 3, rival de 3).
+  Detalle y hashes en `reports/frontier.md` §26.
+Evidencia: capturas `work/frontier/lab/df_*`; `df_paused6.sav` `959b7fa8…`; `python -m pytest -q tests` → 296 passed
+(`work/frontier/dome/tests-final.log`).
+Commits: el de esta entrada (tarea F6-DOMO `done` en `frontier/orch/tasks.json`).
+Decisiones: la línea del campeón no se fotografió (pulsaciones de más); se da por buena la rama por el PB del guardado.
+Sin probar: consola; jefe de la Mansión en la racha del Domo; reinicio sin guardar en 456.
+**Estado del laboratorio**: parado; `use_gdbstub` en `false`.
+Siguiente paso: la siguiente tarea de `frontier/orch/tasks.json` (F6-PALACIO-A, Claude).

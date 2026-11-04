@@ -16,9 +16,9 @@
       "owner": "codex",
       "design": "reports/diseno/domo.md",
       "accept": "lo que pide la v1 de reports/diseno/domo.md, con su puerta (6,56) → interior → salida a (6,57); exclusión mutua respetada; Fábrica y Torre sin regresiones; probado en Azahar lo que el diseño marca; tests en verde.",
-      "status": "in_progress",
+      "status": "done",
       "notes": "",
-      "evidence": ""
+      "evidence": "Commits 2326b25 (código, Claude), 0c8eb59, b1a2b48, 85743ba, f5f3b65 (Codex, Azahar) y el de cierre (Claude). Azahar (reports/frontier.md §26): puerta (6,56)->456->salida (6,57); inscripción con CallPokeSelect y rechazo de repetidos; vista previa de los 3 del rival y 2 de 3 por mote; GDB: jugador count=2 con los huecos elegidos, rival r6=2 con 2 de los 3 anunciados; rondas 1-4 con su nombre y final ganada con PB 0->1 solo en la final (df_paused6.sav, racha/récord 6/6 por la ruta 5, Mansión 20/20); pausa y reanudación con equipo cambiado (dc_paused3.sav); derrotas en ronda 1 y final (dc_loss1_done.sav, dc_loss_final.sav) con equipo y Mansión intactos; exclusión: Fábrica rechazada con Domo pausado, Torre rechazada con Domo pausado, Domo rechazado con Fábrica pausada; Fábrica reanuda por su warp 2 y combate con alquileres (rama de alquileres 3, rival 3). pytest: 296 passed."
     },
     {
       "id": "F6-PALACIO-A",

@@ -1364,3 +1364,24 @@ resuelve la rama `IsWin = false`, no se forzó el resultado por GDB):
   `compare-loss1.json`). También se valida que puede iniciarse un nuevo desafío tras la derrota.
 - `dc_loss1.sav` fue una captura prematura mientras el combate seguía en curso: es idéntica
   a `dc_before_loss1.sav`; la evidencia de la derrota es **dc_loss1_done.sav**.
+
+**Final ganada, exclusión inversa y regresión de la Fábrica** (Azahar, Claude, 2026-11-04; build de
+`2326b25` repetida, `work/frontier/dome/build-final.log`; capturas `work/frontier/lab/df_*`):
+- Desde `dc_paused3.sav`: recepción, inscripción 0,1,2, «racha … asciende a 3», «¡Final del torneo!»
+  (`df_step8.png`), vista previa Froakie/Boldore/Poliwag (`df_step10.png`), dos contra dos (en la pantalla de
+  cambio solo hay dos miembros, `df_battle_d.png`) y final ganada. Las pulsaciones de A eligieron «Continuar»
+  dos veces, así que la línea del campeón no se capturó; se ganaron además las rondas 1 y 2 del torneo siguiente
+  («¡Segunda ronda del torneo!», `df_battle_h.png`) y se pausó tras el combate 6 (`df_b5.png`).
+- `df_paused6.sav`, SHA256 `959b7fa88a9d06e03b029cac5b9e2c39fb5b91611b127d5c0e4c9d14e2ff93ff`: zona 456,
+  racha/activo/récord **6/1/6**, ruta 5, **PB 0 → 1** (solo el de la final: `FRONTIER_BP['dome'][0]` = 1; los
+  combates 5 y 6 no dan PB), Mansión **20/20**, Fábrica y Torre a cero.
+- Salida de 456 a **(6,57)** otra vez; con el Domo pausado, la Torre (puerta (19,46) → 329) se niega con el texto
+  de exclusión (`df_tower_refused.png`).
+- Con la Fábrica pausada (`f6t_factory_paused2.sav`, 16489 = 31), el Domo se niega (`df_dome_refused.png`). Después,
+  por la puerta de la Fábrica (warp 2) y «Fábrica Batalla»: reanuda sin sorteo; GDB en `0x1e3ddc` (rama de
+  alquileres de `rental_hook`) con `r0` = 3 y `work+0x48` = 3, y en `0x1e3568` el rival de **3** (ruta 1); combate
+  con el alquiler Latias (`df_factory_battle.png`). Los cambios de `rental_hook`/`rival_hook` no alteran la Fábrica.
+- Suite: `python -m pytest -q tests` → 296 passed (`work/frontier/dome/tests-final.log`).
+
+**Sin probar**: consola; la línea «¡Has ganado el torneo!» en pantalla (la rama sí: PB 1 en el guardado); el jefe
+de la Mansión en la racha del Domo; reinicio sin guardar dentro de 456.
