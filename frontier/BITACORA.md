@@ -1450,3 +1450,17 @@ cambiado y bloque de Mansión 20/20 como fixture; generador resume_fixture.py). 
 sesión anterior no terminó. El laboratorio anterior estaba parado; se abre uno nuevo en shell persistente.
 Siguiente paso: completar rondas 2–4, guardar pausa antes de la final para probar también derrota;
 validar derrota en primera ronda, equipo, Mansión 20/20, exclusión inversa y regresiones de Fábrica/Torre.
+
+## 2026-11-04 10:44 — Codex — F6-DOMO: reanudación con equipo cambiado y pausa antes de la final
+Estado: en curso
+Hecho: recargado en 456 dc_resume_changed.sav, inscrito 1,2,0 y elegidos 1,0; GDB y guardado
+confirman el orden nuevo. Ganadas las rondas 2 y 3; guardada una pausa real antes de la final.
+Evidencia: dc_paused3.sav SHA256 b86d33b81ade525f63844b3af0d1ca79d53d54b84ba89c9187c6898510cc500a,
+racha/activo/récord 3/1/3, PB 0, Mansión 20/20. compare-rounds23.json: bloques de equipo y Mansión
+idénticos al fixture. GDB cuenta dos por bando en ambos combates. Capturas de_* y §26 del informe.
+Suite de esta sesión sin cambios de código posteriores: 296 passed (tests-relevo.log).
+Commits: b1a2b48; el de esta entrada.
+Decisiones: bifurcar las pruebas desde la pausa 3 para probar derrota y victoria en la final sin
+editar la racha. Laboratorio activo durante la sesión; se parará al terminar.
+Siguiente paso: reanudar, perder la final, guardar/comparar; recargar dc_paused3.sav y ganarla para
+validar PB. Después primera derrota, exclusión inversa y regresiones de Fábrica/Torre. Tarea in_progress.

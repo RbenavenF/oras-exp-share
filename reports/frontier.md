@@ -1337,3 +1337,17 @@ con esta build; fixture de Mansión 20/20. Nada de esto se considera aceptado to
 - `dc_resumed_registered.sav` es una copia del guardado del laboratorio durante la
   reanudación: conserva el equipo y los works anteriores de la pausa. No demuestra por sí
   sola que se guardara la nueva inscripción; no usarla como evidencia de esa escritura.
+
+**Reanudación y semifinal, Codex 10:36–10:44**:
+- Suite tras el relevo: **296 passed**, `work/frontier/dome/tests-relevo.log` (10,42 s).
+- Recargado `dc_resume_changed.sav` en 456; inscripción nueva **1,2,0** y combatientes **1,0**,
+  confirmados en GDB y después en el guardado. Menú con el orden inscrito: `de_choose_first.png`.
+  No hay índices obsoletos tras permutar el equipo durante la pausa.
+- Rondas 2 y 3 ganadas en Azahar. Rivales medidos: N119/N75 de 75,115,119 y N95/N99 de
+  85,99,95; jugador count=2 slots=1,0; `gdb-teams.log`, `de_preview2_actual.png`, `de_preview3.png`.
+  `de_won2.png` y `de_won3.png` anuncian los combates 3 y 4.
+- Pausa real antes de la final: `dc_paused3.sav`, SHA256
+  `b86d33b81ade525f63844b3af0d1ca79d53d54b84ba89c9187c6898510cc500a`;
+  racha/activo/récord = **3/1/3**, PB **0**, Mansión **20/20**, Fábrica y Torre a cero.
+  El bloque completo del equipo **y** el bloque de Mansión son idénticos a los del fixture
+  de reanudación (`work/frontier/dome/compare-rounds23.json`, checksums validados).
