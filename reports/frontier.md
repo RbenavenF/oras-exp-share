@@ -1318,3 +1318,22 @@ Pruebas de Codex, build completa desde `2326b25`:
 Pendiente de probar: torneo completo y PB, derrotas en primera ronda y final, pausa/recarga,
 cambio del equipo durante pausa, salida, exclusión en Azahar y regresión de Fábrica/Torre
 con esta build; fixture de Mansión 20/20. Nada de esto se considera aceptado todavía.
+
+**Pruebas adicionales recuperadas del corte de cuota de las 05:17**:
+- Primera victoria y descanso: `dc_paused1.sav`, SHA256
+  `9b741a581ac2e0cb1f4c3d83a33e5850ca1f721c534814f282dadb5972c4801b`, racha/activo/récord
+  1/1/1, PB 0. `dc_round1end.png` anuncia el combate 2. En el equipo solo cambian los PS
+  actuales de dos Pokémon curados (PK6 +0xF0); todos los demás bytes descifrados son idénticos
+  (`work/frontier/dome/compare-round1.json`).
+- Salida del Domo medida con `walk.sh`: (6,57), `dc_exit.png` y `gdb-teams.log`.
+  Caminando desde allí se entra en la Fábrica con su nuevo warp 2 (`dc_factory_hall.png`).
+  Elegir Fábrica Batalla rechaza el desafío porque el Domo sigue pausado (`dc_factory_refused.png`).
+- Se recargó en 456 una copia de la pausa con el orden del equipo permutado 2,0,1 y el
+  bloque de Mansión copiado de `main-maison-maison20`: `dc_resume_changed.sav`, SHA256
+  `9340d4110694394aa4e1cdcbd22ad863ad72b6b02354f1728936764547044371`;
+  generador `work/frontier/dome/resume_fixture.py`. No se editó la racha del Domo.
+  La ronda 2 comenzó: GDB mide count=2, slots=0,2, racha 1, rival N109/N110 de 110,109,67;
+  `dc_first2.png`, `dc_second2.png`, `dc_fight2.png`. La victoria de esa ronda **no se completó**.
+- `dc_resumed_registered.sav` es una copia del guardado del laboratorio durante la
+  reanudación: conserva el equipo y los works anteriores de la pausa. No demuestra por sí
+  sola que se guardara la nueva inscripción; no usarla como evidencia de esa escritura.

@@ -1434,3 +1434,19 @@ Evidencia:
 Commits: el de esta entrada.
 **Estado del laboratorio**: parado. **Turno: libre.**
 Siguiente paso: relanzar `frontier-orch auto`. F6-DOMO, con aviso de relevo de Codex.
+
+## 2026-11-04 10:37 — Codex — F6-DOMO: recuperación tras el segundo corte de cuota
+Estado: en curso
+Hecho: revisados status/diff y último commit 0a18607 (turno del orquestador). Árbol versionado limpio;
+solo cinco archivos ajenos sin seguimiento. Los commits posteriores a 0c8eb59 arreglan el supervisor,
+no el Domo. No hay cambios de código a medias que revertir. Recuperadas y documentadas en §26 la
+victoria 1, pausa 1/1/1 sin PB, salida a (6,57), entrada en Fábrica por warp 2 y rechazo por Domo pausado.
+Evidencia: dc_paused1.sav SHA256 9b741a581ac2e0cb1f4c3d83a33e5850ca1f721c534814f282dadb5972c4801b;
+work/frontier/dome/save-evidence.jsonl, compare-round1.json, gdb-teams.log; capturas dc_exit,
+dc_factory_refused y dc_fight2. Suite actual: 296 passed (tests-relevo.log).
+Commits: 0c8eb59; el de esta entrada (recuperación documental).
+Decisiones: continuar desde dc_resume_changed.sav (pausa real tras una victoria, orden del equipo
+cambiado y bloque de Mansión 20/20 como fixture; generador resume_fixture.py). La ronda 2 de la
+sesión anterior no terminó. El laboratorio anterior estaba parado; se abre uno nuevo en shell persistente.
+Siguiente paso: completar rondas 2–4, guardar pausa antes de la final para probar también derrota;
+validar derrota en primera ronda, equipo, Mansión 20/20, exclusión inversa y regresiones de Fábrica/Torre.
