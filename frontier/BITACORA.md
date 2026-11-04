@@ -1522,3 +1522,26 @@ selector rechaza a todos (§25). Sin línea de texto «Palacio Batalla» (la Tor
 Siguiente paso: build (`python frontier/overlay.py --out work/frontier/build --romfs work/faraway/dev/overlay/romfs`)
 y en Azahar: puerta (31,69) → 340 → (31,70); guardar/cargar en 340; ronda de 7 con PB 4; pausa, reanudación,
 derrota; rechazos cruzados; Fábrica/Torre sin regresión.
+
+## 2026-11-04 11:5x — Claude Code (Opus 5.5) — F6-PALACIO-A: Palacio etapa A probado en Azahar; hecha
+Estado: hecho
+Hecho:
+- Build completa (`work/frontier/palace/build.log`): 340 clonada de 517 con área 235, texto 619, lugar 279.
+- Azahar (detalle, capturas y hashes en `reports/frontier.md` §27): puerta (31,69) → 340 → salida (31,70); menú sin
+  Fábrica; modalidad y 3 Pokémon propios; guardado en 340 con ruta 3; victorias 1–2 desde cero y pausa 2/1/2 sin PB;
+  desde la racha 6 editada, combate 7 con «4 PB» y pausa 7/1/7 (PB 4); reanudación y derrota en el 8: 0/0/7. Mansión a
+  cero y Torre/Fábrica/Domo sin tocar en todas las partidas. Exclusión: la Fábrica se niega con el Palacio pausado; el
+  Palacio se niega con la Torre pausada; la Torre, en la misma build, reanuda leyendo su racha (ruta 2).
+- REPARTO: fila del Palacio actualizada. `frontier/orch/tasks.json`: F6-PALACIO-A `done` con su evidencia.
+Evidencia: partidas `work/frontier/lab/pa_*.sav` (`save-evidence.jsonl`), capturas `work/frontier/lab/pa_*.png` y
+`work/frontier/palace/r7/`, `loss/`; registros `work/frontier/palace/lab1.log`–`lab3.log`; `python -m pytest -q tests`
+→ 326 passed (`work/frontier/palace/tests-final.log`).
+Commits: 5473973 (código) y el de esta entrada.
+Decisiones: las pruebas siguen el patrón de la Torre (racha editada para llegar al 7.º combate). El texto sigue siendo
+el de la Mansión («Mansión Batalla»); una línea propia del Palacio queda para cuando haya textos por instalación.
+Sin probar: consola; ronda de 7 entera desde cero; jefe de la Mansión en la racha del Palacio; reinicio sin guardar en
+340; el Domo rechazando con el Palacio pausado en el juego (sí en la suite).
+**Estado del laboratorio**: parado; `use_gdbstub` en `false`.
+Siguiente paso: la siguiente tarea de `frontier/orch/tasks.json` (F6-TUBO, Codex). Para la Arena etapa A (Claude):
+`tower.facility_program(retail, 'arena')` con su zona (457, verificar con `zone_check.py`) y su puerta (20,69); las
+etapas B (motor) de Palacio y Arena, cuando se creen como tareas, empiezan por las mediciones M1–M4 de `palacio.md` §4.

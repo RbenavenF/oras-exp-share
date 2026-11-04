@@ -26,9 +26,9 @@
       "owner": "claude",
       "design": "reports/diseno/palacio.md",
       "accept": "etapa A del diseño, con puerta (31,69) → interior → salida a (31,70), ruta 3 y PB de FRONTIER_BP['palace']; exclusión mutua; sin regresiones; probado en Azahar; tests en verde. La etapa B (motor) es otra tarea.",
-      "status": "pending",
+      "status": "done",
       "notes": "",
-      "evidence": ""
+      "evidence": "Commits 5473973 (código: frontier/palace.py, tower.py generalizado con el script de la Torre idéntico, zona 340 en island_build/overlay, tests/test_frontier_palace.py) y el de cierre. Zona 340 comprobada con frontier/zone_check.py. Azahar (reports/frontier.md §27): puerta (31,69)->340->salida (31,70); menú sin Fábrica; modalidad y 3 propios; guardado en 340 con ruta 3 (pa_saved_340.sav); victorias 1-2 y pausa 2/1/2 sin PB (pa_paused2.sav); reanudación desde 6, combate 7 con 4 PB = FRONTIER_BP['palace'][0] y pausa 7/1/7 (pa_paused7.sav); derrota 0/0/7 (pa_after_loss.sav); Mansión a cero en todas; Fábrica rechaza con Palacio pausado, Palacio rechaza con Torre pausada, Torre reanuda por ruta 2. pytest: 326 passed."
     },
     {
       "id": "F6-TUBO",

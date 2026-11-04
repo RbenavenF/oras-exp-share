@@ -1385,3 +1385,45 @@ resuelve la rama `IsWin = false`, no se forzó el resultado por GDB):
 
 **Sin probar**: consola; la línea «¡Has ganado el torneo!» en pantalla (la rama sí: PB 1 en el guardado); el jefe
 de la Mansión en la racha del Domo; reinicio sin guardar dentro de 456.
+
+## 27. F6-PALACIO-A: Palacio etapa A (2026-11-04)
+
+Implementación en `frontier/palace.py` sobre el flujo de la Torre, generalizado en `frontier/tower.py`
+(`facility_program(retail, facility)`; el script de la Torre sale idéntico byte a byte al anterior). Zona 340 (clon de
+517, área nueva 235, texto 619, lugar 279), ruta 3, works 16461/16462/16463 (racha, desafío a medias, récord), PB de
+`data.FRONTIER_BP['palace']` tras cada 7.º combate. Puerta de la isla: warp 3 (`island_build.DOORS['Palace']`, último
+en `FACILITIES`). El jugador da las órdenes: la mecánica propia del Palacio (la naturaleza elige) es la etapa B.
+
+**Zona 340, comprobaciones de §18** (`python frontier/zone_check.py 340` → `work/frontier/palace/zone_check.txt`;
+contexto con `work/frontier/palace/ctx.py`, `ctx2.py`): máscara 0x243, sin warps de entrada. Los cinco literales 340
+no son zonas: compartido 57 `0xD10` (tabla de `@77C`, objeto y flags, como el 329); zonas 214 `0x1700`, 244 `0x198C` y
+316 `0x14C8` (argumento de rutinas que empiezan con `MdlAcmdInit`, animación de modelo); zona 444 `0x23BC` (`@30`:
+`FlagSet` 1740 + N, entrenador). 58 palabras alineadas = 340 en código/CRO (209: 48; 213: 45), orientativo.
+
+**Azahar (build `python frontier/overlay.py --out work/frontier/build --romfs work/faraway/dev/overlay/romfs`,
+`work/frontier/palace/build.log`; partidas en `work/frontier/lab/pa_*`, hechos en
+`work/frontier/palace/save-evidence.jsonl` con `work/frontier/palace/snapshot.py`)**:
+- Desde `pa_strong.sav` (plaza, equipo fuerte de `frontier/lab_tower.py`): (31,70) → puerta (31,69) → interior
+  (20,31) de una sala de la Mansión (`pa_palace_hall.png`). Menú sin «Fábrica Batalla» (`pa_palace_menu.png`).
+- Combatir → modalidad (Individual) → selección de 3 **propios** (`pa_party_select.png`) → guardar. La partida
+  guardada (`pa_saved_340.sav`, SHA256 `1a6d7b4f…`): zona 340, ruta 3, Palacio 0/1/0.
+- Combates 1 y 2 ganados a nivel 50; «El próximo combate será el número 3» (`pa_next3.png`); Pausar. Partida
+  `pa_paused2.sav` (`463cb5a9…`): zona 340, ruta 3, **Palacio 2/1/2**, Torre/Fábrica/Domo 0, Mansión 0x1BBC0 a cero,
+  PB 0 (sin PB en los combates 1–6).
+- Salida del 340 a **(31,70)** (`pa_exit.png`). Con el Palacio pausado, «Fábrica Batalla» en 213 se niega
+  (`pa_factory_refused.png`).
+- Desde `pa_streak6.sav` (racha editada 6/1/6, como en la Torre): reanudación («Prosigamos…»), combate 7 ganado,
+  «**Ruben ha obtenido 4 PB**» (`pa_bp4.png`, `FRONTIER_BP['palace'][0]`), «el número 8» (`pa_next8.png`); pausa
+  `pa_paused7.sav` (`012e718b…`): **7/1/7, PB 4**, Mansión a cero. Equipo frente a `pa_streak6.sav`: solo cambia el
+  +0xF0 del PK6 (PS actuales) de dos Pokémon.
+- Reanudación («Tu racha … asciende a 7», `pa_resume_streak7.png`), combate 8 y «Huir» → abandonar. Partida de la
+  derrota `pa_after_loss.sav` (`0521f47c…`): **0/0/7** (récord conservado), PB 4, Mansión a cero; la ruta queda en 3
+  hasta la siguiente recepción (limitación de §15).
+- Desde `pa_tower_paused.sav` (Torre 3/1/3): «Combatir» en 340 → «Tienes un desafío a medias…» y vuelve al menú
+  (`pa_palace_refused.png`). La Torre, en la misma build, acepta su desafío y lee su racha 3 por la ruta 2
+  (`pa_tower_resume3.png`).
+- Suite: `python -m pytest -q tests` → 326 passed (`work/frontier/palace/tests-final.log`).
+
+**Sin probar**: consola; una ronda de 7 entera empezada desde cero (las victorias 1–2 desde cero y la 7 desde la racha
+editada); el jefe de la Mansión en la racha del Palacio; reinicio sin guardar en 340; el Domo rechazando con el Palacio
+pausado (cubierto por la suite, `busy_check`). Textos y reglas de equipo de la Mansión.

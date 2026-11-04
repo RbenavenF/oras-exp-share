@@ -45,7 +45,7 @@ Decisiones del usuario (2026-11-03):
 | --- | --- | --- | --- | --- | --- |
 | Fábrica | Claude Code | hecha en la sala 213 (§19–§22) | 213 (clon de 517) | PLAN §1–§5 | — |
 | Torre | Claude Code | diseño | 329 (clon de 517) | `torre.md` | baja-media, ~3 sesiones |
-| Palacio | Claude Code | etapa A en código (`frontier/palace.py`, Torre generalizada), Azahar en curso | 340 (clon de 517, comprobada como §18 sin emulador) | `palacio.md` | A: baja-media, 1; B (IA): alta |
+| Palacio | Claude Code | etapa A hecha en la sala 340 (`frontier/palace.py`, Azahar §27); etapa B (motor) pendiente | 340 (clon de 517, comprobada como §18 sin emulador y en Azahar) | `palacio.md` | A: baja-media, 1; B (IA): alta |
 | Arena | Claude Code | diseño | 457 (clon de 517) | `arena.md` | A: media, 1–2; B (3 turnos): alta |
 | Domo | Codex | v1 en código (`frontier/dome.py`, `asm/dome.s`), Azahar en curso | 456 (clon de 517, comprobada como §18 sin emulador) | `domo.md` | media-alta, ~4 |
 | Tubo | Codex | diseño | 379 vestíbulo, 380 sala (clones de 397) | `tubo.md` | media-alta, 4–6 |
