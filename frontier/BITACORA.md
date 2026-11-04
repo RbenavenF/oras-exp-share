@@ -1545,3 +1545,40 @@ Sin probar: consola; ronda de 7 entera desde cero; jefe de la Mansión en la rac
 Siguiente paso: la siguiente tarea de `frontier/orch/tasks.json` (F6-TUBO, Codex). Para la Arena etapa A (Claude):
 `tower.facility_program(retail, 'arena')` con su zona (457, verificar con `zone_check.py`) y su puerta (20,69); las
 etapas B (motor) de Palacio y Arena, cuando se creen como tareas, empiezan por las mediciones M1–M4 de `palacio.md` §4.
+
+## 2026-11-04 15:xx — Claude Code (Opus 5.5) — F6-TUBO: medidas y plan (frontier-orch; relevo de mi propia sesión cortada)
+Estado: en curso
+Hecho:
+- **Relevo**: la sesión anterior (Claude) se cortó por límite de uso sin cambios en el árbol (solo `tasks.json` en
+  `in_progress`, del orquestador, y los cinco archivos ajenos sin seguimiento). Solo había medido; lo recojo aquí.
+- **Medido en `code.bin` (Repolished; `frontier/disasm_code.py`, `work/frontier/pike/getparam.py`)**:
+  - `StartBattle` → `0x1e30b8`: crea el `PokeParty` temporal (r5), lo rellena con `bl 0x1e3d2c` en **`0x1e3110`**
+    (`r3` = el party) y después el montaje Individual `0x1e0634` lo **copia** (`0x3b6428`) en el parámetro de combate:
+    `work+0x620+0x4c` = equipo del jugador, `+0x50` = rival. El temporal se destruye en `0x1e32c8`.
+  - `PokeParty`: punteros a miembros en `+0`…`+0x14`, número (u8) en `+0x18` (`0x3b5d34`, `0x3b6150`).
+  - `0x3b5d34` (`PARTY_PREPARE` de `rental.s`) es **`PokePartyRecoverAll`** (nativa `DllField.cro 0x4f868`): la
+    Mansión cura el equipo real antes de copiarlo. Por miembro, `0x139c00` (RecoverAll) sobre `core = [param+0xc]`.
+  - Accesores del bloque de combate (`[core+4]`; descifrado `0x168ec0`, cifrado `0x168e50`): `GET_HP 0x153174`
+    (+8), `GET_MAX_HP 0x153254` (+0xa), `SET_HP 0x14f450(core, hp)`, `SET_SICK 0x14f814(core, v)` (+0, u32),
+    `GET_SICK 0x4d22e4` (+0). Corresponde al PK6 +0xE8 (estado), +0xF0 (PS), +0xF2 (PS máx.).
+  - `PokePartySetParam` no tiene PS ni estado (solo IV, amistad, EV…): hacen falta ganchos ARM.
+  - `IsWin` = `0x1e5664` (`ldrb r0,[r0,#0x73c]`, 4 instrucciones, hoja).
+- **Zona**: 379 descartada (la zona 159 la empuja antes de un cambio de mapa, `0xb08`); 341–350 tienen warps de
+  entrada (zonas 19/20). **458**: sin warps de entrada, 0 operandos en scripts, máscara 0x243
+  (`work/frontier/pike/zone_check.txt`).
+Decisiones (plan de la v1, desviaciones del diseño a documentar):
+- **Una sola zona, clon de 517 (458)**, como Torre/Palacio, en vez de vestíbulo + sala clonados de 397: las salas son
+  un bucle de script antes de cada combate con menú de 3 puertas (izquierda, centro, derecha) y una pista con su
+  posición. Evita la geometría nueva, los disparadores y el cambio de mapa a la misma zona (riesgos del diseño §6).
+- Equipo: pantalla de modalidad + selección de la Mansión (flujo de la Torre); ruta 6.
+- Ganchos: H1 sustituye el `bl 0x1e3d2c` de `0x1e3110`: tras montar el temporal, con la ruta 6 aplica PS (0xFFFF =
+  lleno, tope PS máx.) y estado guardados por posición. H2 en `IsWin`: con la ruta 6 copia PS y estado de
+  `[work+0x66c]` a los works (**hipótesis por medir con gdb**: que ese equipo siga vivo y con el daño al leer
+  `IsWin`, y la codificación del estado).
+- Works propuestos: PS 16661–16663, estado 16669–16671, racha para el hijo 16673, generador 16674; texto 637 desde
+  la línea 1014; GlobalCall 9776.
+- Combate duro = `SetRank(1)` para ese combate (Súper), `SetRank(0)` tras `StartBattle`; la sala 14 siempre es combate
+  (así el PB va por la rutina de la Mansión, 14 salas por ronda).
+Evidencia: comandos y salidas arriba; nada ejecutado en Azahar.
+Commits: el de esta entrada.
+Siguiente paso: `frontier/pike.py` + `frontier/asm/pike.s` + tests; luego gdb (H2 y estado) en Azahar.

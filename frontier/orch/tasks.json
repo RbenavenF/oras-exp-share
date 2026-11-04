@@ -36,7 +36,7 @@
       "owner": "codex",
       "design": "reports/diseno/tubo.md",
       "accept": "v1 del diseño con las decisiones del usuario de REPARTO.md, puerta (5,69) → vestíbulo → salida a (5,70); exclusión mutua; sin regresiones; probado en Azahar; tests en verde.",
-      "status": "pending",
+      "status": "in_progress",
       "notes": "",
       "evidence": ""
     },
