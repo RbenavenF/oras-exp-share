@@ -1464,3 +1464,16 @@ Decisiones: bifurcar las pruebas desde la pausa 3 para probar derrota y victoria
 editar la racha. Laboratorio activo durante la sesión; se parará al terminar.
 Siguiente paso: reanudar, perder la final, guardar/comparar; recargar dc_paused3.sav y ganarla para
 validar PB. Después primera derrota, exclusión inversa y regresiones de Fábrica/Torre. Tarea in_progress.
+
+## 2026-11-04 10:51 — Codex — F6-DOMO: derrotas en primera ronda y final comprobadas
+Estado: en curso
+Hecho: abandono confirmado dentro del combate final y, tras inscribir un desafío nuevo, dentro de
+la primera ronda. Ambas ramas guardan racha/activo/récord 0/0/3 y PB 0. No se forzó el resultado por GDB.
+Evidencia: dc_loss_final.sav (e2f91280…), dc_loss1_done.sav (711876fc…), hashes completos en §26;
+compare-loss-final.json y compare-loss1.json: equipo completo y bloque de Mansión idénticos antes/después;
+Mansión 20/20. Suite de esta sesión 296 passed; no hay cambios de código posteriores.
+Commits: 85743ba; el de esta entrada.
+Decisiones: dc_loss1.sav era una captura prematura y no es evidencia de derrota; documentado en §26.
+Se recarga ahora la pausa real dc_paused3.sav para ganar la final.
+Siguiente paso: final ganada y PB; exclusión inversa, regresiones de Fábrica/Torre; parar laboratorio,
+completar evidence/status de la tarea solo si todo pasa. Tarea in_progress.

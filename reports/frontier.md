@@ -1351,3 +1351,16 @@ con esta build; fixture de Mansión 20/20. Nada de esto se considera aceptado to
   racha/activo/récord = **3/1/3**, PB **0**, Mansión **20/20**, Fábrica y Torre a cero.
   El bloque completo del equipo **y** el bloque de Mansión son idénticos a los del fixture
   de reanudación (`work/frontier/dome/compare-rounds23.json`, checksums validados).
+
+**Derrota en final y primera ronda** (Azahar, abandonar con «Huir» y confirmar; el motor
+resuelve la rama `IsWin = false`, no se forzó el resultado por GDB):
+- Final desde la pausa 3: `de_final_name.png`, `de_forfeit_final.png`, `de_loss_final.png`;
+  `dc_loss_final.sav`, SHA256 `e2f91280f3823ff70b3eecfc4bfa7b282fe6407499d220d4d83e803cded16637`.
+- Nueva inscripción tras perder, ronda 1: `de_round1_again.png`, `de_forfeit_first.png`,
+  `de_loss1_done.png`; `dc_loss1_done.sav`, SHA256
+  `711876fce2da6472e057d5d5897a335892639414b54a0341f930576261034554`.
+- Ambas guardan **racha 0, activo 0, récord 3, PB 0**, Mansión **20/20**. Equipo completo
+  y bloque de Mansión idénticos a sus respectivos guardados anteriores (`compare-loss-final.json`,
+  `compare-loss1.json`). También se valida que puede iniciarse un nuevo desafío tras la derrota.
+- `dc_loss1.sav` fue una captura prematura mientras el combate seguía en curso: es idéntica
+  a `dc_before_loss1.sav`; la evidencia de la derrota es **dc_loss1_done.sav**.
