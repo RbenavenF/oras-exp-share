@@ -1341,3 +1341,45 @@ Sin probar: consola; jefe de la Mansión en la Torre; reinicio sin guardar en 32
 **Estado del laboratorio**: parado; `use_gdbstub` en `false`.
 Siguiente paso: la siguiente tarea de `frontier/orch/tasks.json` (F6-DOMO, Codex). Para Palacio y Arena (Claude),
 copiar el patrón de `frontier/tower.py` (selección de modalidad incluida) y no usar works de 0x4010–0x401F.
+
+## 2026-11-04 04:xx — Claude Code (Opus 5.5) — F6-DOMO: Domo v1 en código (frontier-orch, relevo de Codex)
+Estado: en curso
+Hecho:
+- **Relevo**: Codex se cortó por límite de uso sin dejar nada de F6-DOMO (sin commits; `git diff` solo traía
+  `tasks.json` en `in_progress`, del orquestador). Los cinco archivos sin seguimiento de consultas ajenas no se tocan.
+- **Zona 456** comprobada sin emulador (`frontier/zone_check.py 456` → `work/frontier/dome/zone_check.txt`): máscara
+  0x243, sin warps entrantes; sus dos operandos están en el compartido 35 (`0x1728`, `0x1750`, `PUSH_P_C 456` sin
+  cambio de mapa detrás); 30 palabras alineadas = 456 (frente a 48 y 45 de 209 y 213).
+- **Medido** (para no depender de la pantalla de la Mansión):
+  - `PokePartyGetParam(hueco, param, 0)`: tabla de saltos de `DllField.cro` `0x4e618` → param 0 especie
+    (`0x1532d8`, bloque A +0), 12 objeto (`0x4d2454`, bloque A +2), 8 huevo.
+  - `CallPokeSelect(1, 0x800C, 0, 1)` en 17 de 23 usos retail; 6 = cancelado.
+  - `WordSetTemotiMonsNickName(buffer, hueco)`; etiqueta del mote `[VAR 0102 n]` (texto 85). Los menús admiten
+    `WordSet` (retail: `WordSetItemName` → `ListMenuAdd`, compartido 40 `0x1084`).
+  - Constructor del rival `0x1e4a94`: archivo en `r2` (`[sp,#0xe0]` = su `r1`, abierto en `0x1e4b48`); repite sin
+    límite si se repite especie dentro del equipo (`0x1e4bdc`), hasta 50 veces por objeto; en Individual
+    (`0x1e35f0`) no hay listas de exclusión. Tamaño del rival Individual: `mov r6,#3` en `0x1e3548`.
+  - Menú tras ganar (`0x2290` → `0x3b90`): 0 seguir, 1 guardar y descansar, 2 retirarse.
+- **`frontier/asm/dome.s`** (enlazado tras `rental.s`, hook 736 bytes): `dome_party` (desde la rama retail de
+  `rental_hook`: con la ruta 5, `work+0x30/0x34` = 16649/16650 y `+0x48` = 2), `dome_rival` (desde `rival_hook`:
+  ranuras 0–1 = 16657/16658, `r2` = 0xb6/0xb8) y `dome_count` (`bl` en `0x1e3548`: 2 con la ruta 5).
+- **`frontier/dome.py`**: script de 456 desde el 517 retail (como la Torre): recepción `dome_reception`
+  (exclusión, ruta 5, inscripción por GlobalCall 9773 también al reanudar, desafío `0x18f8(0,0,0)`), salto de
+  `0x457c` con la ruta 5, `dome_before_battle` en `0x1edc` (GlobalCall 9774), ACTIVE = 0 en `0x2210`/`0x1458`,
+  PB tras cada final (`FRONTIER_BP['dome']`, con la línea del campeón, GlobalCall 9775). Script compartido 5:
+  `dome_entry` (3 × pantalla del equipo, sin huevos ni especie/objeto repetidos), `dome_round` (ronda, 3 conjuntos
+  del rival del nivel de la Fábrica por torneos ganados, vista previa, 2 de 3 por mote, B vuelve a la vista previa,
+  2 forzados al azar) y `dome_won`. Textos: 16 líneas al final del 637 (998–1013).
+- **Integración**: `CLONES[456] = 517`, `KEEP_TEXT`, `DOORS['Dome'] = (456, 0)` (warps de la isla: Torre 0, Domo 1,
+  Fábrica 2); `overlay.facility_scripts`; `factory.shared_program(..., extra)`; `Routine.new_label` con el nombre de
+  la rutina (las etiquetas chocaban). Works en REPARTO.
+Evidencia: `python -m pytest -q tests` → 288 passed (75 nuevos en `tests/test_frontier_dome.py`: VM y Unicorn).
+Roturas a mano: sin `moveq r6` falla `test_rival_party_size[5-2]`; sin `bl dome_party` falla
+`test_dome_route_selects_its_two_fighters`; sin `busy_check` fallan 6 de exclusión. Script de 456: 14.996 bytes,
+ZO 15.788. **No probado en Azahar todavía.**
+Commits: el de esta entrada.
+Decisiones: inscripción propia con `CallPokeSelect` (no la app de la Mansión: no se puede leer qué eligió); el
+torneo no sale al vestíbulo tras la final: sigue el menú de la Mansión (seguir = torneo siguiente, descansar,
+retirarse); la racha cuenta combates (torneos = racha / 4); al reanudar se vuelve a inscribir.
+Siguiente paso: build con la isla y Azahar: puerta (6,56) → 456 → salida (6,57); Fábrica por su nuevo warp 2;
+inscripción, vista previa, 2 contra 2 (gdb en el hook), torneo de 4 con PB; derrota; pausa y reanudación; exclusión.

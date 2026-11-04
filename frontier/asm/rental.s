@@ -34,6 +34,9 @@ rental_hook:
     ldr     r6, [r0, #0x14]         @ player party (original 0x1e3d94)
     mov     r0, r6
     bl      PARTY_PREPARE           @ original 0x1e3d9c
+    mov     r0, r4                  @ work
+    sub     r1, r8, #(2 * (WORK_IV - WORK_ROUTE))   @ &work[WORK_ROUTE]
+    bl      dome_party              @ Battle Dome: its 2 fighters as the selection (frontier/asm/dome.s)
     mov     r0, r6
     add     sp, sp, #0x18
     pop     {r4-r8, pc}
@@ -91,17 +94,21 @@ rentals:
 @ never uses lr). While the Factory is active, also store the index in saved work WORK_RIVAL + r7 (r7 < RENTALS):
 @ a rejected draw is redrawn for the same r7 and overwrites it, so the last value is the accepted set. The
 @ zone script offers these sets for the swap after a win. r0, r1 are free here (reloaded before use); r2, r3
-@ and the flags are not touched before the builder sets them again.
+@ and the flags are not touched before the builder sets them again. While WORK_ROUTE is the Dome's, dome_rival
+@ decides instead (it may change r2, the archive the builder opens next, at 0x1e4b48).
     .global rival_hook
 rival_hook:
     ldrh    r4, [r0, #4]
-    cmp     r7, #RENTALS
-    bxge    lr
     ldr     r0, [fp, #0xb78]
     ldr     r0, [r0, #0x1c]
     ldr     r0, [r0]                @ save data
     add     r0, r0, #0x13000
-    add     r0, r0, #0x144
+    add     r0, r0, #0x144          @ &work[0x4000]
+    ldrh    r1, [r0, #(2 * (WORK_ROUTE - 0x4000))]
+    cmp     r1, #DOME_ROUTE
+    beq     dome_rival              @ Battle Dome: its forced sets (frontier/asm/dome.s); returns to lr
+    cmp     r7, #RENTALS
+    bxge    lr
     add     r0, r0, #(2 * (WORK_IV - 0x4000))
     ldrh    r1, [r0]
     cmp     r1, #0

@@ -7,7 +7,9 @@ party builder behaves as in the retail game. Steps:
 2. Assemble frontier/asm/rental.s with arm-none-eabi-as/ld at the start of the .text padding.
 3. Redirect the player-party branch of the party builder (0x1e3d8c) to it, and the rival builder's set read
    (0x1e4b34) to `rival_hook`, which copies the rival's sets to WORK_RIVAL for the swap, and the Maison's four
-   Singles streak accessors to the Factory streak works while WORK_ROUTE is set.
+   Singles streak accessors to the Factory streak works while WORK_ROUTE is set. frontier/asm/dome.s is linked
+   after it: with the Battle Dome's route the player's party is its two fighters (DOME_FIGHT), the rival's sets
+   are forced (DOME_FORCED) and the rival's Singles party size (0x1e3548, `dome_count`) is 2.
 4. Point the text of the GlobalCall row for ids 9770-9779 (shared script 5, the Factory draft;
    frontier/factory.py) at a new story text entry, TEXT_FACTORY.
 5. Write code.bin and code.ips; the IPS is the diff from the clean code.bin, so it already contains
@@ -36,6 +38,7 @@ HASHES = {
     REPOLISHED_IPS: '0da174955afe9a7baf43254ce314bf5b65032f89c70a8e1065fa92ee4c2267df',
 }
 ASM = ROOT / 'frontier/asm/rental.s'
+ASMS = [ASM, ROOT / 'frontier/asm/dome.s']   # linked together, rental_hook first (at CAVE)
 BASE = 0x100000
 CAVE, CAVE_END = 0x579604, 0x57A000           # .text padding (reports/frontier.md §5)
 SITE = 0x1E3D8C                               # player-party branch of the party builder 0x1e3d2c
@@ -43,6 +46,8 @@ SITE_BEFORE = [0xE5960B78, 0xE590001C, 0xE5908014, 0xE1A00008, 0xEB0747E4]  # ld
 RESUME = 0x1E3DDC                             # common tail: level 50 adjust, per-member updates
 RIVAL_SITE = 0x1E4B34                         # rival builder 0x1e4a94: ldrh r4, [r0, #4] (drawn set index)
 RIVAL_BEFORE = 0xE1D040B4
+COUNT_SITE = 0x1E3548                         # trainer party 0x1e3480, Singles: mov r6, #3 (rival party size)
+COUNT_BEFORE = 0xE3A06003
 FUNCTIONS = {'LOAD_SET': 0x1EFC18, 'MAKE_PARAM': 0x1EF904, 'ADD_MEMBER': 0x3B645C, 'PARTY_PREPARE': 0x3B5D34,
              'RESUME': RESUME}
 FUNCTION_HEADS = {0x1EFC18: 0xE92D4030, 0x1EF904: 0xE92D4FF0, 0x3B645C: 0xE92D4070, 0x3B5D34: 0xE92D4070,
@@ -70,6 +75,11 @@ STREAK_SITES = {0x45CDC4: ('streak_inc', 0xE0801082), 0x45CF14: ('streak_get', 0
 STREAK_ROUTES = {1: ('factory', WORK_FSTREAK), 2: ('tower', 16441), 3: ('palace', 16461), 4: ('arena', 16465),
                  5: ('dome', 16473), 6: ('pike', 16477), 7: ('pyramid', 16481)}
 ROUTE = {facility: route for route, (facility, _) in STREAK_ROUTES.items()}
+# Battle Dome (frontier/asm/dome.s, frontier/dome.py): with WORK_ROUTE = ROUTE['dome'] the player's battle party is
+# the two party slots in DOME_FIGHT and the rival brings two members, the sets in DOME_FORCED (rental work value:
+# bit 15 Super, bits 0-9 index). Free per frontier/ids.py (2026-11-04); assigned in frontier/REPARTO.md.
+DOME_FIGHT = (16649, 16650)
+DOME_FORCED = (16657, 16658)
 # A facility's «challenge in progress» work (started or paused; 0 = none): the Factory's rental IV, for the others
 # the work between their streak and record. A reception refuses while another facility's is not 0 (REPARTO.md).
 ACTIVE_WORK = {facility: WORK_IV if facility == 'factory' else streak + 1
@@ -90,7 +100,9 @@ MAISON_NATIVE_ZONES = (448, 517, 520)
 CONSTANTS = {'WORK_IV': WORK_IV, 'WORK_SET0': WORK_SETS[0], 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'RENTAL_LEVEL': 50,
              'RENTALS': len(WORK_SETS), 'WORK_RIVAL': WORK_RIVAL[0],
              'ROUTE_DELTA': MAISON_BASE - SAVE_WORKS - 2 * (WORK_ROUTE - 0x4000),
-             'ROUTES': len(STREAK_ROUTES),
+             'ROUTES': len(STREAK_ROUTES), 'WORK_ROUTE': WORK_ROUTE,
+             'DOME_ROUTE': ROUTE['dome'], 'DOME_FIGHT0': DOME_FIGHT[0], 'DOME_FORCED0': DOME_FORCED[0],
+             'DOME_FIGHTERS': len(DOME_FIGHT),
              **{f'SLOT_DELTA_{route}': MAISON_BASE - SAVE_WORKS - 2 * (streak - 0x4000) + 0x1C4
                 for route, (_, streak) in STREAK_ROUTES.items()}}
 assert list(WORK_SETS) == [WORK_SETS[0] + k for k in range(3)] and 0 < WORK_IV - WORK_SETS[0] < 128   # rental.s: sub
@@ -101,6 +113,9 @@ assert 0 < CONSTANTS['ROUTE_DELTA'] < 0x10000          # two subs: bits 8-15 and
 _streak_works = [w for _, s in STREAK_ROUTES.values() for w in (s, s + 1, s + 2)]
 assert len(set(_streak_works)) == len(_streak_works) and WORK_ROUTE == WORK_FSTREAK + 1
 assert all(0 < CONSTANTS[f'SLOT_DELTA_{r}'] for r in STREAK_ROUTES)
+assert 0 < WORK_IV - WORK_ROUTE < 128 and 2 * (WORK_ROUTE - 0x4000) < 256           # rental.s, dome.s: imm8 offsets
+assert DOME_FIGHT[1] == DOME_FIGHT[0] + 1 and DOME_FORCED[1] == DOME_FORCED[0] + 1   # dome.s reads them in pairs
+assert 0 < DOME_FIGHT[0] - WORK_ROUTE and len(DOME_FIGHT) == len(DOME_FORCED) == 2
 
 
 def word(data, va):
@@ -115,16 +130,20 @@ def arm_branch(source, target, link=False):
 def assemble():
     """(hook bytes at CAVE, {global symbol: address})."""
     with tempfile.TemporaryDirectory() as tmp:
-        obj, elf, binary = (Path(tmp) / n for n in ('hook.o', 'hook.elf', 'hook.bin'))
+        elf, binary = (Path(tmp) / n for n in ('hook.elf', 'hook.bin'))
         defs = [a for k, v in CONSTANTS.items() for a in ('--defsym', f'{k}={v}')]
-        subprocess.run(['arm-none-eabi-as', '-mcpu=mpcore', *defs, '-o', obj, ASM], check=True)
+        objs = [Path(tmp) / f'{src.stem}.o' for src in ASMS]
+        for src, obj in zip(ASMS, objs):
+            subprocess.run(['arm-none-eabi-as', '-mcpu=mpcore', *defs, '-o', obj, src], check=True)
         resumes = {f'STREAK_{stub[7:].upper()}_RESUME': site + 4 for site, (stub, _) in STREAK_SITES.items()}
         syms = [f'--defsym={k}={v:#x}' for k, v in {**FUNCTIONS, **resumes}.items()]
-        subprocess.run(['arm-none-eabi-ld', f'-Ttext={CAVE:#x}', '-e', 'rental_hook', *syms, '-o', elf, obj],
+        subprocess.run(['arm-none-eabi-ld', f'-Ttext={CAVE:#x}', '-e', 'rental_hook', *syms, '-o', elf, *objs],
                        check=True)
         subprocess.run(['arm-none-eabi-objcopy', '-O', 'binary', '-j', '.text', elf, binary], check=True)
         names = subprocess.run(['arm-none-eabi-nm', elf], check=True, capture_output=True, text=True).stdout
         symbols = {n: int(a, 16) for a, t, n in (line.split() for line in names.splitlines()) if t == 'T'}
+        if symbols['rental_hook'] != CAVE:
+            raise ValueError('rental_hook is not at the start of the cave')
         return binary.read_bytes(), symbols
 
 
@@ -167,6 +186,9 @@ def build(native_clones=None):
     if word(code, RIVAL_SITE) != RIVAL_BEFORE:
         sys.exit(f'rival site word differs: {word(code, RIVAL_SITE):08x}')
     struct.pack_into('<I', code, RIVAL_SITE - BASE, arm_branch(RIVAL_SITE, symbols['rival_hook'], link=True))
+    if word(code, COUNT_SITE) != COUNT_BEFORE:
+        sys.exit(f'rival count site word differs: {word(code, COUNT_SITE):08x}')
+    struct.pack_into('<I', code, COUNT_SITE - BASE, arm_branch(COUNT_SITE, symbols['dome_count'], link=True))
     for va, (stub, before) in STREAK_SITES.items():
         if word(code, va) != before:
             sys.exit(f'streak accessor {va:#x} differs: {word(code, va):08x}')

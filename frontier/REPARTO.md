@@ -47,7 +47,7 @@ Decisiones del usuario (2026-11-03):
 | Torre | Claude Code | diseño | 329 (clon de 517) | `torre.md` | baja-media, ~3 sesiones |
 | Palacio | Claude Code | diseño | 340 (clon de 517) | `palacio.md` | A: baja-media, 1; B (IA): alta |
 | Arena | Claude Code | diseño | 457 (clon de 517) | `arena.md` | A: media, 1–2; B (3 turnos): alta |
-| Domo | Codex | diseño | 456 (clon de 517) | `domo.md` | media-alta, ~4 |
+| Domo | Codex | v1 en código (`frontier/dome.py`, `asm/dome.s`), Azahar en curso | 456 (clon de 517, comprobada como §18 sin emulador) | `domo.md` | media-alta, ~4 |
 | Tubo | Codex | diseño | 379 vestíbulo, 380 sala (clones de 397) | `tubo.md` | media-alta, 4–6 |
 | Pirámide | Codex | diseño | 140 vestíbulo, 141–142 pisos | `piramide.md` | alta, 4–6 + experimento |
 
@@ -90,9 +90,9 @@ la ruta 1 (16437 = 1, récord 1) y las de la Torre por la ruta 2, sin tocar la d
 | Torre | 2 | 16441 | 16442 | 16443 | |
 | Palacio | 3 | 16461 | 16462 | 16463 | |
 | Arena | 4 | 16465 | 16466 | 16467 | |
-| Domo | 5 | 16473 | 16474 | 16475 | |
+| Domo | 5 | 16473 | 16474 | 16475 | 16493–16495 inscritos, 16649–16650 combatientes (code.bin), 16651 racha para el script 5, 16653–16655 rival, 16657–16658 sets forzados (code.bin), 16659 generador; casos 9773–9775 del script 5; líneas 998–1013 del texto 637 |
 | Tubo | 6 | 16477 | 16478 | 16479 | |
 | Pirámide | 7 | 16481 | 16482 | 16483 | |
 
-Libres para pedir (según `python frontier/ids.py`, 2026-11-03; 16485–16487 y 16489–16490 son de la Fábrica desde el 2026-11-04): 16493–16495, 16649–16651,
-16653–16655, 16657–16659, 16661–16663, 16669–16671, 16673–16675 y más; 16665 y 16667 son del evento de Mew.
+Libres para pedir (según `python frontier/ids.py`, 2026-11-03; 16485–16487 y 16489–16490 son de la Fábrica y 16493–16495,
+16649–16651, 16653–16655 y 16657–16659 del Domo desde el 2026-11-04): 16661–16663, 16669–16671, 16673–16675 y más; 16665 y 16667 son del evento de Mew.

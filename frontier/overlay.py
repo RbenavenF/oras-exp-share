@@ -8,6 +8,8 @@ Current scope:
   while the Factory is active (saved work patch.WORK_IV != 0) the Maison's party selection routine (script 517
   0x457c, BattleHouse_CallPartySelectApp) is skipped and answers "accepted" (work 0x800C = 1), and the code.bin
   hook (frontier/patch.py) builds the battle party from the rentals;
+- F6, the Battle Tower (frontier/tower.py) and the Battle Dome (frontier/dome.py: its cases 9773-9775 in shared
+  script 5 and its lines after the Factory's in text 637) in their interiors (facility_scripts);
 - F6, the Frontier Pass (frontier/island.py): item 701 renamed in the game texts, the Lilycove sailor (zone 317)
   hands it to a champion, and the ferry (shared script 79) offers «Isla del Frente» to its holder.
 
@@ -35,6 +37,7 @@ from formats import (build_text, garc_entries, lz11_compress, lz11_decompress, r
 from pawn import OP, Op, Program, Script  # noqa: E402
 import build_patch  # noqa: E402
 import data as fd  # noqa: E402
+import dome  # noqa: E402
 import factory  # noqa: E402
 import island  # noqa: E402
 import island_build  # noqa: E402
@@ -123,6 +126,9 @@ def texts(romfs, sets, table):
                            'after': text} for k, text in enumerate(island.FERRY[code])]
         data = build_patch.guarded_texts(data, spec)
         lines = factory.lines_for(lang, source(romfs, factory.GAMETEXT[lang]), sets, table)
+        if len(lines) != dome.LINE_BASE:
+            raise ValueError(f'text {patch.TEXT_FACTORY}: {len(lines)} Factory lines, the Dome expects {dome.LINE_BASE}')
+        lines += dome.lines(lang)
         words = [text_to_words(line) for line in lines]
         out[path] = rebuild_garc(data, {}, append=[build_text(words, [0] * len(words))])
         game = factory.GAMETEXT[lang]
@@ -157,7 +163,7 @@ def shared(romfs, zone_script, cells, levels):
     retail = Script.parse(raw)
     if retail.build(pad=False) != raw:
         raise ValueError('shared script 5 does not round-trip')
-    program = factory.shared_program(retail, zone_script, cells, levels)
+    program = factory.shared_program(retail, zone_script, cells, levels, dome.shared_cases(levels))
     script = program.build_script(f'L{retail.main:x}').build(pad=False)
     ferry = shared_script(data, island.FERRY_SCRIPT)
     ferry_new = island.ferry_program(ferry).build_script(f'L{ferry.main:x}').build(pad=False)
@@ -195,7 +201,7 @@ def maison_retail(data):
 def facility_scripts(romfs=ROMFS):
     """{interior zone: zone script} of the facilities whose interior runs its own script (island_build.build)."""
     _, retail = maison_retail(source(romfs, 'a/0/1/3'))
-    return {tower.ZONE: tower.zone_script(retail)}
+    return {tower.ZONE: tower.zone_script(retail), dome.ZONE: dome.zone_script(retail)}
 
 
 def build(romfs=ROMFS):

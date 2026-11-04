@@ -174,6 +174,7 @@ class Routine:
         self.p = program
         self.local = {name: -4 * (k + 1) for k, name in enumerate(locals_)}
         self.serial = 0
+        self.name = label
         self.size = 4 * len(locals_)
         program.label(label)
         self.op('PROC', 0)
@@ -189,7 +190,7 @@ class Routine:
 
     def new_label(self, stem):
         self.serial += 1
-        return f'factory_{stem}_{self.serial}'
+        return f'factory_{stem}_{self.serial}' if self.name.startswith('factory_') else f'{self.name}_{stem}_{self.serial}'
 
     def load(self, name):
         self.op('LOAD_P_S_PRI', self.local[name])
@@ -513,8 +514,10 @@ def swap_routine(p, helpers):
     r.ret()
 
 
-def shared_program(shared, zone, cells, levels):
-    """Shared script 5 with case GLOBAL_DRAFT -> factory_draft and the zone 517 helpers it calls."""
+def shared_program(shared, zone, cells, levels, extra=()):
+    """Shared script 5 with case GLOBAL_DRAFT -> factory_draft and the zone 517 helpers it calls. `extra`: other
+    facilities' cases in the same GlobalCall row, (value, routine label, builder(p, helpers)), built after the
+    Factory's routines (so they can call factory_rand and read its data blocks)."""
     p = Program.from_script(shared)
     main = f'L{shared.main:x}'
     start = p.items.index(('label', main))
@@ -525,9 +528,14 @@ def shared_program(shared, zone, cells, levels):
         raise ValueError(f'shared script {SHARED_SCRIPT} is not the retail placeholder')
     end = next(i for i in range(index + 1, len(p.items)) if not isinstance(p.items[i], tuple))
     p.items.insert(end, ('label', 'factory_case_end'))
-    pairs += [(GLOBAL_DRAFT, 'factory_case_draft'), (GLOBAL_SWAP, 'factory_case_swap')]
+    cases = [(GLOBAL_DRAFT, 'factory_case_draft', 'factory_draft'), (GLOBAL_SWAP, 'factory_case_swap', 'factory_swap'),
+             *((value, f'case_{routine}', routine) for value, routine, _ in extra)]
+    values = [v for v, _, _ in cases]
+    if len(set(values)) != len(values) or not all(SHARED_PLACEHOLDER < v <= SHARED_PLACEHOLDER + 9 for v in values):
+        raise ValueError(f'shared script {SHARED_SCRIPT} cases must be distinct ids of its GlobalCall row: {values}')
+    pairs += [(value, case) for value, case, _ in cases]
     table.args = [len(pairs), table.args[1]] + [x for pair in sorted(pairs) for x in pair]
-    for case, routine in (('factory_case_draft', 'factory_draft'), ('factory_case_swap', 'factory_swap')):
+    for _, case, routine in cases:
         p.label(case)
         p.call(routine)
         p.emit('JUMP', 'factory_case_end')
@@ -535,6 +543,8 @@ def shared_program(shared, zone, cells, levels):
     helpers = {name: p.transplant(zone, address, f'z{name}_') for name, address in HELPERS.items()}
     draft_routine(p, cells, levels, helpers)
     swap_routine(p, helpers)
+    for _, _, builder in extra:
+        builder(p, helpers)
     return p
 
 

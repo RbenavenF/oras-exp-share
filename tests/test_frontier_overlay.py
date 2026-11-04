@@ -53,6 +53,7 @@ def test_party_select_checks_the_factory_state(built):
 
 def test_texts_append_the_option_the_refusal_and_the_factory_entry(built):
     from formats import text_lines, words_to_text
+    import dome
     import factory
     import island
     _, (archives, _) = built
@@ -75,7 +76,8 @@ def test_texts_append_the_option_the_refusal_and_the_factory_entry(built):
             assert [words_to_text(w) for w in new_lines[len(old_lines):]] == appended
         e = b[-1]
         lines = [words_to_text(w) for w in text_lines(after[e[2]:e[2] + e[3]])[0]]
-        assert lines[:3] == factory.PICK[factory.LANG[lang]] and len(lines) == factory.LINE_S + 784
+        assert lines[:3] == factory.PICK[factory.LANG[lang]] and dome.LINE_BASE == factory.LINE_S + 784
+        assert lines[dome.LINE_BASE:] == dome.lines(lang)                   # the Dome's, after the Factory's
 
 
 def test_game_texts_rename_only_the_pass(built):
