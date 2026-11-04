@@ -1700,3 +1700,29 @@ Decisiones: mismo patrón que el Palacio (pantalla de modalidad incluida). Sin t
 Siguiente paso: Azahar desde `work/frontier/lab/pa_strong.sav` (plaza, (20,59)): bajar a la puerta (20,69) → 457 →
 salida (20,70); guardar en 457; victorias; racha editada a 6 para el 7.º con PB 1; pausa, reanudación, derrota;
 rechazos cruzados.
+
+## 2026-11-04 21:35 — Codex — F6-ARENA-A: recuperación de evidencia de Azahar y cierre
+Estado: hecho
+Hecho:
+- Revisados `git status`, `git diff` y último commit `e3c85ba`: sin cambios versionados a medias. Se conservan sin
+  tocar los cinco archivos ajenos sin seguimiento. REPARTO mantiene el turno del orquestador, sin modificaciones.
+- Recuperada la evidencia posterior al commit que Claude dejó sin documentar al agotar cuota: registro
+  `work/orch/logs/20261104-205236-claude-F6-ARENA-A.log`, ocho partidas y capturas. Documentada en
+  `reports/frontier.md` §29, distinguiendo explícitamente ejecución heredada de verificaciones de Codex.
+- Azahar de Claude: entrada a 457 y salida (20,70), ronda desde cero y derrota 0/0/8 con 1 PB; reanudación desde
+  fixture editada 6/1/8, premio 1 PB del séptimo, pausa real 9/1/9 con PB 2; Palacio rechaza Arena pausada y viceversa.
+  Mansión intacta. Equipo tras derrota: solo PS actuales de dos Pokémon cambiados por curación.
+- `F6-ARENA-A` pasa a done con evidencia. Escalón B fuera de esta tarea.
+Evidencia:
+- `python -m pytest -q tests` → 430 passed (`work/frontier/arena/tests-relevo.log`).
+- Checksums, SHA256, zona y works de los ocho guardados verificados (`save-audit-relevo.json`). Comparación PK6
+  repetida (`party-diff-relevo.txt`). Overlay regenerado idéntico en sus 25 archivos a la build probada por Claude
+  (`build-relevo.log`, `build-manifest-relevo.json`).
+- El intento adicional de Codex de recargar la pausa 9 no llegó a mostrar el juego; no se declara probado.
+  Laboratorio cerrado, namespace sin procesos y metadata archivada (`lab-stop-relevo.txt`).
+Commits: e3c85ba (implementación, Claude) y el de esta entrada (auditoría y cierre, Codex).
+Decisiones: conservar la implementación sin cambios; aceptar la evidencia de ejecución recuperada y comprobada,
+no repetir toda la ronda. Sin probar: consola; recarga de la pausa 9 concreta; combates de regresión de Fábrica,
+Torre y Domo con el CRO del Tubo (limitación heredada §28; suite sí en verde). Textos de la Mansión conservados.
+Siguiente paso: siguiente tarea del orquestador, F6-PIRAMIDE. Antes de publicar, comprobar rama de alquileres de
+Fábrica con el CRO actual como pide §28. Laboratorio parado; inputs y partida original intactos; sin push.

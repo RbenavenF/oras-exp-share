@@ -46,9 +46,9 @@
       "owner": "claude",
       "design": "reports/diseno/arena.md",
       "accept": "escalón A del diseño, con puerta (20,69) → interior → salida a (20,70), ruta 4 y PB de FRONTIER_BP['arena']; exclusión mutua; sin regresiones; probado en Azahar; tests en verde. El escalón B (motor) es otra tarea.",
-      "status": "in_progress",
+      "status": "done",
       "notes": "",
-      "evidence": ""
+      "evidence": "Commit e3c85ba (implementación Claude) y commit de cierre Codex (entrada BITACORA 2026-11-04 21:35). reports/frontier.md §29: evidencia de Azahar recuperada del registro de Claude y auditada por Codex (8 saves con checksums/SHA256); puerta (20,69)->457->(20,70), ruta 4, ronda desde cero y derrota 0/0/8 con 1 PB; reanudación desde fixture 6/1/8, premio 1 PB del séptimo y pausa 9/1/9; rechazos cruzados Arena/Palacio; Mansión intacta; equipo solo cambia PS por curación. Suite 430 passed (tests-relevo.log); build regenerada idéntica en 25 archivos. Laboratorio parado. Límites: consola y recarga de pausa 9 no probadas; regresiones de combate Fábrica/Torre/Domo con CRO nuevo pendientes como §28 (suite en verde)."
     },
     {
       "id": "F6-PIRAMIDE",

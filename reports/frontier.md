@@ -1497,3 +1497,52 @@ pantalla; la pausa del Tubo tras ganar (se probó la reanudación desde una part
 14 salas desde cero; el combate fuerte con rango Súper más allá del primer combate de Codex; Fábrica, Torre y Domo
 con el CRO nuevo en el juego (el camino de combate es el mismo que el del Palacio y el Tubo). El veneno grave se
 guarda como veneno normal (valor 5).
+
+## 29. Arena Batalla: escalón A (2026-11-04)
+
+Implementación en `e3c85ba` (`frontier/arena.py`): flujo de la Torre con equipo propio, zona **457**, ruta **4**,
+works **16465/16466/16467** (racha/activo/récord), siete combates y `FRONTIER_BP['arena']`. Sin límite de turnos
+ni juicio; el motor del escalón B queda pendiente. Conserva textos y selección de modalidad de la Mansión,
+como el Palacio; no incorpora Greta. Zona comprobada estáticamente con `frontier/zone_check.py 457` y contexto
+de los literales (`work/frontier/arena/zone_check.txt`, `ctx.txt`): las tres referencias de scripts son al objeto
+457. Clon de 517, área 237; puerta (20,69), warp 4 de la isla, salida (20,70). El Palacio pasa al warp 5.
+
+**Evidencia de Azahar recuperada del relevo de Claude**, posterior al commit de código: registro
+`work/orch/logs/20261104-205236-claude-F6-ARENA-A.log`, capturas `work/frontier/lab/ar_*.png`, partidas del mismo
+prefijo y `work/frontier/arena/save-evidence.jsonl`. Codex revisó capturas, comandos del registro, checksums y los
+ocho SHA256 completos de las partidas; auditoría en `save-audit-relevo.json`. No son nuevas partidas jugadas por
+Codex. Los estados siguientes proceden de esos guardados, no de inferencias sobre los textos:
+
+| Prueba | Partida en `work/frontier/lab/` (SHA256 abreviado) | Resultado |
+| --- | --- | --- |
+| Entrada por la puerta, recepción, selección de tres propios y guardado | `ar_saved_457.sav` (`dabc9fd8…`) | Zona 457, ruta 4, Arena 0/1/0, PB 0 |
+| Ronda desde cero y derrota por Huir después de ocho victorias | `ar_after_loss_run1.sav` (`55b358fc…`) | Arena 0/0/8, PB 1 |
+| Salida andando y guardado en la explanada | `ar_exit_plaza.sav` (`735326f5…`) | Zona 209, coordenadas 20.5/70.5 (casilla 20,70), ruta 0 |
+| Reanudación desde racha editada a 6, activo 1 | `ar_resumed_saved.sav` (`7c743650…`) | Zona 457, ruta 4, Arena 6/1/8, PB 1 |
+| Victoria 7 con 1 PB, victorias 8–9 y Pausar | `ar_paused9.sav` (`093ed149…`) | Arena 9/1/9, PB 2; `ar_bp1.png` muestra el premio |
+| Palacio rechaza con Arena pausada | `ar_palace_refused_in340.sav` (`f445d704…`) | Zona 340, Arena 9/1/9, Palacio 0/0/0, ruta 0 |
+| Arena rechaza con Palacio pausado | `ar_arena_refused_in457.sav` (`10700392…`) | Zona 457, Arena 0/0/0, Palacio 2/1/2, ruta 0 |
+
+La fixture `ar_streak6.sav` (`d1657561…`) se hizo a partir de `ar_exit_plaza.sav` cambiando solo los works
+16465=6 y 16466=1 con `faraway/save_event.py` (el récord se conservó en 8). La primera ronda sí se jugó desde cero;
+la segunda secuencia es una prueba de reanudación y premio con fixture editada. La pausa posterior en 9 fue real.
+Los rechazos son visibles en `ar_palace_refused.png` y `ar_arena_refused.png`; sus zonas se fijan por los guardados.
+La racha de la Mansión permanece 0/0/0/0 en los ocho guardados; Torre, Fábrica y Domo permanecen a cero.
+
+**Equipo y regresiones**: `python work/frontier/pike/party_diff.py work/frontier/lab/pa_strong.sav
+work/frontier/lab/ar_after_loss_run1.sav` da únicamente +0xF0 (PS actuales) en los dos primeros Pokémon, sin
+cambios en los otros cuatro (`work/frontier/arena/party-diff-relevo.txt`). No se afirma identidad binaria del equipo:
+la instalación lo cura. Durante el paseo posterior al Palacio también cambia la amistad, según el registro de Claude.
+La suite completa ejecutada por Codex da **430 passed** (`tests-relevo.log`), incluyendo rutas ARM, exclusión,
+PB y las instalaciones anteriores. La reconstrucción con `python frontier/overlay.py --out work/frontier/build
+--romfs work/faraway/dev/overlay/romfs` reproduce los **25 archivos** de la build heredada byte por byte
+(`build-relevo.log`, `build-manifest-relevo.json`).
+
+**Límites**: consola no probada; no se repitieron combates de Fábrica, Torre ni Domo en esta sesión (persiste la
+limitación del CRO del Tubo anotada en §28). La exclusión en juego se midió contra el Palacio; las demás rutas
+quedan cubiertas por la suite. Textos propios de Arena, Greta y escalón B pendientes.
+
+Intento adicional de Codex de recargar `ar_paused9.sav`: el arranque no llegó a mostrar el juego (captura negra,
+`work/frontier/arena/lab-relevo.log`); **recarga de esa pausa concreta no probada**. No invalida las pruebas
+anteriores de Claude de reanudación desde la fixture 6/1/8. El laboratorio se cerró y se comprobó que no quedaban
+procesos en su namespace (`lab-stop-relevo.txt`); no se atribuye al juego un fallo del arranque del laboratorio.
