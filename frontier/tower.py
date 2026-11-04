@@ -101,10 +101,15 @@ def reception_routine(p, facility=FACILITY):
     r.ret()
 
 
+STAGES = {'pike': 14}           # streak steps per round when not data.STAGES_PER_ROUND (the Pike's rooms)
+
+
 def battle_points(p, facility=FACILITY):
     """BP of data.FRONTIER_BP[facility] as Emerald, inserted in the Maison's BP routine 0x3de4 once its locals exist (-4 win count, -8 BP),
-    while WORK_ROUTE = patch.ROUTE[facility] (factory.battle_points does the same for the Factory)."""
+    while WORK_ROUTE = patch.ROUTE[facility] (factory.battle_points does the same for the Factory). A round is
+    STAGES.get(facility, data.STAGES_PER_ROUND) streak steps."""
     route, table_bp, t = patch.ROUTE[facility], fd.FRONTIER_BP[facility], facility
+    stages = STAGES.get(facility, fd.STAGES_PER_ROUND)
     start = factory._index(p, factory.BATTLE_POINTS)
     at = next(i for i in range(start, len(p.items)) if isinstance(p.items[i], Op)
               and p.items[i].op == OP['STOR_P_S_PRI'] and p.items[i].args == [-4])
@@ -119,10 +124,10 @@ def battle_points(p, facility=FACILITY):
     b.sysreq('GetMyWinCount', 0, 0)
     b.emit('STOR_P_S_PRI', -4)
     b.emit('MOVE_ALT', 0)
-    b.emit('CONST_P_PRI', fd.STAGES_PER_ROUND)
+    b.emit('CONST_P_PRI', stages)
     b.emit('SDIV_ALT', 0)                    # rounds won = streak / 7
     b.emit('STOR_P_S_PRI', -8)
-    b.emit('SMUL_P_C', fd.STAGES_PER_ROUND)
+    b.emit('SMUL_P_C', stages)
     b.emit('LOAD_P_S_ALT', -4)
     b.emit('SUB_ALT', 0)                     # streak - 7 * rounds
     b.emit('JNZ', f'{t}_bp_none')

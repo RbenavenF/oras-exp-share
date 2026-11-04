@@ -42,6 +42,7 @@ import factory  # noqa: E402
 import island  # noqa: E402
 import island_build  # noqa: E402
 import palace  # noqa: E402
+import pike  # noqa: E402
 import patch  # noqa: E402
 import tower  # noqa: E402
 
@@ -130,6 +131,9 @@ def texts(romfs, sets, table):
         if len(lines) != dome.LINE_BASE:
             raise ValueError(f'text {patch.TEXT_FACTORY}: {len(lines)} Factory lines, the Dome expects {dome.LINE_BASE}')
         lines += dome.lines(lang)
+        if len(lines) != pike.LINE_BASE:
+            raise ValueError(f'text {patch.TEXT_FACTORY}: {len(lines)} lines, the Pike expects {pike.LINE_BASE}')
+        lines += pike.lines(lang)
         words = [text_to_words(line) for line in lines]
         out[path] = rebuild_garc(data, {}, append=[build_text(words, [0] * len(words))])
         game = factory.GAMETEXT[lang]
@@ -164,7 +168,7 @@ def shared(romfs, zone_script, cells, levels):
     retail = Script.parse(raw)
     if retail.build(pad=False) != raw:
         raise ValueError('shared script 5 does not round-trip')
-    program = factory.shared_program(retail, zone_script, cells, levels, dome.shared_cases(levels))
+    program = factory.shared_program(retail, zone_script, cells, levels, dome.shared_cases(levels) + pike.shared_cases())
     script = program.build_script(f'L{retail.main:x}').build(pad=False)
     ferry = shared_script(data, island.FERRY_SCRIPT)
     ferry_new = island.ferry_program(ferry).build_script(f'L{ferry.main:x}').build(pad=False)
@@ -203,7 +207,7 @@ def facility_scripts(romfs=ROMFS):
     """{interior zone: zone script} of the facilities whose interior runs its own script (island_build.build)."""
     _, retail = maison_retail(source(romfs, 'a/0/1/3'))
     return {tower.ZONE: tower.zone_script(retail), dome.ZONE: dome.zone_script(retail),
-            palace.ZONE: palace.zone_script(retail)}
+            palace.ZONE: palace.zone_script(retail), pike.ZONE: pike.zone_script(retail)}
 
 
 def build(romfs=ROMFS):

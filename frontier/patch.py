@@ -38,7 +38,7 @@ HASHES = {
     REPOLISHED_IPS: '0da174955afe9a7baf43254ce314bf5b65032f89c70a8e1065fa92ee4c2267df',
 }
 ASM = ROOT / 'frontier/asm/rental.s'
-ASMS = [ASM, ROOT / 'frontier/asm/dome.s']   # linked together, rental_hook first (at CAVE)
+ASMS = [ASM, ROOT / 'frontier/asm/dome.s', ROOT / 'frontier/asm/pike.s']   # linked together, rental_hook first (at CAVE)
 BASE = 0x100000
 CAVE, CAVE_END = 0x579604, 0x57A000           # .text padding (reports/frontier.md §5)
 SITE = 0x1E3D8C                               # player-party branch of the party builder 0x1e3d2c
@@ -48,9 +48,20 @@ RIVAL_SITE = 0x1E4B34                         # rival builder 0x1e4a94: ldrh r4,
 RIVAL_BEFORE = 0xE1D040B4
 COUNT_SITE = 0x1E3548                         # trainer party 0x1e3480, Singles: mov r6, #3 (rival party size)
 COUNT_BEFORE = 0xE3A06003
+BUILD_SITE = 0x1E3110                         # StartBattle 0x1e30b8: bl 0x1e3d2c (party builder), Pike H1
+BUILD_BEFORE = 0xEB000305
+ISWIN = 0x1E5664                              # IsWin: ldrb r0, [r0, #0x73c]; cmp; movne; bx lr. Pike H2
+ISWIN_BEFORE = (0xE5D0073C, 0xE3500001, 0x13A00000, 0xE12FFF1E)
 FUNCTIONS = {'LOAD_SET': 0x1EFC18, 'MAKE_PARAM': 0x1EF904, 'ADD_MEMBER': 0x3B645C, 'PARTY_PREPARE': 0x3B5D34,
-             'RESUME': RESUME}
-FUNCTION_HEADS = {0x1EFC18: 0xE92D4030, 0x1EF904: 0xE92D4FF0, 0x3B645C: 0xE92D4070, 0x3B5D34: 0xE92D4070,
+             'RESUME': RESUME, 'BUILD_PARTY': 0x1E3D2C,
+             # PokemonParam core accessors (reports/frontier.md §28; the battle block at [core+4])
+             'GET_HP': 0x153174, 'GET_MAX_HP': 0x153254, 'SET_HP': 0x14F450, 'GET_SICK': 0x4D22E4,
+             'SET_SICK': 0x14F814}
+FUNCTION_HEADS = {0x1E3D2C: 0xE92D47F0, 0x153174: 0xE92D4070, 0x153254: 0xE92D4070, 0x14F450: 0xE92D4070,
+                  0x4D22E4: 0xE92D4070, 0x14F814: 0xE92D4070,
+                  0x1531A8: 0xE1D050B8, 0x153288: 0xE1D050BA, 0x14F488: 0xE1C050B8, 0x4D2318: 0xE5905000,
+                  0x14F84C: 0xE5805000,
+                  0x1EFC18: 0xE92D4030, 0x1EF904: 0xE92D4FF0, 0x3B645C: 0xE92D4070, 0x3B5D34: 0xE92D4070,
                   # saved work N at [[game data]] + 0x13140 + 4 + 2*(N - 0x4000): WorkGet (0x3fe118) ...
                   0x3FE128: 0xE592201C, 0x3FE12C: 0xE5922000, 0x3FE130: 0xE2822801, 0x3FE134: 0xE2822DC5,
                   # ... and the EventWork getter 0x11fa90 (r0 + 2*N - 0x7ffc)
@@ -80,6 +91,12 @@ ROUTE = {facility: route for route, (facility, _) in STREAK_ROUTES.items()}
 # bit 15 Super, bits 0-9 index). Free per frontier/ids.py (2026-11-04); assigned in frontier/REPARTO.md.
 DOME_FIGHT = (16649, 16650)
 DOME_FORCED = (16657, 16658)
+# Battle Pike (frontier/asm/pike.s, frontier/pike.py): with WORK_ROUTE = ROUTE['pike'] the battle party's HP and
+# status are set from these works when it is built and copied back to them by IsWin, by position (HP 0xFFFF = full).
+# Free per frontier/ids.py (2026-11-04); assigned in frontier/REPARTO.md.
+PIKE_HP = (16661, 16662, 16663)
+PIKE_ST = (16669, 16670, 16671)
+PIKE_FULL = 0xFFFF
 # A facility's «challenge in progress» work (started or paused; 0 = none): the Factory's rental IV, for the others
 # the work between their streak and record. A reception refuses while another facility's is not 0 (REPARTO.md).
 ACTIVE_WORK = {facility: WORK_IV if facility == 'factory' else streak + 1
@@ -103,6 +120,7 @@ CONSTANTS = {'WORK_IV': WORK_IV, 'WORK_SET0': WORK_SETS[0], 'ARCHIVE_NORMAL': 0x
              'ROUTES': len(STREAK_ROUTES), 'WORK_ROUTE': WORK_ROUTE,
              'DOME_ROUTE': ROUTE['dome'], 'DOME_FIGHT0': DOME_FIGHT[0], 'DOME_FORCED0': DOME_FORCED[0],
              'DOME_FIGHTERS': len(DOME_FIGHT),
+             'PIKE_ROUTE': ROUTE['pike'], 'PIKE_HP0': PIKE_HP[0], 'PIKE_ST0': PIKE_ST[0], 'PIKE_FIGHTERS': len(PIKE_HP),
              **{f'SLOT_DELTA_{route}': MAISON_BASE - SAVE_WORKS - 2 * (streak - 0x4000) + 0x1C4
                 for route, (_, streak) in STREAK_ROUTES.items()}}
 assert list(WORK_SETS) == [WORK_SETS[0] + k for k in range(3)] and 0 < WORK_IV - WORK_SETS[0] < 128   # rental.s: sub
@@ -116,6 +134,8 @@ assert all(0 < CONSTANTS[f'SLOT_DELTA_{r}'] for r in STREAK_ROUTES)
 assert 0 < WORK_IV - WORK_ROUTE < 128 and 2 * (WORK_ROUTE - 0x4000) < 256           # rental.s, dome.s: imm8 offsets
 assert DOME_FIGHT[1] == DOME_FIGHT[0] + 1 and DOME_FORCED[1] == DOME_FORCED[0] + 1   # dome.s reads them in pairs
 assert 0 < DOME_FIGHT[0] - WORK_ROUTE and len(DOME_FIGHT) == len(DOME_FORCED) == 2
+assert list(PIKE_HP) == [PIKE_HP[0] + k for k in range(3)] and list(PIKE_ST) == [PIKE_ST[0] + k for k in range(3)]
+assert 0 < 2 * (PIKE_ST[0] - PIKE_HP[0]) < 256                                       # pike.s: ldrh/strh imm8
 
 
 def word(data, va):
@@ -189,6 +209,13 @@ def build(native_clones=None):
     if word(code, COUNT_SITE) != COUNT_BEFORE:
         sys.exit(f'rival count site word differs: {word(code, COUNT_SITE):08x}')
     struct.pack_into('<I', code, COUNT_SITE - BASE, arm_branch(COUNT_SITE, symbols['dome_count'], link=True))
+    if word(code, BUILD_SITE) != BUILD_BEFORE:
+        sys.exit(f'party build call {BUILD_SITE:#x} differs: {word(code, BUILD_SITE):08x}')
+    struct.pack_into('<I', code, BUILD_SITE - BASE, arm_branch(BUILD_SITE, symbols['pike_build'], link=True))
+    got = tuple(word(code, ISWIN + 4 * i) for i in range(4))
+    if got != ISWIN_BEFORE:
+        sys.exit(f'IsWin {ISWIN:#x} differs: {[f"{w:08x}" for w in got]}')
+    struct.pack_into('<I', code, ISWIN - BASE, arm_branch(ISWIN, symbols['pike_iswin']))
     for va, (stub, before) in STREAK_SITES.items():
         if word(code, va) != before:
             sys.exit(f'streak accessor {va:#x} differs: {word(code, va):08x}')

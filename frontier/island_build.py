@@ -58,12 +58,14 @@ CLERK = (300, 300, 2, 0, 54, 34, 0, 2)   # model, MoveModel, event, flag, x, y, 
 ZONE_TOWER = 329              # the Tower's interior (frontier/tower.py; REPARTO.md; checked by frontier/zone_check.py)
 ZONE_DOME = 456               # the Dome's interior (frontier/dome.py; idem, reports/frontier.md §26)
 ZONE_PALACE = 340             # the Palace's interior (frontier/palace.py; idem, reports/frontier.md §27)
+ZONE_PIKE = 458               # the Pike's interior (frontier/pike.py; idem, reports/frontier.md §28)
 CLONES = {ZONE_ISLAND: DONOR_ISLAND, ZONE_HALL: DONOR_HALL,   # slot: donor of its map, area, entities and script
-          ZONE_TOWER: DONOR_HALL, ZONE_DOME: DONOR_HALL, ZONE_PALACE: DONOR_HALL}
+          ZONE_TOWER: DONOR_HALL, ZONE_DOME: DONOR_HALL, ZONE_PALACE: DONOR_HALL,
+          ZONE_PIKE: DONOR_HALL}
 # Facility zones are added here by the integrator (frontier/REPARTO.md). Every clone gets the place name PLACE; one in
 # KEEP_TEXT keeps its donor's story text (the Maison's 619 for a 517 clone); one in NATIVE_DONORS registers that
 # zone's native groups instead of its donor's (a floor cloned from a cave that runs Maison battles needs 517's).
-KEEP_TEXT = {ZONE_HALL, ZONE_TOWER, ZONE_DOME, ZONE_PALACE}
+KEEP_TEXT = {ZONE_HALL, ZONE_TOWER, ZONE_DOME, ZONE_PALACE, ZONE_PIKE}
 NATIVE_DONORS = {}
 
 
@@ -93,7 +95,8 @@ NOT_DRAWN = {'Pacifidlog stilt hut', "Route 114 Lanette's house"}
 # unpacked. The largest measured to load in Azahar; 2986112 and up hung (reports/frontier.md §23). A measured bound,
 # not the engine's limit, which was not found: retail areas hold larger texture packs.
 LOAD_BUDGET = 2724608
-DOORS = {'Tower': (ZONE_TOWER, 0), 'Dome': (ZONE_DOME, 0), 'Factory': (ZONE_HALL, 0), 'Palace': (ZONE_PALACE, 0)}   # facility: (zone, warp) its door leads to (island warps follow FACILITIES order)
+DOORS = {'Tower': (ZONE_TOWER, 0), 'Dome': (ZONE_DOME, 0), 'Factory': (ZONE_HALL, 0), 'Palace': (ZONE_PALACE, 0),
+         'Pike': (ZONE_PIKE, 0)}   # facility: (zone, warp) its door leads to (island warps follow FACILITIES order)
 
 
 ISLAND_EVENTS = {-1, 1, 2}      # zone 212's events the island keeps: -1 empty, 1 arrival, 2 the ferry clerk

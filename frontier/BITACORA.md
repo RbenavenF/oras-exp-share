@@ -1582,3 +1582,34 @@ Decisiones (plan de la v1, desviaciones del diseño a documentar):
 Evidencia: comandos y salidas arriba; nada ejecutado en Azahar.
 Commits: el de esta entrada.
 Siguiente paso: `frontier/pike.py` + `frontier/asm/pike.s` + tests; luego gdb (H2 y estado) en Azahar.
+
+## 2026-11-04 16:xx — Claude Code (Opus 5.5) — F6-TUBO: Tubo v1 en código (frontier-orch)
+Estado: en curso
+Hecho:
+- **`frontier/asm/pike.s`** (enlazado tras `dome.s`; hook total 1052 de 2556 bytes): `pike_build` sustituye el
+  `bl 0x1e3d2c` de `0x1e3110` (StartBattle): monta el equipo y, con la ruta 6, pone a cada miembro los PS guardados
+  (`0xFFFF` = lleno, con tope en el PS máx.) y el estado; `pike_iswin` sustituye la 1.ª instrucción de `IsWin`
+  `0x1e5664`: con la ruta 6 copia PS y estado de `[work+0x66c]` a los works y devuelve lo mismo que `IsWin`.
+  `patch.py` comprueba las cabeceras y las palabras leídas de los cinco accesores, el sitio y las 4 palabras de IsWin.
+- **`frontier/pike.py`**: zona 458 = flujo de la Torre (`tower.facility_program(retail, 'pike')`, ruta 6, works
+  16477/16478/16479) más `pike_rooms` tras `AcmdListClear` del bucle `0x1e1c` (antes de que entre el rival) y
+  `pike_after_start` tras `StartBattle` (`SetRank(0)`). Rutina `pike_room` en el compartido 5 (GlobalCall 9776): «Sala
+  N de 14» (`WordSetNumber` como 517 `0x3c3c`), sala 14 = combate, 3 puertas con pista (categoría + posición),
+  menú de puertas, salas: individual, duro (`SetRank(1)`), PNJ, cura total, cura parcial (1–2), estado (1/2/3 por
+  sala, probabilidades de Esmeralda, sin inmunidades). 41 líneas al final del texto 637 (desde la 1014).
+- `tower.battle_points` toma la ronda de `tower.STAGES` (14 para el Tubo; la Torre y el Palacio siguen con 7,
+  scripts idénticos: sus tests no cambian).
+- Integración: `island_build.ZONE_PIKE = 458` en `CLONES`/`KEEP_TEXT`/`DOORS` (warps de la isla: Torre 0, Domo 1,
+  Fábrica 2, **Tubo 3, Palacio 4**), `overlay` (script, caso compartido y textos). Tests de isla/overlay/patch
+  actualizados.
+Evidencia: `python -m pytest -q tests` → **390 passed** (64 nuevos en `tests/test_frontier_pike.py`: VM de las salas
+con 300 semillas, PB cada 14, exclusión; Unicorn de H1/H2 con accesores simulados). Roturas a mano: sin el tope de
+PS falla `test_h1_sets_the_saved_hp_and_status_on_the_pike_route`; sin el rechazo de categoría en las puertas sin
+pista falla `test_hinted_door_is_of_its_category_and_the_others_are_not`. Script de 458: 15.288 bytes, ZO en
+`work/frontier/pike/sizes.txt`. **No probado en Azahar todavía.**
+Commits: el de esta entrada.
+Decisiones: works PS 16661–16663, estado 16669–16671, generador 16674 (REPARTO). Las hipótesis por medir siguen
+siendo: el equipo de `[work+0x66c]` vivo al llamar a `IsWin`, su orden, y los valores de estado (enum de pml
+1 parálisis, 2 sueño, 3 congelación, 4 quemadura, 5 veneno; el tóxico se guarda como veneno).
+Siguiente paso: build y Azahar: puerta (5,69) → 458 → salida (5,70); desafío, salas, combate con daño y comprobar
+con el guardado (pausa) que los works de PS cambian y que el siguiente combate empieza con ese daño; estado visible.
