@@ -1383,3 +1383,22 @@ torneo no sale al vestíbulo tras la final: sigue el menú de la Mansión (segui
 retirarse); la racha cuenta combates (torneos = racha / 4); al reanudar se vuelve a inscribir.
 Siguiente paso: build con la isla y Azahar: puerta (6,56) → 456 → salida (6,57); Fábrica por su nuevo warp 2;
 inscripción, vista previa, 2 contra 2 (gdb en el hook), torneo de 4 con PB; derrota; pausa y reanudación; exclusión.
+
+## 2026-11-04 05:11 — Codex — F6-DOMO: relevo auditado y dos contra dos medido en Azahar
+Estado: en curso
+Hecho: revisados git status, diff y último commit (2326b25). No hay código a medias; solo tasks.json
+con in_progress, que se conserva. Los cinco archivos ajenos sin seguimiento no se tocan.
+Build repetida, entrada por la puerta del Domo, recepción, inscripción de tres, guardado en 456,
+vista previa y elección de dos probados. GDB confirma exactamente los dos huecos elegidos y dos
+rivales pertenecientes a los tres anunciados. Añadido reports/frontier.md §26.
+Evidencia: pytest 288 passed (work/frontier/dome/tests-codex.log); build-codex.log;
+trace.gdb/gdb-teams.log: jugador count=2 slots=2,0; rival r6=2, N108/N79 de 108,79,83.
+dc_registered.sav SHA256 3294aa93b5c3fe83df3c79f0e40815fa6cd4be2ac68d783ad8957cb580472fcf.
+Capturas dc_* en work/frontier/lab; snapshot.py y save-evidence.jsonl en work/frontier/dome.
+Commits: 2326b25 (implementación heredada); el de esta entrada (validación parcial).
+Decisiones: mantener el turno del orquestador. La sesión de Claude llegó más lejos que su entrada:
+comandos recuperados en work/frontier/dome/previous-commands.txt, pero se han repetido las pruebas.
+Las cuatro rondas y dos combatientes contrastados con pokeemerald 731ad5bf (fuente en §26).
+Siguiente paso: ganar el torneo en el laboratorio activo (shell persistente de esta sesión), probar
+pausa/recarga, derrotas, salida, exclusión y regresiones; tareas aún in_progress. El laboratorio
+se parará antes de terminar la sesión. No probado todavía lo enumerado como pendiente en §26.

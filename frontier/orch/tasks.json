@@ -16,7 +16,7 @@
       "owner": "codex",
       "design": "reports/diseno/domo.md",
       "accept": "lo que pide la v1 de reports/diseno/domo.md, con su puerta (6,56) → interior → salida a (6,57); exclusión mutua respetada; Fábrica y Torre sin regresiones; probado en Azahar lo que el diseño marca; tests en verde.",
-      "status": "pending",
+      "status": "in_progress",
       "notes": "",
       "evidence": ""
     },

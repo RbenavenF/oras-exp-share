@@ -1273,3 +1273,48 @@ instalación tiene su `patch.ACTIVE_WORK` distinto de cero, en ambas recepciones
 
 **Sin probar**: la consola; el jefe de la Mansión y los tramos por encima de la racha 19 en la Torre; reinicio sin
 guardar a mitad de desafío en 329. Los textos y las reglas de equipo son los de la Mansión.
+
+## 26. F6-DOMO: Domo v1 (2026-11-04, validación en curso)
+
+Implementación heredada de `2326b25`: `frontier/dome.py` y `frontier/asm/dome.s`, zona 456
+clonada de 517, ruta 5, works 16473/16474/16475 (victorias, activo, récord). Cuatro combates
+por torneo, inscripción de tres propios y elección de dos antes de cada combate. Rival:
+dos elegidos al azar entre los tres anunciados; PB de `data.FRONTIER_BP['dome']` al ganar
+la final. Al reanudar se inscribe de nuevo para evitar índices obsoletos si cambió el equipo.
+La racha interna cuenta combates; torneos ganados = racha / 4. Después de la final se conserva
+el menú de continuar/descansar/retirarse. No hay cuadro, simulación de otros participantes,
+Tucker ni modalidades Doble/Libre. Persisten los textos generales de la Mansión.
+
+Reglas contrastadas con `pret/pokeemerald` **731ad5bf**, descargado en
+`work/frontier/dome/emerald-battle_dome.h` y `emerald-battle_dome.c`:
+[`include/constants/battle_dome.h`](https://github.com/pret/pokeemerald/blob/731ad5bf/include/constants/battle_dome.h)
+define `DOME_ROUNDS_COUNT = 4`, rondas 0–3 y `DOME_BATTLE_PARTY_SIZE = 2`.
+La tabla de PB ya estaba contrastada en `frontier/data.py` con el mismo commit.
+
+Comprobación estática de zona: `work/frontier/dome/zone_check.txt` (sesión anterior):
+456 sin warps entrantes retail; máscara 0x243; dos operandos en compartido 35 sin cambio
+de mapa detrás. Los 30 literales alineados de código/CRO son un recuento orientativo,
+no una prueba de ausencia de referencias calculadas. Build repetida por Codex:
+`work/frontier/dome/build-codex.log`; área propia 234, máscara parcheada 0x343, ZO 15.788 bytes.
+Los warps de la isla son Torre 0, Domo 1, Fábrica 2; sus salidas se calculan con `door_warp`.
+
+Pruebas de Codex, build completa desde `2326b25`:
+- `source scripts/env.sh && python -m pytest -q tests`: **288 passed** (10,10 s),
+  `work/frontier/dome/tests-codex.log`. Incluye VM, Unicorn, exclusión y las rutas anteriores.
+- Azahar: desde `f6dm_strong.sav` (copia de laboratorio, equipo fuerte de `lab_tower.py`),
+  caminar hasta (6,57) y entrar por (6,56): sala del Domo, recepción e inscripción funcionan.
+  Capturas `work/frontier/lab/dc_door2.png`, `dc_hall.png`, `dc_select1.png`, `dc_registered.png`.
+- Guardado real en 456 antes del combate: `dc_registered.sav`, SHA256
+  `3294aa93b5c3fe83df3c79f0e40815fa6cd4be2ac68d783ad8957cb580472fcf`;
+  inscripción 0,1,2; ruta 5; racha/récord 0; activo 1; Mansión y Fábrica a cero.
+- Primera ronda: vista previa Baltoy (Garra Rápida), Swinub (Antiderretir), Snubbull
+  (Roca del Rey), `dc_preview_menu.png`. Se eligen los huecos **2,0** (Garchomp, Metagross;
+  conservan los motes Poochyena y Torchic del fixture), `dc_pick1.png`, `dc_pick2.png`.
+- Medido con GDB, sin alterar los equipos: en **0x1E3DA0**, count=2 y slots=2,0;
+  en **0x1E3568**, r6=2; en **0x1E4B38**, conjuntos N108 y N79. Los works del rival
+  anunciado son 108,79,83; los forzados 108,79. `work/frontier/dome/trace.gdb` y
+  `gdb-teams.log`; captura del combate `dc_battle_now.png` con dos Poké Balls del rival.
+
+Pendiente de probar: torneo completo y PB, derrotas en primera ronda y final, pausa/recarga,
+cambio del equipo durante pausa, salida, exclusión en Azahar y regresión de Fábrica/Torre
+con esta build; fixture de Mansión 20/20. Nada de esto se considera aceptado todavía.
