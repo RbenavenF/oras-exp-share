@@ -1649,3 +1649,29 @@ Decisiones: fixture nueva `pk_cx_lastroom_fixture.sav`, basada en `pk_cx_loss.sa
 PS 100/90/184, estados 1/4/0 para medir sala 14, estados y PB. Es una prueba con racha editada, no 14 salas desde cero.
 Siguiente paso: continuar en la copia de sala 14; registrar PB y estados; después curas, exclusión y regresiones.
 Laboratorio activo durante este hito, bajo shell persistente; se parará al finalizar la sesión.
+
+## 2026-11-04 1x:xx — Claude Code (Opus 5.5) — F6-TUBO: sala 14 con PB, debilitados, regresión del Palacio y exclusión; hecha
+Estado: hecho
+Hecho:
+- **Relevo revisado**: árbol limpio tras Codex (`63f4e93`), solo los cinco archivos ajenos sin seguimiento; el
+  laboratorio estaba parado. Nada a medias. Lo heredado de Codex (parche de `DllBattle.cro`, daño entre combates,
+  puerta y salida) se da por bueno con su evidencia de §28.
+- Azahar (build igual al código de `63f4e93`, `work/frontier/pike/build3.log`): reanudación desde la racha 13 con PS
+  100/90 y parálisis/quemadura aplicados por posición; «Sala 14 de 14», combate ganado, **1 PB**; ronda 2: los
+  debilitados siguen debilitados; derrota 0/0/14 con PB 1 y equipo real idéntico; salida a (5,70); Palacio con el CRO
+  nuevo: dos combates, el segundo con PS llenos, pausa 2/1/2; con el Palacio pausado el Tubo se niega. Detalle y
+  hashes en `reports/frontier.md` §28. Fila del Tubo de REPARTO actualizada; F6-TUBO `done` en `tasks.json`.
+- Laboratorio: `work/frontier/pike/lab.sh` arranca con el stub de gdb (además de `use_gdbstub=true` hace falta
+  `use_gdbstub\default=false`, si no Azahar usa su valor por defecto y lo apaga); `k.sh`/`tap.sh` para teclas y
+  toques (B es la tecla `s`; la pantalla táctil, con `mousemove x y mousedown 1 … mouseup 1`).
+Evidencia: partidas `work/frontier/lab/pk_r14_then_loss.sav` (`cc9db86c…`), `pk_palace_paused_crobuild.sav`
+(`53823118…`); capturas `pk_f_*`, `pk_g_*`, `pk_pal_*`, `pk_pike_refused.png`; `python -m pytest -q tests` → 398
+passed (`work/frontier/pike/tests-final.log`).
+Commits: el de esta entrada.
+Decisiones: la pausa del Tubo tras una victoria es la de la Torre (mismo script de la Mansión) y se dio por cubierta con
+la reanudación desde partida editada; queda anotada como no probada directamente.
+Sin probar: consola; sala de estado y cura total vistas en pantalla (cubiertas por la suite); congelación y veneno en
+pantalla; una ronda de 14 desde cero; Fábrica, Torre y Domo en juego con el CRO nuevo.
+**Estado del laboratorio**: parado; `use_gdbstub` en `false` (y `\default=true`).
+Siguiente paso: la siguiente tarea de `frontier/orch/tasks.json` (F6-ARENA-A, Claude). Antes de publicar un paquete, un
+combate de la Fábrica con el CRO nuevo (rama de alquileres).

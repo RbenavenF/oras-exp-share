@@ -1428,7 +1428,7 @@ no son zonas: compartido 57 `0xD10` (tabla de `@77C`, objeto y flags, como el 32
 editada); el jefe de la Mansión en la racha del Palacio; reinicio sin guardar en 340; el Domo rechazando con el Palacio
 pausado (cubierto por la suite, `busy_check`). Textos y reglas de equipo de la Mansión.
 
-## 28. F6-TUBO: implementación y validación en curso (2026-11-04)
+## 28. F6-TUBO: Tubo v1 (2026-11-04)
 
 Código inicial `23c471c`; recuperación del relevo y parche CRO `f5e6a2a`. Zona 458, clon de 517, ruta 6,
 works 16477/16478/16479. Las 14 salas se representan mediante un bucle de script con menú de tres puertas y pistas,
@@ -1465,6 +1465,35 @@ copia temporal de todas las instalaciones de la Mansión: su regresión en juego
 - Hechos de las partidas en `work/frontier/pike/save-evidence.jsonl`; suite **398 passed** en
   `tests-relevo-final.log`, incluyendo 8 pruebas nuevas del CRO (puerta ARM, identidad de entrada, hashes).
 
-Pendiente: estados y curas en esta build, ronda de 14/PB, pausa/reanudación con daño, exclusión en juego y regresión
-de Fábrica/Torre/Domo/Palacio con el CRO nuevo. Consola no probada. El veneno grave se representa actualmente como
-veneno normal (valor 5); los valores de estado del módulo requieren terminar su validación visual.
+**Azahar, Claude, 2026-11-04 (build `work/frontier/pike/build3.log`, mismo código que `63f4e93`; capturas
+`work/frontier/lab/pk_f_*`, `pk_g_*`, `pk_pal_*`, `pk_pike_refused.png`; hechos en `save-evidence.jsonl`)**:
+- **Valores de estado** (sesión anterior de Claude, build sin el CRO, works escritos con GDB antes del combate): 1 →
+  «PARALIZADO», 2 → «DORMIDO», 4 → «QUEMADO» en la pantalla del equipo del combate, en el orden de la selección
+  (`pk_b2_party.png`); PS 40 aplicados al primero. Es el enum de pml; 3 (congelación) y 5 (veneno) no se han visto.
+- **Reanudación con daño y sala 14**: `pk_cx_lastroom_fixture.sav` (racha/activo/récord 13/1/13, PS 100/90/184,
+  estados 1/4/0). «Tu racha … asciende a 13», selección de tres, guardar, «Sala 14 de 14.» y «¡Última sala de la
+  ronda! Te espera un combate.» (`pk_f_room14.png`, `pk_f_last.png`). En el combate: 100/156 PARALIZADO, 90/156
+  QUEMADO, 184/184 (`pk_f_party.png`). Combate ganado (dos debilitados) y **«Ruben ha obtenido 1 PB»**
+  (`pk_f_w3.png`, `FRONTIER_BP['pike'][0]`); después «Sala 1 de 14.» de la ronda 2.
+- **Debilitados entre combates**: el siguiente combate (sala 1, «voces de gente» → combate individual) empieza con el
+  tercero (los dos debilitados no salen, `pk_g_b.png`); derrota. Partida de la derrota `pk_r14_then_loss.sav`
+  (`cc9db86c…`): Tubo **0/0/14**, PS 0/0/0, **PB 1**; bloque del equipo cifrado idéntico al de la entrada (mismo
+  SHA256 `12355b31…`); Mansión y demás instalaciones a cero.
+- **Salida** de 458 andando: (5,70) otra vez.
+- **Regresión con el CRO nuevo (Palacio)**: (31,69) → 340, selección, dos combates ganados; el segundo empieza con
+  156/156 aunque el primero acabó en 46/156 (`pk_pal_b2.png`: fuera de la ruta 6 la Mansión sigue curando y los
+  ganchos no actúan); «El próximo combate será el número 3» y Pausar → `pk_palace_paused_crobuild.sav`
+  (`53823118…`): Palacio **2/1/2**, ruta 3, Tubo intacto (0/0/14), PB 1. Equipo descifrado frente a la partida
+  anterior (`work/frontier/pike/party_diff.py`): solo +0xCA (amistad) y la suma de tres Pokémon que no combatieron
+  (pasos andando).
+- **Exclusión en juego**: con el Palacio pausado, «Combatir» en 458 → «Tienes un desafío a medias en otra
+  instalación…» (`pk_pike_refused.png`). El sentido inverso (otras recepciones con el Tubo a medias) lo cubre la suite
+  (`factory.busy_check` recorre `patch.ACTIVE_WORK`).
+- Suite: `python -m pytest -q tests` → **398 passed** (`work/frontier/pike/tests-final.log`).
+
+**Sin probar**: consola; una sala de estado y una cura total vistas en Azahar (sí la cura parcial, `pk_r2_room1_res.png`
+de la sesión anterior, y la sala de PNJ; estado y curas cubiertos por la suite); congelación (3) y veneno (5) en
+pantalla; la pausa del Tubo tras ganar (se probó la reanudación desde una partida con la racha editada); una ronda de
+14 salas desde cero; el combate fuerte con rango Súper más allá del primer combate de Codex; Fábrica, Torre y Domo
+con el CRO nuevo en el juego (el camino de combate es el mismo que el del Palacio y el Tubo). El veneno grave se
+guarda como veneno normal (valor 5).

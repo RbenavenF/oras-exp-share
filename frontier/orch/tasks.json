@@ -36,9 +36,9 @@
       "owner": "codex",
       "design": "reports/diseno/tubo.md",
       "accept": "v1 del diseño con las decisiones del usuario de REPARTO.md, puerta (5,69) → vestíbulo → salida a (5,70); exclusión mutua; sin regresiones; probado en Azahar; tests en verde.",
-      "status": "in_progress",
+      "status": "done",
       "notes": "",
-      "evidence": ""
+      "evidence": "Commits d1718db (medidas), 23c471c (código: frontier/pike.py, asm/pike.s H1 0x1e3110 / H2 IsWin, zona 458, tower.STAGES), f5e6a2a (Codex: parche DllBattle.cro 0x15398 para que el combate devuelva el equipo con competidor 2), 63f4e93 (Codex, Azahar) y el de cierre (Claude). Zona 458 comprobada con zone_check.py. Azahar (reports/frontier.md §28): puerta (5,69)->458->salida (5,70) (pk_cx_exit.sav, pk_cx_entered_done.sav y otra vez en esta sesión); salas con 3 puertas, pista con posición, PNJ, cura parcial, combate individual y fuerte; daño conservado entre combates (61/156) con PP llenos; estados 1/2/4 = parálisis/sueño/quemadura visibles; reanudación con racha 13 y PS/estados por posición, sala 14 combate, 'Ruben ha obtenido 1 PB'; debilitados siguen debilitados; derrota 0/0/14 con PB 1 y equipo real idéntico (pk_r14_then_loss.sav); Palacio con el CRO nuevo cura entre combates y pausa 2/1/2; exclusión: el Tubo se niega con el Palacio pausado. pytest: 398 passed. Sin probar: consola, sala de estado y cura total en pantalla, ronda de 14 desde cero."
     },
     {
       "id": "F6-ARENA-A",
