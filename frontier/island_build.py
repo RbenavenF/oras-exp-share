@@ -43,6 +43,7 @@ from formats import garc_entries, lz11_decompress, text_lines, words_to_text, zo
 from pawn import OP, Op, Program, Script  # noqa: E402
 import factory  # noqa: E402
 import island  # noqa: E402
+import pyramid  # noqa: E402
 
 STAGED = ['a/0/1/4', 'a/0/3/9', 'a/0/4/0', 'a/0/7/3', 'a/0/8/1', 'a/0/1/3', 'a/0/2/3', 'a/1/3/7', 'a/0/2/1',
           'a/0/3/6', 'a/0/3/7', 'a/0/3/8', 'a/1/9/5', 'a/1/8/9', 'a/1/9/7', 'a/0/2/9', 'a/1/8/2', 'a/1/8/3',
@@ -60,13 +61,14 @@ ZONE_DOME = 456               # the Dome's interior (frontier/dome.py; idem, rep
 ZONE_PALACE = 340             # the Palace's interior (frontier/palace.py; idem, reports/frontier.md §27)
 ZONE_PIKE = 458               # the Pike's interior (frontier/pike.py; idem, reports/frontier.md §28)
 ZONE_ARENA = 457              # the Arena's interior (frontier/arena.py; idem, reports/frontier.md §29)
+ZONE_PYRAMID = pyramid.LOBBY  # the Pyramid's lobby (140) and floors (141, 142) (frontier/pyramid.py; §30)
 CLONES = {ZONE_ISLAND: DONOR_ISLAND, ZONE_HALL: DONOR_HALL,   # slot: donor of its map, area, entities and script
           ZONE_TOWER: DONOR_HALL, ZONE_DOME: DONOR_HALL, ZONE_PALACE: DONOR_HALL,
-          ZONE_PIKE: DONOR_HALL, ZONE_ARENA: DONOR_HALL}
+          ZONE_PIKE: DONOR_HALL, ZONE_ARENA: DONOR_HALL, **{z: DONOR_HALL for z in pyramid.ZONES}}
 # Facility zones are added here by the integrator (frontier/REPARTO.md). Every clone gets the place name PLACE; one in
 # KEEP_TEXT keeps its donor's story text (the Maison's 619 for a 517 clone); one in NATIVE_DONORS registers that
 # zone's native groups instead of its donor's (a floor cloned from a cave that runs Maison battles needs 517's).
-KEEP_TEXT = {ZONE_HALL, ZONE_TOWER, ZONE_DOME, ZONE_PALACE, ZONE_PIKE, ZONE_ARENA}
+KEEP_TEXT = {ZONE_HALL, ZONE_TOWER, ZONE_DOME, ZONE_PALACE, ZONE_PIKE, ZONE_ARENA, *pyramid.ZONES}
 NATIVE_DONORS = {}
 
 
@@ -97,7 +99,7 @@ NOT_DRAWN = {'Pacifidlog stilt hut', "Route 114 Lanette's house"}
 # not the engine's limit, which was not found: retail areas hold larger texture packs.
 LOAD_BUDGET = 2724608
 DOORS = {'Tower': (ZONE_TOWER, 0), 'Dome': (ZONE_DOME, 0), 'Factory': (ZONE_HALL, 0), 'Palace': (ZONE_PALACE, 0),
-         'Pike': (ZONE_PIKE, 0), 'Arena': (ZONE_ARENA, 0)}   # facility: (zone, warp) its door leads to (island warps follow FACILITIES order)
+         'Pike': (ZONE_PIKE, 0), 'Arena': (ZONE_ARENA, 0), 'Pyramid': (ZONE_PYRAMID, 0)}   # facility: (zone, warp) its door leads to (island warps follow FACILITIES order)
 
 
 ISLAND_EVENTS = {-1, 1, 2}      # zone 212's events the island keeps: -1 empty, 1 arrival, 2 the ferry clerk
@@ -157,6 +159,7 @@ def plan(scripts):
         lines.append(f'plaza.building.{i}={name}|{x}|{y}')
         if facility in DOORS:
             lines.append(f'plaza.door.{i}=' + ','.join(map(str, DOORS[facility])))
+    lines += pyramid.plan_lines()   # the Pyramid's floors: NPCs and exit to its lobby
     return '\n'.join(lines) + '\n'
 
 

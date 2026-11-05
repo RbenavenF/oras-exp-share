@@ -38,7 +38,7 @@ HASHES = {
     REPOLISHED_IPS: '0da174955afe9a7baf43254ce314bf5b65032f89c70a8e1065fa92ee4c2267df',
 }
 ASM = ROOT / 'frontier/asm/rental.s'
-ASMS = [ASM, ROOT / 'frontier/asm/dome.s', ROOT / 'frontier/asm/pike.s']   # linked together, rental_hook first (at CAVE)
+ASMS = [ASM, ROOT / 'frontier/asm/dome.s', ROOT / 'frontier/asm/pike.s', ROOT / 'frontier/asm/pyramid.s']   # linked together, rental_hook first (at CAVE)
 BASE = 0x100000
 CAVE, CAVE_END = 0x579604, 0x57A000           # .text padding (reports/frontier.md §5)
 SITE = 0x1E3D8C                               # player-party branch of the party builder 0x1e3d2c
@@ -52,12 +52,14 @@ BUILD_SITE = 0x1E3110                         # StartBattle 0x1e30b8: bl 0x1e3d2
 BUILD_BEFORE = 0xEB000305
 ISWIN = 0x1E5664                              # IsWin: ldrb r0, [r0, #0x73c]; cmp; movne; bx lr. Pike H2
 ISWIN_BEFORE = (0xE5D0073C, 0xE3500001, 0x13A00000, 0xE12FFF1E)
+WORK_DELETE = 0x1E5C48                        # BattleInstWorkDelete (DllField.cro 0x956b4 -> thunk 0x3738), holder r0
+DELETE_SITE = 0x1E5C54                        # its `bl 0x12b8fc` after ldr r4, [r0, #0x64] (work): pyramid_save
 FUNCTIONS = {'LOAD_SET': 0x1EFC18, 'MAKE_PARAM': 0x1EF904, 'ADD_MEMBER': 0x3B645C, 'PARTY_PREPARE': 0x3B5D34,
-             'RESUME': RESUME, 'BUILD_PARTY': 0x1E3D2C,
+             'RESUME': RESUME, 'BUILD_PARTY': 0x1E3D2C, 'WORK_DELETE_CALL': 0x12B8FC,
              # PokemonParam core accessors (reports/frontier.md §28; the battle block at [core+4])
              'GET_HP': 0x153174, 'GET_MAX_HP': 0x153254, 'SET_HP': 0x14F450, 'GET_SICK': 0x4D22E4,
              'SET_SICK': 0x14F814}
-FUNCTION_HEADS = {0x1E3D2C: 0xE92D47F0, 0x153174: 0xE92D4070, 0x153254: 0xE92D4070, 0x14F450: 0xE92D4070,
+FUNCTION_HEADS = {0x1E3D2C: 0xE92D47F0, 0x1E5C48: 0xE92D4070, 0x1E5C4C: 0xE1A05000, 0x1E5C50: 0xE5904064, 0x153174: 0xE92D4070, 0x153254: 0xE92D4070, 0x14F450: 0xE92D4070,
                   0x4D22E4: 0xE92D4070, 0x14F814: 0xE92D4070,
                   0x1531A8: 0xE1D050B8, 0x153288: 0xE1D050BA, 0x14F488: 0xE1C050B8, 0x4D2318: 0xE5905000,
                   0x14F84C: 0xE5805000,
@@ -97,6 +99,11 @@ DOME_FORCED = (16657, 16658)
 PIKE_HP = (16661, 16662, 16663)
 PIKE_ST = (16669, 16670, 16671)
 PIKE_FULL = 0xFFFF
+# Battle Pyramid (frontier/asm/pyramid.s, frontier/pyramid.py): with WORK_ROUTE = ROUTE['pyramid'] the party slots
+# chosen in the lobby are saved here when its facility work is deleted (the count 3 in PYRAMID_COUNT) and become the
+# selection of every floor battle. Free per frontier/ids.py (2026-11-05); assigned in frontier/REPARTO.md.
+PYRAMID_SEL = (16681, 16682, 16683)
+PYRAMID_COUNT = 16685
 # A facility's «challenge in progress» work (started or paused; 0 = none): the Factory's rental IV, for the others
 # the work between their streak and record. A reception refuses while another facility's is not 0 (REPARTO.md).
 ACTIVE_WORK = {facility: WORK_IV if facility == 'factory' else streak + 1
@@ -121,6 +128,8 @@ CONSTANTS = {'WORK_IV': WORK_IV, 'WORK_SET0': WORK_SETS[0], 'ARCHIVE_NORMAL': 0x
              'DOME_ROUTE': ROUTE['dome'], 'DOME_FIGHT0': DOME_FIGHT[0], 'DOME_FORCED0': DOME_FORCED[0],
              'DOME_FIGHTERS': len(DOME_FIGHT),
              'PIKE_ROUTE': ROUTE['pike'], 'PIKE_HP0': PIKE_HP[0], 'PIKE_ST0': PIKE_ST[0], 'PIKE_FIGHTERS': len(PIKE_HP),
+             'PYRAMID_ROUTE': ROUTE['pyramid'], 'PYRAMID_SEL0': PYRAMID_SEL[0], 'PYRAMID_COUNT': PYRAMID_COUNT,
+             'PYRAMID_PICKS': len(PYRAMID_SEL),
              **{f'SLOT_DELTA_{route}': MAISON_BASE - SAVE_WORKS - 2 * (streak - 0x4000) + 0x1C4
                 for route, (_, streak) in STREAK_ROUTES.items()}}
 assert list(WORK_SETS) == [WORK_SETS[0] + k for k in range(3)] and 0 < WORK_IV - WORK_SETS[0] < 128   # rental.s: sub
@@ -136,6 +145,8 @@ assert DOME_FIGHT[1] == DOME_FIGHT[0] + 1 and DOME_FORCED[1] == DOME_FORCED[0] +
 assert 0 < DOME_FIGHT[0] - WORK_ROUTE and len(DOME_FIGHT) == len(DOME_FORCED) == 2
 assert list(PIKE_HP) == [PIKE_HP[0] + k for k in range(3)] and list(PIKE_ST) == [PIKE_ST[0] + k for k in range(3)]
 assert 0 < 2 * (PIKE_ST[0] - PIKE_HP[0]) < 256                                       # pike.s: ldrh/strh imm8
+assert list(PYRAMID_SEL) == [PYRAMID_SEL[0] + k for k in range(3)] and 0 < PYRAMID_COUNT - PYRAMID_SEL[0] < 128
+assert 0 < 2 * (PYRAMID_SEL[0] - WORK_ROUTE) < 0x10000                                # pyramid.s: ADDW
 
 
 def word(data, va):
@@ -216,6 +227,9 @@ def build(native_clones=None):
     if got != ISWIN_BEFORE:
         sys.exit(f'IsWin {ISWIN:#x} differs: {[f"{w:08x}" for w in got]}')
     struct.pack_into('<I', code, ISWIN - BASE, arm_branch(ISWIN, symbols['pike_iswin']))
+    if word(code, DELETE_SITE) != arm_branch(DELETE_SITE, FUNCTIONS['WORK_DELETE_CALL'], link=True):
+        sys.exit(f'work delete call {DELETE_SITE:#x} differs: {word(code, DELETE_SITE):08x}')
+    struct.pack_into('<I', code, DELETE_SITE - BASE, arm_branch(DELETE_SITE, symbols['pyramid_save'], link=True))
     for va, (stub, before) in STREAK_SITES.items():
         if word(code, va) != before:
             sys.exit(f'streak accessor {va:#x} differs: {word(code, va):08x}')

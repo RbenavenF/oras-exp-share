@@ -44,6 +44,7 @@ import island  # noqa: E402
 import island_build  # noqa: E402
 import palace  # noqa: E402
 import pike  # noqa: E402
+import pyramid  # noqa: E402
 import patch  # noqa: E402
 import tower  # noqa: E402
 
@@ -135,6 +136,9 @@ def texts(romfs, sets, table):
         if len(lines) != pike.LINE_BASE:
             raise ValueError(f'text {patch.TEXT_FACTORY}: {len(lines)} lines, the Pike expects {pike.LINE_BASE}')
         lines += pike.lines(lang)
+        if len(lines) != pyramid.LINE_BASE:
+            raise ValueError(f'text {patch.TEXT_FACTORY}: {len(lines)} lines, the Pyramid expects {pyramid.LINE_BASE}')
+        lines += pyramid.lines(lang)
         words = [text_to_words(line) for line in lines]
         out[path] = rebuild_garc(data, {}, append=[build_text(words, [0] * len(words))])
         game = factory.GAMETEXT[lang]
@@ -169,7 +173,8 @@ def shared(romfs, zone_script, cells, levels):
     retail = Script.parse(raw)
     if retail.build(pad=False) != raw:
         raise ValueError('shared script 5 does not round-trip')
-    program = factory.shared_program(retail, zone_script, cells, levels, dome.shared_cases(levels) + pike.shared_cases())
+    program = factory.shared_program(retail, zone_script, cells, levels, dome.shared_cases(levels) + pike.shared_cases()
+                                     + pyramid.shared_cases())
     script = program.build_script(f'L{retail.main:x}').build(pad=False)
     ferry = shared_script(data, island.FERRY_SCRIPT)
     ferry_new = island.ferry_program(ferry).build_script(f'L{ferry.main:x}').build(pad=False)
@@ -209,7 +214,7 @@ def facility_scripts(romfs=ROMFS):
     _, retail = maison_retail(source(romfs, 'a/0/1/3'))
     return {tower.ZONE: tower.zone_script(retail), dome.ZONE: dome.zone_script(retail),
             palace.ZONE: palace.zone_script(retail), pike.ZONE: pike.zone_script(retail),
-            arena.ZONE: arena.zone_script(retail)}
+            arena.ZONE: arena.zone_script(retail), **pyramid.zone_scripts(retail)}
 
 
 def build(romfs=ROMFS):

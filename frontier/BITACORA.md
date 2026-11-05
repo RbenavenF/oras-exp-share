@@ -1726,3 +1726,54 @@ no repetir toda la ronda. Sin probar: consola; recarga de la pausa 9 concreta; c
 Torre y Domo con el CRO del Tubo (limitación heredada §28; suite sí en verde). Textos de la Mansión conservados.
 Siguiente paso: siguiente tarea del orquestador, F6-PIRAMIDE. Antes de publicar, comprobar rama de alquileres de
 Fábrica con el CRO actual como pide §28. Laboratorio parado; inputs y partida original intactos; sin push.
+
+## 2026-11-05 02:2x — Claude Code (Opus 5.5) — F6-PIRAMIDE: experimento 0, Pirámide v1 en código y primeras pruebas en Azahar (frontier-orch)
+Estado: en curso
+Hecho:
+- **Relevo de Codex** (cortado por cuota el 2026-11-04 21:39 sin commit ni bitácora): `git status` con
+  `frontier/pyramid_probe.py` y `tests/test_frontier_pyramid_probe.py` sin seguimiento (banco de pruebas del
+  experimento 0: puerta → 140, recepcionista → selección → 141 clonada de la cueva 192; 13 tests en verde) y
+  `tasks.json` en `in_progress`. Sus medidas en `work/frontier/pyramid/` (zone-check de 140–142, contexto de operandos:
+  los literales 140–142 de scripts son flags, objetos, líneas de texto o coordenadas, ninguno lleva a esas zonas).
+  Se conserva el banco de pruebas tal cual (aparato del experimento 0, fuera de `overlay.py`). El laboratorio que dejó
+  arrancado en su espacio de PID ya no existía. Los cinco archivos ajenos sin seguimiento no se tocan.
+- **Experimento 0 en Azahar** (build del banco de Codex, `work/frontier/pyramid/probe`, gdb):
+  - `BattleInstWorkCreate` en el vestíbulo 140 (clon de 517) devuelve el trabajo `0x0880a6cc`; modalidad y selección
+    de 3 normales; `_MapChangeCore(141, 19, 0, 18, 0, 0, 0, 1, 0)` lleva a la zona 141 (`py_e0_after_select.png`).
+  - **El trabajo de la instalación no sobrevive al cambio de mapa**: en 141, `x/8wx 0x880a6cc+0x2c` lee la selección
+    a 0 y `+0x48 = 0x0bc204e8`, y su cabecera es otro objeto (`0x005e0098 …`): memoria liberada y reutilizada.
+  - La cueva 192 no sirve de piso sin más: el jugador llega a la boca de la cueva, no puede andar y los NPC en (16–22, 17)
+    no se ven (`py_e0_floor*.png`). Se descarta para la v1: los pisos son clones de 517 (geometría conocida).
+  - `BattleInstWorkDelete` → `DllField.cro` 0x956b4 → thunk 0x3738 → **`code.bin 0x1e5c48(holder)`** (literal leído en
+    0x6f673c con DllField en 0x6f3000): `ldr r4, [r0, #0x64]` (trabajo) y `bl 0x12b8fc` en 0x1e5c54.
+- **Diseño resultante** (`frontier/pyramid.py`, `frontier/asm/pyramid.s`): la selección vive en works guardados.
+  `pyramid_save` (en 0x1e5c54, al borrar el trabajo con la ruta 7, selección de 3 del equipo, no de la Caja) copia
+  `work+0x30..0x38` a 16681–16683 y pone 16685 = 3; `pyramid_party` (desde `rental_hook`, tras `dome_party`) los pone
+  en el trabajo nuevo de cada combate. Cada combate de piso: `BattleInstWorkCreate`, `SetRank(0)`, `SetTrainer(0)`,
+  `StartBattle(0, 1)`, esperas de 517, `IsWin`, `BattleInstWorkDelete`.
+- **Pirámide v1**: vestíbulo 140, pisos 141/142 alternos (clones de 517; 3 entrenadores y un encargado por piso,
+  salida del piso al vestíbulo), puerta (32,57) = warp 3 de la isla (Pike 4, Arena 5, Palace 6 se recalculan con
+  `door_warp`). Textos en el texto 637 (líneas 1055–1069) por el caso 9777 del compartido 5. Works: 16481–16483
+  (racha de pisos, piso actual, récord), 16686 vencidos, 16687 línea, 16689 número; patch: 16681–16683, 16685.
+- Integración (turno del orquestador): `island_build` (CLONES/KEEP_TEXT/DOORS, líneas del plan de los pisos),
+  `overlay` (scripts, caso compartido, textos), `patch.py` y `rental.s`; tests de isla, overlay y parche ajustados.
+- Fallo encontrado en Azahar y corregido: la rutina de guardado 0x13d4 devuelve **0 si se guarda** (517 0x1a60–0x1a70).
+Evidencia (Azahar, build `work/frontier/pyramid/build`, partida de partida `py_start.sav` = copia de `pa_strong.sav`):
+- Puerta (32,57) → vestíbulo; textos propios; modalidad y selección; gdb en `pyramid_save`: trabajo `0x8822544`,
+  `+0x30..+0x38 = 0, 1, 2`, `+0x48 = 3`. Guardado: `py_lobby_saved.sav` (`708bc25e…`, zona 140, ruta 7, 16481–3 =
+  0/1/0, selección 0/1/2, cuenta 3).
+- Reanudar desde el vestíbulo → piso 1 (141); «Piso 1 de 7»; tres combates ganados contra entrenadores de la Mansión
+  con **exactamente los 3 elegidos a Nv. 50** (`py_v1_party_in_battle.png`), «Ya hemos combatido» tras cada uno;
+  encargado: «¡Piso superado!» → piso 2 (142). Guardado en el piso 2: `py_floor2_try.sav` (`be355c35…`, zona 142,
+  racha 1, piso 2, récord 1, selección 0/1/2). **Recarga en el piso 2 y combate ganado** (la selección sale de works).
+- Equipo real: solo +0xF0 (PS actuales) de los miembros 0 y 1 cambia (26→34, 25→35): la cura de la Mansión ya vista
+  en §28 (`work/frontier/pike/party_diff.py`).
+- `python -m pytest -q tests` → 443 passed.
+Commits: el de esta entrada.
+Decisiones: pisos sobre la sala de la Mansión (no la cueva); racha por pisos (Emerald); la racha sigue tras completar
+los 7 pisos y vuelve a 0 al perder o abandonar; la ruta 7 queda puesta mientras el desafío sigue (también al guardar en
+un piso). Riesgo anotado: los pisos y el vestíbulo conservan el PC de la Mansión; cambiar el equipo entre pisos cambia
+quién combate (los índices son huecos del equipo) y no se ha probado qué pasa con un hueco vacío.
+Siguiente paso: en Azahar, salida del piso → vestíbulo → (32,58) y exclusión mutua con la Fábrica; PB del piso 7
+(partida editada); derrota con 3 débiles (huecos 3–5); regresión de otra instalación con esta build. Después,
+`tests/test_frontier_pyramid.py` (VM y Unicorn), `reports/frontier.md` §30 y REPARTO.

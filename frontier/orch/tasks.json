@@ -56,7 +56,7 @@
       "owner": "codex",
       "design": "reports/diseno/piramide.md",
       "accept": "experimento 0 del diseño hecho y documentado; v1 con puerta (32,57) → vestíbulo → pisos → vuelta, salida a (32,58); exclusión mutua; sin regresiones; probado en Azahar; tests en verde.",
-      "status": "pending",
+      "status": "in_progress",
       "notes": "",
       "evidence": ""
     }

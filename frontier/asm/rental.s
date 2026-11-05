@@ -37,6 +37,9 @@ rental_hook:
     mov     r0, r4                  @ work
     sub     r1, r8, #(2 * (WORK_IV - WORK_ROUTE))   @ &work[WORK_ROUTE]
     bl      dome_party              @ Battle Dome: its 2 fighters as the selection (frontier/asm/dome.s)
+    mov     r0, r4                  @ work
+    sub     r1, r8, #(2 * (WORK_IV - WORK_ROUTE))   @ &work[WORK_ROUTE]
+    bl      pyramid_party           @ Battle Pyramid: the lobby's three as the selection (frontier/asm/pyramid.s)
     mov     r0, r6
     add     sp, sp, #0x18
     pop     {r4-r8, pc}

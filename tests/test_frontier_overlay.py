@@ -79,7 +79,10 @@ def test_texts_append_the_option_the_refusal_and_the_factory_entry(built):
         lines = [words_to_text(w) for w in text_lines(after[e[2]:e[2] + e[3]])[0]]
         assert lines[:3] == factory.PICK[factory.LANG[lang]] and dome.LINE_BASE == factory.LINE_S + 784
         assert lines[dome.LINE_BASE:pike.LINE_BASE] == dome.lines(lang)     # the Dome's, after the Factory's
-        assert lines[pike.LINE_BASE:] == pike.lines(lang)                   # the Pike's, after the Dome's
+        assert lines[pike.LINE_BASE:pike.LINE_END] == pike.lines(lang)      # the Pike's, after the Dome's
+        import pyramid
+        assert pyramid.LINE_BASE == pike.LINE_END
+        assert lines[pyramid.LINE_BASE:] == pyramid.lines(lang)             # the Pyramid's, after the Pike's
 
 
 def test_game_texts_rename_only_the_pass(built):

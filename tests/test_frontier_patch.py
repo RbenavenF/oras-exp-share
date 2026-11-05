@@ -130,7 +130,8 @@ def test_patch_only_touches_site_padding_and_text_row(patched):
     site = fp.SITE - fp.BASE
     cave = fp.CAVE - fp.BASE
     text = fp.GLOBAL_ROW - fp.BASE + 8
-    singles = [va - fp.BASE for va in (fp.RIVAL_SITE, fp.COUNT_SITE, *fp.STREAK_SITES, fp.BUILD_SITE, fp.ISWIN)]
+    singles = [va - fp.BASE for va in (fp.RIVAL_SITE, fp.COUNT_SITE, *fp.STREAK_SITES, fp.BUILD_SITE, fp.ISWIN,
+                                        fp.DELETE_SITE)]
     assert all(site <= i < site + 20 or cave <= i < cave + len(hook) or text <= i < text + 2
                or any(s <= i < s + 4 for s in singles) for i in diff)
     assert struct.unpack_from('<8H', code, fp.GLOBAL_ROW - fp.BASE) == (9770, 9779, 5, 1, fp.TEXT_FACTORY, 0, 0, 0)
