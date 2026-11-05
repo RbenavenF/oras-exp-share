@@ -1824,3 +1824,16 @@ Decisiones: el usuario pidió el cambio y no lanzar el orquestador todavía. Tod
 `done` (el supervisor terminó a las 06:36 con «all tasks done»).
 Siguiente paso: definir las siguientes tareas en `frontier/orch/tasks.json` (p. ej. etapa B del Palacio y la Arena)
 y lanzar `frontier/orch/frontier-orch auto`; medir cuánto dura Codex por ventana con el cambio.
+
+## 2026-11-05 09:25 — Claude Code (Opus 5.5) — frontier-orch: Codex con gpt-6.1-sol
+Estado: hecho (sin ejecutar el orquestador)
+Hecho: `frontier/orch/config.json` pasa `-c model="gpt-6.1-sol"` en las órdenes `new` y `resume` de Codex (razonamiento
+medio, sesiones nuevas, como en la entrada anterior). Decisión del usuario: probar Sol frente a gpt-6-astra por la
+cuota. `~/.codex/config.toml` no se toca (astra para el uso manual). Según `~/.codex/models_cache.json`, Sol es
+«Latest workhorse model for coding and everyday work» y Astra «Frontier intelligence for the most demanding work».
+Evidencia: `python -m pytest -q tests/test_frontier_orch.py` en verde tras el cambio.
+Sin probar: ninguna ejecución de Codex con Sol; ni consumo por ventana ni calidad.
+Commits: el de esta entrada.
+Siguiente paso: nuevas tareas en `tasks.json` y `frontier/orch/frontier-orch auto`. Al acabar la primera ventana de
+Codex, medir en `~/.codex/sessions/…` llamadas, contexto medio y minutos hasta el límite, y comparar con la sesión del
+Domo (124 llamadas, ~142k por llamada, ~15 min). Revisar sus commits con más cuidado que los de Astra.
