@@ -1877,3 +1877,28 @@ Sin probar: gpt-6.1-sol sigue sin ninguna ejecución real (Codex sin cuota hasta
 Commits: el de esta entrada.
 Siguiente paso: relanzar `frontier/orch/frontier-orch auto`: Claude hereda F6-ARENA-B con el aviso de relevo
 (o el usuario decide devolverle la Arena a Claude / esperar al día 8).
+
+## 2026-11-05 10:24 — Codex — F6-ARENA-B: primer mapa del motor (frontier-orch)
+Estado: en curso
+Hecho: leído AGENTS/PLAN/REPARTO/diseño/últimas entradas y Git; no existía trabajo previo de etapa B (la sesión
+anterior agotó cuota al arrancar). Turno del orquestador sin cambiar. Nuevo `frontier/arena_survey.py`, solo lectura:
+SHA256, tablas de eventos relocadas y listados de los candidatos M1–M5. `reports/frontier.md` §31 distingue las
+medidas de lo pendiente: cadena CallSakasaBattle→3da5cc→1dbd18; setup de Mansión +0x620 (dump GDB); edad de
+BattleMon +0x158 y reinicio 0x724cc; final de turno 0x1cf44; cola de KO 0x1dacc; predicado de cambio 0x79458
+antes del permiso a Fantasma; ausencia de cueva grande en el texto CRO (los ceros son tablas relocadas), 1284 bytes
+restantes en la cueva de code.bin. No hay parche de motor nuevo.
+Evidencia: `source scripts/env.sh; python frontier/arena_survey.py > work/frontier/arena/b-static.txt`;
+`python frontier/patch.py --out work/frontier/arena/b-measure-patch` (hook 1272 bytes);
+`python -m pytest -q tests` → 506 passed (`b-tests-measures.log`). GDB: setup 0x08822b64, volcado `b-setup.bin`
+SHA256 42366157…; DllBattle base 0x006f3000, predicado 0x0076c458 ejecutado desde offset 0x5e4c con rival id 12.
+Commits: el de esta entrada.
+Decisiones: no tocar código funcional hasta completar las medidas; no confundir flag de Sorpresa con contador ni
+el registro ID 195 ajeno con el movimiento 195. In_progress (sin bloqueo que requiera decisión del usuario).
+Los cinco archivos sin seguimiento del usuario se conservan intactos.
+Siguiente paso: continuar la medición dinámica M2/M3 y el bit libre M1. Laboratorio en curso en esta sesión:
+consola persistente (debe pararse antes de terminar), fixture ar_saved_457.sav, v0.5 + work/frontier/build.
+En RAM se cambió el primer movimiento de Metagross a Canto Mortal (solo copia de combate, direcciones en
+`work/frontier/arena/b-probe.gdb`), para medir los PS con watchpoints. Los logs de GDB siguen en
+`work/faraway/gdb/out.log` y se copiarán a `work/frontier/arena/`. Mantener start, gdb e input en una misma consola:
+las llamadas exec tienen namespaces de procesos separados; una llamada nueva no puede controlar sus PIDs.
+No probado todavía: contador en marcha, Canto Mortal/KO, restricción del menú, Fantasma, juicio y regresiones B.

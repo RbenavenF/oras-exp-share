@@ -1604,3 +1604,99 @@ probado); cada combate cura; objetos equipados permitidos; prohibiciones de la M
 quedan (dicen «Ya hemos combatido»). La racha sigue tras los 7 pisos y vuelve a 0 al perder o abandonar. Sin
 oscuridad, salvajes, objetos, bolsa ni Brandon (v2). Consola no probada; Fábrica, Domo, Tubo, Palacio y Arena no se
 volvieron a jugar con esta build (sus tests sí, en verde).
+
+## 31. Arena B: medidas del motor (2026-11-05, en curso)
+
+Todavía **sin parche de etapa B**, ni juicio probado. Reproducción estática:
+
+```bash
+source scripts/env.sh
+python frontier/arena_survey.py > work/frontier/arena/b-static.txt
+python frontier/patch.py --out work/frontier/arena/b-measure-patch
+```
+
+El primer comando incluye SHA256 de cada entrada, listados ARM y las tablas de eventos resueltas mediante las
+relocaciones internas de `frontier/cro.py`. Las direcciones del CRO siguientes son **offsets de fichero**;
+las de `code.bin` son VA. Entradas: code `3999d658…`, DllField `23248ab0…`, DllBattle retail `330170f6…`.
+El generador final deberá seguir leyendo el DllBattle de **v0.5** (`46153fa3…`) y conservar el cambio del Tubo
+`patch.COPY_BACK` (0x15398); no se ha escrito aún ningún cambio del Palacio B.
+
+### M1 — identificación de la Arena: cadena localizada; bit libre pendiente de confirmar
+
+- Tabla de nativas DllField 0xf79a4 → **0x559ac**, `CallSakasaBattle` (hash FEB567AE;
+  `work/frontier/natives_dllfield.txt`, TSV de CTRMap). Pasa dos bytes 7 y dos argumentos del script en la pila;
+  llama al thunk 0x2c08. La importación estática en 0x2c0c apunta a **code 0x3da5cc**
+  (`scripts/analyze_assets.py:CRO.static_imports`, contra `static.crs`).
+- 0x3da5cc crea un trabajo de 0x290 bytes; 0x3da658 construye reglas en `work+0x248` (0x3eab6c) y 0x3da674
+  llama a **0x1dbd18** con la configuración del combate en `work+0x30`. Esta última llama a 0x1d6c74 (limpia
+  **0x218 bytes**) y a 0x3673bc (configura el combate). Por tanto, `CallSakasaBattle` NO demuestra por sí sola
+  que haya un bit libre en +0x8c: ese byte ya es el Repartir Exp. (`ingenieria.md`).
+- En StartBattle, **0x1e30b8**, el setup de la Mansión es `facility_work+0x620`, con la misma estructura.
+  Un sitio al final de la construcción, antes de entregarla al motor: **0x1e33d8–0x1e33e0**. El hook del Tubo
+  0x1e3110 sucede antes de que el setup esté completamente construido: no poner ahí un bit que luego se borre.
+- **Azahar/GDB**, v0.5 + `work/frontier/build`, partida copiada de `ar_saved_457.sav`:
+  breakpoint 0x1e30b8 → trabajo **0x08822544**; en 0x1e33d8, setup **0x08822b64**;
+  `dump binary memory work/frontier/arena/b-setup.bin $arena_work+0x620 $arena_work+0x838`.
+  SHA256 `423661572e743699b3833372cd0db86bfcf6e24ac02dcca52c0fe87a0a995153`.
+  Primeros words = `2, 9, 0x0a0a000a, 0`; +0xa8 = 0, +0x154 = 0. Es una observación de este combate,
+  **no prueba de espacio libre**. Log inicial `work/frontier/arena/b-gdb.log`.
+- El word +0xa8 tiene máscaras retail (ejemplos CRO 0x6094: 0x20000, 0x14d84: 0x100000;
+  0x5eaa0 es un getter de máscara variable). No se ha reservado ningún bit todavía. Pendiente revisar sus
+  productores/consumidores, incluidas las demás CRO. Los listados exploratorios `b-code-a8-refs.txt` y
+  `b-cro-a8-refs.txt` contienen también accesos a otros tipos de objeto: no asumir que todos son el setup.
+
+### M2 — contador desde la entrada: localizado estáticamente; ejecución pendiente
+
+- Movimiento 252 (Sorpresa): registro **0xde050** → fábrica **0xb707c** → tabla 0xdd0f8,
+  evento 0x1f → **0xbc974**. Usa 0x51394(mon, 0), que consulta bit 0 de `mon+0x169`.
+  **Ese bit NO es un contador**: 0x6c548 lo pone tras una acción; no usarlo para contar tres turnos.
+- Habilidad 3 (Impulso): registro **0xdf358** → fábrica **0xc94d0** → tabla 0xdd400, evento **0x80** →
+  **0xc6014**. También consulta ese bit. El evento 0x80 se despacha desde **0x1d11c**, dentro de 0x1cf44
+  (final de turno, con fases y reentradas; un hook en su entrada contaría varias veces).
+- **Edad en campo: u16[BattleMon+0x158]**. Se incrementa al final del turno en **0x1d1a8–0x1d1b4**,
+  saturada a 9999; la rutina de entrada **0x72498–0x724cc** guarda el turno global `server+0x14` en
+  `mon+0x15a` y pone `mon+0x158 = 0`. El turno global sube en **0x1d230–0x1d23c**.
+  Esto permite investigar un contador por enfrentamiento sin inventar un contador global persistente.
+  Pendiente medir 0→1→2→3 y la entrada del siguiente Pokémon; falta decidir cómo reiniciar el juicio si entra
+  uno nuevo mientras el contrario sigue en campo.
+
+### M3 — final de turno y debilitamiento: candidatos; Canto Mortal en laboratorio pendiente
+
+- Rutina **0x1cf44**, fases en `server+0x108a`: estados finales de efectos 0x7f/0x80/0x81; limpieza de
+  flags, incremento de la edad y del turno global en el tramo 0x1d19c–0x1d250. Hay que enganchar una fase
+  que se ejecute una sola vez y deje al motor procesar los dos debilitamientos antes de decidir el resultado.
+- **0x1dacc** es un manejador de KO forzado en la cola: comprueba PS, pone `u16[mon+0x10] = 0`
+  en **0x1dc38**, llama al thunk 0x400 → **code 0x3b48fc**, emite mensajes 4/0x4b vía 0x71bd8 y llama a
+  **0x6a068(server, mon, 0, contexto)** para tramitar el debilitamiento. No confundir poner PS=0 con completar
+  el KO y enviar al siguiente Pokémon. La cola se reserva con 0x6f920/0x6f92c y se entrega con 0x6d4ec.
+- Registro de movimiento 195 (Canto Mortal): **0xde420 → 0xb7f30 → 0xdcee0**, evento 0x25 → 0xc09c8.
+  El otro registro ID 195, en 0xddb00 → 0xb2040, es de **otro registro**, no del movimiento: no usarlo.
+  Falta vincular dinámicamente Canto Mortal con su condición y su manejador de la cola.
+
+### M4 — cambio desde el menú: predicado localizado; bloqueo y Fantasma no probados
+
+- **0x79458** consulta el tipo Fantasma (7) con 0x75a14 en 0x79478, antes de las trampas.
+  Si es Fantasma salta a 0x796b0 y devuelve **5** (permitido). Reconoce Sombra Trampa (23/0x17) en
+  0x79558 y Trampa Arena (71/0x47) en 0x79560. Devuelve 0 (habilidad), 3 (estado) o 4 (otra restricción);
+  las salidas por habilidad/estado escriben identificador y habilidad en los punteros r2/r3.
+- Llamadores: 0x5e4c, 0x6648 y 0xfe48 comprueban retorno == 5. Para impedir cambiar a un Fantasma,
+  el hook deberá actuar **antes de 0x79478**, conservando los argumentos/salidas de la rama retail.
+- GDB: con DllBattle en **0x006f3000**, 0x0076c458 tiene los words esperados de 0x79458 y el breakpoint
+  llega desde **LR 0x006f8e50** (offset 0x5e50). r0 = 0x082121ac (cliente), r1 = 0x082063d0
+  (Flabébé rival, id 12). Esto demuestra ejecución del predicado, **todavía no el camino del menú del jugador**.
+
+### M5 — espacio: no hay cueva grande en el texto declarado del CRO
+
+- Texto declarado: offset **0x180**, tamaño **0xd74a8**, fin **0xd7628**. El barrido ingenuo da huecos de hasta
+  252 bytes (p. ej. 0x1a40c), pero son **tablas de saltos con relocaciones** (0x1a404 salta a esa tabla).
+- Excluyendo todos los words destino de relocaciones internas, solo quedan dos tramos alineados de ≥16 bytes:
+  **0x7744c (16)** y **0x7fddc (16)**. Son candidatos a pequeños trampolines, no prueba de que estén libres.
+  No se afirma que la página hasta 0xd8000 pertenezca al segmento ejecutable declarado.
+- `python frontier/patch.py --out work/frontier/arena/b-measure-patch`: hook actual **1272 bytes**,
+  **0x579604–0x579afc**, fin disponible **0x57a000** → **1284 bytes restantes** en code.bin.
+  Sigue abierta la alternativa del diseño (lógica en code.bin, llamada desde CRO). Falta medir/validar el puente
+  y compartir ese espacio con Palacio B; no se ha reservado una cueva sobre sus futuras necesidades.
+
+Pruebas del hito inicial: `python -m pytest -q tests` → **506 passed**, log
+`work/frontier/arena/b-tests-measures.log`. Ningún parche de motor nuevo probado ni instalado. Pendientes M1–M4
+completas, Unicorn del juicio/contador y toda la aceptación de Azahar de la etapa B.
