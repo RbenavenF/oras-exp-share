@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-libre (último: Claude Code, 2026-11-05 09:25)
+Claude Code, 2026-11-05 09:35 (tareas de la etapa B en tasks.json)
 
 ## Instalaciones
 
