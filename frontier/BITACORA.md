@@ -1850,3 +1850,13 @@ Commits: el de esta entrada.
 Decisiones: Palacio antes que Arena (orden de `tasks.json`). Fuera: etapa C del Palacio; Mente/Técnica/Greta de la
 Arena; Pirámide v2.
 Siguiente paso: cerrar la terminal antigua y lanzar `frontier/orch/frontier-orch auto` cuando el usuario lo diga.
+
+## 2026-11-05 09:55 — Claude Code (Opus 5.5) — frontier-orch: F6-ARENA-B para Codex
+Estado: hecho (sin ejecutar el orquestador)
+Hecho: a petición del usuario, F6-ARENA-B pasa a Codex (gpt-6.1-sol) y va antes que F6-PALACIO-B en `tasks.json`,
+para que Codex trabaje desde el primer momento (el orquestador toma la primera tarea abierta) y se mida Sol.
+REPARTO: la Arena queda con Claude en la etapa A y Codex en la B.
+Evidencia: `frontier/orch/frontier-orch status`; `python -m pytest -q tests/test_frontier_orch.py` en verde.
+Commits: el de esta entrada.
+Siguiente paso: `frontier/orch/frontier-orch auto` (lo lanza el usuario). Tras la primera ventana de Codex, medir
+llamadas, contexto medio y minutos hasta el límite en `~/.codex/sessions/`.

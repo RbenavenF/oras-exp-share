@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-Claude Code, 2026-11-05 09:50 (F6-ARENA-B a Codex)
+libre (último: Claude Code, 2026-11-05 09:55)
 
 ## Instalaciones
 
@@ -46,7 +46,7 @@ Decisiones del usuario (2026-11-03):
 | Fábrica | Claude Code | hecha en la sala 213 (§19–§22) | 213 (clon de 517) | PLAN §1–§5 | — |
 | Torre | Claude Code | diseño | 329 (clon de 517) | `torre.md` | baja-media, ~3 sesiones |
 | Palacio | Claude Code | etapa A hecha en la sala 340 (`frontier/palace.py`, Azahar §27); etapa B (motor) pendiente | 340 (clon de 517, comprobada como §18 sin emulador y en Azahar) | `palacio.md` | A: baja-media, 1; B (IA): alta |
-| Arena | Claude Code | diseño | 457 (clon de 517) | `arena.md` | A: media, 1–2; B (3 turnos): alta |
+| Arena | Claude Code (etapa A); Codex (etapa B, usuario 2026-11-05) | diseño | 457 (clon de 517) | `arena.md` | A: media, 1–2; B (3 turnos): alta |
 | Domo | Codex | v1 en código (`frontier/dome.py`, `asm/dome.s`), Azahar en curso | 456 (clon de 517, comprobada como §18 sin emulador) | `domo.md` | media-alta, ~4 |
 | Tubo | Codex | v1 hecha en la sala 458 (`frontier/pike.py`, `asm/pike.s`, parche de `DllBattle.cro`; Azahar §28) | 458 (clon de 517, comprobada como §18 sin emulador; 379 descartada) | `tubo.md` | media-alta, 4–6 |
 | Pirámide | Codex | v1 hecha (Claude, por el orquestador): vestíbulo 140 y pisos 141/142 (`frontier/pyramid.py`, `asm/pyramid.s`; Azahar §30) | 140 vestíbulo, 141–142 pisos (clones de 517; comprobadas como §18 sin emulador por Codex y en Azahar) | `piramide.md` | alta, 4–6 + experimento |
