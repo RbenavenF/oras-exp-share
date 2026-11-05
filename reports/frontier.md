@@ -1700,3 +1700,68 @@ El generador final deberá seguir leyendo el DllBattle de **v0.5** (`46153fa3…
 Pruebas del hito inicial: `python -m pytest -q tests` → **506 passed**, log
 `work/frontier/arena/b-tests-measures.log`. Ningún parche de motor nuevo probado ni instalado. Pendientes M1–M4
 completas, Unicorn del juicio/contador y toda la aceptación de Azahar de la etapa B.
+
+### Continuación dinámica de M1–M4 y experimento del juicio (2026-11-05)
+
+Log completo de medidas: `work/frontier/arena/b-gdb-dynamic.log`. Las escrituras experimentales siguientes se
+hicieron en la RAM del laboratorio, no en los inputs ni en una build de entrega.
+
+- **M2 verificada en el servidor**. Sus Pokémon NO son los objetos del cliente (los de la interfaz).
+  En esta ejecución: servidor **0x082091c0**, contenedor `[server+8] = 0x081fb928`; jugador Metagross
+  **0x08206a9c**, Flabébé **0x08207168**. En 0x71021c (CRO+0x1d21c), el turno global antes de subir es 1
+  y las edades son **2/2**, luego turno global 2 y edades **3/3**. Tras el KO, entrada de Garchomp en
+  **0x08206f24**, breakpoint **0x7654d0** (CRO+0x724d0): `u16[mon+0x158]=0`,
+  `u16[mon+0x15a]=4`, `server+0x14=4`. Esto prueba el reinicio de la edad al entrar.
+- **M3 verificada con Canto Mortal**. Se sustituyó en RAM el primer movimiento de Metagross por 195
+  (registros original/actual `mon+0x116`/`mon+0x11c`, PP en +0x118/+0x11e). También se editó inicialmente
+  la copia del cliente para mostrarlo; editar solo esa copia NO cambia la ficha del servidor.
+  La condición de Canto Mortal es **0x14**, word **mon+0x6c**: se vio `0x22` en ambos, y 0 al expirar.
+  `0xa8398`, caso 0x14 en 0xa8460–0xa8498, reserva un evento de cola **0x12**, pone el id en `packet+4`
+  y lo entrega con 0x6d4ec. El despacho 0x1a454 (tabla de 0x1a40c, índice 0x12) lleva a **0x1a9ac → 0x1dacc**.
+  NO usar 0x22: ese es otro evento.
+  Watchpoint en PS del servidor: **129→0**, PC **0x003b48fc**, LR **0x00710c44**, r4 = 0x08206a9c,
+  r5 = servidor. Corresponde exactamente al `bl 0x400` tras el store a cero en CRO **0x1dc38**.
+  Después aparece la selección de sustituto y entra Garchomp (medida M2).
+  El rival cambió Flabébé por Phantump antes de expirar Canto Mortal: **no es una prueba de KO doble**.
+- **M4, menú confirmado**. Al pulsar Pokémon, breakpoint **0x76c458**, LR **0x702e4c**
+  (llamada CRO **0xfe48**), r0 = cliente **0x0820d9ac**, r1 = Garchomp cliente **0x0820618c**,
+  r2/r3 = salidas `0x0ffffea4`/`0x0ffffea8`. Retail devuelve 5 y abre el equipo.
+  Experimento posterior: al detenerse ANTES del predicado se pusieron ambos tipos del objeto cliente (+0x100,
+  +0x101) a **7**, se escribieron las salidas id=2/atributo=0 y se devolvió **3** directamente al llamador.
+  Al intentar sustituirlo por Cascoon, aparece **«¡No se puede cambiar a Poochyena!»**
+  (`work/frontier/arena/b-menu-denied-ghost-type.png`). Es una medida del camino de rechazo con tipos
+  Fantasma sintéticos: **no sustituye la aceptación de un Fantasma real con el parche**.
+  Para escribir RAM de forma fiable se usó `gdb.selected_inferior().write_memory(...)`; varios `set {tipo}`
+  de GDB fallaron con «Cannot access memory at address 0x16». Los intentos fallidos constan en el log y
+  no se cuentan como pruebas. Los tipos escritos se verificaron como `07 07 12` antes de forzar el retorno.
+- **M1, candidato de bit**: se puso **0x80000000** en `setup+0xa8` durante este mismo combate; la entrada
+  siguiente y el menú retail siguieron funcionando. Los lectores de máscara directa de este campo en el CRO
+  y los callers de 0x5eaa0 examinados no usan ese bit (listados `b-cro-a8-refs.txt`, `b-rule-getter-refs.txt`).
+  Se reserva como marca de Arena en REPARTO, con limpieza/puesta en el final de StartBattle. Esto es evidencia
+  acotada a esta ruta y esta base: **las regresiones con la marca apagada y la comprobación de los demás
+  consumidores siguen pendientes**. No usar el bit del Repartir Exp. de +0x8c.
+
+`frontier/asm/arena.s` contiene por ahora **solo `arena_judge`**, aislado de la build: toma PS actuales/iniciales
+por lado y devuelve máscara 1 (cae jugador), 2 (cae rival), 3 (ambos), 0 (snapshot ausente). Compara los porcentajes
+enteros truncados, no las fracciones exactas. En Unicorn se ejecuta junto con la **división retail real**
+**code 0x15ec10**, import DllBattle 0x424 (su cola está en 0x300788). Se comprueba también la conservación de
+r4–r11 y de la pila. **11 casos**: victoria, derrota, empate, empate por truncado, PS cero, límites u16, curación
+sobre PS iniciales y snapshot inválido. No se ha probado aún en Azahar el juicio ni está conectado a los KO.
+
+M5, puente previsto sin cueva del CRO: sustituir cuatro instrucciones por
+`ldr ip,[pc,#4]; blx ip; b resume; .word <VA code.bin>` (16 bytes). Sitios medidos:
+
+| Offset CRO | Bytes previos (16) | Instrucciones que debe reproducir el stub |
+| --- | --- | --- |
+| 0x724c0 | `010c85e20010a0e3bab5c0e1b815c0e1` | `add r0,r5,#0x100; mov r1,#0; strh fp,[r0,#0x5a]; strh r1,[r0,#0x58]` |
+| 0x1d21c | `0600a0e1353901eb00f020e300f020e3` | `mov r0,r6; bl 0x6b6fc; nop; nop` |
+| 0x7945c | `0060a0e10180a0e10cd04de202a0a0e1` | `mov r6,r0; mov r8,r1; sub sp,#12; mov sl,r2` |
+
+El último sitio va DESPUÉS del push retail de 0x79458 (que ya conserva el LR original): un rechazo temprano
+puede restaurar ese frame y volver al llamador antes de la excepción Fantasma. Para los demás stubs, el LR
+que deja `blx` permite obtener la base cargada del CRO y llamar a sus rutinas relativas. **Puente todavía no
+ensamblado ni ejecutado**; comprobar destinos al interior de esos 16 bytes y relocaciones antes de escribirlos.
+
+Suite tras el experimento: **519 passed**, `work/frontier/arena/b-tests-judge-full.log`; 45 en
+`tests/test_frontier_arena.py`. Los dos tests del barrido de ceros comprueban explícitamente que se excluyan
+las tablas relocadas y que se respete el fin declarado del segmento. Laboratorio parado al cerrar este hito.

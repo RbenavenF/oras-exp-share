@@ -220,3 +220,76 @@ def test_no_arena_battle_points_inside_a_round(built, streak):
 @pytest.mark.parametrize('route', [0, 1, 2, 3])
 def test_maison_battle_points_without_the_arena_route(built, route):
     assert battle_points_run(built, 7, route=route) == [('bp', 2), ('number', 2)]   # GetWinCount 99 > 10: 2 BP
+
+
+def test_arena_space_survey_excludes_relocated_zero_jump_tables():
+    from types import SimpleNamespace
+    from arena_survey import zero_runs
+    cro = SimpleNamespace(data=bytes(32), segments=[(4, 24, 0)],
+                          relocs=[(8, 2, 0x100), (12, 2, 0x104)])
+    assert list(zero_runs(cro, minimum=8)) == [(16, 12)]
+
+
+def test_arena_space_survey_stops_at_text_boundary_and_nonzero_words():
+    from types import SimpleNamespace
+    from arena_survey import zero_runs
+    cro = SimpleNamespace(data=bytes(16) + b'CODE' + bytes(28),
+                          segments=[(4, 32, 0)], relocs=[])
+    assert list(zero_runs(cro, minimum=8)) == [(4, 12), (20, 16)]
+
+
+@pytest.fixture(scope='module')
+def arena_judge_code(tmp_path_factory):
+    """Isolated engine experiment: execute actual ARM udiv, without a ROM patch."""
+    import shutil
+    import subprocess
+    if not fp.REPOLISHED.exists() or not shutil.which('arm-none-eabi-as'):
+        pytest.skip('Local baseline and ARM binutils required')
+    tmp = tmp_path_factory.mktemp('arena-judge')
+    obj, elf, binary = (tmp / name for name in ('judge.o', 'judge.elf', 'judge.bin'))
+    subprocess.run(['arm-none-eabi-as', '-mcpu=mpcore', '-o', obj, ROOT / 'frontier/asm/arena.s'], check=True)
+    subprocess.run(['arm-none-eabi-ld', f'-Ttext={fp.CAVE:#x}', '-e', 'arena_judge',
+                    '--defsym=ARENA_UDIV=0x15ec10', '-o', elf, obj], check=True)
+    subprocess.run(['arm-none-eabi-objcopy', '-O', 'binary', '-j', '.text', elf, binary], check=True)
+    code = bytearray(fp.REPOLISHED.read_bytes())
+    helper = binary.read_bytes()
+    assert len(helper) <= 128 and fp.CAVE + len(helper) < fp.CAVE_END
+    # Preserve the retail implementation of udiv and its tail at 0x300788.
+    code[fp.CAVE - fp.BASE:fp.CAVE - fp.BASE + len(helper)] = helper
+    return bytes(code)
+
+
+@pytest.mark.parametrize('hp, expected', [
+    ((75, 100, 25, 50), 2),                # 75% vs 50%: player wins
+    ((40, 100, 50, 100), 1),               # 40% vs 50%: player loses
+    ((50, 100, 25, 50), 3),                # equal ratios, different HP
+    ((1, 101, 2, 300), 3),                 # both floor to 0%, not exact fractions
+    ((0, 100, 1, 100), 1),
+    ((1, 100, 0, 100), 2),
+    ((0, 100, 0, 100), 3),
+    ((65535, 65535, 65534, 65535), 2),       # unsigned u16 limits
+    ((150, 100, 100, 100), 2),              # healing above entry HP is counted
+    ((0, 0, 10, 100), 0),                  # missing entry snapshot: no judgement
+    ((10, 100, 0, 0), 0),
+])
+def test_arena_cuerpo_arm_judgement(arena_judge_code, hp, expected):
+    from unicorn import Uc, UC_ARCH_ARM, UC_MODE_ARM
+    from unicorn import arm_const as reg
+    uc = Uc(UC_ARCH_ARM, UC_MODE_ARM)
+    uc.mem_map(fp.BASE, (len(arena_judge_code) + 0xFFF) & ~0xFFF)
+    uc.mem_write(fp.BASE, arena_judge_code)
+    stack, finish = 0x8001000, 0x9000000
+    uc.mem_map(stack - 0x1000, 0x1000)
+    uc.mem_map(finish, 0x1000)
+    uc.reg_write(reg.UC_ARM_REG_SP, stack)
+    uc.reg_write(reg.UC_ARM_REG_LR, finish)
+    for index, value in enumerate(hp):
+        uc.reg_write(getattr(reg, f'UC_ARM_REG_R{index}'), value)
+    for index in range(4, 12):
+        uc.reg_write(getattr(reg, f'UC_ARM_REG_R{index}'), 0xCAFE0000 + index)
+    uc.emu_start(fp.CAVE, finish, count=1000)
+    assert uc.reg_read(reg.UC_ARM_REG_PC) == finish
+    assert uc.reg_read(reg.UC_ARM_REG_R0) == expected
+    assert uc.reg_read(reg.UC_ARM_REG_SP) == stack
+    for index in range(4, 12):
+        assert uc.reg_read(getattr(reg, f'UC_ARM_REG_R{index}')) == 0xCAFE0000 + index

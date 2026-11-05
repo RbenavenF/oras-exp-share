@@ -1902,3 +1902,33 @@ En RAM se cambió el primer movimiento de Metagross a Canto Mortal (solo copia d
 `work/faraway/gdb/out.log` y se copiarán a `work/frontier/arena/`. Mantener start, gdb e input en una misma consola:
 las llamadas exec tienen namespaces de procesos separados; una llamada nueva no puede controlar sus PIDs.
 No probado todavía: contador en marcha, Canto Mortal/KO, restricción del menú, Fantasma, juicio y regresiones B.
+
+## 2026-11-05 10:48 — Codex — F6-ARENA-B: contador, KO y rechazo del menú medidos; juicio Unicorn
+Estado: en curso
+Hecho:
+- Continúa 97ee614. GDB distingue las copias del cliente y del servidor; en el servidor, edades 2/2 y 3/3 y,
+  tras Canto Mortal, entrada del siguiente con edad 0/turno de entrada 4. Canto Mortal usa condición 0x14
+  (BattleMon+0x6c) y evento de cola **0x12**, que va a 0x1dacc. Watchpoint de PS: 129→0, PC 0x3b48fc,
+  LR CRO+0x1dc44; después selección y entrada del siguiente. El rival cambió antes de expirar: no hubo KO doble.
+- Camino del menú confirmado: llamada CRO+0xfe48 al predicado 0x79458. Devolver 3 con sus salidas inicializadas,
+  antes de la excepción Fantasma y con tipos sintéticos 7/7, impide sustituir al activo. Captura y fuente en §31.
+  No es aún prueba con un Fantasma de especie ni con un parche instalado.
+- Reserva en REPARTO: bit 31 del word BattleSetup+0xa8 (candidato, se validará con regresiones) y works
+  16693–16694 para PS iniciales. Turno del orquestador intacto. El bit puesto en RAM no alteró entrada/menú retail
+  en el combate de medida; falta auditar los otros consumidores y programar su puesta/limpieza en StartBattle.
+- `frontier/asm/arena.s`: por ahora SOLO juicio puro `arena_judge`, aislado de la build (no se enlaza desde
+  patch.py). Porcentajes enteros, máscara de perdedores; snapshot a cero no juzga. Unicorn ejecuta también
+  udiv retail 0x15ec10, con victoria/derrota/empate/truncado/extremos/curación y ABI comprobada.
+- §31 documenta los 16 bytes de tres posibles puentes CRO→code.bin y las instrucciones que deberán reproducir;
+  aún no se han ensamblado ni probado esos puentes. Tests del barrido evitan sobrescribir tablas relocadas.
+Evidencia: `work/frontier/arena/b-gdb-dynamic.log` SHA256 e4905e02…; `b-menu-denied-ghost-type.png` e7232caa…;
+`b-free-works.txt`; `python -m pytest -q tests/test_frontier_arena.py` → 45 passed; suite → 519 passed
+(`b-tests-judge-full.log`). Laboratorio detenido en la misma consola que lo inició; stub desactivado/restaurado.
+Commits: 97ee614 y el de esta entrada.
+Decisiones: mantener F6-ARENA-B in_progress; no existe bloqueo que requiera decisión del usuario. No activar el
+juicio en el motor antes de comprobar puente y marca de reglas. No declarar empate ni pruebas de regresión B.
+Siguiente paso: completar la revisión del bit +0xa8 y los destinos/relocaciones de los tres puentes (§31);
+implementar `arena_start` al final de StartBattle (después de construir el setup), snapshot/contador al entrar,
+juicio en final de turno y predicado antes de Fantasma; extender patch.battle_cro mediante guarded_writes,
+conservando v0.5 y Tubo. Añadir Unicorn de los puentes, contador/snapshots y gating; después build y aceptación
+Azahar completa. Se puede reutilizar `arena_judge`; actualmente su test lo ensambla aislado y no modifica ROM.
