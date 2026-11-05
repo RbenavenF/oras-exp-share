@@ -149,10 +149,17 @@ class Orch:
     def command(self, agent, task, resuming):
         spec = self.cfg['agents'][agent]
         session = self.state['sessions'].get(task['id'], {}).get(agent)
-        resume = resuming and session is not None
+        # fresh_sessions: never resume. Measured 2026-11-04: a resumed Codex session re-sent ~142k tokens per call
+        # (124 calls, 17.2M input) and spent a whole quota window in ~15 min; the repository holds the state anyway.
+        fresh = bool(spec.get('fresh_sessions'))
+        resume = resuming and session is not None and not fresh
         if not resume and spec['kind'] == 'claude':
             session = str(uuid.uuid4())     # Claude takes the id up front; Codex reports its thread id
-        values = {'prompt': self.prompt(task, agent, resume), 'session': session or '', 'root': str(self.root)}
+        prompt = self.prompt(task, agent, resume)
+        if fresh and resuming and session is not None:
+            prompt += ('\n\nLa tarea ya está empezada (sesión nueva, sin el historial de la anterior): antes de '
+                       'seguir, mira `git log`, `git status` y la última entrada de la bitácora de esta tarea.')
+        values = {'prompt': prompt, 'session': session or '', 'root': str(self.root)}
         return [part.format(**values) for part in spec['resume' if resume else 'new']], session, resume
 
     def run(self, agent, task, resuming):

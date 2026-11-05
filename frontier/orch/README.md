@@ -18,6 +18,10 @@ Para pararlo: Ctrl+C. El turno de `REPARTO.md` se devuelve al salir. Si el super
 2. Elige la primera tarea abierta: primero `in_progress`, luego `pending`, en el orden de `tasks.json`.
 3. Se la da a su dueño si tiene cuota. Si no, al otro agente.
 4. **Si la tarea sigue abierta**, la reanuda en la misma sesión con «Continúa la tarea…», sin que nadie escriba nada.
+   Excepción: un agente con `"fresh_sessions": true` en `config.json` (Codex) empieza siempre una sesión nueva con
+   el brief completo y el aviso de que la tarea ya está empezada. Medido el 2026-11-04: la sesión reanudada del Domo
+   reenviaba ~142k tokens por llamada (124 llamadas, 17,2 M de entrada) y gastaba la cuota de Codex en ~15 min.
+   Las órdenes de Codex fijan además `model_reasoning_effort="medium"`.
 5. **Si un agente agota su cuota**:
    - lo deja en espera hasta la hora que da el aviso, más 2 minutos (Claude: «resets 6:30am»; Codex: «try again at
      10:04 AM»). Si el aviso no da hora, `cooldown_minutes` (30);

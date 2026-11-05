@@ -1805,3 +1805,22 @@ seguidos desde cero (el piso 7 se probó con partida editada); recarga en el ves
 salir a la plaza (sí la reanudación desde `py_lobby_saved.sav`).
 Siguiente paso: la siguiente tarea de `frontier/orch/tasks.json`. Mejoras posibles de la Pirámide (v2): quitar el PC
 de los pisos, ocultar a los entrenadores vencidos, un piso con aspecto de cueva.
+
+## 2026-11-05 09:10 — Claude Code (Opus 5.5) — frontier-orch: Codex sin reanudar sesiones
+Estado: hecho (sin ejecutar el orquestador, por petición del usuario)
+Hecho:
+- Medida (`~/.codex/sessions/2026/11/04/rollout-2026-11-04T02-04-24-01a1a415-….jsonl`, sesión del Domo):
+  gpt-6-astra con razonamiento alto, 124 llamadas, ~142k tokens de entrada de media por llamada (máx. 219k),
+  17,2 M de entrada (99 % en caché), 29k de salida (9k de razonamiento). Con `orch.log`: Codex gastaba cada ventana
+  de cuota en ~13–15 min (23:34→23:49, 05:04→05:17, 10:36→10:51 del 3–4 de noviembre).
+- `frontier_orch.py`: opción `fresh_sessions` por agente; con ella nunca se reanuda (orden `new`, brief completo) y
+  se añade «La tarea ya está empezada…» si había sesión previa de esa tarea.
+- `config.json`: Codex con `fresh_sessions: true` y `-c model_reasoning_effort="medium"` en `new` y `resume`.
+  `README.md` del orquestador, punto 4.
+Evidencia: `python -m pytest -q tests` → 503 passed (nuevo `test_fresh_sessions_never_resume_and_say_the_task_is_started`).
+Sin probar: una ejecución real de Codex con la sesión nueva (consumo por ventana tras el cambio).
+Commits: el de esta entrada (turno tomado en c3e62e9).
+Decisiones: el usuario pidió el cambio y no lanzar el orquestador todavía. Todas las tareas de `tasks.json` están
+`done` (el supervisor terminó a las 06:36 con «all tasks done»).
+Siguiente paso: definir las siguientes tareas en `frontier/orch/tasks.json` (p. ej. etapa B del Palacio y la Arena)
+y lanzar `frontier/orch/frontier-orch auto`; medir cuánto dura Codex por ventana con el cambio.

@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-Claude Code, 2026-11-05 09:00 (orquestador: Codex sin reanudar sesiones)
+libre (último: Claude Code, 2026-11-05 09:10)
 
 ## Instalaciones
 

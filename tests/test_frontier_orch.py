@@ -226,3 +226,18 @@ def test_reset_time_from_the_limit_message(message, now, expect):
         days, hour, minute = expect
         assert datetime.datetime.fromtimestamp(got) == (base.replace(hour=hour, minute=minute)
                                                         + datetime.timedelta(days=days))
+
+
+def test_fresh_sessions_never_resume_and_say_the_task_is_started(repo):
+    cfg = json.loads((repo / 'frontier/orch/config.json').read_text())
+    assert cfg['agents']['codex'].get('fresh_sessions') is True     # the real config carries it
+    tasks = json.loads((repo / 'frontier/orch/tasks.json').read_text())
+    tasks['tasks'][0]['status'] = 'done'
+    (repo / 'frontier/orch/tasks.json').write_text(json.dumps(tasks))
+    git(repo, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qam', 'T1 done')
+    outcome, calls, tasks, orch, _ = run(repo, [['codex', 'commit'], ['codex', 'done']])
+    assert outcome == 'done' and [c[0] for c in calls] == ['codex', 'codex']
+    assert calls[1][1] == ''                         # the 'new' command again, no session id passed
+    assert calls[1][2].startswith('Eres codex')         # the full brief, not «Continúa…»
+    cmd, session, resumed = orch.command('codex', tasks['T2'], resuming=True)
+    assert not resumed and 'La tarea ya está empezada' in cmd[-1]
