@@ -1958,3 +1958,29 @@ Siguiente paso: instalar b-build solo en el laboratorio y comprobar marca/snapsh
 victoria/derrota/empate en condiciones controladas, luego Fantasma real, sustituto, racha/PB y regresiones. Si el
 motor devuelve mal el empate, medir la cola de KO y el resultado antes de cambiar el protocolo. Los stubs no han
 sido validados todavía por el juego. No hay ningún binario comercial seguido ni inputs/partida original tocados.
+
+## 2026-11-05 12:20 — Claude Code (Opus 5.5) — F6-ARENA-B: aceptación en Azahar del motor (relevo de Codex, frontier-orch)
+Estado: en curso
+Hecho:
+- Relevo: Codex se cortó por cuota tras bb09fa8. Sin cambios a medias en ficheros seguidos; quedaban sin seguir sus
+  herramientas `frontier/lab_arena.py` (fixture) y `frontier/lab_arena_probe.py` (sonda GDB), que se incorporan.
+  Laboratorio de Codex no vivo (sin session.json ni procesos); `b-build` = reconstrucción de HEAD (`diff -r` idéntico).
+- Sonda corregida: la IA del rival elige con la copia del cliente (servidor−0xd98, medido); sin ella Gengar cayó por
+  Pulso Umbrío. Ahora se neutralizan ambas copias y avisa si no encuentra la del cliente.
+- Azahar con b-build (detalle y hashes en reports/frontier.md §31 «Aceptación en Azahar»): marca puesta solo en la
+  Arena; cambio bloqueado con Gengar real; victoria por juicio de los tres rivales, 1 PB al ganar el 7.º (13→14);
+  empate a mitad con sustitución de ambos; derrota por juicio; empate con el último propio y empate de los dos últimos
+  → resultado 0 (derrota); racha 0/0/14, PB 3, equipo intacto.
+- Work a 0: Torre (racha 12, ruta 2), Mansión 517 y salvaje en Ruta 102: flag 0, cambio permitido, edades ≥3 con
+  ambos vivos sin juicio. Torre: después racha 0/récord 12 y works de la Arena a 0.
+Evidencia: `work/frontier/arena/b2-gdb-arena.log` (a1635c48…), `b2-gdb-tower.log`, `b2-gdb-maison.log`,
+`b2-gdb-wild.log`; partidas `b2-after-loss.sav` (4000357e…), `b2-after-lasttie.sav` (d3677c07…), `b2-tower-after.sav`;
+capturas `b2-ghost-blocked.png` (5bcd1494…), `b2-win-bp.png`, `b2-tie-*.png`. `python -m pytest -q tests` → 560 passed.
+Laboratorio parado (sin procesos), `use_gdbstub` restaurado a false; `inputs/` y la partida original intactos (a30034d1…).
+Commits: el de esta entrada.
+Decisiones: no tocar el parche (todo lo medido coincide con el diseño). Mantener in_progress: falta el combate de
+entrenador del mundo exigido por la aceptación. No hay bloqueo que requiera al usuario.
+Siguiente paso: un combate contra un entrenador del mundo no vencido con b-build y `b-probe-normal.gdb`
+(flag 0, cambio permitido, edades ≥3 sin juicio). La Ruta 102 de la partida real tiene vencidos los recorridos;
+probar otra zona de esa partida (p. ej. Ruta 104 / Bosque Petalia, al oeste de Ciudad Petalia) o borrar en una copia
+el flag de un entrenador. Opcional: Fábrica/Palacio en juego. Luego marcar done con evidencia.

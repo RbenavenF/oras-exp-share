@@ -1801,3 +1801,52 @@ evento. Verifican asimismo pila, registros y ejecución de la llamada retail des
 `python frontier/overlay.py --out work/frontier/arena/b-build` → build completa; hook **1936 bytes**,
 **0x579604–0x579d94**, quedan **620 bytes** hasta 0x57a000 (compartidos con Palacio B futuro).
 Nada de esta build se ha probado todavía en Azahar ni en consola. La aceptación B sigue abierta.
+
+### Aceptación en Azahar del motor B (2026-11-05, Claude, relevo de Codex)
+
+Build `work/frontier/arena/b-build` (= `python frontier/overlay.py --out work/frontier/arena/b-build-check`,
+idéntica por `diff -r`; commit bb09fa8) sobre v0.5, instalada solo en el laboratorio con
+`work/frontier/arena/b-lab-start2.sh` (`FIXTURE=<partida>`). Sonda GDB: `python frontier/lab_arena_probe.py
+--mode win|loss|tie|normal`; rompe en arena_start+4, arena_enter, arena_turn_end, arena_judge, 0x3b48fc (KO
+desde CRO+0x1dc44) y pike_iswin. En los modos win/loss/tie fija los PS en el juicio (rival 1 / jugador 1 /
+iguales) y pone Salpicadura al rival. **Corrección de la sonda**: la IA elige con la **copia del cliente** del rival,
+no con la del servidor; con solo la del servidor, Houndour usó Pulso Umbrío y debilitó a Gengar en el turno 2
+(sin juicio, sin KO forzado). Medido: servidor 0x8207168 / cliente **0x82063d0** (mismos words +8/+0xc;
+movimientos originales 492/53/399/417), igual desfase **0xd98** que Garchomp 0x8206f24/0x820618c. La sonda
+escribe ahora ambas copias si coinciden esos words y avisa si no (`ARENA WARN`). Es herramienta de laboratorio, no
+forma parte del parche. Log completo: `work/frontier/arena/b2-gdb-arena.log` (a1635c48…).
+
+Partida: `b-paused13.sav` (71e03694…) = `b-paused-fixture.sav` de Codex (Gengar/Blaziken/Garchomp con
+Salpicadura/Protección/Recuperación/Gruñido) con solo 16465 = 16467 = 13 (`faraway/save_event.py`); PB 2.
+Guardado de la inscripción del combate 14: `b-start14.sav` (ad9a152c…).
+
+| Prueba | Resultado medido |
+| --- | --- |
+| Marca | `ARENA START flag=80000000 style=0` en los tres combates de la Arena; snapshots al entrar = PS del entrante |
+| Cambio con Fantasma real | Gengar activo → Pokémon → Blaziken → Cambiar: «¡No se puede cambiar a Gengar!» (`b2-ghost-blocked.png` 5bcd1494…) |
+| Juicio victoria ×3 (combate 14) | Garchomp entra con edad 0 tras KO natural de Gengar: edades [1,3]→[2,4]→[3,5], juicio `[184,184,1,108]`, KO de Houndour por 0x1dacc, entra el siguiente; igual con Fletchinder ([6,3]) y el tercero ([9,3]). `RESULT raw=1` |
+| Racha y PB | «Ruben ha obtenido 1 PB» (`b2-win-bp.png` 0c500496…), «El próximo combate será el número 15» |
+| Empate a mitad (combate 15) | edades [3,3], juicio `[136,136,123,123]`, KO de ambos; se pide sustituto (`b2-tie-replace.png`) y entran Blaziken y Grimer (`b2-tie-next.png`) |
+| Juicio derrota | Blaziken a 1: juicio `[1,156,143,143]`, cae solo Blaziken, Grimer sigue con su edad; entra Garchomp (edad 0) |
+| Empate con mi último | Garchomp/Grimer `[184,184,143,143]`: caen ambos, el rival conserva uno → derrota, `RESULT raw=0` |
+| Racha tras derrota | `b2-after-loss.sav` (4000357e…): 16465 = 0, 16466 = 0, 16467 = 14, PB 3; equipo sin cambios |
+| Empate de los dos últimos (combate 1 de ronda nueva) | tres juicios de empate seguidos; el último deja a ambos sin Pokémon: `RESULT raw=0` (derrota, como el empate de Esmeralda); `b2-after-lasttie.sav` (d3677c07…) 0/0/14, PB 3 |
+
+**Con el work de la Arena a 0** (sonda normal, solo lectura, salvo donde se dice):
+
+- **Torre** (`f6t_paused12.sav`, ruta 2, racha 12): `ARENA START flag=0`; cambio desde el menú en dos turnos
+  seguidos (entradas id 0/1 a mitad de combate); edades **[3,7]** con ambos vivos sin juicio; derrota natural, después
+  16441 = 0, 16443 = 12, Arena 0/0/0 y works 16693/16694 = 0 (`b2-tower-after.sav` 32d773f9…). Log `b2-gdb-tower.log`.
+- **Mansión retail** (zona 517, `lab_tower.py work/frontier/lab/control_after.sav` → `b2-maison-in.sav`): `flag=0`;
+  cambio Metagross→Blaziken permitido (`b2-maison-switch.png`); tras poner en RAM Salpicadura a los dos activos,
+  edades **[3,5]** y **[4,6]** con ambos vivos y sin juicio. Abandonado por Huir. Log `b2-gdb-maison.log`.
+- **Salvaje** (copia de `inputs/save/20261031-123645/main`, a30034d1…, Ruta 102): sin `ARENA START`
+  (no pasa por StartBattle de la Mansión); `flag=0` en entrada y fin de turno; cambio Torchic→Beldum permitido
+  (`b2-wild-switched.png`); edades hasta **[5,5]** con ambos vivos y sin juicio. Un segundo encuentro, huido.
+  Log `b2-gdb-wild.log`.
+
+**No probado**: combate contra un entrenador del mundo (los de la parte recorrida de la Ruta 102 ya estaban
+vencidos: «Para seguir avanzando, tengo que atrapar más Pokémon»); Fábrica, Palacio, Domo, Tubo y Pirámide en juego
+(solo la suite: la marca exige ruta 4); consola. Observación: tras un combate de la Arena los works 16693/16694
+quedan con los últimos PS (184/143); solo se leen con la marca y se reescriben al entrar.
+Suite `python -m pytest -q tests` → **560 passed** (`b2-tests.log`). Laboratorio parado y `use_gdbstub` restaurado a false.
