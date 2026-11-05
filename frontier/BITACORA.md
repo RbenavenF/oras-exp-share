@@ -1984,3 +1984,17 @@ Siguiente paso: un combate contra un entrenador del mundo no vencido con b-build
 (flag 0, cambio permitido, edades ≥3 sin juicio). La Ruta 102 de la partida real tiene vencidos los recorridos;
 probar otra zona de esa partida (p. ej. Ruta 104 / Bosque Petalia, al oeste de Ciudad Petalia) o borrar en una copia
 el flag de un entrenador. Opcional: Fábrica/Palacio en juego. Luego marcar done con evidencia.
+
+## 2026-11-05 12:40 — Claude Code (Opus 5.5) — F6-ARENA-B: intento de combate de entrenador del mundo (sin resultado)
+Estado: en curso
+Hecho: segunda sesión de laboratorio con una copia nueva de la partida real (`b2-route102-in.sav`, a30034d1…)
+para buscar un entrenador no vencido al oeste de Ciudad Petalia. La navegación a ciegas por el mundo no llegó a la
+Ruta 104 (acabó dentro de una casa de Petalia); no hubo ningún combate en esa sesión. Laboratorio parado, sin
+procesos, `use_gdbstub` restaurado; partida original intacta.
+Evidencia: ninguna nueva (sin combates). Suite sin cambios desde 44b9aa8 (560 passed).
+Commits: el de esta entrada.
+Decisiones: no forzar más la búsqueda en esta sesión.
+Siguiente paso: igual que la entrada anterior. Más rápido que andar: localizar el entrenador más cercano de la Ruta
+102/104 con los datos de zona (`frontier/zone_check.py`/scripts de la zona 24) y su flag de vencido, y borrarlo en una
+copia de la partida; o colocar al jugador junto a él con `faraway/save_event.py` (posición). Comprobar con
+`b-probe-normal.gdb`: flag 0, cambio permitido, edades ≥3 sin juicio. Después, done.
