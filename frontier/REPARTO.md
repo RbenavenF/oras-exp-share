@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-libre (último: Claude Code, 2026-11-05 09:40)
+Claude Code, 2026-11-05 09:50 (F6-ARENA-B a Codex)
 
 ## Instalaciones
 
