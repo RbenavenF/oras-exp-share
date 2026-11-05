@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 from formats import apply_ips, read_ips, sha256  # noqa: E402
 from build_patch import diff_ips  # noqa: E402
+import arena_engine as ae  # noqa: E402
 
 CLEAN = ROOT / 'baseline/oras/clean/exefs/code.bin'
 REPOLISHED = ROOT / 'baseline/oras/repolished/exefs/code.bin'
@@ -38,7 +39,8 @@ HASHES = {
     REPOLISHED_IPS: '0da174955afe9a7baf43254ce314bf5b65032f89c70a8e1065fa92ee4c2267df',
 }
 ASM = ROOT / 'frontier/asm/rental.s'
-ASMS = [ASM, ROOT / 'frontier/asm/dome.s', ROOT / 'frontier/asm/pike.s', ROOT / 'frontier/asm/pyramid.s']   # linked together, rental_hook first (at CAVE)
+ASMS = [ASM, ROOT / 'frontier/asm/dome.s', ROOT / 'frontier/asm/pike.s', ROOT / 'frontier/asm/pyramid.s',
+        ROOT / 'frontier/asm/arena.s']   # linked together, rental_hook first (at CAVE)
 BASE = 0x100000
 CAVE, CAVE_END = 0x579604, 0x57A000           # .text padding (reports/frontier.md §5)
 SITE = 0x1E3D8C                               # player-party branch of the party builder 0x1e3d2c
@@ -55,11 +57,13 @@ ISWIN_BEFORE = (0xE5D0073C, 0xE3500001, 0x13A00000, 0xE12FFF1E)
 WORK_DELETE = 0x1E5C48                        # BattleInstWorkDelete (DllField.cro 0x956b4 -> thunk 0x3738), holder r0
 DELETE_SITE = 0x1E5C54                        # its `bl 0x12b8fc` after ldr r4, [r0, #0x64] (work): pyramid_save
 FUNCTIONS = {'LOAD_SET': 0x1EFC18, 'MAKE_PARAM': 0x1EF904, 'ADD_MEMBER': 0x3B645C, 'PARTY_PREPARE': 0x3B5D34,
+             'ARENA_UDIV': ae.UDIV, 'ARENA_START_RESUME': ae.START + 4,
              'RESUME': RESUME, 'BUILD_PARTY': 0x1E3D2C, 'WORK_DELETE_CALL': 0x12B8FC,
              # PokemonParam core accessors (reports/frontier.md §28; the battle block at [core+4])
              'GET_HP': 0x153174, 'GET_MAX_HP': 0x153254, 'SET_HP': 0x14F450, 'GET_SICK': 0x4D22E4,
              'SET_SICK': 0x14F814}
 FUNCTION_HEADS = {0x1E3D2C: 0xE92D47F0, 0x1E5C48: 0xE92D4070, 0x1E5C4C: 0xE1A05000, 0x1E5C50: 0xE5904064, 0x153174: 0xE92D4070, 0x153254: 0xE92D4070, 0x14F450: 0xE92D4070,
+                  ae.UDIV: 0xE3B02000,
                   0x4D22E4: 0xE92D4070, 0x14F814: 0xE92D4070,
                   0x1531A8: 0xE1D050B8, 0x153288: 0xE1D050BA, 0x14F488: 0xE1C050B8, 0x4D2318: 0xE5905000,
                   0x14F84C: 0xE5805000,
@@ -122,6 +126,7 @@ ZONE_NATIVES, ZONE_COUNT = 0x587D58, 536
 NATIVES_DEFAULT, NATIVES_MAISON = 0x243, 0x100
 MAISON_NATIVE_ZONES = (448, 517, 520)
 CONSTANTS = {'WORK_IV': WORK_IV, 'WORK_SET0': WORK_SETS[0], 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'RENTAL_LEVEL': 50,
+             **ae.CONSTANTS,
              'RENTALS': len(WORK_SETS), 'WORK_RIVAL': WORK_RIVAL[0],
              'ROUTE_DELTA': MAISON_BASE - SAVE_WORKS - 2 * (WORK_ROUTE - 0x4000),
              'ROUTES': len(STREAK_ROUTES), 'WORK_ROUTE': WORK_ROUTE,
@@ -230,6 +235,9 @@ def build(native_clones=None):
     if word(code, DELETE_SITE) != arm_branch(DELETE_SITE, FUNCTIONS['WORK_DELETE_CALL'], link=True):
         sys.exit(f'work delete call {DELETE_SITE:#x} differs: {word(code, DELETE_SITE):08x}')
     struct.pack_into('<I', code, DELETE_SITE - BASE, arm_branch(DELETE_SITE, symbols['pyramid_save'], link=True))
+    if word(code, ae.START) != ae.START_BEFORE:
+        sys.exit(f'Arena StartBattle site {ae.START:#x} differs')
+    struct.pack_into('<I', code, ae.START - BASE, arm_branch(ae.START, symbols['arena_start']))
     for va, (stub, before) in STREAK_SITES.items():
         if word(code, va) != before:
             sys.exit(f'streak accessor {va:#x} differs: {word(code, va):08x}')
@@ -259,8 +267,12 @@ COPY_BACK_AFTER = (0xE3510002, 0xE1A00000, 0x8A000119)   # cmp r1, #2; nop; bhi 
 
 
 def battle_cro(romfs=MOD_ROMFS):
-    """{romfs path: bytes}: the mod's DllBattle.cro with the copy back for competitor 2, and its static.crr."""
-    from build_patch import rehash_cro, update_crr
+    """v0.5 + Pike copy-back + Arena bridges, guarded together, with updated CRO/CRR hashes.
+
+    Additional facility bridges can extend the write list before the single rehash.
+    Arena acts only with its setup bit; the unmarked path replays retail instructions.
+    """
+    from build_patch import guarded_writes, rehash_cro, update_crr
     original = (romfs / BATTLE_CRO).read_bytes()
     import hashlib
     if hashlib.sha256(original).hexdigest() != BATTLE_CRO_SHA256:
@@ -268,9 +280,11 @@ def battle_cro(romfs=MOD_ROMFS):
     got = struct.unpack_from('<3I', original, COPY_BACK)
     if got != COPY_BACK_BEFORE:
         sys.exit(f'{BATTLE_CRO} {COPY_BACK:#x} differs: {[f"{w:08x}" for w in got]}')
-    changed = bytearray(original)
-    struct.pack_into('<3I', changed, COPY_BACK, *COPY_BACK_AFTER)
-    changed = rehash_cro(original, bytes(changed))
+    _, symbols = assemble()
+    writes = [dict(offset=COPY_BACK, before=struct.pack('<3I', *COPY_BACK_BEFORE).hex(),
+                   after=struct.pack('<3I', *COPY_BACK_AFTER).hex()), *ae.cro_writes(symbols)]
+    changed = guarded_writes(original, dict(path=BATTLE_CRO, sha256=BATTLE_CRO_SHA256, writes=writes))
+    changed = rehash_cro(original, changed)
     crr = update_crr((romfs / CRR).read_bytes(), original, changed)
     return {BATTLE_CRO: changed, CRR: crr}
 

@@ -1932,3 +1932,29 @@ implementar `arena_start` al final de StartBattle (después de construir el setu
 juicio en final de turno y predicado antes de Fantasma; extender patch.battle_cro mediante guarded_writes,
 conservando v0.5 y Tubo. Añadir Unicorn de los puentes, contador/snapshots y gating; después build y aceptación
 Azahar completa. Se puede reutilizar `arena_judge`; actualmente su test lo ensambla aislado y no modifica ROM.
+
+## 2026-11-05 11:00 — Codex — F6-ARENA-B: motor y puentes integrados, Unicorn en verde
+Estado: en curso
+Hecho:
+- `arena_engine.py`: constantes de bit, works y sitios; especificaciones `guarded_writes` de puentes de 16 bytes.
+  Auditoría de esos intervalos: sin relocaciones ni saltos a sus instrucciones intermedias, test añadido.
+- `arena.s` y `patch.py`: marca al final de StartBattle (ruta/activo/Individual), snapshot de PS al entrar con
+  reinicio de edad retail, rechazo de cambio antes de Fantasma (permite reemplazo de debilitados), juicio tras
+  tres turnos desde el último entrante. Usa las edades nativas y dos works; no necesita un tercer contador.
+  En empate pone ambos PS a cero antes de tramitar los dos eventos KO 0x12 con force=1.
+- Los puentes llaman a code.bin y recuperan la base CRO desde LR; el bloqueo temprano deshace el frame retail.
+  `battle_cro` aplica las escrituras de Arena y Tubo sobre v0.5 mediante guarded_writes y rehash CRO/CRR único;
+  queda preparado para componer las futuras escrituras del Palacio B.
+- Unicorn de marca, snapshots/reinicio, rechazo (Fantasma y sustitución forzada), turnos/juicio/no-op sin marca,
+  pila y registros, ambas bases CRO y ambos órdenes de velocidad. Tests de alcance de los parches actualizados.
+Evidencia: suite 560 passed (`work/frontier/arena/b-tests-engine-full.log`); build completa generada con
+`python frontier/overlay.py --out work/frontier/arena/b-build` (`b-build.log`). Hook 1936 bytes, quedan 620 libres.
+Símbolos y algoritmo documentados en reports/frontier.md §31. Azahar con este motor **NO probado todavía**.
+Commits: 97ee614, 255f5de y el de esta entrada.
+Decisiones: bit 31 reservado con evidencia limitada a los consumidores examinados; regresiones obligatorias aún
+pendientes. Works 16693/16694 de REPARTO se usan ahora. No marcar done hasta toda la aceptación de juego.
+Laboratorio de las medidas anterior parado y sin AppRun vivo (comprobado en su namespace).
+Siguiente paso: instalar b-build solo en el laboratorio y comprobar marca/snapshots/turnos y juicio; empezar con
+victoria/derrota/empate en condiciones controladas, luego Fantasma real, sustituto, racha/PB y regresiones. Si el
+motor devuelve mal el empate, medir la cola de KO y el resultado antes de cambiar el protocolo. Los stubs no han
+sido validados todavía por el juego. No hay ningún binario comercial seguido ni inputs/partida original tocados.

@@ -1765,3 +1765,39 @@ ensamblado ni ejecutado**; comprobar destinos al interior de esos 16 bytes y rel
 Suite tras el experimento: **519 passed**, `work/frontier/arena/b-tests-judge-full.log`; 45 en
 `tests/test_frontier_arena.py`. Los dos tests del barrido de ceros comprueban explícitamente que se excluyan
 las tablas relocadas y que se respete el fin declarado del segmento. Laboratorio parado al cerrar este hito.
+
+### Motor integrado para laboratorio; Azahar pendiente (2026-11-05)
+
+`frontier/arena_engine.py` define los tres puentes y genera entradas de `guarded_writes`. `patch.battle_cro`
+valida el DllBattle v0.5 completo, aplica conjuntamente Tubo y Arena, y recalcula CRO/CRR una vez. Palacio B aún
+no existe; puede añadir sus escrituras a esa misma lista sin descartar ninguna de estas. Los tres intervalos
+están libres de relocaciones y de destinos internos de salto a sus instrucciones intermedias (test estático
+sobre el CRO v0.5). No se escribe en los ceros de tablas.
+
+`patch.py` enlaza ya `arena.s`, con los siguientes símbolos en esta revisión:
+
+| Rutina | VA code.bin | Efecto |
+| --- | --- | --- |
+| arena_start | 0x579afc | Desde 0x1e33d8, limpia bit 31 y lo pone solo con ruta 4, work 16466 no cero y estilo Individual; reproduce `mov r0,r5` y vuelve a 0x1e33dc |
+| arena_enter | 0x579b50 | Puente de 0x724c0: reproduce el reinicio nativo de edad y copia PS actuales del entrante al work 16693 (jugador) o 16694 (rival) si la marca está puesta |
+| arena_switch | 0x579bb0 | Puente de 0x7945c, después del push retail: con marca y PS no cero devuelve 3/salidas válidas y restaura el frame original, antes de consultar Fantasma; sin marca/debilitado reproduce las cuatro instrucciones |
+| arena_turn_end | 0x579bfc | Puente de 0x1d21c: exige dos activos vivos con edades ≥3; ordena los lados por id, calcula Cuerpo y pone a cero todos los perdedores antes de tramitar los KO; siempre reproduce llamada retail 0x6b6fc |
+| arena_judge | 0x579d38 | Mismo juicio porcentual ya probado; ahora enlazado junto a los otros hooks |
+
+Para cada perdedor se reserva evento 0x12 con `0x6f920(server,0x12,id)`, se escriben `packet+4=id`,
+`packet+5=1` (tramitar KO aunque sus PS estén ya a cero) y se entrega mediante 0x6d4ec. **Es una implementación
+por validar en Azahar**: especialmente el empate con ambos últimos Pokémon y el resultado de la instalación.
+El menor de los dos contadores nativos de edad mide los turnos desde el último entrante; así la edad del
+superviviente no necesita borrarse ni un tercer work. No se suman turnos en cada reentrada de la máquina de fases.
+
+Los stubs obtienen la base del CRO a partir del LR del puente, por lo que no dependen de 0x6f3000. Los tests
+los ejecutan con el CRO cargado en **0x02000000 y 0x03000000**, y con ambos órdenes de velocidad. Incluyen:
+marca por ruta/activo/estilo, conservación de otros bits, reinicio de edad y snapshots con/sin marca, bloqueo con
+tipo Fantasma y sustitución tras KO, victoria/derrota/empate, no juzgar en turno 2 ni con un entrante de edad 0,
+KO natural, y el camino retail sin marca. En empate verifican que ambos PS sean cero ANTES de entregar el primer
+evento. Verifican asimismo pila, registros y ejecución de la llamada retail desplazada.
+
+`python -m pytest -q tests` → **560 passed**, `work/frontier/arena/b-tests-engine-full.log`.
+`python frontier/overlay.py --out work/frontier/arena/b-build` → build completa; hook **1936 bytes**,
+**0x579604–0x579d94**, quedan **620 bytes** hasta 0x57a000 (compartidos con Palacio B futuro).
+Nada de esta build se ha probado todavía en Azahar ni en consola. La aceptación B sigue abierta.
