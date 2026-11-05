@@ -1,0 +1,501 @@
+diff --git a/frontier/asm/arena.s b/frontier/asm/arena.s
+index fe44da7..5f900c3 100644
+--- a/frontier/asm/arena.s
++++ b/frontier/asm/arena.s
+@@ -51,8 +51,7 @@ arena_start:
+     orrne   ip, ip, #ARENA_RULE
+     strne   ip, [r4, #0x6c8]
+ 1:
+-    mov     r0, r5
+-    b       ARENA_START_RESUME
++    b       palace_start            @ frontier/asm/palace.s: its bit, then mov r0,r5 and resume
+ 
+ @ CRO 0x724c0, r4 server / r5 entrant / fp global turn. Reproduce all displaced
+ @ instructions, including the native age reset, then snapshot the entrant's HP.
+diff --git a/frontier/palace.py b/frontier/palace.py
+index f22bbbf..07215f2 100644
+--- a/frontier/palace.py
++++ b/frontier/palace.py
+@@ -8,8 +8,9 @@ selection, reports/frontier.md §25), 7 battles a round, an own streak and recor
+ (patch.STREAK_ROUTES), BP of data.FRONTIER_BP['palace'] after the 7th battle of each round, pause and resume as the
+ Maison, and the mutual exclusion with the other facilities (factory.busy_check, patch.ACTIVE_WORK).
+ 
+-Stage A only: the player still gives the orders. The Palace's own rule (the Pokémon choose their moves by nature)
+-needs the battle engine and is stage B/C (design §1, §4). Same known deviations as the Tower: the Maison's texts
++Stage B (reports/frontier.md §32): in its battles the game's AI decides for the player's Pokémon (frontier/asm/
++palace.s, frontier/palace_engine.py; still without the nature table, stage C). The battle video does not record
++those decisions, so the Palace's «next battle» menu drops «Guardar vídeo» (VIDEO_ITEM, `hide_video`). Same known deviations as the Tower: the Maison's texts
+ («Mansión Batalla»), its party rules, its boss on the streak; no Spenser, Doubles or Open Level.
+ """
+ import sys
+@@ -20,17 +21,38 @@ sys.path[:0] = [str(ROOT / 'scripts'), str(ROOT / 'frontier')]
+ import data as fd  # noqa: E402
+ import patch  # noqa: E402
+ import tower  # noqa: E402
++from pawn import OP, Op  # noqa: E402
+ 
+ FACILITY = 'palace'
++VIDEO_MENU = 'L3d2c'             # 0x3d08: LOAD_P_S_PRI 20; JNZ 0x3d2c skips ListMenuAdd(68 «Guardar vídeo», 1)
++VIDEO_ITEM = 68
+ ZONE = 340                       # frontier/REPARTO.md; checked statically by frontier/zone_check.py (§27)
+ ROUTE = patch.ROUTE[FACILITY]
+ STREAK, ACTIVE, RECORD = (patch.STREAK_ROUTES[ROUTE][1] + k for k in range(3))
+ PALACE_BP = fd.FRONTIER_BP[FACILITY]
+ 
+ 
++def hide_video(p):
++    """The «next battle» menu (0x3ce4..0x3d20: Continuar 67, Pausar 69, Guardar vídeo 68 only if argument 20 is 0)
++    never adds its video item: its conditional jump over the ListMenuAdd becomes unconditional."""
++    add = p.native('ListMenuAdd')
++    found = []
++    for i in range(len(p.items) - 6):
++        a, b, c, d, e, f = p.items[i:i + 6]
++        if (all(isinstance(x, Op) for x in (a, b, c, d, e, f)) and a.op == OP['LOAD_P_S_PRI'] and a.args == [20]
++                and b.op == OP['JNZ'] and b.args == [VIDEO_MENU] and [x.op for x in (c, d, e)] == [OP['PUSH_P_C']] * 3
++                and [x.args for x in (c, d, e)] == [[0], [1], [VIDEO_ITEM]] and f.op == OP['SYSREQ_N']
++                and f.args[0] == add):
++            found.append(i)
++    if len(found) != 1:
++        raise ValueError(f'video menu item not found once ({len(found)})')
++    p.items[found[0]:found[0] + 2] = [Op(OP['JUMP'], [VIDEO_MENU])]
++    return p
++
++
+ def palace_program(retail):
+     """Zone 517's retail script with the Palace (module docstring)."""
+-    return tower.facility_program(retail, FACILITY)
++    return hide_video(tower.facility_program(retail, FACILITY))
+ 
+ 
+ def zone_script(retail):
+diff --git a/frontier/patch.py b/frontier/patch.py
+index 941c66c..4b817bc 100644
+--- a/frontier/patch.py
++++ b/frontier/patch.py
+@@ -29,6 +29,7 @@ sys.path.insert(0, str(ROOT / 'scripts'))
+ from formats import apply_ips, read_ips, sha256  # noqa: E402
+ from build_patch import diff_ips  # noqa: E402
+ import arena_engine as ae  # noqa: E402
++import palace_engine as pe  # noqa: E402
+ 
+ CLEAN = ROOT / 'baseline/oras/clean/exefs/code.bin'
+ REPOLISHED = ROOT / 'baseline/oras/repolished/exefs/code.bin'
+@@ -40,7 +41,7 @@ HASHES = {
+ }
+ ASM = ROOT / 'frontier/asm/rental.s'
+ ASMS = [ASM, ROOT / 'frontier/asm/dome.s', ROOT / 'frontier/asm/pike.s', ROOT / 'frontier/asm/pyramid.s',
+-        ROOT / 'frontier/asm/arena.s']   # linked together, rental_hook first (at CAVE)
++        ROOT / 'frontier/asm/arena.s', ROOT / 'frontier/asm/palace.s']   # linked together, rental_hook first (at CAVE)
+ BASE = 0x100000
+ CAVE, CAVE_END = 0x579604, 0x57A000           # .text padding (reports/frontier.md §5)
+ SITE = 0x1E3D8C                               # player-party branch of the party builder 0x1e3d2c
+@@ -126,7 +127,7 @@ ZONE_NATIVES, ZONE_COUNT = 0x587D58, 536
+ NATIVES_DEFAULT, NATIVES_MAISON = 0x243, 0x100
+ MAISON_NATIVE_ZONES = (448, 517, 520)
+ CONSTANTS = {'WORK_IV': WORK_IV, 'WORK_SET0': WORK_SETS[0], 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'RENTAL_LEVEL': 50,
+-             **ae.CONSTANTS,
++             **ae.CONSTANTS, **pe.CONSTANTS,
+              'RENTALS': len(WORK_SETS), 'WORK_RIVAL': WORK_RIVAL[0],
+              'ROUTE_DELTA': MAISON_BASE - SAVE_WORKS - 2 * (WORK_ROUTE - 0x4000),
+              'ROUTES': len(STREAK_ROUTES), 'WORK_ROUTE': WORK_ROUTE,
+@@ -267,7 +268,7 @@ COPY_BACK_AFTER = (0xE3510002, 0xE1A00000, 0x8A000119)   # cmp r1, #2; nop; bhi
+ 
+ 
+ def battle_cro(romfs=MOD_ROMFS):
+-    """v0.5 + Pike copy-back + Arena bridges, guarded together, with updated CRO/CRR hashes.
++    """v0.5 + Pike copy-back + Arena and Palace bridges, guarded together, with updated CRO/CRR hashes.
+ 
+     Additional facility bridges can extend the write list before the single rehash.
+     Arena acts only with its setup bit; the unmarked path replays retail instructions.
+@@ -282,7 +283,8 @@ def battle_cro(romfs=MOD_ROMFS):
+         sys.exit(f'{BATTLE_CRO} {COPY_BACK:#x} differs: {[f"{w:08x}" for w in got]}')
+     _, symbols = assemble()
+     writes = [dict(offset=COPY_BACK, before=struct.pack('<3I', *COPY_BACK_BEFORE).hex(),
+-                   after=struct.pack('<3I', *COPY_BACK_AFTER).hex()), *ae.cro_writes(symbols)]
++                   after=struct.pack('<3I', *COPY_BACK_AFTER).hex()), *ae.cro_writes(symbols),
++              *pe.cro_writes(symbols)]
+     changed = guarded_writes(original, dict(path=BATTLE_CRO, sha256=BATTLE_CRO_SHA256, writes=writes))
+     changed = rehash_cro(original, changed)
+     crr = update_crr((romfs / CRR).read_bytes(), original, changed)
+diff --git a/tests/test_frontier_palace.py b/tests/test_frontier_palace.py
+index 2431f32..aaf2f0f 100644
+--- a/tests/test_frontier_palace.py
++++ b/tests/test_frontier_palace.py
+@@ -218,3 +218,213 @@ def test_no_palace_battle_points_inside_a_round(built, streak):
+ @pytest.mark.parametrize('route', [0, 1, 2])
+ def test_maison_battle_points_without_the_palace_route(built, route):
+     assert battle_points_run(built, 7, route=route) == [('bp', 2), ('number', 2)]   # GetWinCount 99 > 10: 2 BP
++
++
++# Stage B (reports/frontier.md §32): the linked code.bin stubs and the patched DllBattle.cro bridges executed in
++# Unicorn, with the real instructions around each site. Checks the logic, not the game (Azahar: §32).
++import struct  # noqa: E402
++import palace_engine as pe  # noqa: E402
++
++PMEM, PSTACK, PRETURN = 0x08000000, 0x09001000, 0x0A000000
++PMAIN, PCLIENT, PSETUP, PWORK, PGAME, PSAVE = (PMEM + n for n in (0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x10000))
++
++
++@pytest.fixture(scope='module')
++def palace_engine_code():
++    import shutil
++    if not fp.REPOLISHED.exists() or not shutil.which('arm-none-eabi-as'):
++        pytest.skip('Local baseline and ARM binutils required')
++    return fp.build()[0], fp.battle_cro()[fp.BATTLE_CRO]
++
++
++def pmachine(binaries, cro_base=0x02000000):
++    from unicorn import Uc, UC_ARCH_ARM, UC_MODE_ARM
++    from unicorn import arm_const as AR
++    code, cro = binaries
++    uc = Uc(UC_ARCH_ARM, UC_MODE_ARM)
++    for address, data in ((fp.BASE, code), (cro_base, cro)):
++        uc.mem_map(address, (len(data) + 0xFFF) & ~0xFFF)
++        uc.mem_write(address, data)
++    uc.mem_map(PMEM, 0x40000)
++    uc.mem_map(PSTACK - 0x1000, 0x2000)
++    uc.mem_map(PRETURN, 0x1000)
++    regs = [getattr(AR, f'UC_ARM_REG_R{k}') for k in range(13)]
++    for k, reg in enumerate(regs):
++        uc.reg_write(reg, 0xCAFE0000 + k)
++    uc.reg_write(AR.UC_ARM_REG_SP, PSTACK)
++    uc.reg_write(AR.UC_ARM_REG_LR, PRETURN)
++
++    def put(address, value, fmt='<I'):
++        uc.mem_write(address, struct.pack(fmt, value))
++    for address, value in [(PCLIENT, PMAIN), (PMAIN + 0x10, PSETUP), (PSETUP + 0x7C, PGAME), (PGAME, PSAVE),
++                           (PWORK + 0xB78, PMEM + 0x6000), (PMEM + 0x601C, PGAME)]:
++        put(address, value)
++    return uc, put, regs, AR
++
++
++def pclient(put, ident, thinker, flag, other_bits=0x10000):
++    put(PCLIENT + 0x90, ident, '<B')
++    put(PCLIENT + 0x91, thinker, '<B')
++    put(PSETUP + 0xA8, other_bits | (pe.RULE if flag else 0))
++
++
++def test_palace_engine_ids_and_sites():
++    assert (pe.ROUTE, pe.ACTIVE) == (palace.ROUTE, palace.ACTIVE) == (fp.ROUTE['palace'], fp.ACTIVE_WORK['palace'])
++    import arena_engine as ae
++    assert pe.RULE != ae.RULE and not set(pe.SITES) & set(ae.SITES)
++    assert all(abs(a - b) >= 16 for a in pe.SITES for b in [*ae.SITES, fp.COPY_BACK])
++
++
++@pytest.mark.parametrize('route, active, style, enabled', [(3, 1, 0, True), (3, 0, 0, False), (3, 1, 1, False),
++    (0, 1, 0, False), (1, 1, 0, False), (2, 1, 0, False), (4, 1, 0, False), (5, 1, 0, False), (6, 1, 0, False),
++    (7, 1, 0, False)])
++def test_palace_start_marks_only_its_active_singles_setup(palace_engine_code, route, active, style, enabled):
++    import arena_engine as ae
++    uc, put, regs, AR = pmachine(palace_engine_code)
++    put(PWORK + 0x6C8, pe.RULE | 0x12345)          # a stale mark is always cleared first
++    put(PWORK + 0x621, style, '<B')
++    for work, value in ((fp.WORK_ROUTE, route), (pe.ACTIVE, active), (ae.CONSTANTS['ARENA_ACTIVE'], 0)):
++        put(PSAVE + fp.SAVE_WORKS + 2 * (work - 0x4000), value, '<H')
++    uc.reg_write(regs[4], PWORK)
++    uc.reg_write(regs[5], 0x12340000)
++    before = [uc.reg_read(r) for r in regs[1:12]]
++    uc.emu_start(ae.START, ae.START + 4, count=300)
++    assert uc.reg_read(AR.UC_ARM_REG_PC) == ae.START + 4
++    assert struct.unpack('<I', uc.mem_read(PWORK + 0x6C8, 4))[0] == 0x12345 | (pe.RULE if enabled else 0)
++    assert uc.reg_read(regs[0]) == 0x12340000
++    assert [uc.reg_read(r) for r in regs[1:12]] == before and uc.reg_read(AR.UC_ARM_REG_SP) == PSTACK
++
++
++def test_arena_and_palace_marks_are_exclusive(palace_engine_code):
++    import arena_engine as ae
++    for route in (3, 4):
++        uc, put, regs, AR = pmachine(palace_engine_code)
++        for work in (fp.WORK_ROUTE, pe.ACTIVE, ae.CONSTANTS['ARENA_ACTIVE']):
++            put(PSAVE + fp.SAVE_WORKS + 2 * (work - 0x4000), route if work == fp.WORK_ROUTE else 1, '<H')
++        put(PWORK + 0x6C8, ae.RULE | pe.RULE)
++        uc.reg_write(regs[4], PWORK)
++        uc.emu_start(ae.START, ae.START + 4, count=300)
++        assert struct.unpack('<I', uc.mem_read(PWORK + 0x6C8, 4))[0] == (pe.RULE if route == 3 else ae.RULE)
++
++
++@pytest.mark.parametrize('cro_base', [0x02000000, 0x03000000])
++@pytest.mark.parametrize('ident, thinker, argument, flag, create', [
++    (1, 1, 0, False, True),       # retail AI client
++    (1, 1, 1, True, False),       # retail: no AI object with that argument
++    (0, 0, 0, False, False),      # retail UI client
++    (0, 0, 0, True, True),        # the Palace's client 0: AI object, thinker stays UI
++    (0, 0, 1, True, False),
++    (1, 0, 0, True, False),       # only client 0
++    (0, 2, 0, True, False),       # a replaying client is never touched
++])
++def test_palace_constructor_bridge_requests_an_ai_object(palace_engine_code, cro_base, ident, thinker, argument,
++                                                         flag, create):
++    uc, put, regs, AR = pmachine(palace_engine_code, cro_base)
++    pclient(put, ident, thinker, flag)
++    put(PSTACK + 0x6C, argument)
++    uc.reg_write(regs[4], PCLIENT)
++    before = [uc.reg_read(r) for r in regs[1:12]]
++    site = cro_base + 0x731F0
++    uc.emu_start(site, site + 16, count=200)
++    assert uc.reg_read(AR.UC_ARM_REG_PC) == site + 16
++    assert bool(uc.reg_read(AR.UC_ARM_REG_CPSR) & (1 << 30)) == create       # Z: beq 0x7321c creates it
++    assert [uc.reg_read(r) for r in regs[1:12]] == before and uc.reg_read(AR.UC_ARM_REG_SP) == PSTACK
++    assert uc.mem_read(PCLIENT + 0x91, 1)[0] == thinker
++
++
++@pytest.mark.parametrize('cro_base', [0x02000000, 0x03000000])
++@pytest.mark.parametrize('ident, thinker, flag, system, flags, target', [
++    (0, 0, True, 1, pe.AI_FLAGS, 0x732C0),
++    (0, 0, False, 1, 0, 0x732C0),
++    (1, 1, True, 1, 0x87, 0x732C0),      # the rival keeps its own flags
++    (0, 1, True, 1, 0, 0x732C0),         # a retail AI client 0 keeps its own
++    (0, 0, True, 0, pe.AI_FLAGS, 0x732B0),   # missing AI system: the retail assertion path
++])
++def test_palace_ai_flags_bridge(palace_engine_code, cro_base, ident, thinker, flag, system, flags, target):
++    from unicorn import UC_HOOK_CODE
++    uc, put, regs, AR = pmachine(palace_engine_code, cro_base)
++    pclient(put, ident, thinker, flag)
++    put(PMAIN + 0x820, PMEM + 0x7000 if system else 0)
++    uc.reg_write(regs[4], PCLIENT)
++    uc.reg_write(regs[5], PMAIN)
++    uc.reg_write(regs[6], 0x87 if ident else 0)
++    before = [uc.reg_read(r) for r in regs[1:6] + regs[7:12]]
++    stops = []
++
++    def hook(machine, address, size, data):
++        if address in (cro_base + 0x732C0, cro_base + 0x732B0, cro_base + 0x73268):
++            stops.append(address - cro_base)
++            machine.emu_stop()
++    uc.hook_add(UC_HOOK_CODE, hook)
++    uc.emu_start(cro_base + 0x73258, PRETURN, count=200)
++    assert stops == [target]
++    assert uc.reg_read(regs[6]) == flags
++    assert [uc.reg_read(r) for r in regs[1:6] + regs[7:12]] == before and uc.reg_read(AR.UC_ARM_REG_SP) == PSTACK
++
++
++@pytest.mark.parametrize('cro_base', [0x02000000, 0x03000000])
++@pytest.mark.parametrize('ident, thinker, flag, command, column', [
++    (0, 0, True, 3, 1), (0, 0, True, 5, 1), (0, 0, True, 6, 1),    # decisions: AI
++    (0, 0, True, 7, 0), (0, 0, True, 10, 0), (0, 0, True, 2, 0),   # display and the rest: UI
++    (0, 0, True, 257, 0), (0, 0, True, 4, 0), (0, 0, True, 8, 0),
++    (0, 0, False, 3, 0), (0, 0, False, 5, 0),                      # unmarked battle: retail
++    (1, 1, True, 3, 1), (1, 1, False, 7, 1),                       # rival unchanged
++    (0, 2, True, 3, 2),                                            # replay unchanged
++])
++def test_palace_dispatch_bridge_columns(palace_engine_code, cro_base, ident, thinker, flag, command, column):
++    uc, put, regs, AR = pmachine(palace_engine_code, cro_base)
++    pclient(put, ident, thinker, flag)
++    table, row = PMEM + 0x8000, 5
++    put(PSTACK, 0x11223344)                       # [sp] is read by 0x4a74 after the dispatch
++    for reg, value in zip(regs, (row, command, table)):
++        uc.reg_write(reg, value)
++    uc.reg_write(regs[4], PCLIENT)
++    uc.reg_write(regs[6], 0)
++    before = [uc.reg_read(r) for r in (regs[4], regs[6], *regs[7:12])]
++    site = cro_base + 0x49EC
++    uc.emu_start(site, site + 16, count=200)
++    assert uc.reg_read(AR.UC_ARM_REG_PC) == site + 16
++    assert uc.reg_read(regs[3]) == column
++    assert uc.reg_read(regs[0]) == 7 * row and uc.reg_read(regs[2]) == table + 0x1C * row
++    assert uc.reg_read(regs[5]) == PCLIENT + 0x1E4 and uc.reg_read(regs[1]) == command
++    assert [uc.reg_read(r) for r in (regs[4], regs[6], *regs[7:12])] == before
++    assert uc.reg_read(AR.UC_ARM_REG_SP) == PSTACK and uc.mem_read(PSTACK, 4) == struct.pack('<I', 0x11223344)
++
++
++def test_palace_command_table_columns_are_the_measured_ones():
++    """DllBattle 0xdbc68: commands 3, 5 and 6 have an AI proc; 7 (server commands: display) only a UI one."""
++    from cro import Cro
++    cro = Cro((fp.MOD_ROMFS / fp.BATTLE_CRO).read_bytes())
++    pointers = cro.pointer_at()
++    rows = {}
++    for row in range(16):
++        at = 0xDBC68 + 0x1C * row
++        rows[struct.unpack_from('<I', cro.data, at)[0]] = [pointers.get(at + 4 + 8 * k, 0) for k in range(3)]
++    assert rows[3] == [0xD8D8, 0xD0C8, 0xE5C0] and rows[7] == [0x10E40, 0, 0]
++    assert all(rows[c][1] for c in pe.DECISIONS)
++
++
++def test_palace_bridges_do_not_overwrite_relocations_or_incoming_destinations(palace_engine_code):
++    import capstone
++    from cro import Cro
++    cro = Cro((fp.MOD_ROMFS / fp.BATTLE_CRO).read_bytes())
++    for site, (_, before) in pe.SITES.items():
++        assert cro.data[site:site + 16] == before
++    middle = {site + delta for site in pe.SITES for delta in (4, 8, 12)}
++    assert not any(target in middle or target in pe.SITES for target, _, _ in cro.relocs)
++    assert not any(source in middle for _, _, source in cro.relocs)
++    md = capstone.Cs(capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM)
++    md.skipdata = True
++    start, length, _ = cro.segments[0]
++    for ins in md.disasm(cro.data[start:start + length], start):
++        if ins.mnemonic.startswith('b') and ins.op_str.startswith('#'):
++            assert int(ins.op_str[1:], 16) not in middle
++
++
++def test_palace_menu_has_no_video_item_and_the_towers_keeps_it(built):
++    _, retail, _, _ = built
++
++    def video_jumps(program):
++        return [(x.op, x.args) for x in program.items if isinstance(x, Op) and x.args == [palace.VIDEO_MENU]]
++    assert video_jumps(palace.palace_program(retail)) == [(OP['JUMP'], [palace.VIDEO_MENU])]
++    assert video_jumps(tower.tower_program(retail)) == [(OP['JNZ'], [palace.VIDEO_MENU])]
+diff --git a/tests/test_frontier_pike.py b/tests/test_frontier_pike.py
+index 16d8613..e272fbc 100644
+--- a/tests/test_frontier_pike.py
++++ b/tests/test_frontier_pike.py
+@@ -508,7 +508,7 @@ def test_battle_copy_back_changes_only_gate_and_validates_hashes(battle_module):
+     assert len(changed) == len(original)
+     assert changed[:0x80] == b''.join(cro_hashes(changed))
+     assert all(i < 0x80 or fp.COPY_BACK <= i < fp.COPY_BACK + 12
+-               or any(site <= i < site + 16 for site in fp.ae.SITES)
++               or any(site <= i < site + 16 for site in [*fp.ae.SITES, *fp.pe.SITES])
+                for i, (a, b) in enumerate(zip(original, changed)) if a != b)
+     crr = battle_module[fp.CRR]
+     offset, count = struct.unpack_from('<II', crr, 0x350)
+diff --git a/frontier/asm/palace.s b/frontier/asm/palace.s
+new file mode 100644
+index 0000000..744dea8
+--- /dev/null
++++ b/frontier/asm/palace.s
+@@ -0,0 +1,106 @@
++@ Battle Palace stage B (reports/frontier.md §32): the game's AI decides for the player's Pokemon.
++@ Only setup+0xa8 bit 30 (PALACE_RULE) enables the CRO bridges; code.bin StartBattle sets it for a
++@ Singles Palace challenge (route PALACE_ROUTE, work PALACE_ACTIVE not 0) and clears it otherwise.
++@
++@ Measured in Azahar (2026-11-05): a client's thinker type is byte +0x91 (0 UI, 1 AI, 2 replay) and selects
++@ the column of the command table DllBattle 0xdbc68 (rows of 0x1c: command, three {proc, adj}). Making the
++@ player's client 0 an AI client hangs on a black screen: server commands (animations, messages) only have
++@ a UI proc. So client 0 stays UI and gets, as AI clients do, an AI object (+0x1c8, AI flags PALACE_AI);
++@ only its decisions use the AI column: 3 (choose an action) and 5/6 (choose a Pokemon to send in).
++    .syntax unified
++    .arm
++    .section .text
++
++@ code.bin 0x1e33d8, reached from arena_start: r4 work, r5 the value for r0; r0/ip/flags scratch.
++    .global palace_start
++palace_start:
++    ldr     ip, [r4, #0x6c8]        @ setup+0xa8
++    bic     ip, ip, #PALACE_RULE
++    str     ip, [r4, #0x6c8]
++    ldrb    r0, [r4, #0x621]        @ battle style: Singles only
++    cmp     r0, #0
++    bne     1f
++    ldr     r0, [r4, #0xb78]
++    ldr     r0, [r0, #0x1c]
++    ldr     r0, [r0]
++    add     r0, r0, #0x13000
++    add     r0, r0, #0x144
++    ldrh    ip, [r0, #(2 * (WORK_ROUTE - 0x4000))]
++    cmp     ip, #PALACE_ROUTE
++    bne     1f
++    ldrh    r0, [r0, #(2 * (PALACE_ACTIVE - 0x4000))]
++    cmp     r0, #0
++    ldrne   ip, [r4, #0x6c8]
++    orrne   ip, ip, #PALACE_RULE
++    strne   ip, [r4, #0x6c8]
++1:
++    mov     r0, r5
++    b       ARENA_START_RESUME
++
++@ CRO 0x731f0 in the client constructor 0x72f40, r4 client, sp its frame (untouched before the reads).
++@ Returns Z set to create the AI object. Retail: thinker 1 and argument [sp,#0x6c] 0. Palace: also the
++@ UI client 0 with that argument 0. r0/ip/flags scratch (both continuations reload r0).
++    .global palace_ai_want
++palace_ai_want:
++    ldrb    r0, [r4, #0x91]
++    cmp     r0, #1
++    ldreq   r0, [sp, #0x6c]
++    cmpeq   r0, #0
++    bxeq    lr
++    ldrb    r0, [r4, #0x91]
++    ldrb    ip, [r4, #0x90]
++    orrs    r0, r0, ip              @ thinker 0 (UI) and client 0
++    bxne    lr
++    ldr     r0, [sp, #0x6c]
++    cmp     r0, #0
++    bxne    lr
++    ldr     r0, [r4]                @ BattleMain
++    ldr     r0, [r0, #0x10]         @ BattleSetup
++    ldr     r0, [r0, #0xa8]
++    and     r0, r0, #PALACE_RULE
++    eors    r0, r0, #PALACE_RULE    @ Z set iff the bit is set
++    bx      lr
++
++@ CRO 0x73258, r4 client, r5 BattleMain, r6 the AI flags just chosen. For the Palace's client 0 use
++@ PALACE_AI (the Maison trainers' 7). Replaces `ldr r0,[r5,#0x820]; cmp r0,#0; bne 0x732c0; b 0x732b0`:
++@ returns to 0x732c0, or to 0x732b0 (retail assertion) if that object is missing. LR = CRO 0x73260.
++    .global palace_ai_flags
++palace_ai_flags:
++    ldrb    r0, [r4, #0x90]
++    ldrb    ip, [r4, #0x91]
++    orrs    r0, r0, ip
++    bne     1f
++    ldr     r0, [r5, #0x10]
++    ldr     r0, [r0, #0xa8]
++    tst     r0, #PALACE_RULE
++    movne   r6, #PALACE_AI
++1:
++    ldr     r0, [r5, #0x820]
++    cmp     r0, #0
++    addne   lr, lr, #(0x732c0 - 0x73260)
++    addeq   lr, lr, #(0x732b0 - 0x73260)
++    bx      lr
++
++@ CRO 0x49ec, the command dispatch of client proc 0x4914: r0 row, r1 command, r2 table, r4 client.
++@ Reproduces `ldrb r3,[r4,#0x91]; rsb r0,r0,r0,lsl#3; add r5,r4,#0x1e4; add r2,r2,r0,lsl#2`, with
++@ column 1 (AI) for the Palace's client 0 on commands 3, 5 and 6. ip/flags scratch.
++    .global palace_dispatch
++palace_dispatch:
++    ldrb    r3, [r4, #0x91]
++    ldrb    ip, [r4, #0x90]
++    orrs    ip, ip, r3
++    bne     1f
++    cmp     r1, #3
++    cmpne   r1, #5
++    cmpne   r1, #6
++    bne     1f
++    ldr     ip, [r4]
++    ldr     ip, [ip, #0x10]
++    ldr     ip, [ip, #0xa8]
++    tst     ip, #PALACE_RULE
++    movne   r3, #1
++1:
++    rsb     r0, r0, r0, lsl #3
++    add     r5, r4, #0x1e4
++    add     r2, r2, r0, lsl #2
++    bx      lr
+diff --git a/frontier/palace_engine.py b/frontier/palace_engine.py
+new file mode 100644
+index 0000000..17c17a6
+--- /dev/null
++++ b/frontier/palace_engine.py
+@@ -0,0 +1,33 @@
++"""Palace B engine constants and guarded DllBattle.cro bridges (reports/frontier.md §32, frontier/asm/palace.s).
++
++Measured in Azahar on the v0.5 DllBattle.cro loaded at 0x6f3000 (work/frontier/palace/b2-gdb-m3b.log):
++- client constructor 0x72f40: arguments (clientID, thinker...) at [sp+0x5c..]; thinker stored at +0x91
++  (0x73064), AI object at +0x1c8 only for thinker 1 (0x731f0..0x73304), its AI flags from 0x73228..0x732ac;
++- the single battle setup 0x164fc builds client 0 with thinker 0 (0x16660) and client 1 with thinker 1
++  (0x166c8);
++- command dispatch 0x49b0..0x4a08: row of 0x1c bytes in table 0xdbc68, column = client+0x91.
++
++Same bridge shape as the Arena's (arena_engine.cro_writes): `ldr ip,[pc,#4]; blx ip; b +0; .word stub`.
++The second dispatcher (0x7664, never reached in the measured battles) is left retail: if it ever carries a
++decision, the player is simply asked (manual control), which is the retail behaviour.
++"""
++import struct
++
++RULE = 0x40000000            # setup+0xa8 bit 30 (the Arena owns bit 31; retail masks measured up to 0x100000)
++AI_FLAGS = 7                 # the Maison trainers' AI flags (trainer object +0xc, 0x1e3620)
++ROUTE = 3
++ACTIVE = 16462               # frontier/REPARTO.md
++DECISIONS = (3, 5, 6)        # commands answered by the AI column for the Palace's client 0
++SITES = {
++    0x731F0: ('palace_ai_want', bytes.fromhex('9100d4e5010050e36c009d0500005003')),
++    0x73258: ('palace_ai_flags', bytes.fromhex('200895e5000050e31600001a110000ea')),
++    0x49EC: ('palace_dispatch', bytes.fromhex('9130d4e5800160e0795f84e2002182e0')),
++}
++CONSTANTS = {'PALACE_RULE': RULE, 'PALACE_AI': AI_FLAGS, 'PALACE_ROUTE': ROUTE, 'PALACE_ACTIVE': ACTIVE}
++
++
++def cro_writes(symbols):
++    """guarded_writes entries, composed with the Pike's and the Arena's before the single rehash."""
++    return [dict(offset=site, before=before.hex(), after=struct.pack(
++        '<4I', 0xE59FC004, 0xE12FFF3C, 0xEA000000, symbols[name]).hex())
++            for site, (name, before) in SITES.items()]

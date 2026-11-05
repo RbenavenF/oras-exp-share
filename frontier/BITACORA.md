@@ -2017,3 +2017,44 @@ Decisiones: F6-ARENA-B pasa a done. Limitaciones aceptadas y escritas: consola n
 la Fábrica se vio con equipo propio (flujo de alquiler no verificado en esta build). Mente, Técnica, árbitro y Greta fuera.
 Siguiente paso: la siguiente tarea de `frontier/orch/tasks.json`. Si se quiere más garantía: un combate de la Pirámide y
 uno de alquiler de la Fábrica con esta build y `b-probe-normal.gdb`.
+
+## 2026-11-05 15:02 — Codex — F6-PALACIO-B: relevo recuperado y parada expresa en M3
+Estado: bloqueado
+Hecho:
+- Revisados AGENTS, PLAN, REPARTO, diseño, último commit 18a464f, status y diff. No existe CLAUDE.md.
+  El turno sigue en frontier-orch, sin modificar REPARTO. Claude dejó integración B sin commit y resultados
+  en work/frontier/palace/ sin informe ni entrada de relevo. No se han usado subagentes ni push.
+- reports/frontier.md §32 recoge M1 Individual, localización de clientes (M2 parcial), M3 directo fallido
+  y el ensayo híbrido posterior. Direcciones, fuentes, hashes y límites explícitos. M1 Multi, rwatch completos
+  de M2 y M4 en GDB no realizados; no se presentan como medidos.
+- El registro heredado de M3 fuerza tipo IA en cliente 0 (CRO+0x73064), crea objeto IA con flags 0 y deja
+  pantallas negras tras una espera de 20 s. No se midió IsWin ni se repitió tipo IA con flags 7. El ensayo híbrido
+  posterior conserva tipo interfaz, objeto IA flags 7 y desvía decisiones 3/5/6; hay capturas de victoria y
+  sustitución, pero no aceptación de build/racha/PB. No se afirma imposibilidad de todas las vías IA.
+- Se aplica la condición expresa de parada de la tarea ante el fallo de M3 directo: status blocked y pregunta
+  concreta en notes sobre la vía híbrida y las alternativas 2 (ficha recortada) / 3 (truco de Multi).
+- Para no integrar silenciosamente la vía posterior al fallo, archivado el cambio B completo y la corrección
+  del test del Tubo en reports/diseno/palacio-b-experimental.patch (sobre 18a464f). Restaurados explícitamente
+  desde HEAD arena.s, palace.py, patch.py y tests de Palacio/Tubo; palace.s y palace_engine.py retirados después
+  de archivarlos. Sin stash ni reset. El generador activo queda como el último commit estable.
+  Sondas originales preservadas en frontier/probes/palace/ para reproducir las medidas tras decidir.
+Evidencia:
+- b1-gdb-m1-m3a.log c82b21a0…; b1-m3a-black.png 70365222…; b2-gdb-m3b.log 989b94d7…;
+  hashes completos y direcciones en §32. Parche fuente archivado: SHA256 505e054ca90d64adeea779f86fdb29233d82389d375fd9ecdb84fd01ac53cd32.
+- Suite experimental tras ampliar los intervalos admitidos del test CRO del Tubo: 633 passed (b4-tests.log).
+  Suite ACTIVA restaurada: `source scripts/env.sh; python -m pytest -q tests` → 566 passed en 17 s
+  (work/frontier/palace/b4-restored-tests.log). `git apply --check reports/diseno/palacio-b-experimental.patch`
+  y `git diff --check` correctos. No se han probado en Azahar los ganchos de la build experimental.
+- Laboratorio arrancado para revisar el estado y detenido al aplicar la parada; en esta sesión NO hubo combate
+  nuevo (b4-start-only.log). Tras stop, comprobación en el mismo namespace sin AppRun/Xvfb/GDB;
+  use_gdbstub=false y sin session.json activo. Inputs y partida original no escritos.
+- Informes sin seguir evoluciones-repolished.md, iniciales-repolished.md, senda-ignea.md y scripts
+  inspect_encounters.py / inspect_evolutions.py ya estaban al llegar: no se han tocado ni incorporado.
+Commits: 18a464f como base estable y el de esta entrada (archivo de investigación y bloqueo de F6-PALACIO-B).
+Decisiones: respetar la parada explícita, preservar la etapa A y todo el código pendiente como propuesta revisable.
+El fallo directo con flags 0 no es prueba de imposibilidad de la vía híbrida; necesita decisión, no declararla done.
+Siguiente paso: esperar respuesta a notes. Si se autoriza la vía híbrida, revisar y aplicar el parche archivado
+(`git apply --check` antes), completar M1 Multi/M2/M4 y auditoría del bit 30, reservarlo en REPARTO antes de usarlo,
+regenerar sondas desde los símbolos enlazados y ejecutar la aceptación Azahar completa (sin entrada, KO/sustituto,
+IsWin/racha/PB, Fábrica/Torre/Mansión/historia manuales, exclusión y vídeo). Si se elige 2 o 3, actualizar primero
+el diseño y la aceptación. No restaurar automáticamente el código B ni marcar done por las capturas heredadas.

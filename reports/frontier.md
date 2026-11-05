@@ -1877,3 +1877,103 @@ copias de partidas en `work/frontier/arena/b2-*`; herramientas `work/frontier/ar
 
 Suite `python -m pytest -q tests` → **566 passed** (`work/frontier/arena/b3-tests.log`). Laboratorio parado, sin procesos,
 `use_gdbstub=false`; partida original intacta (a30034d1…). Consola no probada.
+
+
+## 32. F6-PALACIO-B: relevo y parada en M3 (2026-11-05)
+
+**Estado: bloqueado por la condición de parada de la tarea; etapa A conservada.** El relevo encontró código B
+sin commit tras `18a464f`. Los experimentos de Claude estaban en `work/frontier/palace/`, pero no constaban en
+este informe ni en la bitácora. Codex revisó los registros y el último commit. No se declara B terminada ni se
+ha establecido que toda solución con IA sea imposible: falló la conversión directa del cliente y existe un
+ensayo híbrido prometedor. La instrucción de F6-PALACIO-B pide consultar al usuario si M3 se cuelga; se deja esa
+decisión explícita antes de integrar otra vía.
+
+### M1 — setup Individual medido; Multi pendiente
+
+Fuente heredada: `work/frontier/palace/b1-gdb-m1-m3a.log`, SHA256
+`c82b21a09b89917fd8d416018d8e340061ac3cf1f915e5babe0f3dcd8b6f25e3`.
+Sonda conservada en `frontier/probes/palace/m1.gdb` (breakpoints 0x1e32ac/0x1e3244, instrucciones siguientes
+al volcado propuesto en el diseño). En Individual: `r4=0x8822544`, setup = work+0x620 = **0x8822b64**;
+work+0x839=0, work+0xae1=0, setup+0x49=0; +0x4c=0x880b36c, +0x50=0x880bf10, +0x54/+0x58=0,
++0x6c=0, +0x70=0x880cab4, +0x74=0. El entrenador de +0x70 tiene +0xc=7.
+Volcado local: `b1-setup-single.bin`. **No hay hit Multi en el registro: M1 Multi no probado.**
+
+### M2 — creación de clientes localizada; rwatch del diseño incompleto
+
+Mismo registro. Base cargada de DllBattle **0x6f3000**. Cliente 0 **0x820d9ac**, cliente 1 **0x82121ac**;
+byte +0x90 = identificador, +0x91 = tipo (0 interfaz, 1 IA). Puntero al objeto IA en +0x1c8:
+0 para el cliente 0; 0x8215d78 para el 1 (flags 7 en objeto IA+0xc). Constructor CRO+0x72f40;
+escritura del tipo en **CRO+0x73064 = 0x766064**; asignación del objeto IA observada en
+**CRO+0x73304 = 0x766304**. Se usó watchpoint de escritura sobre cliente0+0x3c=0x820d9e8
+para armar breakpoints después de cargar el CRO (la recarga sobrescribe los breakpoints anteriores).
+Los rwatch sobre setup+0x6c/+0x70 que figuran en el registro no dieron una cadena completa de consumidores.
+**Los rwatch pedidos sobre +0x74/+0x49 y la creación del compañero Multi no están probados.**
+
+### M3 — conversión directa fallida; ensayo híbrido separado
+
+**Directa**, fuente `b1-gdb-m1-m3a.log`, sonda `frontier/probes/palace/m3-direct.gdb`:
+se fuerza `$r6=1` para el cliente 0 en 0x766064; aparece objeto IA 0x8211578, flags **0**;
+cliente 1 conserva tipo 1 y flags 7. Después no llega una decisión de combate y la captura
+`b1-m3a-black.png` muestra ambas pantallas negras (SHA256
+`70365222c781532e35d42726d79c5ac9614bb4e906deb6112ffe0161e38013ed`). El registro del orquestador
+`work/orch/logs/20261105-123811-claude-F6-PALACIO-B.log` conserva la espera de 20 s previa a esa captura.
+Al interrumpir: PC **0x15eb5c**, LR **0x160168**. No hubo resultado IsWin medido.
+**Límite:** no se repitió la conversión directa con flags 7; este fallo no demuestra por sí solo la imposibilidad
+de todas las variantes de cliente 0 con IA. No se afirma tampoco un deadlock interno diagnosticado.
+
+**Híbrida, investigación de Claude posterior al fallo directo**, fuente `b2-gdb-m3b.log`, SHA256
+`989b94d7dec5cc1796f4b485af38fe3ba1d71489bbc30503ce2bfd9066fb62c4`;
+sonda `frontier/probes/palace/m3-hybrid.gdb`:
+- Mantiene tipo 0 para la interfaz, fuerza la creación del objeto IA y flags 7; cambia en RAM solo la columna
+  de despacho de los comandos **3, 5 y 6** a 1. Los mensajes/animaciones conservan columna 0.
+- Constructor: CRO+0x731f4; flags: +0x732c0; despacho: +0x49f0. Tabla de comandos en **CRO+0xdbc68**,
+  filas de 0x1c bytes con tres pares procedimiento/ajuste. El comando 7 tiene procedimiento de interfaz
+  +0x10e40 y puntero IA nulo (lectura estática del CRO, no una traza de ese comando).
+- El registro muestra acciones `cmd=3 col=1`, selecciones `cmd=5 col=1` y entradas propias id=0 e id=1;
+  en el segundo combate se puso a 1 el PS del primer Pokémon y su copia cliente (mon−0xd98) como fixture RAM.
+  Capturas heredadas de victoria y sustitución: `b2-m3b-win.png`, `b2-m3b-win2.png`,
+  `b2-m3b-autoswitch.png` (esta última SHA256
+  `16c4dd9669594b516ec3d12ffdfb8717a01bb39b22e3379e0b9da700da51fa2d`).
+- Esto es evidencia de viabilidad de **decisiones** mediante IA con la interfaz conservada; no aceptación de una
+  build ni prueba de IsWin/racha/PB. El segundo despachador CRO+0x7668 fue instrumentado sin hits en esas trazas.
+
+Codex no repitió estos combates: arrancó el laboratorio para revisar el estado, cargó una sonda, permaneció en
+la plaza y lo paró al aplicar la condición de parada. `b4-start-only.log` no contiene un combate ni añade medidas
+M1–M3. No se atribuyen las observaciones heredadas a una ejecución nueva.
+
+### M4 — espacio: cálculo estático; medida GDB pendiente
+
+`source scripts/env.sh; python` importando `frontier/patch.py` y ejecutando `patch.assemble()` sobre el código
+restaurado: cueva **0x579604–0x57a000**, 2556 bytes; gancho actual 1936 bytes, fin 0x579d94, **620 libres**.
+La build experimental heredada `b3-build.log` usa 2208 bytes (**348 libres**). Sus puentes de 16 bytes saltan del
+CRO a code.bin; no ocupa tablas nulas del CRO. Sitios propuestos: CRO+0x731f0, +0x73258, +0x49ec.
+**M4 mediante GDB y auditoría completa de consumidores del bit 30: no probadas.** El bit 30 propuesto no se
+reserva ni se instala al dejar B bloqueada. El bit 31 de la Arena no cambia.
+
+### Relevo, recuperación y pruebas
+
+Cambios heredados: `asm/arena.s` encadenaba `palace_start`; `patch.py` enlazaba el nuevo ensamblador y los tres
+puentes CRO; `palace.py` ocultaba Guardar vídeo; `tests/test_frontier_palace.py` añadía Unicorn. Faltaba ampliar
+el test del Tubo que acota los intervalos cambiados del CRO. Corregido ese test de forma temporal, Codex ejecutó
+la suite: **633 passed** (`work/frontier/palace/b4-tests.log`). No equivale a validación en Azahar.
+
+Para respetar la parada sin perder el trabajo, se archivó todo el código B más esa corrección en
+**`reports/diseno/palacio-b-experimental.patch`**, basado en `18a464f`, SHA256
+`505e054ca90d64adeea779f86fdb29233d82389d375fd9ecdb84fd01ac53cd32`.
+Es texto fuente, incluye dos ficheros nuevos; **no lo aplica el generador**. Una futura sesión autorizada puede
+revisarlo con `git apply --stat` y comprobarlo con `git apply --check` antes de aplicarlo. Las referencias a §32
+dentro del parche describen la intención experimental, no aceptación final.
+
+Se restauraron explícitamente desde HEAD solo los cinco ficheros seguidos de implementación/tests del cambio
+B y se retiraron los dos módulos nuevos tras archivarlos. Sin stash ni reset. `tasks.json` se actualiza a blocked.
+El generador queda como `18a464f`: v0.5 + Tubo + Arena; hash de entrada v0.5 DllBattle.cro exigido por
+`patch.py`: `46153fa373b8166a3a65a31272008dc8d63207f3b2498752c69c1a0c74235519`.
+Suite restaurada: **566 passed** (`b4-restored-tests.log`). Laboratorio parado en su mismo namespace;
+`use_gdbstub=false`, sin AppRun/Xvfb/GDB en la comprobación tras la parada; sin tocar inputs ni la partida original.
+Quedaron sin seguir y sin modificar los informes y scripts de evoluciones/encuentros que ya estaban al llegar.
+No se modificó REPARTO ni se hizo push.
+
+**Decisión pendiente:** ¿retomar B con la vía híbrida de decisiones IA manteniendo la interfaz (requiere completar
+M1–M4 y toda la aceptación de juego), o elegir la alternativa **2**, ficha de movimientos recortada por naturaleza
+con pulsación manual, o la **3**, experimento Multi con equipo en el compañero IA y un Pokémon debilitado en
+cliente 0 (cambia el formato a 2 contra 2)? La etapa A sigue utilizable mientras se decide. La naturaleza es C.

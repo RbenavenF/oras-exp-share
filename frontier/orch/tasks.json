@@ -76,9 +76,9 @@
       "owner": "claude",
       "design": "reports/diseno/palacio.md",
       "accept": "Primero las medidas M1–M4 de palacio.md §4 con gdb en Azahar, apuntadas con direcciones y fuente en reports/frontier.md (sección nueva). Si M3 muestra que el cliente 0 no puede pasar a IA sin colgar o desincronizar, NO sigas: status blocked y en notes la pregunta concreta al usuario con las alternativas 2 (ficha recortada) y 3 (truco de Multi) de palacio.md §1 y lo medido. Si es viable: gancho en el camino de la Mansión (0x1e30b8) condicionado al work del Palacio y DllBattle.cro parcheado encima del de la v0.5 (hashes y CRR como scripts/build_patch.py); en Azahar, un combate del Palacio sin entrada del jugador, con cambio automático al debilitarse y resultado/racha/PB correctos; con el Palacio inactivo, la Fábrica, la Torre y la Mansión con control manual, un combate de la historia sin afectar; «Guardar vídeo» oculto o anotado como riesgo; exclusión mutua y sin regresiones; tests (Unicorn del gancho) en verde. La etapa C (naturaleza) es otra tarea.",
-      "status": "pending",
-      "notes": "",
-      "evidence": ""
+      "status": "blocked",
+      "notes": "M3 directo heredado: forzar cliente 0 a thinker IA (CRO+0x73064) dejó pantallas negras tras 20 s; objeto IA con flags 0, sin IsWin. No se repitió con flags 7. Por la parada expresa de la tarea se retiró la integración B pendiente y se archivó como reports/diseno/palacio-b-experimental.patch (base 18a464f). ¿Quieres retomar B con la vía híbrida observada (interfaz tipo 0, objeto IA flags 7, decisiones 3/5/6 por IA), o elegir alternativa 2 (ficha recortada por naturaleza, pulsación manual) o 3 (truco Multi: compañero IA y cliente 0 debilitado, formato 2 contra 2)? reports/frontier.md §32 detalla medidas y límites; no hay prueba de imposibilidad de toda solución IA. M1 Multi, M2 rwatch completo, M4 GDB y aceptación de la build pendientes.",
+      "evidence": "Relevo de 18a464f: reports/frontier.md §32; b1-gdb-m1-m3a.log (c82b21a0…), b1-m3a-black.png (70365222…); ensayo híbrido b2-gdb-m3b.log (989b94d7…) y capturas heredadas de victoria/sustitución, sin racha/PB medidos. Sondas fuente conservadas en frontier/probes/palace/. Propuesta archivada SHA256 505e054c…; suite experimental corregida 633 passed, código activo restaurado 566 passed (b4-restored-tests.log). Laboratorio parado, stub desactivado. Commit de cierre identificado por la entrada de bitácora 2026-11-05 15:02."
     }
   ]
 }
