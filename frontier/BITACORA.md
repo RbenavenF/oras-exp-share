@@ -1777,3 +1777,31 @@ quién combate (los índices son huecos del equipo) y no se ha probado qué pasa
 Siguiente paso: en Azahar, salida del piso → vestíbulo → (32,58) y exclusión mutua con la Fábrica; PB del piso 7
 (partida editada); derrota con 3 débiles (huecos 3–5); regresión de otra instalación con esta build. Después,
 `tests/test_frontier_pyramid.py` (VM y Unicorn), `reports/frontier.md` §30 y REPARTO.
+
+## 2026-11-05 03:xx — Claude Code (Opus 5.5) — F6-PIRAMIDE: Azahar completo, tests y cierre (frontier-orch)
+Estado: hecho
+Hecho:
+- Relevo: árbol limpio tras `2a0752f` (mi propio commit; el aviso de relevo se repitió al reanudarse la sesión).
+  Los cinco archivos ajenos sin seguimiento siguen sin tocarse.
+- Azahar con la build de `2a0752f` (sin cambios de código después): salida piso → vestíbulo → plaza en (32,58);
+  exclusión en los dos sentidos (Fábrica con la Pirámide a medias; Pirámide con la Torre a medias, partida editada);
+  piso 7 con 5 PB (partida editada: piso 7, vencidos 7, racha 6); desafío nuevo con los huecos 4/5/3 (salen esos tres
+  y en ese orden) y derrota con limpieza; «No» y cancelación de la pantalla de equipo; Torre con esta build, inscripción
+  y al menos cuatro combates. Tabla completa con hashes en `reports/frontier.md` §30.
+- `tests/test_frontier_pyramid.py` (59): constantes, plan, vestíbulo (nuevo, rechazos, cancelaciones, no guardar,
+  reanudar por piso, abandonar, exclusión con las seis), pisos (combate, vencido, derrota, encargado, subir 1→7, PB del
+  piso 7 por desafío), `pyramid_say` del compartido 5, y Unicorn de `pyramid_party` y `pyramid_save` (ruta, Caja,
+  cuenta, índices fuera de 0–5, trabajo nulo). `scripts/pawn_vm.py` gana el opcode OR. Roturas a mano en `pyramid.s`
+  (`cmp r1, #7` y desplazamiento de SEL0) → 1 y 2 tests fallan.
+- REPARTO: fila de la Pirámide y sus works (el turno no se toca).
+Evidencia: partidas `work/frontier/lab/py_*.sav` y `save-evidence.jsonl`; capturas `py_v1_*`, `py_tw_*`;
+`python -m pytest -q tests` → 502 passed (`work/frontier/pyramid/tests-final.log`). Laboratorio parado (sin procesos
+AppRun/gdb), `use_gdbstub=false` y `\default=true` restaurados.
+Commits: 2a0752f y el de esta entrada.
+Decisiones: F6-PIRAMIDE `done` en `tasks.json`. La Torre se tomó como regresión representativa; las demás
+instalaciones quedan cubiertas por la suite.
+Sin probar: consola; un hueco de equipo vacío o reordenado entre pisos (PC de la Mansión en los pisos); siete pisos
+seguidos desde cero (el piso 7 se probó con partida editada); recarga en el vestíbulo con el desafío a medias tras
+salir a la plaza (sí la reanudación desde `py_lobby_saved.sav`).
+Siguiente paso: la siguiente tarea de `frontier/orch/tasks.json`. Mejoras posibles de la Pirámide (v2): quitar el PC
+de los pisos, ocultar a los entrenadores vencidos, un piso con aspecto de cueva.

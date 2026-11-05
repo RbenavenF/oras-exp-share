@@ -1546,3 +1546,61 @@ Intento adicional de Codex de recargar `ar_paused9.sav`: el arranque no llegó a
 `work/frontier/arena/lab-relevo.log`); **recarga de esa pausa concreta no probada**. No invalida las pruebas
 anteriores de Claude de reanudación desde la fixture 6/1/8. El laboratorio se cerró y se comprobó que no quedaban
 procesos en su namespace (`lab-stop-relevo.txt`); no se atribuye al juego un fallo del arranque del laboratorio.
+
+## 30. F6-PIRAMIDE: Pirámide Batalla v1 (2026-11-05)
+
+Diseño: `reports/diseno/piramide.md`. Código: `frontier/pyramid.py`, `frontier/asm/pyramid.s`; integración en
+`island_build` (clones 140/141/142 de 517, puerta), `overlay` (scripts, caso 9777 del compartido 5, líneas 1055–1069
+del texto 637) y `patch.py`/`rental.s`. Tests: `tests/test_frontier_pyramid.py` (VM y Unicorn).
+
+**Experimento 0** (Azahar, build del banco de pruebas de Codex `frontier/pyramid_probe.py`, gdb):
+- `BattleInstWorkCreate` desde el vestíbulo 140 (clon de 517, máscara de nativas de 517) devuelve el trabajo en
+  `0x0880a6cc`; la pantalla de modalidad y la de equipo funcionan; `_MapChangeCore(141, 19, 0, 18, 0, 0, 0, 1, 0)`
+  (firma del ayudante `0x724` del compartido 79) lleva a la zona 141.
+- **El trabajo de la instalación no sobrevive a `_MapChangeCore`**: ya en 141, `+0x2c..+0x44` lee ceros, `+0x48 =
+  0x0bc204e8` y la cabecera es otro objeto: memoria liberada y reutilizada. Consecuencia: la selección se guarda en
+  works guardados (abajo) y cada combate de piso crea su propio trabajo.
+- El clon de la cueva 192 no sirve de piso tal cual: se llega a la boca de la cueva sin poder andar y los NPC puestos
+  en (16–22, 17) no se ven. La v1 usa clones de 517 también para los pisos.
+- `StartBattle` desde un script que no es el de 517 (pisos 141/142, con la máscara de 517) funciona: combates
+  completos, victoria y derrota (abajo). La misma zona no hace falta reentrarla: los pisos alternan 141/142.
+- `BattleInstWorkDelete`: `DllField.cro` 0x956b4 → thunk 0x3738 → literal `0x001e5c48` (leído en 0x6f673c, DllField en
+  0x6f3000) → `code.bin 0x1e5c48(holder)`: `ldr r4, [r0, #0x64]` (el trabajo) y `bl 0x12b8fc` en `0x1e5c54`.
+
+**Hooks** (`frontier/asm/pyramid.s`, solo con `WORK_ROUTE` = 7):
+- `pyramid_save` en `0x1e5c54` (sustituye el `bl 0x12b8fc`, al que salta al final): si la selección es del equipo
+  (`+0x2c` = 0), de 3 (`+0x48`) y cada índice está en 0–5, copia `+0x30..+0x38` a los works 16681–16683 y pone
+  16685 = 3. Medido con gdb: trabajo `0x8822544`, selección 0/1/2, cuenta 3.
+- `pyramid_party`, desde `rental_hook` tras `dome_party`: pone los tres works como selección del trabajo nuevo.
+
+**Flujo** (`frontier/pyramid.py`): vestíbulo 140 con la recepcionista de la derecha; pisos 141 (impares) y 142
+(pares) con tres entrenadores (eventos 2–4) y un encargado (evento 5); la salida de un piso lleva al vestíbulo y la
+del vestíbulo a la puerta (32,57) de la plaza (warp 3 de la isla). Works: racha de pisos 16481, piso actual 16482
+(= «desafío a medias»), récord 16483, vencidos 16686, línea 16687, número 16689.
+
+**Azahar** (build `work/frontier/pyramid/build`, partida inicial `py_start.sav` = copia de `pa_strong.sav`; partidas
+en `work/frontier/lab/`, hechos en `work/frontier/pyramid/save-evidence.jsonl`, capturas `py_v1_*`):
+
+| Prueba | Partida | Hechos |
+| --- | --- | --- |
+| Puerta (32,57) → vestíbulo, inscripción, guardado del desafío | `py_lobby_saved.sav` (`708bc25e…`) | zona 140, ruta 7, 16481–3 = 0/1/0, selección 0/1/2, cuenta 3 |
+| Piso 1: tres combates ganados con los 3 elegidos a Nv. 50, «Ya hemos combatido», encargado → piso 2 | `py_floor2_try.sav` (`be355c35…`, guardado en 142) | zona 142, ruta 7, racha 1, piso 2, récord 1 |
+| Recarga en el piso 2 y combate ganado | `py_plaza_active.sav` (`d4fb6779…`) | vencidos = 2 (bit del entrenador 1) |
+| Piso 2 → vestíbulo → plaza | `py_exit_plaza.sav` (`f2237dcc…`) | zona 209, casilla **(32,58)**, desafío conservado |
+| Fábrica con la Pirámide a medias | `py_v1_fac_refused.png` | «Tienes un desafío a medias en otra instalación» |
+| Pirámide con la Torre a medias (16442 = 1, partida editada `py_fx_tower_busy.sav`) | `py_v1_pyr_refused.png` | mismo rechazo |
+| Piso 7 con sus tres vencidos (partida editada `py_fx_floor7.sav`: piso 7, vencidos 7, racha y récord 6) | `py_f7_lobby.sav` (`d345c5df…`) | «Recibes 5 PB», PB 0 → 5, ruta 0, racha 7, piso 0, récord 7, vuelta al vestíbulo |
+| Desafío nuevo con Silcoon, Shroomish, Cascoon (huecos 4, 5, 3) | `py_c_lobby_saved2.sav` (`8b5a8b76…`) | selección 4/5/3, racha 7 conservada, piso 1; en combate salen esos tres en ese orden |
+| Derrota en el piso 1 | `py_after_loss.sav` (`745c8388…`) | «Has perdido…», vestíbulo, ruta 0, racha 0, piso 0, récord 7, PB 5 |
+
+Equipo real: `party_diff.py py_start.sav py_after_loss.sav` → solo +0xF0 (PS actuales) de los miembros 0 y 1, la
+cura de la Mansión ya vista en §28. Regresión: la Torre (329) con esta build hizo inscripción, guardado y al menos
+cuatro combates seguidos (`py_tw_*`); no se guardó su estado final. Rechazo «No» del vestíbulo y cancelación de la
+pantalla de equipo (vuelta al vestíbulo sin desafío) vistos en pantalla.
+
+**Desviaciones y límites**: pisos con el aspecto de la Mansión (no una cueva) y el PC de la Mansión en cada piso
+(cambiar el equipo entre pisos cambia quién combate: los índices son huecos del equipo; un hueco vacío no se ha
+probado); cada combate cura; objetos equipados permitidos; prohibiciones de la Mansión; los entrenadores vencidos se
+quedan (dicen «Ya hemos combatido»). La racha sigue tras los 7 pisos y vuelve a 0 al perder o abandonar. Sin
+oscuridad, salvajes, objetos, bolsa ni Brandon (v2). Consola no probada; Fábrica, Domo, Tubo, Palacio y Arena no se
+volvieron a jugar con esta build (sus tests sí, en verde).

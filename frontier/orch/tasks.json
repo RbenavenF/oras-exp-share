@@ -56,9 +56,9 @@
       "owner": "codex",
       "design": "reports/diseno/piramide.md",
       "accept": "experimento 0 del diseño hecho y documentado; v1 con puerta (32,57) → vestíbulo → pisos → vuelta, salida a (32,58); exclusión mutua; sin regresiones; probado en Azahar; tests en verde.",
-      "status": "in_progress",
+      "status": "done",
       "notes": "",
-      "evidence": ""
+      "evidence": "Commits 2a0752f (experimento 0 y v1) y el de cierre (tests, informe). reports/frontier.md §30: el trabajo de la instalación no sobrevive a _MapChangeCore (gdb), selección en works por hooks; Azahar: puerta (32,57) -> 140 -> pisos 141/142 con combates ganados, recarga en el piso 2, salida a (32,58) (py_exit_plaza.sav), piso 7 con 5 PB (py_f7_lobby.sav), derrota con limpieza (py_after_loss.sav), exclusión con Fábrica y Torre, Torre sin regresión; pytest tests -> 502 passed."
     }
   ]
 }

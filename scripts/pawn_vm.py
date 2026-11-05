@@ -159,6 +159,8 @@ class VM:
                 pri, alt = s32(q), s32(alt - q * pri)
             elif name == 'AND':
                 pri = s32(pri & alt)
+            elif name == 'OR':
+                pri = s32(pri | alt)
             elif name == 'SHR_P_C_PRI':
                 pri = s32((pri & MASK) >> arg)
             elif name == 'SHL_P_C_PRI':
