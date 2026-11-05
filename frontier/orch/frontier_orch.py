@@ -32,8 +32,12 @@ LIMIT = re.compile(r'usage limit|hit your .{0,20}limit|rate.?limit|quota|limit r
 AUTH = re.compile(r'failed to authenticate|oauth|not logged in|/login|log ?in again|unauthori[sz]ed|\b401\b'
                   r'|authentication (?:failed|required|error)|invalid api key', re.I)
 # The reset time the CLIs print with a usage limit (measured 2026-11-04): Claude «resets 6:30am (Europe/Madrid)»,
-# Codex «try again at 10:04 AM». Local time of this machine.
-RESET = re.compile(r'(?:resets|try again at)\s+(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\b', re.I)
+# Codex «try again at 10:04 AM». Local time of this machine. With a date when the wait is longer than a day (Codex's
+# weekly limit, measured 2026-11-05): «try again at Nov 8th, 2026 1:43 PM».
+MONTHS = ('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
+RESET = re.compile(r'(?:resets|try again at)\s+(?:(?P<mon>' + '|'.join(MONTHS) + r')[a-z]*\.?\s+(?P<day>\d{1,2})'
+                   r'(?:st|nd|rd|th)?,?\s+(?:(?P<year>\d{4}),?\s+)?(?:at\s+)?)?'
+                   r'(?P<h>\d{1,2})(?::(?P<m>\d{2}))?\s*(?P<ap>[ap])\.?m\b', re.I)
 TURN = re.compile(r'(## Turno\n\n)(.*)\n')
 HOLDER = 'frontier-orch'
 
@@ -300,10 +304,15 @@ def reset_time(message, now):
     m = RESET.search(message)
     if not m:
         return None
-    hour, minute = int(m.group(1)) % 12 + (12 if m.group(3).lower() == 'p' else 0), int(m.group(2) or 0)
+    hour, minute = int(m['h']) % 12 + (12 if m['ap'].lower() == 'p' else 0), int(m['m'] or 0)
     base = datetime.datetime.fromtimestamp(now)
     at = base.replace(hour=hour, minute=minute, second=0, microsecond=0)
-    if at <= base:
+    if m['mon']:
+        at = at.replace(year=int(m['year'] or base.year), month=MONTHS.index(m['mon'].lower()[:3]) + 1,
+                        day=int(m['day']))
+        if at <= base and not m['year']:
+            at = at.replace(year=at.year + 1)
+    elif at <= base:
         at += datetime.timedelta(days=1)
     return at.timestamp() + 120
 

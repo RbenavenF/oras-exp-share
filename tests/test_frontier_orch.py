@@ -214,6 +214,9 @@ def test_parse_reads_the_result_of_a_stream_json_run():
     ('You\u2019ve hit your usage limit. ... or try again at 10:04 AM.', (5, 17), (0, 10, 6)),
     ("You've hit your 5-hour limit · resets 1am (Europe/Madrid)", (23, 40), (1, 1, 2)),
     ('resets 11:50pm', (23, 55), (1, 23, 52)),
+    ('try again at Nov 8th, 2026 1:43 PM.', (9, 54), (4, 13, 45)),          # Codex weekly limit, 2026-11-05
+    ('try again at Nov 4th, 2026 4:35 AM.', (0, 19), (0, 4, 37)),
+    ('resets Nov 8, 1pm', (9, 54), (4, 13, 2)),
     ("You've hit your usage limit", (5, 0), None),
 ])
 def test_reset_time_from_the_limit_message(message, now, expect):

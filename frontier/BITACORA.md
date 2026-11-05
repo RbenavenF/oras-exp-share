@@ -1860,3 +1860,20 @@ Evidencia: `frontier/orch/frontier-orch status`; `python -m pytest -q tests/test
 Commits: el de esta entrada.
 Siguiente paso: `frontier/orch/frontier-orch auto` (lo lanza el usuario). Tras la primera ventana de Codex, medir
 llamadas, contexto medio y minutos hasta el límite en `~/.codex/sessions/`.
+
+## 2026-11-05 10:10 — Claude Code (Opus 5.5) — frontier-orch: límite semanal de Codex
+Estado: hecho (orquestador parado; lo relanza el usuario)
+Hecho:
+- El usuario lanzó `auto` a las 09:54. Codex (F6-ARENA-B) falló a los 2 s: «try again at Nov 8th, 2026 1:43 PM»
+  (`work/orch/logs/20261105-095451-codex-F6-ARENA-B.log`), es decir, el límite semanal. `RESET` no leía la fecha y
+  aplicó la espera por defecto de 30 min; la tarea pasó a Claude con aviso de relevo y el usuario lo cortó con Ctrl+C
+  a los pocos segundos (sin commits de Claude; `tasks.json` quedó con F6-ARENA-B `in_progress`, se conserva).
+- `frontier_orch.py`: `RESET`/`reset_time` aceptan «Nov 8th, 2026 1:43 PM» (mes, día con ordinal, año opcional).
+  Tres casos nuevos en `test_reset_time_from_the_limit_message`.
+- `work/orch/state.json`: espera de Codex fijada a 2026-11-08 13:45 con el propio `reset_time`.
+Evidencia: `python -m pytest -q tests/test_frontier_orch.py` → 36 passed. Sin procesos de agente ni de Azahar vivos
+(`pgrep`).
+Sin probar: gpt-6.1-sol sigue sin ninguna ejecución real (Codex sin cuota hasta el día 8).
+Commits: el de esta entrada.
+Siguiente paso: relanzar `frontier/orch/frontier-orch auto`: Claude hereda F6-ARENA-B con el aviso de relevo
+(o el usuario decide devolverle la Arena a Claude / esperar al día 8).

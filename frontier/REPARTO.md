@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-Claude Code, 2026-11-05 10:05 (frontier-orch: hora de vuelta con fecha)
+libre (último: Claude Code, 2026-11-05 10:10)
 
 ## Instalaciones
 

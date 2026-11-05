@@ -66,7 +66,7 @@
       "owner": "codex",
       "design": "reports/diseno/arena.md",
       "accept": "Primero las medidas 1–5 de arena.md §2 (bit de reglas vía CallSakasaBattle/work+0x620, contador de turnos, final de turno y forma de debilitar, bloqueo de cambio, espacio en DllBattle.cro), apuntadas con direcciones y fuente en reports/frontier.md. Si alguna hace inviable el escalón B, status blocked con la pregunta concreta y lo medido. Si es viable: frontier/asm/arena.s y parche de DllBattle.cro con guarded_writes, encima de la v0.5 y compatible con el parche del Palacio B y del Tubo; bit de reglas puesto en StartBattle solo con el work de la Arena ≠ 0. En Azahar: juicio tras 3 turnos con victoria, derrota y empate (los dos debilitados); cambio bloqueado desde el menú, también con un Fantasma; el siguiente Pokémon entra tras el juicio; racha y PB correctos; con el work a 0, un combate salvaje, uno de entrenador, la Mansión y las demás instalaciones sin cambios. Unicorn del juicio (victoria, derrota, empate) y del contador reiniciado al entrar; tests en verde. Mente, Técnica, textos del árbitro y Greta quedan fuera.",
-      "status": "pending",
+      "status": "in_progress",
       "notes": "",
       "evidence": ""
     },
