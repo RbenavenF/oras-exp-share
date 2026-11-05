@@ -59,6 +59,26 @@
       "status": "done",
       "notes": "",
       "evidence": "Commits 2a0752f (experimento 0 y v1) y el de cierre (tests, informe). reports/frontier.md §30: el trabajo de la instalación no sobrevive a _MapChangeCore (gdb), selección en works por hooks; Azahar: puerta (32,57) -> 140 -> pisos 141/142 con combates ganados, recarga en el piso 2, salida a (32,58) (py_exit_plaza.sav), piso 7 con 5 PB (py_f7_lobby.sav), derrota con limpieza (py_after_loss.sav), exclusión con Fábrica y Torre, Torre sin regresión; pytest tests -> 502 passed."
+    },
+    {
+      "id": "F6-PALACIO-B",
+      "title": "Palacio Batalla etapa B: la IA del juego decide por tus Pokémon (todavía sin naturaleza)",
+      "owner": "claude",
+      "design": "reports/diseno/palacio.md",
+      "accept": "Primero las medidas M1–M4 de palacio.md §4 con gdb en Azahar, apuntadas con direcciones y fuente en reports/frontier.md (sección nueva). Si M3 muestra que el cliente 0 no puede pasar a IA sin colgar o desincronizar, NO sigas: status blocked y en notes la pregunta concreta al usuario con las alternativas 2 (ficha recortada) y 3 (truco de Multi) de palacio.md §1 y lo medido. Si es viable: gancho en el camino de la Mansión (0x1e30b8) condicionado al work del Palacio y DllBattle.cro parcheado encima del de la v0.5 (hashes y CRR como scripts/build_patch.py); en Azahar, un combate del Palacio sin entrada del jugador, con cambio automático al debilitarse y resultado/racha/PB correctos; con el Palacio inactivo, la Fábrica, la Torre y la Mansión con control manual, un combate de la historia sin afectar; «Guardar vídeo» oculto o anotado como riesgo; exclusión mutua y sin regresiones; tests (Unicorn del gancho) en verde. La etapa C (naturaleza) es otra tarea.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F6-ARENA-B",
+      "title": "Arena Batalla etapa B: límite de 3 turnos, juicio por Cuerpo y cambio prohibido",
+      "owner": "claude",
+      "design": "reports/diseno/arena.md",
+      "accept": "Primero las medidas 1–5 de arena.md §2 (bit de reglas vía CallSakasaBattle/work+0x620, contador de turnos, final de turno y forma de debilitar, bloqueo de cambio, espacio en DllBattle.cro), apuntadas con direcciones y fuente en reports/frontier.md. Si alguna hace inviable el escalón B, status blocked con la pregunta concreta y lo medido. Si es viable: frontier/asm/arena.s y parche de DllBattle.cro con guarded_writes, encima de la v0.5 y compatible con el parche del Palacio B y del Tubo; bit de reglas puesto en StartBattle solo con el work de la Arena ≠ 0. En Azahar: juicio tras 3 turnos con victoria, derrota y empate (los dos debilitados); cambio bloqueado desde el menú, también con un Fantasma; el siguiente Pokémon entra tras el juicio; racha y PB correctos; con el work a 0, un combate salvaje, uno de entrenador, la Mansión y las demás instalaciones sin cambios. Unicorn del juicio (victoria, derrota, empate) y del contador reiniciado al entrar; tests en verde. Mente, Técnica, textos del árbitro y Greta quedan fuera.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
     }
   ]
 }

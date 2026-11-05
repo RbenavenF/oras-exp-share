@@ -1837,3 +1837,16 @@ Commits: el de esta entrada.
 Siguiente paso: nuevas tareas en `tasks.json` y `frontier/orch/frontier-orch auto`. Al acabar la primera ventana de
 Codex, medir en `~/.codex/sessions/…` llamadas, contexto medio y minutos hasta el límite, y comparar con la sesión del
 Domo (124 llamadas, ~142k por llamada, ~15 min). Revisar sus commits con más cuidado que los de Astra.
+
+## 2026-11-05 09:40 — Claude Code (Opus 5.5) — frontier-orch: tareas de la etapa B
+Estado: hecho (sin ejecutar el orquestador)
+Hecho: `frontier/orch/tasks.json` gana F6-PALACIO-B y F6-ARENA-B (`pending`, dueño Claude como en REPARTO), a
+petición del usuario. Criterios sacados de `reports/diseno/palacio.md` §1, §4–§6 y `arena.md` §1–§2, §5–§6: medir
+antes de escribir y, si la medida clave lo hace inviable (M3 del Palacio; cualquiera de 1–5 de la Arena), `blocked`
+con la pregunta y lo medido en vez de improvisar. Los dos parchean `DllBattle.cro` encima de la v0.5 y del Tubo.
+Evidencia: `python -m json.tool frontier/orch/tasks.json` válido; `frontier/orch/frontier-orch status` (abajo, en el commit).
+Sin probar: ninguna de las dos tareas.
+Commits: el de esta entrada.
+Decisiones: Palacio antes que Arena (orden de `tasks.json`). Fuera: etapa C del Palacio; Mente/Técnica/Greta de la
+Arena; Pirámide v2.
+Siguiente paso: cerrar la terminal antigua y lanzar `frontier/orch/frontier-orch auto` cuando el usuario lo diga.
