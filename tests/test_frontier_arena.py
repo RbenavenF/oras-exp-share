@@ -339,7 +339,9 @@ def au16(uc, address):
 
 
 @pytest.mark.parametrize('route, active, style, enabled', [(4, 1, 0, True), (4, 0, 0, False),
-    (0, 1, 0, False), (3, 0, 0, False), (6, 0, 0, False), (4, 1, 1, False)])
+    (0, 1, 0, False), (3, 0, 0, False), (6, 0, 0, False), (4, 1, 1, False),
+    # every other facility route, even with a stale Arena active work (Pyramid 7 was not played in Azahar)
+    (1, 1, 0, False), (2, 1, 0, False), (3, 1, 0, False), (5, 1, 0, False), (6, 1, 0, False), (7, 1, 0, False)])
 def test_arena_start_marks_only_its_active_singles_setup(arena_engine_code, route, active, style, enabled):
     uc, put = amachine(arena_engine_code)
     put(AWORK + 0x6C8, ae.RULE | 0x12345)

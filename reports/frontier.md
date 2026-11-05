@@ -1850,3 +1850,30 @@ vencidos: «Para seguir avanzando, tengo que atrapar más Pokémon»); Fábrica,
 (solo la suite: la marca exige ruta 4); consola. Observación: tras un combate de la Arena los works 16693/16694
 quedan con los últimos PS (184/143); solo se leen con la marca y se reescriben al entrar.
 Suite `python -m pytest -q tests` → **560 passed** (`b2-tests.log`). Laboratorio parado y `use_gdbstub` restaurado a false.
+
+**Cierre de regresiones con el work de la Arena a 0** (2026-11-05, Claude; misma b-build, `b-probe-normal.gdb`,
+copias de partidas en `work/frontier/arena/b2-*`; herramientas `work/frontier/arena/tools/{npcs,try_npc,fac,regress}.*`):
+
+- **Entrenador del mundo**: los cuatro entrenadores de la Ruta 102 (zona 24, NPC uid 5–8, scripts 3010/3008/3007/3301,
+  posiciones leídas del fichero de entidades con `tools/npcs.py`) estaban vencidos en la partida real. El flag de vencido
+  es **1740 + id del entrenador** (`shared 52`/`81`: `FlagSet(arg+1740)` antes de `_TrainerEyeRegist`). Control:
+  1747, 1748, 1750 y 2041 a 1 en la partida y 1741–1746/1749/1751… a 0. Copia `b2-trainer8.sav` (9fd9d995…) = partida
+  real con **solo el flag 1748 a 0** y el jugador en (160,146) (13 bytes cambiados, incluido el checksum). El Cazabichos
+  reta («¡Te desafío con un Pokémon de tipo Bicho!»), combate con Wurmple Nv. 4: `setup+0xa8 = 0x10000` (bit 16 retail,
+  bit 31 a 0), cambio Torchic→Beldum permitido (`b2-trainer-switched.png` 4b69f569…), edades **[3,3]…[5,5]** con
+  ambos vivos y sin juicio. Log `b2-gdb-trainer.log` (9111f330…).
+- **Palacio** (`pa_paused2.sav`, ruta 3): `flag=0`, cambio permitido, edades hasta [5,5] sin juicio (`b2-gdb-palace.log`).
+- **Domo** (`dc_paused3.sav`, ruta 5): inscripción y combate; `flag=0`, cambio permitido; el combate se ganó por KO
+  natural (`RESULT raw=1`) antes de llegar a 3 turnos con los dos vivos (`b2-gdb-dome.log`).
+- **Fábrica** (`f6td_factory_paused1.sav`, sala 213, ruta 1): `flag=0` y cambio permitido; varios KO naturales. La
+  pantalla fue la de selección del equipo propio: **no** se verificó que fuera el flujo de alquiler (`b2-gdb-factory.log`).
+- **Tubo** (`pk_cx_lastroom_fixture.sav`, ruta 6): el gancho del Tubo sigue en marcha con el DllBattle conjunto (el primero
+  entra con 100/156 PARALIZADO, el segundo QUEMADO, como §28); `flag=0`, cambio permitido (`b2-pike-switched.png`
+  faafbf3d…, `b2-gdb-pike.log`).
+- **Pirámide**: no se llegó a combatir (sesión parada en la plataforma del piso). Cubierta en la suite:
+  `test_arena_start_marks_only_its_active_singles_setup` ahora incluye las rutas 1, 2, 3, 5, 6 y **7** con el work de la
+  Arena a 1 (marca nunca puesta). Comprobado al romperlo: con `cmp ip, ip` en lugar de `cmp ip, #ARENA_ROUTE` fallan 7
+  casos; restaurado, pasan.
+
+Suite `python -m pytest -q tests` → **566 passed** (`work/frontier/arena/b3-tests.log`). Laboratorio parado, sin procesos,
+`use_gdbstub=false`; partida original intacta (a30034d1…). Consola no probada.

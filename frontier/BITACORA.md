@@ -1998,3 +1998,22 @@ Siguiente paso: igual que la entrada anterior. Más rápido que andar: localizar
 102/104 con los datos de zona (`frontier/zone_check.py`/scripts de la zona 24) y su flag de vencido, y borrarlo en una
 copia de la partida; o colocar al jugador junto a él con `faraway/save_event.py` (posición). Comprobar con
 `b-probe-normal.gdb`: flag 0, cambio permitido, edades ≥3 sin juicio. Después, done.
+
+## 2026-11-05 13:40 — Claude Code (Opus 5.5) — F6-ARENA-B: entrenador del mundo y demás instalaciones; tarea cerrada
+Estado: hecho
+Hecho:
+- Entrenador del mundo con el work a 0: posiciones de los NPC de la zona 24 leídas del fichero de entidades; los cuatro
+  entrenadores estaban vencidos. Flag de vencido = 1740 + id (scripts compartidos 52/81), con control positivo/negativo
+  en la partida. Copia con solo 1748 = 0: el Cazabichos reta; bit 31 a 0 (word 0x10000), cambio permitido, edades ≥3 sin juicio.
+- Palacio, Domo, Fábrica (sala 213) y Tubo con esta build: marca 0 y cambio permitido; el gancho de PS/estado del Tubo
+  sigue funcionando con el DllBattle conjunto. Pirámide no jugada (no llegué a combate en el piso).
+- Test de la marca ampliado a todas las rutas 1–7 con el work de la Arena a 1; comprobado rompiendo la comparación
+  de ruta (7 fallos) y restaurándola.
+Evidencia: reports/frontier.md §31 «Cierre de regresiones»; `work/frontier/arena/b2-gdb-{trainer,palace,dome,factory,pike}.log`,
+`b2-trainer8.sav` (9fd9d995…); `python -m pytest -q tests` → 566 passed (`b3-tests.log`).
+Laboratorio parado, `use_gdbstub=false`, `inputs/` y partida original intactos.
+Commits: el de esta entrada.
+Decisiones: F6-ARENA-B pasa a done. Limitaciones aceptadas y escritas: consola no probada; Pirámide solo por la suite;
+la Fábrica se vio con equipo propio (flujo de alquiler no verificado en esta build). Mente, Técnica, árbitro y Greta fuera.
+Siguiente paso: la siguiente tarea de `frontier/orch/tasks.json`. Si se quiere más garantía: un combate de la Pirámide y
+uno de alquiler de la Fábrica con esta build y `b-probe-normal.gdb`.
