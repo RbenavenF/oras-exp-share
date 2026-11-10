@@ -2058,3 +2058,19 @@ Siguiente paso: esperar respuesta a notes. Si se autoriza la vía híbrida, revi
 regenerar sondas desde los símbolos enlazados y ejecutar la aceptación Azahar completa (sin entrada, KO/sustituto,
 IsWin/racha/PB, Fábrica/Torre/Mansión/historia manuales, exclusión y vídeo). Si se elige 2 o 3, actualizar primero
 el diseño y la aceptación. No restaurar automáticamente el código B ni marcar done por las capturas heredadas.
+
+## 2026-11-10 10:35 — Claude Code (Opus 5.5) — frontier-orch: Sol medido y compactación de Codex
+Estado: hecho (orquestador parado desde 2026-11-05 15:04, «needs the user» por F6-PALACIO-B bloqueada)
+Hecho:
+- Medida de gpt-6.1-sol en F6-ARENA-B (`~/.codex/sessions/2026/11/05/rollout-…10-00-37-01a1aaf0….jsonl`, `orch.log`):
+  77 min hasta el límite (10:00→11:17), 211 llamadas, contexto medio ~250k (máx. 424k), 52 M de entrada (99 % en
+  caché), 113k de salida, tres commits útiles (97ee614, 255f5de, bb09fa8). Astra en el Domo: ~15 min, 124 llamadas,
+  ~142k de media. En F6-PALACIO-B (14:57→15:04): 30 llamadas, media ~78k, máx. 104k.
+- `config.json`: Codex con `-c model_auto_compact_token_limit=150000` en `new` y `resume` (la clave existe en el
+  binario de codex-cli 0.166.0). Desde el 2026-11-05 también está en `~/.codex/config.toml` del usuario (copia
+  `config.toml.bak-20261105`), puesta allí porque el orquestador tenía el turno.
+Evidencia: `python -m pytest -q tests/test_frontier_orch.py` en verde.
+Sin probar: la compactación no se ha disparado aún (la ejecución del Palacio no pasó de 104k).
+Commits: el de esta entrada.
+Siguiente paso: decisión del usuario sobre F6-PALACIO-B (notas de `tasks.json`, `reports/frontier.md` §32); después
+relanzar `frontier/orch/frontier-orch auto`.
