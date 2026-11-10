@@ -2066,3 +2066,35 @@ espera; llamadas en 0x21d0, 0x2250 y 0x25dc) en `PROC; ZERO_PRI; RETN` solo en e
 2», selección, combates 3 y 4 ganados con la IA (sin pulsaciones salvo los textos), Pausar → `c3-paused4.sav`
 (aebef83e…): **4/1/4, PB 0**, Mansión a cero, bloque de equipo idéntico al de entrada (12355b31…).
 Sin pantallas negras ni cuelgues en 12 combates. Suite: `python -m pytest -q tests` → 696 passed.
+
+### Regresiones con control manual (`c-build3`, 2026-11-10)
+
+Mismo laboratorio y sonda; partidas copiadas de las regresiones de la Arena B (§31). Registros en
+`work/frontier/palace/c/gdb-{arena,factory,maison,world}.log`; el de la Torre no se guardó (se sobrescribió al
+reiniciar), su resultado consta de la salida de consola de esta sesión.
+- **Torre** (`b2-tower-in.sav`, 12/1): `START a8=0 palace=0`; menú de movimientos manual (`c/r-tower-menu.png`);
+  cliente 0 con `cmd=3/5 col=0` (5 y 2); victoria `RESULT raw=1`.
+- **Arena** (`lab_arena.py` sobre `b-paused13.sav` → `c/r-arena-in.sav`): `START a8=80000000 palace=0 arena=1`;
+  Gengar cayó ante Magcargo y el reemplazo fue **manual** (lista de equipo); con la sonda `win` de
+  `lab_arena_probe.py` (rival con Salpicadura) edades [3,6] → `arena_judge` (args 156/156/1/115) → victoria por juicio
+  (`ARENA RESULT raw=1`). 12 decisiones del cliente 0 por la columna 0, ninguna por la IA.
+- **Fábrica** (`b2-fac-factory-in.sav`, sala 213, desafío a medias): `START a8=0 palace=0`; combate con **alquileres**
+  (Latias); 4 decisiones manuales y reemplazo manual tras el KO (`c/r-fac-manual-switch.png`). No se terminó.
+- **Mansión** (`b2-maison-in.sav`, 517): `START a8=0 palace=0`; 3 decisiones manuales, victoria.
+- **Entrenador del mundo** (`b2-trainer8.sav`, Ruta 102, Cazabichos): ese camino no pasa por 0x1e33dc (ni la Arena ni
+  el Palacio ponen marca); `setup+0xa8 = 0x10000` (bit 30 a 0), sin objeto IA para el cliente 0 (solo `AIFLAGS
+  client=1`), `cmd=3 col=0`, menú manual (`c/r-world-menu.png`).
+- Sin cuelgues ni pantallas negras. Exclusión mutua: sin cambios de script respecto a la etapa A (probada en §27) y
+  cubierta por la suite; no se repitió en Azahar. Domo, Tubo y Pirámide: no jugados (sin cambios en sus caminos; la
+  marca solo se pone con ruta 3).
+- Laboratorio parado (sin AppRun/Xvfb/GDB, sin session.json), `use_gdbstub=false` restaurado.
+
+### Pendiente: textos del entrenador
+
+Criterio no cumplido: «sin ninguna pulsación durante los combates». Decisiones y cambios no piden nada, pero la
+presentación («¡… te desafía!») y la frase de derrota del entrenador esperan A, como en retail. Pistas (estáticas):
+en la vista, tras esperar, el código llama a la importación CRO 0x1018 sobre `[[vista+0x1a0]]+0xcc` (¿impresión
+terminada?) y luego `0x5ca94(vista+0x1a0)`, pone `gestor(vista+0x444)+0x14` y avanza el estado (0x43c5c, 0x48a50,
+0x5e3cc). Las impresiones de la vista pasan `r2 = 1` a 0x5c314/0x5c730 (¿espera de tecla?). Sin probar.
+Opciones: (a) aceptar esas dos pulsaciones de texto (comportamiento retail); (b) investigar el modo automático de
+la ventana de texto y activarlo solo con el bit 30 (riesgo: toca la interfaz de todos los combates por el puente).

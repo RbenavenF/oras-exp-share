@@ -18,3 +18,11 @@ Parar siempre el laboratorio en el mismo namespace al acabar. No escribir sobre 
 El código B sin commit se conserva como propuesta en `reports/diseno/palacio-b-experimental.patch`, sobre
 18a464f. Aplicado tal cual el 2026-11-10 tras la decisión del usuario (vía híbrida; `reports/frontier.md` §33).
 - `audit_a8.py` / `audit_a8_all.py`: auditoría estática de los lectores de `setup+0xa8` para el bit 30 (§33).
+
+Laboratorio de la aceptación B (2026-11-10, `reports/frontier.md` §33), copiados de `work/frontier/palace/`
+(rutas internas a `work/frontier/palace/…`; copiarlos allí para usarlos):
+- `lab-c-lab-start3.sh`: instala `c-build3` y una copia de la partida (`FIXTURE=`), arranca con stub GDB.
+- `lab-c-probe2.gdb`: sonda pasiva (marca, flags IA, despacho con el comando leído de la fila, entradas, IsWin);
+  `pa['low']=N` pone a 1 PS las N siguientes entradas propias (fixture de RAM, solo laboratorio).
+- `lab-drive.sh`: pulsa A solo fuera del combate o en los textos del entrenador (comandos 1/12) y registra el motivo.
+- `lab-manual_battle.sh`, `lab-until_battle.sh`, `lab-enter.sh`, `lab-regress-start.sh`, `lab-k.sh`: control manual.

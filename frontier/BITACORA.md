@@ -2130,3 +2130,21 @@ c3-paused4.sav; `python -m pytest -q tests` → 696 passed.
 Commits: el de esta entrada.
 Siguiente paso: regresiones con control manual (Fábrica, Torre, Arena, Mansión, entrenador del mundo) con c-build3;
 después decidir los textos del entrenador (seguir el gestor `vista+0x444`, vtable CRO 0xe5168, o preguntar).
+
+## 2026-11-10 11:55 — Claude Code (Opus 5.5) — F6-PALACIO-B: regresiones manuales; bloqueada por una pregunta (textos)
+Estado: bloqueado (decisión del usuario)
+Hecho:
+- Regresiones con `c-build3` y control manual: Torre, Arena (juicio y victoria por juicio con la sonda `win`),
+  Fábrica (alquileres, reemplazo manual), Mansión y entrenador de la Ruta 102: bit 30 a 0 y decisiones del cliente 0
+  por la columna 0 en todas; sin cuelgues (reports/frontier.md §33).
+- Sondas y conductores de laboratorio copiados a `frontier/probes/palace/lab-*`.
+- Laboratorio parado, `use_gdbstub=false` restaurado; `inputs/` y la partida original sin tocar.
+Evidencia: §33; `work/frontier/palace/c/gdb-{arena,factory,maison,world}.log`, capturas `c/r-*.png`;
+`python -m pytest -q tests` → 696 passed.
+Sin probar: Domo, Tubo y Pirámide con esta build; exclusión mutua en Azahar (solo suite); consola.
+Commits: el de esta entrada.
+Decisiones: `tasks.json` F6-PALACIO-B → `blocked` con la pregunta: los textos del entrenador (presentación y derrota)
+siguen esperando A como en retail; ¿se acepta o se investiga su avance automático solo en el Palacio?
+Siguiente paso: según la respuesta: (a) marcar done con la evidencia de §33; (b) seguir las pistas de §33 «Pendiente»
+(importación CRO 0x1018 sobre `[[vista+0x1a0]]+0xcc`, argumento `r2=1` de 0x5c314/0x5c730), gatear con el bit 30,
+y repetir en Azahar una ronda con `lab-drive.sh` esperando 0 pulsaciones en combate.
