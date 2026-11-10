@@ -116,7 +116,7 @@
       "owner": "codex",
       "design": "reports/diseno/domo.md",
       "accept": "La zona 456 deja de verse igual que la sala de la Fábrica (domo.md §3: «decoración, más adelante»): mapa de un donante retail con aspecto de estadio o sala amplia, elegido con datos (work/frontier/island/zones.tsv, como hizo la Pirámide v2A con las Ruinas del Desierto), conservando el script y flujo del Domo (ZO ≤ 17.248), su puerta y su salida a (6,57), sin superar LOAD_BUDGET y con la máscara de nativas de 517. Sin código nativo ni cambios en code.bin, patch.py o los CRO. En Azahar: entrar por la puerta, recepcionista que habla, inscripción, un combate del torneo, pausa, guardar y cargar dentro, salida a la plaza; regresión de la Fábrica y la Torre (entran y salen). Capturas antes y después. Si ningún donante cabe, status blocked con lo medido. Tests en verde.",
-      "status": "pending",
+      "status": "in_progress",
       "notes": "Primera tanda del modo paralelo: corre a la vez que F6-PALACIO-C (Claude). No toques motor, code.bin, patch.py ni CRO.",
       "evidence": ""
     }
