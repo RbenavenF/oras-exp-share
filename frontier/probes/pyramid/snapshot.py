@@ -1,4 +1,4 @@
-"""Lab only: copy the emulator's save to work/frontier/lab/py_<name>.sav (unless it exists) and log its facts."""
+"""Lab only: copy the emulator's save to a new work/frontier/lab/py_<name>.sav and log its facts."""
 from pathlib import Path
 import sys, json, struct, hashlib, shutil
 ROOT = Path(__file__).resolve().parents[3]
@@ -7,9 +7,10 @@ import save_event as se
 import save_fixture as sf
 name = sys.argv[1]
 out = ROOT / 'work/frontier/lab' / f'py_{name}.sav'
-if not out.exists():
-    src = next((ROOT / 'work/azahar-lab/data/azahar-emu/sdmc').glob('**/00000001/main'))
-    shutil.copyfile(src, out)
+if out.exists():
+    raise FileExistsError(out)
+src = next((ROOT / 'work/azahar-lab/data/azahar-emu/sdmc').glob('**/00000001/main'))
+shutil.copyfile(src, out)
 d = out.read_bytes(); sf.inspect(d)
 w = lambda n: se.work(d, n)
 r = dict(file=str(out.relative_to(ROOT)), sha256=hashlib.sha256(d).hexdigest(), place=se.place(d), route=w(16438),

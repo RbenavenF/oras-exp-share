@@ -2142,3 +2142,31 @@ PS persistentes, objetos y salvajes siguen fuera de esta tarea.
 Para actualizar una partida v1 guardada físicamente en un piso de la Mansión, salir primero al vestíbulo con v1:
 las coordenadas de ese piso guardado no corresponden a la nueva cueva. La reanudación desde el vestíbulo conserva
 piso y vencidos y usa las coordenadas nuevas. Recarga de guardados nuevos en cueva: llegada y bit de vencido comprobados como arriba.
+
+
+### Recorrido de siete pisos, recompensa y derrota (Azahar)
+
+Build ddd8428, sondas de 61d0910, un solo laboratorio. `gdb-before-reload.log` contiene la primera victoria;
+`gdb-round.log` las otras veinte. `python frontier/probes/pyramid/audit_round.py` verifica **21 victorias**, tres
+por piso 1–7, máscaras previas 0/1/3 y siete transiciones. `climb.log`, capturas `after-floor1.png`…`after-floor7.png`:
+racha/piso/récord tras cada escalera 1/2/1, 2/3/2, 3/4/3, 4/5/4, 5/6/5, 6/7/6, **7/0/7**, ruta final 0.
+El conductor terminó con error de shell `/null` tras imprimir el último estado (se editó su archivo mientras seguía
+leyéndolo); no fue error del juego. Se reanudó GDB. Una A sobrante abrió otra conversación al llegar al vestíbulo:
+el intento `v2-round7` no guardó y su snapshot es inválido como evidencia final; conserva el guardado anterior.
+`climb.sh` usa ahora tres A ante el encargado y `save.sh` rechaza el archivo sin cambios; no editar conductores vivos.
+
+Medida adicional de la recompensa, **fixture de frontera editada**, no otro recorrido jugado:
+`save_event.py floor1-beaten0.sav --sha256 9c58778b760f383a5c8b8bfe781f96725655d65c5b1ad7518ea27b613f733c7c
+--output work/frontier/pyramid/v2/top-boundary.sav --work 16481=6 --work 16482=7 --work 16483=6 --work 16686=7`.
+Conserva la posición válida de cueva, selección y PB 0. Encargado: `top-bp.png` «Recibes 5 PB»;
+guardado por interfaz `py_v2-top-paid.sav`, SHA **97c0571308269dfff528f77ccab5922408f2c563090ed187ddabd23c8ec3cf3e**:
+zona 140, 7/0/7, ruta/vencidos 0, **PB 0→5**, equipo real SHA `12355b3132ad974cc97ae6c236f396d571b7b13ecee20f6fc64a647dc17a2f08`
+idéntico al inicial. `top-boundary.json`, `top-drive.log`, `top-save.log`, `v2/save-evidence.jsonl`.
+
+Derrota: partida v1 `py_c_lobby_saved2.sav` (8b5a8b76…, equipo 4/5/3, 7/1/7, PB 5) reanudada en la cueva nueva.
+Modo `loss` de la sonda: 1 PS/Salpicadura a nuestros tres elegidos, sustituciones manuales; rival sin cambiar.
+`gdb-loss.log`: entradas 0/1/2, IsWin **raw=0**, después `LOSS CLEAN`: ruta, racha, piso y vencidos 0; récord 7.
+`lost.png`: «Has perdido…». Guardado por interfaz `py_v2-loss.sav`, SHA
+**3a2410afe9af564d9e8b3f2dfd106fe60d57cca00997afe5c67ac4bb0e83abaa**, zona 140, **0/0/7**, PB **5→5**.
+Fuentes `loss-drive*.log`, `loss-save.log`. Tests de hito: 60 passed (`tests-m3.log`), audit_round, compileall y bash -n.
+Exclusión y regresión aún pendientes en esta entrada.

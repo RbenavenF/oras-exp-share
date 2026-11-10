@@ -2190,3 +2190,19 @@ Commits: ddd8428 y el de esta entrada.
 Decisiones: combates asistidos con HP 1/Salpicadura del rival en RAM; no se alteran resultados, works ni PB.
 Siguiente paso: terminar recorrido de siete pisos (conductor vivo en shell persistente), guardar PB, probar derrota,
 exclusión y Torre con la misma build; detener laboratorio. Tarea sigue in_progress, no hay decisión pendiente.
+
+## 2026-11-10 18:47 — Codex — F6-PIRAMIDE-V2A: siete pisos, PB y derrota
+Estado: en curso
+Hecho: 21 victorias reales asistidas, tres por piso, siete cambios por el encargado, final 7/0/7 ruta 0.
+Recompensa adicional con fixture de frontera explícita: PB 0→5 y 7/0/7 guardados; equipo real idéntico.
+Derrota real asistida con equipo 4/5/3: IsWin 0, limpieza 0/0/7 ruta/vencidos 0, PB 5→5 guardados.
+Corregido conductor (A sobrante al llegar al vestíbulo), añadido rechazo del guardado sin cambios y auditoría de logs.
+Evidencia: reports/frontier.md §34; v2/gdb-round.log + gdb-before-reload.log, climb.log, round-audit.txt;
+partidas py_v2-top-paid.sav SHA 97c0571308269dfff528f77ccab5922408f2c563090ed187ddabd23c8ec3cf3e y
+py_v2-loss.sav SHA 3a2410afe9af564d9e8b3f2dfd106fe60d57cca00997afe5c67ac4bb0e83abaa; top-bp.png, lost.png.
+Tests: 60 passed test_frontier_pyramid.py, auditoría 21 victorias/transiciones, compileall y bash -n; suite previa 697.
+Commits: ddd8428, 61d0910 y el de esta entrada.
+Decisiones: intento v2-round7 inválido (no guardó por diálogo abierto); su estado final medido se conserva en logs,
+recompensa medida además con fixture, sin presentar esa fixture como recorrido. No cambios nativos.
+Siguiente paso: Pirámide rechaza Torre activa (boot en curso), Fábrica rechaza Pirámide activa y regresión Torre.
+Después, detener laboratorio y cerrar tasks.json si todo pasa. Tarea in_progress.

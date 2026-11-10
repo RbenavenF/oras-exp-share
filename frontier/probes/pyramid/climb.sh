@@ -19,7 +19,7 @@ for floor in $(seq "${FIRST:-1}" 7); do
   $walk 16 11; $keys t a
   bash frontier/probes/pyramid/fight.sh
   # Avoid the trainer at (12,10) while walking to the attendant at (12,6).
-  $walk 14 11; $walk 14 7; $walk 12 7; $keys t a a a a
+  $walk 14 11; $walk 14 7; $walk 12 7; $keys t a a a
   sleep 3
   python scripts/azahar_lab.py screenshot >/dev/null
   cp work/azahar-lab/screen.png "$out/after-floor$floor.png"
