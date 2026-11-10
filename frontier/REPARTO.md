@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-libre (último: Claude Code, 2026-11-10 10:35)
+Claude Code, 2026-11-10 10:45 (F6-PALACIO-B: vía híbrida)
 
 ## Instalaciones
 
