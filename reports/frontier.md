@@ -2371,3 +2371,58 @@ Corregido `STATUS_IMMUNE_TYPES` = tóxico (3, 8), congelación (14), parálisis 
 las habilidades conservan sus números de Gen 3 (Inmunidad 17, Escudo Magma 40, Flexibilidad 7,
 Insomnio 15, Espíritu Vital 72, Velo Agua 41). Tests con las expectativas corregidas y un caso
 nuevo que comprueba que 10/13/15 ya no protegen. Suite: `tests-wild.log`.
+
+### Hito 6: aceptación en Azahar (build-wild, 2026-11-10, Claude)
+
+Build `work/frontier/pike/v2/build-wild` (code.ips SHA256 `f64e527c…`), un solo laboratorio, tres
+arranques sucesivos con `frontier/probes/pike/boot.sh` (el anterior se detiene antes). Sonda
+`frontier/probes/pike/lab_probe.py`; logs `gdb-wild-session1.log`, `gdb-palace.log`, `gdb-arena.log`.
+Salas forzadas fijando los segundos que lee `pike_room`: `frontier/probes/pike/seconds.py` ejecuta el
+script 5 construido en la VM con los works del juego y devuelve los segundos que dan la sala pedida
+por la puerta izquierda; la sonda los pone al volver la función de tiempo de code.bin 0x12fa94 a
+DllField+0x4fad8 (un breakpoint dentro de DllField, 0x742aec, no saltó nunca). Cada predicción del
+log coincide con lo mostrado. Combates asistidos solo en RAM (rival PS 1/Salpicadura, o rival 300 PS
+para perder); resultados, works de racha y PB no se escriben salvo donde se indica.
+
+Partida de entrada: copia de `v2/pp-paused.sav` (Tubo pausado, sala 15). Selección Torchic/Beldum/
+Poochyena (motes de Metagross/Blaziken/Garchomp; la sonda lee tipos 8/13 y habilidad 29 del primero).
+- **PP del guardado**: el primer combate entra con [3,10,15,30], los PP guardados antes de la pausa.
+- **Inmunidad**: racha 17 (sala 4), estado previsto; «¡Un Pokémon salvaje ha usado un ataque
+  extraño…!» y «¡Su tipo o habilidad lo protege del estado!» (`immune-1.png`, `immune-2.png`);
+  consulta del hueco virtual 256: tipos 8/13, habilidad 29 → tóxico rechazado por Acero; works de
+  estado siguen a 0.
+- **Salvaje ganada**: racha 18, «¡Un Pokémon salvaje se lanza al ataque!» (`wild-room-msg.png`);
+  `PIKE COUNT route=6 wild=217`, setup competitor 2 con **1** rival; Seviper **Nv. 46**, una sola
+  Ball en su marcador (`wild-battle-start.png`). **Bolsa**: el cursor llega a BOLSA y A no abre nada
+  (`wild-bag-refused*.png`), al contrario que la sonda de competitor 0 del hito 4. Victoria raw=1.
+- **PP entre salas**: tras la salvaje, Metagross guarda [9,10,15,30]; el combate de la sala siguiente
+  (individual, `wild=0`, 3 rivales: el work se limpió) entra con **[9,10,15,30]**.
+- **Sala 14 y PB**: nuevo desafío (ver incidencia), salas NPC forzadas hasta la racha 13: «¡Última sala
+  de la ronda!» (`room14-msg.png`), victoria y «Ruben ha obtenido 1 PB» (`room14-bp.png`), racha 14.
+- **Salvajes**: Dusclops (219) **Nv. 45** y Seviper (217) ganadas (14→15→16; la sonda de derrota no
+  alcanzó la segunda copia del rival). **Derrota**: fixture en RAM de los works del equipo (PS 1,
+  PP 0), Seviper con 300 PS en sus dos copias (0x82063d0 y 0x8206ce0, a 0x910). En pantalla
+  1/156 y 1/184 y PP [0,0,0,0] al entrar (los works mandan); Forcejeo, IsWin **raw=0** con racha 16.
+  Limpieza: ruta 0, racha 0, activo 0, récord 20 (`wild-lost.png`).
+- **Equipo al salir**: guardado del juego tras la derrota `v2/wild-after-loss.sav` (SHA256
+  `c9093b9f…`) frente a `pp-paused.sav`: especie, EXP, PS, PP, movimientos y objetos idénticos en los
+  seis; sigue habiendo 6 Pokémon. Cambian solo campos de recuerdos (0xA4–0xA8, 0xCC–0xD0; retail,
+  §10) y el **bit 5 del byte 0x30** (cintas) de los tres participantes: con el récord del Tubo en 20
+  la Mansión concede su cinta de racha (hipótesis: Combatiente Experto; el Tubo cuenta salas).
+- **Exclusión**: con el work activo del Palacio puesto a 1 en RAM, la recepcionista del Tubo dice
+  «Tienes un desafío a medias en otra instalación» (`pike-refuses-palace.png`); en el Palacio
+  (`work/frontier/palace/c3-resume-in.sav`) con el del Tubo a 1, igual (`palace-refuses-pike.png`).
+  Restaurados a 0 antes de seguir.
+- **Regresión Palacio**: misma partida, reanudación y victoria asistida: racha 2→3, récord 3,
+  `setup+0xa8 = 0x40000000`, `wild=0`, 3 rivales. **Arena** (`work/frontier/lab/ar_paused9.sav`):
+  victoria asistida, racha 9→10, `setup+0xa8 = 0x80000000`. Ambos con el inicio compartido de 7386d80.
+  No se ejercitó el juicio de 3 turnos de la Arena ni se observó la IA del Palacio (KO en un turno).
+
+**Incidencia sin aislar**: tras ganar en la racha 19, unas pulsaciones de A de más llevaron al
+vestíbulo con racha 20, activo 1 y récord 20; al volver a combatir en la misma sesión el desafío empezó
+de cero (primera sala con racha 0, equipo curado). No se capturó qué opción del menú se eligió
+(Continuar/Pausar/Vídeo). La reanudación tras recargar la partida (inicio de esta sesión) sí conservó
+la racha 15. Pendiente de reproducir; no forma parte de los criterios de v2.
+
+Laboratorio detenido al final: sin procesos de Azahar/Xvfb/GDB del laboratorio y `use_gdbstub=false`
+restaurado. No probado en consola.

@@ -2303,3 +2303,22 @@ Desviaciones: un combate por sala; presentación de entrenador; naturaleza Fuert
 No probado: nada de la sala salvaje en Azahar (Bolsa/captura/exp con competitor 2, victoria/derrota).
 Siguiente paso: laboratorio con build-wild: sala salvaje ganada y perdida, Bolsa bloqueada, equipo al salir,
 inmunidad, PP, sala 14/PB, exclusión, regresión Palacio/Arena. Turno del orquestador intacto.
+
+## 2026-11-10 20:55 — Claude — F6-TUBO-V2 cerrada: aceptación en Azahar
+Estado: hecho
+Hecho: corregidos los números de tipo de las inmunidades (ORAS no tiene «???»: Fuego 9, Eléctrico 12, Hielo 14;
+medido en texto 18 y tabla personal a/1/9/5). Aceptación en Azahar con build-wild: PP entre salas, estado rechazado
+por inmunidad, salvaje ganada (Seviper Nv46, rival único, Bolsa inerte) y perdida (raw 0, limpieza), sala 14 con 1 PB,
+equipo al salir, exclusión en ambos sentidos, regresión del Palacio (bit 30) y la Arena (bit 31).
+Evidencia: reports/frontier.md §35 hitos 5–6; work/frontier/pike/v2: gdb-wild-session1.log, gdb-palace.log,
+gdb-arena.log, capturas immune-*, wild-*, room14-*, *-refuses-*, palace/arena-after-win.png; wild-after-loss.sav
+c9093b9f…; tests-final.log 973 passed; compileall, bash -n y diff --check correctos.
+Commits: 0694701, c85de46 y el de esta entrada (sondas: seconds.py, lab_probe.py con reloj en code.bin 0x12fae4).
+Decisiones: salas forzadas con segundos calculados en la VM (predicción = pantalla); derrota con fixture en RAM de
+works (PS 1, PP 0) y rival 300 PS; el resto de combates asistidos solo en RAM. tasks.json → done.
+Abierto (fuera de criterios): tras unas A de más en el menú posterior a un combate, la reanudación en la misma sesión
+empezó el desafío de cero (racha 20 → 0, récord 20); sin aislar. La cinta de racha 20 de la Mansión se concede con
+20 salas del Tubo. No probado: consola, juicio de la Arena, IA del Palacio.
+Siguiente paso: frontier-orch verifica y elige la siguiente tarea. Para reproducir: frontier/probes/pike/boot.sh con
+PIKE_BUILD=work/frontier/pike/v2/build-wild, `pk_want` en la sonda y fight.sh. Laboratorio detenido
+(sin procesos, use_gdbstub=false). Turno del orquestador intacto; sin push ni subagentes.
