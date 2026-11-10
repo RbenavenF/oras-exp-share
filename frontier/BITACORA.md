@@ -2176,3 +2176,17 @@ No añadir flags ni gastar la cueva nativa compartida. No se tocaron inputs, inf
 Siguiente paso: aceptación Azahar con v2/build, partida v2/start.sav (copia de py_lobby_saved.sav): reanudar,
 comprobar movimiento y NPC en cueva, siete pisos y PB, persistencia tras salir/guardar/recargar, derrota,
 exclusión y regresión. Laboratorio vivo en la shell persistente de esta sesión; al terminar debe detenerse.
+
+## 2026-11-10 18:19 — Codex — F6-PIRAMIDE-V2A: persistencia y primer piso en Azahar
+Estado: en curso
+Hecho: llegada y movimiento en Ruinas Desierto, tres entrenadores combatibles, encargado accesible y transición
+1→2 con racha/piso/récord 1/2/1 y vencidos 0. Salida al vestíbulo y reentrada: el vencido 0 rechaza combatir.
+Guardar mediante interfaz y reiniciar en la cueva conserva vencidos 1 y la selección; siguiente combate correcto.
+Añadidas sondas y conductores reproducibles en frontier/probes/pyramid; no forman parte del parche.
+Evidencia: reports/frontier.md §34, capturas v2/floor1.png y beaten-return2.png; partida floor1-beaten0.sav SHA
+9c58778b760f383a5c8b8bfe781f96725655d65c5b1ad7518ea27b613f733c7c; v2/climb.log y gdb-before-reload.log.
+Tests: compileall y bash -n de las sondas; pytest 697 passed (v2/tests-final.log).
+Commits: ddd8428 y el de esta entrada.
+Decisiones: combates asistidos con HP 1/Salpicadura del rival en RAM; no se alteran resultados, works ni PB.
+Siguiente paso: terminar recorrido de siete pisos (conductor vivo en shell persistente), guardar PB, probar derrota,
+exclusión y Torre con la misma build; detener laboratorio. Tarea sigue in_progress, no hay decisión pendiente.

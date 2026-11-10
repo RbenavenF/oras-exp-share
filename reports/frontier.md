@@ -2126,7 +2126,19 @@ El generador comprueba la carga antes de empaquetar y `pyramid.check_floor` vali
 disparadores, tres salidas al vestíbulo, texto y round-trip del script. Prueba de exceso de ZO y salida retail negativa.
 Suite `python -m pytest -q tests`: **697 passed**, `work/frontier/pyramid/v2/tests-m1.log`.
 
-Azahar: aceptación en curso, todavía no declarada. PS persistentes, objetos y salvajes siguen fuera de esta tarea.
+Azahar, primer hito de laboratorio (build de ddd8428):
+- `v2/floor1.png`: cueva, tres entrenadores y encargado, sin PC. Movimiento y tres combates del primer piso.
+- `v2/beaten-return2.png`: después de salir al vestíbulo y reanudar, el entrenador 0 dice «Ya hemos combatido»;
+  no hay otro StartBattle. Partida guardada por interfaz `v2/floor1-beaten0.sav`, SHA-256
+  `9c58778b760f383a5c8b8bfe781f96725655d65c5b1ad7518ea27b613f733c7c`.
+- Reinicio completo desde esa partida: `v2/climb.log` / `work/faraway/gdb/out.log`, primer Start del entrenador 1
+  con ruta 7, piso 1, vencidos 1; conserva el vencido tras cargar. Primer cambio de piso: racha/piso/récord
+  1/2/1, vencidos 0. Ronda completa, derrota y regresiones todavía en curso.
+- Sonda reproducible `frontier/probes/pyramid`: modo `win` baja a 1 los PS del rival y le da Salpicadura en RAM;
+  resultados, works, racha y PB no se escriben. Victoria asistida, no una prueba de dificultad del equipo.
+- Suite repetida tras las herramientas de laboratorio: `v2/tests-final.log`, **697 passed**.
+
+PS persistentes, objetos y salvajes siguen fuera de esta tarea.
 Para actualizar una partida v1 guardada físicamente en un piso de la Mansión, salir primero al vestíbulo con v1:
 las coordenadas de ese piso guardado no corresponden a la nueva cueva. La reanudación desde el vestíbulo conserva
-piso y vencidos y usa las coordenadas nuevas. Recarga de guardados nuevos en cueva: pendiente de laboratorio.
+piso y vencidos y usa las coordenadas nuevas. Recarga de guardados nuevos en cueva: llegada y bit de vencido comprobados como arriba.

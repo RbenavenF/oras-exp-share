@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Battle Pyramid v1 (reports/diseno/piramide.md §1): a lobby and seven fixed floors of trainers; no darkness, wild
-Pokémon, items or Brandon (v2).
+"""Battle Pyramid v2A (reports/diseno/piramide.md): seven fixed cave floors of trainers;
+no darkness, wild Pokémon, items, persistent HP or Brandon.
 
 Interiors (frontier/REPARTO.md), all with the Battle Maison native groups:
 - LOBBY (140): the plaza's Pyramid door (32,57) leads here and its exit (warp 0) back to (32,58). The right-hand
