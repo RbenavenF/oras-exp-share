@@ -51,8 +51,7 @@ arena_start:
     orrne   ip, ip, #ARENA_RULE
     strne   ip, [r4, #0x6c8]
 1:
-    mov     r0, r5
-    b       ARENA_START_RESUME
+    b       palace_start            @ frontier/asm/palace.s: its bit, then mov r0,r5 and resume
 
 @ CRO 0x724c0, r4 server / r5 entrant / fp global turn. Reproduce all displaced
 @ instructions, including the native age reset, then snapshot the entrant's HP.

@@ -29,6 +29,7 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 from formats import apply_ips, read_ips, sha256  # noqa: E402
 from build_patch import diff_ips  # noqa: E402
 import arena_engine as ae  # noqa: E402
+import palace_engine as pe  # noqa: E402
 
 CLEAN = ROOT / 'baseline/oras/clean/exefs/code.bin'
 REPOLISHED = ROOT / 'baseline/oras/repolished/exefs/code.bin'
@@ -40,7 +41,7 @@ HASHES = {
 }
 ASM = ROOT / 'frontier/asm/rental.s'
 ASMS = [ASM, ROOT / 'frontier/asm/dome.s', ROOT / 'frontier/asm/pike.s', ROOT / 'frontier/asm/pyramid.s',
-        ROOT / 'frontier/asm/arena.s']   # linked together, rental_hook first (at CAVE)
+        ROOT / 'frontier/asm/arena.s', ROOT / 'frontier/asm/palace.s']   # linked together, rental_hook first (at CAVE)
 BASE = 0x100000
 CAVE, CAVE_END = 0x579604, 0x57A000           # .text padding (reports/frontier.md §5)
 SITE = 0x1E3D8C                               # player-party branch of the party builder 0x1e3d2c
@@ -126,7 +127,7 @@ ZONE_NATIVES, ZONE_COUNT = 0x587D58, 536
 NATIVES_DEFAULT, NATIVES_MAISON = 0x243, 0x100
 MAISON_NATIVE_ZONES = (448, 517, 520)
 CONSTANTS = {'WORK_IV': WORK_IV, 'WORK_SET0': WORK_SETS[0], 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'RENTAL_LEVEL': 50,
-             **ae.CONSTANTS,
+             **ae.CONSTANTS, **pe.CONSTANTS,
              'RENTALS': len(WORK_SETS), 'WORK_RIVAL': WORK_RIVAL[0],
              'ROUTE_DELTA': MAISON_BASE - SAVE_WORKS - 2 * (WORK_ROUTE - 0x4000),
              'ROUTES': len(STREAK_ROUTES), 'WORK_ROUTE': WORK_ROUTE,
@@ -267,7 +268,7 @@ COPY_BACK_AFTER = (0xE3510002, 0xE1A00000, 0x8A000119)   # cmp r1, #2; nop; bhi 
 
 
 def battle_cro(romfs=MOD_ROMFS):
-    """v0.5 + Pike copy-back + Arena bridges, guarded together, with updated CRO/CRR hashes.
+    """v0.5 + Pike copy-back + Arena and Palace bridges, guarded together, with updated CRO/CRR hashes.
 
     Additional facility bridges can extend the write list before the single rehash.
     Arena acts only with its setup bit; the unmarked path replays retail instructions.
@@ -282,7 +283,8 @@ def battle_cro(romfs=MOD_ROMFS):
         sys.exit(f'{BATTLE_CRO} {COPY_BACK:#x} differs: {[f"{w:08x}" for w in got]}')
     _, symbols = assemble()
     writes = [dict(offset=COPY_BACK, before=struct.pack('<3I', *COPY_BACK_BEFORE).hex(),
-                   after=struct.pack('<3I', *COPY_BACK_AFTER).hex()), *ae.cro_writes(symbols)]
+                   after=struct.pack('<3I', *COPY_BACK_AFTER).hex()), *ae.cro_writes(symbols),
+              *pe.cro_writes(symbols)]
     changed = guarded_writes(original, dict(path=BATTLE_CRO, sha256=BATTLE_CRO_SHA256, writes=writes))
     changed = rehash_cro(original, changed)
     crr = update_crr((romfs / CRR).read_bytes(), original, changed)

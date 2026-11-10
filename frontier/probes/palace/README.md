@@ -16,4 +16,5 @@ Los scripts no conectan ni arrancan el emulador; usar `faraway/gdbctl.sh` y `scr
 Parar siempre el laboratorio en el mismo namespace al acabar. No escribir sobre inputs ni la partida original.
 
 El código B sin commit se conserva como propuesta en `reports/diseno/palacio-b-experimental.patch`, sobre
-18a464f. No está instalado. Esperar la decisión en F6-PALACIO-B antes de volver a integrarlo.
+18a464f. Aplicado tal cual el 2026-11-10 tras la decisión del usuario (vía híbrida; `reports/frontier.md` §33).
+- `audit_a8.py` / `audit_a8_all.py`: auditoría estática de los lectores de `setup+0xa8` para el bit 30 (§33).

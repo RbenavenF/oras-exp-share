@@ -106,3 +106,8 @@ Arena: bit 31 (`0x80000000`) del word `BattleSetup+0xa8`; se pondrá al final de
 y work 16466 activo. El bit sigue en validación (§31); no usarlo para Palacio B. Works 16693–16694 para PS
 iniciales: libres según `python frontier/ids.py` (1157 scripts, 147 ficheros de código), reservados antes de usarlos.
 La lógica del CRO irá en la cueva compartida de code.bin si cabe; hoy quedan 1284 bytes antes de añadir el juicio.
+
+Palacio B (2026-11-10, F6-PALACIO-B): bit 30 (`0x40000000`) del mismo word `BattleSetup+0xa8`; `palace_start`
+(encadenado tras `arena_start`) lo limpia y lo pone solo con ruta 3, work 16462 activo y estilo Individual. Ningún
+lector de `+0xa8` con máscara que incluya el bit 30 en code.bin ni en las 145 CRO (`frontier/probes/palace/audit_a8.py`,
+`reports/frontier.md` §33). El bit 31 sigue siendo de la Arena.

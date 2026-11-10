@@ -2098,3 +2098,20 @@ ficheros compartidos (REPARTO normas 1 y 6).
 Evidencia: `frontier/orch/frontier-orch status`.
 Commits: el de esta entrada.
 Siguiente paso: el usuario lanza `frontier/orch/frontier-orch auto`.
+
+## 2026-11-10 11:30 — Claude Code (Opus 5.5) — F6-PALACIO-B: vía híbrida integrada, auditoría del bit 30 y M4
+Estado: en curso
+Hecho:
+- Revisado y aplicado tal cual `reports/diseno/palacio-b-experimental.patch` (sin cambios en sus ficheros desde 18a464f):
+  `asm/palace.s`, `palace_engine.py`, puentes guardados en `patch.battle_cro` encima de la v0.5 con el Tubo y la Arena,
+  «Guardar vídeo» oculto en el menú del Palacio, tests Unicorn.
+- Bit 30 de `setup+0xa8` reservado en REPARTO (sección de reservas del motor; el turno no se toca).
+- Auditoría estática de sus lectores (`frontier/probes/palace/audit_a8*.py`): ninguna máscara con el bit 30 en code.bin
+  ni en las 145 CRO; detalle y límites en reports/frontier.md §33.
+- M4: gancho 2208 bytes, 348 libres. Build `work/frontier/palace/c-build`, idéntica a `b3-build`.
+Evidencia: `python -m pytest -q tests` → 633 passed; `work/frontier/palace/c/audit-a8.txt`, `audit-a8-all.txt`,
+`c-build.log`. Azahar: no probado aún en esta sesión.
+Commits: el de esta entrada.
+Siguiente paso: aceptación en Azahar con `c-build` (sonda pasiva `work/frontier/palace/b3-probe.gdb`, direcciones
+comprobadas contra los símbolos enlazados): ronda sin pulsaciones desde `b3-streak6-in.sav` (racha 6) y una desde
+`b1-in.sav`; KO con cambio automático; IsWin, racha ruta 3 y PB; pausa/reanudación/derrota; regresiones manuales.

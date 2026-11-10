@@ -508,7 +508,7 @@ def test_battle_copy_back_changes_only_gate_and_validates_hashes(battle_module):
     assert len(changed) == len(original)
     assert changed[:0x80] == b''.join(cro_hashes(changed))
     assert all(i < 0x80 or fp.COPY_BACK <= i < fp.COPY_BACK + 12
-               or any(site <= i < site + 16 for site in fp.ae.SITES)
+               or any(site <= i < site + 16 for site in [*fp.ae.SITES, *fp.pe.SITES])
                for i, (a, b) in enumerate(zip(original, changed)) if a != b)
     crr = battle_module[fp.CRR]
     offset, count = struct.unpack_from('<II', crr, 0x350)

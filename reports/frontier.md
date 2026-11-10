@@ -1977,3 +1977,50 @@ No se modificó REPARTO ni se hizo push.
 M1–M4 y toda la aceptación de juego), o elegir la alternativa **2**, ficha de movimientos recortada por naturaleza
 con pulsación manual, o la **3**, experimento Multi con equipo en el compañero IA y un Pokémon debilitado en
 cliente 0 (cambia el formato a 2 contra 2)? La etapa A sigue utilizable mientras se decide. La naturaleza es C.
+
+## 33. F6-PALACIO-B por la vía híbrida (2026-11-10)
+
+Decisión del usuario del 2026-11-10 (REPARTO): vía híbrida de §32. Tarea de frontier-orch, dueño Claude.
+
+### Código integrado
+
+`reports/diseno/palacio-b-experimental.patch` (base 18a464f) se revisó y se aplicó tal cual sobre 7846388
+(`git apply --check` correcto; ningún cambio en los ficheros que toca desde 18a464f):
+- `frontier/asm/palace.s`: `palace_start` (encadenado al final de `arena_start`, code.bin 0x1e33d8): limpia el bit 30
+  de `setup+0xa8` (`work+0x6c8`) y lo pone solo con estilo Individual (`work+0x621` = 0), `WORK_ROUTE` = 3 y work 16462
+  ≠ 0. Tres puentes del CRO, del mismo molde que los de la Arena (`ldr ip,[pc,#4]; blx ip; b +0; .word`):
+  CRO+0x731f0 `palace_ai_want` (el cliente 0 de interfaz pide objeto IA si el bit está puesto), +0x73258
+  `palace_ai_flags` (flags 7 para ese objeto) y +0x49ec `palace_dispatch` (columna 1 solo para los comandos 3/5/6 del
+  cliente 0 con el bit; el resto, columna retail).
+- `frontier/palace_engine.py`: sitios con sus 16 bytes previos para `guarded_writes`, compuestos con el Tubo y la Arena
+  en `patch.battle_cro` encima del DllBattle.cro de la v0.5 (hash exigido 46153fa3…) y un solo rehash CRO/CRR.
+- `frontier/palace.py`: el menú «siguiente combate» del Palacio salta siempre «Guardar vídeo» (línea 68); la Torre lo
+  conserva (test).
+- Tests Unicorn de la marca en todas las rutas, exclusión con la Arena, los tres puentes a dos bases del CRO, la tabla
+  de comandos medida y la ausencia de relocaciones/destinos de salto dentro de los sitios.
+
+### Auditoría del bit 30
+
+`python -I frontier/probes/palace/audit_a8.py baseline/oras/repolished/exefs/code.bin
+dist/held-exp-share-v0.5/mods/000400000011C400/romfs` → `work/frontier/palace/c/audit-a8.txt`, y la misma
+clasificación sobre code.bin y las 145 CRO de Repolished (+ las dos de la v0.5), `audit_a8_all.py` → `c/audit-a8-all.txt`:
+- **Ningún** `ldr` de `+0xa8` (ni `ldrb +0xab`/`ldrh +0xaa`) seguido de `tst/and/bic` con una máscara que incluya
+  0x40000000, en code.bin ni en ninguna CRO.
+- DllBattle: 27 lecturas de `+0xa8`; 16 con máscara sin el bit 30; las «enteras» son punteros a función de otros
+  objetos (`blx`, 0x34368, 0x8be80, 0x8f4d4, 0xab4c4) o copias de un global por `pc` (0x30998, 0x309d4), no del setup;
+  0x130a8 y 0x644bc pasan `+0xa8` de otros objetos como argumento. El getter de máscara variable 0x5eaa0 se llama con
+  0x100000, 0x80000, 0x40000 y 0x40; su envoltorio 0xd25a8 (máscara del llamador) no tiene llamadas directas: si lo usa
+  una tabla de funciones, no está auditado.
+- En code.bin solo hay una lectura de `work+0x6c8` fuera del gancho (máscara sin el bit 30). Las lecturas de
+  `setup+0xa8` por puntero al setup en code.bin (`+0xa8`) tampoco tienen máscara con el bit 30; los usos de palabra
+  entera (p. ej. `cmp #0`) los vería igual el bit 31 de la Arena, ya probado en regresiones (§31).
+- Límite: lectura estática a 8 instrucciones; copias del word a otras estructuras no se siguen.
+
+### M4: espacio
+
+`patch.assemble()` sobre el código integrado: gancho **2208 bytes**, 0x579604–0x579ea4, **348 libres** hasta
+0x57a000 (antes 1936/620). `palace_start` 0x579d90, `palace_ai_want` 0x579de4, `palace_ai_flags` 0x579e2c,
+`palace_dispatch` 0x579e60. Los puentes del CRO no usan espacio del CRO (sustituyen 16 bytes cada uno).
+Build: `python frontier/overlay.py --out work/frontier/palace/c-build` (`c-build.log`), **idéntica** (`diff -r`) a la
+build experimental `b3-build` de §32; code.ips 330cf5e6…, DllBattle.cro a9b91f85….
+Suite: `python -m pytest -q tests` → 633 passed.

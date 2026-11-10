@@ -218,3 +218,213 @@ def test_no_palace_battle_points_inside_a_round(built, streak):
 @pytest.mark.parametrize('route', [0, 1, 2])
 def test_maison_battle_points_without_the_palace_route(built, route):
     assert battle_points_run(built, 7, route=route) == [('bp', 2), ('number', 2)]   # GetWinCount 99 > 10: 2 BP
+
+
+# Stage B (reports/frontier.md §32): the linked code.bin stubs and the patched DllBattle.cro bridges executed in
+# Unicorn, with the real instructions around each site. Checks the logic, not the game (Azahar: §32).
+import struct  # noqa: E402
+import palace_engine as pe  # noqa: E402
+
+PMEM, PSTACK, PRETURN = 0x08000000, 0x09001000, 0x0A000000
+PMAIN, PCLIENT, PSETUP, PWORK, PGAME, PSAVE = (PMEM + n for n in (0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x10000))
+
+
+@pytest.fixture(scope='module')
+def palace_engine_code():
+    import shutil
+    if not fp.REPOLISHED.exists() or not shutil.which('arm-none-eabi-as'):
+        pytest.skip('Local baseline and ARM binutils required')
+    return fp.build()[0], fp.battle_cro()[fp.BATTLE_CRO]
+
+
+def pmachine(binaries, cro_base=0x02000000):
+    from unicorn import Uc, UC_ARCH_ARM, UC_MODE_ARM
+    from unicorn import arm_const as AR
+    code, cro = binaries
+    uc = Uc(UC_ARCH_ARM, UC_MODE_ARM)
+    for address, data in ((fp.BASE, code), (cro_base, cro)):
+        uc.mem_map(address, (len(data) + 0xFFF) & ~0xFFF)
+        uc.mem_write(address, data)
+    uc.mem_map(PMEM, 0x40000)
+    uc.mem_map(PSTACK - 0x1000, 0x2000)
+    uc.mem_map(PRETURN, 0x1000)
+    regs = [getattr(AR, f'UC_ARM_REG_R{k}') for k in range(13)]
+    for k, reg in enumerate(regs):
+        uc.reg_write(reg, 0xCAFE0000 + k)
+    uc.reg_write(AR.UC_ARM_REG_SP, PSTACK)
+    uc.reg_write(AR.UC_ARM_REG_LR, PRETURN)
+
+    def put(address, value, fmt='<I'):
+        uc.mem_write(address, struct.pack(fmt, value))
+    for address, value in [(PCLIENT, PMAIN), (PMAIN + 0x10, PSETUP), (PSETUP + 0x7C, PGAME), (PGAME, PSAVE),
+                           (PWORK + 0xB78, PMEM + 0x6000), (PMEM + 0x601C, PGAME)]:
+        put(address, value)
+    return uc, put, regs, AR
+
+
+def pclient(put, ident, thinker, flag, other_bits=0x10000):
+    put(PCLIENT + 0x90, ident, '<B')
+    put(PCLIENT + 0x91, thinker, '<B')
+    put(PSETUP + 0xA8, other_bits | (pe.RULE if flag else 0))
+
+
+def test_palace_engine_ids_and_sites():
+    assert (pe.ROUTE, pe.ACTIVE) == (palace.ROUTE, palace.ACTIVE) == (fp.ROUTE['palace'], fp.ACTIVE_WORK['palace'])
+    import arena_engine as ae
+    assert pe.RULE != ae.RULE and not set(pe.SITES) & set(ae.SITES)
+    assert all(abs(a - b) >= 16 for a in pe.SITES for b in [*ae.SITES, fp.COPY_BACK])
+
+
+@pytest.mark.parametrize('route, active, style, enabled', [(3, 1, 0, True), (3, 0, 0, False), (3, 1, 1, False),
+    (0, 1, 0, False), (1, 1, 0, False), (2, 1, 0, False), (4, 1, 0, False), (5, 1, 0, False), (6, 1, 0, False),
+    (7, 1, 0, False)])
+def test_palace_start_marks_only_its_active_singles_setup(palace_engine_code, route, active, style, enabled):
+    import arena_engine as ae
+    uc, put, regs, AR = pmachine(palace_engine_code)
+    put(PWORK + 0x6C8, pe.RULE | 0x12345)          # a stale mark is always cleared first
+    put(PWORK + 0x621, style, '<B')
+    for work, value in ((fp.WORK_ROUTE, route), (pe.ACTIVE, active), (ae.CONSTANTS['ARENA_ACTIVE'], 0)):
+        put(PSAVE + fp.SAVE_WORKS + 2 * (work - 0x4000), value, '<H')
+    uc.reg_write(regs[4], PWORK)
+    uc.reg_write(regs[5], 0x12340000)
+    before = [uc.reg_read(r) for r in regs[1:12]]
+    uc.emu_start(ae.START, ae.START + 4, count=300)
+    assert uc.reg_read(AR.UC_ARM_REG_PC) == ae.START + 4
+    assert struct.unpack('<I', uc.mem_read(PWORK + 0x6C8, 4))[0] == 0x12345 | (pe.RULE if enabled else 0)
+    assert uc.reg_read(regs[0]) == 0x12340000
+    assert [uc.reg_read(r) for r in regs[1:12]] == before and uc.reg_read(AR.UC_ARM_REG_SP) == PSTACK
+
+
+def test_arena_and_palace_marks_are_exclusive(palace_engine_code):
+    import arena_engine as ae
+    for route in (3, 4):
+        uc, put, regs, AR = pmachine(palace_engine_code)
+        for work in (fp.WORK_ROUTE, pe.ACTIVE, ae.CONSTANTS['ARENA_ACTIVE']):
+            put(PSAVE + fp.SAVE_WORKS + 2 * (work - 0x4000), route if work == fp.WORK_ROUTE else 1, '<H')
+        put(PWORK + 0x6C8, ae.RULE | pe.RULE)
+        uc.reg_write(regs[4], PWORK)
+        uc.emu_start(ae.START, ae.START + 4, count=300)
+        assert struct.unpack('<I', uc.mem_read(PWORK + 0x6C8, 4))[0] == (pe.RULE if route == 3 else ae.RULE)
+
+
+@pytest.mark.parametrize('cro_base', [0x02000000, 0x03000000])
+@pytest.mark.parametrize('ident, thinker, argument, flag, create', [
+    (1, 1, 0, False, True),       # retail AI client
+    (1, 1, 1, True, False),       # retail: no AI object with that argument
+    (0, 0, 0, False, False),      # retail UI client
+    (0, 0, 0, True, True),        # the Palace's client 0: AI object, thinker stays UI
+    (0, 0, 1, True, False),
+    (1, 0, 0, True, False),       # only client 0
+    (0, 2, 0, True, False),       # a replaying client is never touched
+])
+def test_palace_constructor_bridge_requests_an_ai_object(palace_engine_code, cro_base, ident, thinker, argument,
+                                                         flag, create):
+    uc, put, regs, AR = pmachine(palace_engine_code, cro_base)
+    pclient(put, ident, thinker, flag)
+    put(PSTACK + 0x6C, argument)
+    uc.reg_write(regs[4], PCLIENT)
+    before = [uc.reg_read(r) for r in regs[1:12]]
+    site = cro_base + 0x731F0
+    uc.emu_start(site, site + 16, count=200)
+    assert uc.reg_read(AR.UC_ARM_REG_PC) == site + 16
+    assert bool(uc.reg_read(AR.UC_ARM_REG_CPSR) & (1 << 30)) == create       # Z: beq 0x7321c creates it
+    assert [uc.reg_read(r) for r in regs[1:12]] == before and uc.reg_read(AR.UC_ARM_REG_SP) == PSTACK
+    assert uc.mem_read(PCLIENT + 0x91, 1)[0] == thinker
+
+
+@pytest.mark.parametrize('cro_base', [0x02000000, 0x03000000])
+@pytest.mark.parametrize('ident, thinker, flag, system, flags, target', [
+    (0, 0, True, 1, pe.AI_FLAGS, 0x732C0),
+    (0, 0, False, 1, 0, 0x732C0),
+    (1, 1, True, 1, 0x87, 0x732C0),      # the rival keeps its own flags
+    (0, 1, True, 1, 0, 0x732C0),         # a retail AI client 0 keeps its own
+    (0, 0, True, 0, pe.AI_FLAGS, 0x732B0),   # missing AI system: the retail assertion path
+])
+def test_palace_ai_flags_bridge(palace_engine_code, cro_base, ident, thinker, flag, system, flags, target):
+    from unicorn import UC_HOOK_CODE
+    uc, put, regs, AR = pmachine(palace_engine_code, cro_base)
+    pclient(put, ident, thinker, flag)
+    put(PMAIN + 0x820, PMEM + 0x7000 if system else 0)
+    uc.reg_write(regs[4], PCLIENT)
+    uc.reg_write(regs[5], PMAIN)
+    uc.reg_write(regs[6], 0x87 if ident else 0)
+    before = [uc.reg_read(r) for r in regs[1:6] + regs[7:12]]
+    stops = []
+
+    def hook(machine, address, size, data):
+        if address in (cro_base + 0x732C0, cro_base + 0x732B0, cro_base + 0x73268):
+            stops.append(address - cro_base)
+            machine.emu_stop()
+    uc.hook_add(UC_HOOK_CODE, hook)
+    uc.emu_start(cro_base + 0x73258, PRETURN, count=200)
+    assert stops == [target]
+    assert uc.reg_read(regs[6]) == flags
+    assert [uc.reg_read(r) for r in regs[1:6] + regs[7:12]] == before and uc.reg_read(AR.UC_ARM_REG_SP) == PSTACK
+
+
+@pytest.mark.parametrize('cro_base', [0x02000000, 0x03000000])
+@pytest.mark.parametrize('ident, thinker, flag, command, column', [
+    (0, 0, True, 3, 1), (0, 0, True, 5, 1), (0, 0, True, 6, 1),    # decisions: AI
+    (0, 0, True, 7, 0), (0, 0, True, 10, 0), (0, 0, True, 2, 0),   # display and the rest: UI
+    (0, 0, True, 257, 0), (0, 0, True, 4, 0), (0, 0, True, 8, 0),
+    (0, 0, False, 3, 0), (0, 0, False, 5, 0),                      # unmarked battle: retail
+    (1, 1, True, 3, 1), (1, 1, False, 7, 1),                       # rival unchanged
+    (0, 2, True, 3, 2),                                            # replay unchanged
+])
+def test_palace_dispatch_bridge_columns(palace_engine_code, cro_base, ident, thinker, flag, command, column):
+    uc, put, regs, AR = pmachine(palace_engine_code, cro_base)
+    pclient(put, ident, thinker, flag)
+    table, row = PMEM + 0x8000, 5
+    put(PSTACK, 0x11223344)                       # [sp] is read by 0x4a74 after the dispatch
+    for reg, value in zip(regs, (row, command, table)):
+        uc.reg_write(reg, value)
+    uc.reg_write(regs[4], PCLIENT)
+    uc.reg_write(regs[6], 0)
+    before = [uc.reg_read(r) for r in (regs[4], regs[6], *regs[7:12])]
+    site = cro_base + 0x49EC
+    uc.emu_start(site, site + 16, count=200)
+    assert uc.reg_read(AR.UC_ARM_REG_PC) == site + 16
+    assert uc.reg_read(regs[3]) == column
+    assert uc.reg_read(regs[0]) == 7 * row and uc.reg_read(regs[2]) == table + 0x1C * row
+    assert uc.reg_read(regs[5]) == PCLIENT + 0x1E4 and uc.reg_read(regs[1]) == command
+    assert [uc.reg_read(r) for r in (regs[4], regs[6], *regs[7:12])] == before
+    assert uc.reg_read(AR.UC_ARM_REG_SP) == PSTACK and uc.mem_read(PSTACK, 4) == struct.pack('<I', 0x11223344)
+
+
+def test_palace_command_table_columns_are_the_measured_ones():
+    """DllBattle 0xdbc68: commands 3, 5 and 6 have an AI proc; 7 (server commands: display) only a UI one."""
+    from cro import Cro
+    cro = Cro((fp.MOD_ROMFS / fp.BATTLE_CRO).read_bytes())
+    pointers = cro.pointer_at()
+    rows = {}
+    for row in range(16):
+        at = 0xDBC68 + 0x1C * row
+        rows[struct.unpack_from('<I', cro.data, at)[0]] = [pointers.get(at + 4 + 8 * k, 0) for k in range(3)]
+    assert rows[3] == [0xD8D8, 0xD0C8, 0xE5C0] and rows[7] == [0x10E40, 0, 0]
+    assert all(rows[c][1] for c in pe.DECISIONS)
+
+
+def test_palace_bridges_do_not_overwrite_relocations_or_incoming_destinations(palace_engine_code):
+    import capstone
+    from cro import Cro
+    cro = Cro((fp.MOD_ROMFS / fp.BATTLE_CRO).read_bytes())
+    for site, (_, before) in pe.SITES.items():
+        assert cro.data[site:site + 16] == before
+    middle = {site + delta for site in pe.SITES for delta in (4, 8, 12)}
+    assert not any(target in middle or target in pe.SITES for target, _, _ in cro.relocs)
+    assert not any(source in middle for _, _, source in cro.relocs)
+    md = capstone.Cs(capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM)
+    md.skipdata = True
+    start, length, _ = cro.segments[0]
+    for ins in md.disasm(cro.data[start:start + length], start):
+        if ins.mnemonic.startswith('b') and ins.op_str.startswith('#'):
+            assert int(ins.op_str[1:], 16) not in middle
+
+
+def test_palace_menu_has_no_video_item_and_the_towers_keeps_it(built):
+    _, retail, _, _ = built
+
+    def video_jumps(program):
+        return [(x.op, x.args) for x in program.items if isinstance(x, Op) and x.args == [palace.VIDEO_MENU]]
+    assert video_jumps(palace.palace_program(retail)) == [(OP['JUMP'], [palace.VIDEO_MENU])]
+    assert video_jumps(tower.tower_program(retail)) == [(OP['JNZ'], [palace.VIDEO_MENU])]
