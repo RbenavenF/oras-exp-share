@@ -448,3 +448,162 @@ def test_palace_record_routine_returns_at_once_and_the_towers_records(built):
     assert routine(tower_program)[1] == (OP['PUSH_P_S'], [12])
     calls = [x for x in palace.palace_program(retail).items if isinstance(x, Op) and x.args == [palace.VIDEO_RECORD]]
     assert len(calls) == 3
+
+
+# Stage C (reports/frontier.md §36): nature move groups. The patched DllBattle.cro runs in Unicorn from its real
+# `bl` at 0xd468; only the retail usable-move function 0xe044, rand 0x490 and code.bin's nature getter are stubbed.
+import palace_ai  # noqa: E402
+
+PMON, PPARAM, PCORE, PUSABLE = PMEM + 0x9000, PMEM + 0xA000, PMEM + 0xA100, PMEM + 0xB000
+TACKLE, SWORDS_DANCE, THUNDER_WAVE, PROTECT, SPIKES, METRONOME, EARTHQUAKE = 33, 14, 86, 182, 191, 118, 89
+
+
+@pytest.fixture(scope='module')
+def move_groups():
+    if not palace_ai.MOVES_GARC.exists():
+        pytest.skip('Local baseline required')
+    return palace_ai.move_groups()
+
+
+def emerald_group(nature, low, percent):
+    odds = palace_ai.NATURE_ODDS[nature][2 if low else 0:][:2]
+    return 0 if percent < odds[0] else 1 if percent < odds[1] else 2
+
+
+def run_filter(binaries, *, nature=0, percent=0, hp=100, max_hp=100, moves=(TACKLE,), usable=None, ident=0,
+               thinker=0, flag=True, cro_base=0x02000000):
+    from unicorn import UC_HOOK_CODE
+    uc, put, regs, AR = pmachine(binaries, cro_base)
+    pclient(put, ident, thinker, flag)
+    usable = [1] * len(moves) if usable is None else usable
+    put(PMON, PPARAM)
+    put(PPARAM + 0xC, PCORE)
+    put(PMON + 0x10, hp, '<H')
+    put(PMON + 0xE, max_hp, '<H')
+    put(PMON + 0x152, len(moves), '<B')
+    for slot, move in enumerate(moves):
+        put(PMON + 0x11C + 14 * slot, move, '<H')
+    calls = []
+
+    def stub(machine, address, size, data):
+        at = address - cro_base
+        if at == 0xE044:
+            assert [machine.reg_read(r) for r in regs[:3]] == [PCLIENT, PMON, PUSABLE]
+            flags = (list(usable) + [0] * 4)[:4]
+            machine.mem_write(PUSABLE, bytes(flags))
+            result = next((k for k, f in enumerate(flags) if f), 4)
+        elif at == 0x490:
+            assert machine.reg_read(regs[0]) == 100
+            result = percent
+        elif address == palace_ai.CODE_NATURE:
+            assert machine.reg_read(regs[0]) == PCORE
+            result = nature
+        else:
+            return
+        calls.append(at if address != palace_ai.CODE_NATURE else 'nature')
+        machine.reg_write(regs[0], result)
+        machine.reg_write(AR.UC_ARM_REG_PC, machine.reg_read(AR.UC_ARM_REG_LR))
+    uc.hook_add(UC_HOOK_CODE, stub)
+    for reg, value in zip(regs, (PCLIENT, PMON, PUSABLE)):
+        uc.reg_write(reg, value)
+    before = [uc.reg_read(r) for r in regs[4:12]]
+    site = cro_base + palace_ai.SITE
+    uc.emu_start(site, site + 4, count=500)
+    assert uc.reg_read(AR.UC_ARM_REG_PC) == site + 4
+    assert [uc.reg_read(r) for r in regs[4:12]] == before and uc.reg_read(AR.UC_ARM_REG_SP) == PSTACK
+    return list(uc.mem_read(PUSABLE, 4)), uc.reg_read(regs[0]), calls
+
+
+def test_palace_move_group_table_from_the_move_data(move_groups):
+    assert len(move_groups) == 622 and set(move_groups) == {0, 1, 2}
+    expected = {TACKLE: 0, EARTHQUAKE: 0, SWORDS_DANCE: 1, PROTECT: 1, THUNDER_WAVE: 2, SPIKES: 2,
+                METRONOME: 2, 115: 1, 240: 1, 68: 2, 165: 0, 176: 1, 214: 2}   # Reflect, Rain Dance, Counter
+    assert {move: move_groups[move] for move in expected} == expected
+    packed = palace_ai.pack_groups(move_groups)
+    assert len(packed) == 156
+    assert all((packed[m >> 2] >> 2 * (m & 3)) & 3 == g for m, g in enumerate(move_groups))
+
+
+def test_palace_nature_odds_are_emeralds():
+    assert len(palace_ai.NATURE_ODDS) == 25
+    assert palace_ai.NATURE_ODDS[0] == (61, 68, 61, 68)            # Hardy
+    assert palace_ai.NATURE_ODDS[2] == (70, 85, 32, 92)            # Brave
+    assert palace_ai.NATURE_ODDS[22] == (88, 94, 22, 42)           # Sassy
+    assert palace_ai.NATURE_ODDS[21] == (18, 88, 90, 95)           # Gentle
+    assert all(a <= b <= 100 and c <= d <= 100 for a, b, c, d in palace_ai.NATURE_ODDS)
+    assert len(palace_ai.pack_odds()) == 100
+
+
+def test_palace_cro_blob_fits_the_code_region_padding(palace_engine_code):
+    from cro import Cro
+    original = (fp.MOD_ROMFS / fp.BATTLE_CRO).read_bytes()
+    cro = Cro(original)
+    blob, symbols = palace_ai.assemble()
+    start, length, kind = cro.segments[0]
+    assert kind == 0 and start + length == palace_ai.TEXT_END <= palace_ai.AT
+    assert cro.segments[1][0] == palace_ai.RODATA and palace_ai.AT + len(blob) <= palace_ai.RODATA
+    code_offset, code_size = struct.unpack_from('<2I', original, 0xB0)     # the region ldr:ro maps as code
+    assert code_offset <= palace_ai.AT and palace_ai.AT + len(blob) <= code_offset + code_size
+    assert not any(original[palace_ai.TEXT_END:palace_ai.RODATA])
+    # Only one relocation points at the padding: the end of the range [0xd7610, 0xd7628) set up at 0xd68a8-0xd68c4,
+    # an exclusive end that is never read. None points into the blob or patches a word in the padding.
+    assert [(t, s) for t, _, s in cro.relocs if palace_ai.TEXT_END <= t < palace_ai.RODATA
+            or palace_ai.TEXT_END <= s < palace_ai.RODATA] == [(0xD68F8, palace_ai.TEXT_END)]
+    assert [(t, s) for t, _, s in cro.relocs if s == 0xD7610] == [(0xD68F4, 0xD7610)]
+    site = palace_ai.SITE
+    assert original[site:site + 4] == palace_ai.SITE_BEFORE
+    assert not any(t == site or s == site for t, _, s in cro.relocs)
+    patched = palace_engine_code[1]
+    assert patched[palace_ai.AT:palace_ai.AT + len(blob)] == blob
+    assert patched[site:site + 4] == palace_ai.bl(site, symbols['palace_moves'])
+
+
+@pytest.mark.parametrize('cro_base', [0x02000000, 0x03000000])
+@pytest.mark.parametrize('nature', [0, 2, 9, 11, 21, 22])      # Hardy, Brave, Lax, Hasty, Gentle, Sassy
+@pytest.mark.parametrize('hp, max_hp, low', [(100, 100, False), (50, 101, True), (51, 101, False),
+                                             (50, 100, True), (51, 100, False), (1, 100, True)])
+def test_palace_filter_keeps_the_drawn_group(palace_engine_code, cro_base, nature, hp, max_hp, low):
+    moves = (TACKLE, SWORDS_DANCE, THUNDER_WAVE, EARTHQUAKE)
+    odds = palace_ai.NATURE_ODDS[nature][2 if low else 0:][:2]
+    for percent in sorted({0, odds[0] - 1, odds[0], odds[1] - 1, odds[1], 99} & set(range(100))):
+        group = emerald_group(nature, low, percent)
+        usable, result, calls = run_filter(palace_engine_code, nature=nature, percent=percent, hp=hp,
+                                           max_hp=max_hp, moves=moves, cro_base=cro_base)
+        assert usable == [int(g == group) for g in (0, 1, 2, 0)], (percent, group)
+        assert result == 0 and calls == [0xE044, 0x490, 'nature']
+
+
+def test_palace_filter_column_switch_changes_the_group(palace_engine_code):
+    """Gentle at percent 50: attack below half HP (90), defense above it (18 / 88)."""
+    moves = (TACKLE, PROTECT)
+    assert run_filter(palace_engine_code, nature=21, percent=50, hp=60, max_hp=100, moves=moves)[0] == [0, 1, 0, 0]
+    assert run_filter(palace_engine_code, nature=21, percent=50, hp=50, max_hp=100, moves=moves)[0] == [1, 0, 0, 0]
+
+
+def test_palace_filter_empty_group_keeps_every_usable_move(palace_engine_code):
+    """Drawn support (Sassy, percent 99) without usable support moves: the AI keeps the others."""
+    moves = (TACKLE, SWORDS_DANCE, THUNDER_WAVE)
+    usable, result, _ = run_filter(palace_engine_code, nature=22, percent=99, moves=moves, usable=[1, 1, 0])
+    assert usable == [1, 1, 0, 0] and result == 0
+    usable, _, _ = run_filter(palace_engine_code, nature=22, percent=99, moves=(TACKLE, EARTHQUAKE))
+    assert usable == [1, 1, 0, 0]
+
+
+def test_palace_filter_never_revives_an_unusable_move(palace_engine_code):
+    moves = (THUNDER_WAVE, TACKLE, SPIKES, EARTHQUAKE)
+    usable, result, _ = run_filter(palace_engine_code, nature=22, percent=0, moves=moves, usable=[1, 0, 1, 1])
+    assert usable == [0, 0, 0, 1] and result == 0      # the retail first usable slot is returned unchanged
+
+
+@pytest.mark.parametrize('ident, thinker, flag', [(0, 0, False), (1, 1, True), (0, 1, True), (0, 2, True),
+                                                  (1, 0, True)])
+def test_palace_filter_is_retail_elsewhere(palace_engine_code, ident, thinker, flag):
+    moves = (TACKLE, SWORDS_DANCE, THUNDER_WAVE)
+    usable, result, calls = run_filter(palace_engine_code, nature=22, percent=0, moves=moves, ident=ident,
+                                       thinker=thinker, flag=flag)
+    assert usable == [1, 1, 1, 0] and result == 0 and calls == [0xE044]
+
+
+def test_palace_filter_without_usable_moves_is_retail_struggle(palace_engine_code):
+    usable, result, calls = run_filter(palace_engine_code, moves=(TACKLE, PROTECT), usable=[0, 0])
+    assert usable == [0, 0, 0, 0] and result == 4 and calls == [0xE044]

@@ -13,6 +13,8 @@ decision, the player is simply asked (manual control), which is the retail behav
 """
 import struct
 
+import palace_ai  # noqa: E402,F401  (stage C, also reached as pe.palace_ai)
+
 RULE = 0x40000000            # setup+0xa8 bit 30 (the Arena owns bit 31; retail masks measured up to 0x100000)
 AI_FLAGS = 7                 # the Maison trainers' AI flags (trainer object +0xc, 0x1e3620)
 ROUTE = 3
@@ -27,7 +29,10 @@ CONSTANTS = {'PALACE_RULE': RULE, 'PALACE_AI': AI_FLAGS, 'PALACE_ROUTE': ROUTE, 
 
 
 def cro_writes(symbols):
-    """guarded_writes entries, composed with the Pike's and the Arena's before the single rehash."""
-    return [dict(offset=site, before=before.hex(), after=struct.pack(
+    """guarded_writes entries, composed with the Pike's and the Arena's before the single rehash.
+
+    Stage C (palace_ai.py, asm/palace_cro.s) lives in the CRO itself: its `bl` at 0xd468 and its code and tables
+    in the padding after .text; it does not use the code.bin cave."""
+    return [*palace_ai.cro_writes(), *[dict(offset=site, before=before.hex(), after=struct.pack(
         '<4I', 0xE59FC004, 0xE12FFF3C, 0xEA000000, symbols[name]).hex())
-            for site, (name, before) in SITES.items()]
+            for site, (name, before) in SITES.items()]]

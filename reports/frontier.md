@@ -2426,3 +2426,72 @@ la racha 15. Pendiente de reproducir; no forma parte de los criterios de v2.
 
 Laboratorio detenido al final: sin procesos de Azahar/Xvfb/GDB del laboratorio y `use_gdbstub=false`
 restaurado. No probado en consola.
+
+## 36. F6-PALACIO-C: movimientos por naturaleza y PS (2026-11-11, Claude)
+
+Tarea de frontier-orch (modo paralelo, carril `claude`). Sobre la vía híbrida de §33 (bit 30 de `setup+0xa8`, cliente 0
+de interfaz con objeto IA y flags 7, comandos 3/5/6 por la columna IA).
+
+### Reglas de Esmeralda (fuente)
+
+pret/pokeemerald **731ad5bf**, descargado con `curl` de raw.githubusercontent.com a `work/frontier/palace/c-src/`:
+- `src/battle_gfx_sfx_util.c` `ChooseMoveAndTargetInBattlePalace` (sha256 510be3aa…): `percent = Random() % 100`;
+  columna baja si `palaceFlags` del combatiente (que `battle_script_commands.c:4659`/`:6389` ponen si
+  `maxHP / 2 >= hp`, PS > 0 y sin dormir); grupo = ataque si `percent < t[0]`, defensa si `< t[1]`, si no apoyo; a la
+  IA solo le llegan los movimientos de ese grupo con PP. Sin ninguno: elige al azar de otros grupos y con 50 %
+  «no obedece» (fuera de esta tarea).
+- `GetBattlePalaceMoveGroup`: objetivo SELECTED/USER_OR_SELECTED/RANDOM/BOTH/FOES_AND_ALLY → apoyo si potencia 0,
+  ataque si no; DEPENDS/OPPONENTS_FIELD → apoyo; USER → defensa; el resto → ataque.
+- `src/battle_script_commands.c:855` `gBattlePalaceNatureToMoveGroupLikelihood` (sha256 e0847cd2…), con
+  `PALACE_STYLE(atk, def, atkLow, defLow) = {atk, atk+def, atkLow, atkLow+defLow}`. Copiada en
+  `frontier/palace_ai.py` (`EMERALD_STYLES`, 25 filas, orden de naturalezas igual en Gen 6).
+
+### Tabla de grupos desde a/1/8/9
+
+`palace_ai.move_groups()`: GARC `a/1/8/9` (sha256 426aaeb0…, idéntico en retail y Repolished), paquete `WD` de
+622 registros de 0x24 bytes; pk3DS `Move6`: potencia 0x03, objetivo 0x14 (`MoveTarget`). Correspondencia de
+objetivos de Gen 6 con los de Esmeralda calibrada sobre los movimientos 1–354 contra `src/data/battle_moves.h` del
+mismo commit: coincide en 348; las 6 diferencias (Metrónomo, Conversión 2, Sonámbulo, Ayuda, Capa Mágica, Robo) van
+en `EMERALD_OVERRIDES` con el grupo de Esmeralda. Resultado: 393 ataque, 113 defensa, 116 apoyo; empaquetada a
+2 bits (156 bytes). Los movimientos de Gen 4–6 siguen la regla por objetivo (hipótesis razonada, no medida en un
+juego con Palacio).
+
+### Dónde decide la IA (lectura estática de DllBattle.cro v0.5)
+
+- Comando 3, columna IA = proc **0xd0c8**. En su estado 1 llama a **0xe044**(cliente, BattleMon, u8 usable[4]) en
+  **0xd468** (`f50200eb`, `bl` relativo sin relocación), que devuelve el primer hueco usable o 4 (Forcejeo), y copia
+  `usable[]` a **IA+0x198** (0xd4f8).
+- Los guiones de la IA saltan los huecos con IA+0x198 = 0 (**0xa88c0**: estado 8, la puntuación queda excluida con
+  la marca de 0x170 a 1) y el elector de reserva **0xa9438** también elige solo entre ellos. Resultado de la IA en
+  IA+0x278 (hueco) / +0x279 (objetivo), leído en 0xd61c.
+- BattleMon: PS `u16 +0x10`, PS máx. `u16 +0xe` (la curación se acota con él, 0x7aa4/0x1ecf0), movimiento del hueco
+  k en `u16 +0x11c + 14k` (0xa9274), `[mon]` = PokemonParam (0x50fe4, bayas de confusión), `[pp+0xc]` = CoreParam;
+  naturaleza = code.bin **0x152f08**(core) (descifra, bloque A +0x14 = PK6 0x1C, cifra; el setter es 0x168b10).
+- `rand(n)`: thunk CRO **0x490** → code 0x48ad84 (el que usa la propia IA, p. ej. 0xa8fd0).
+
+### Implementación y espacio
+
+La cueva de code.bin está casi llena (**2544/2556, 12 libres**, `patch.assemble()`), así que el filtro va en la
+propia CRO: el relleno a cero entre el fin de .text (**0xd7628**) y .rodata (**0xd8000**), 2520 bytes, dentro de la
+región de código declarada en la cabecera (`0xb0` = 0x180, `0xb4` = 0xe6e80, que ldr:ro mapea como código).
+Ninguna relocación apunta dentro salvo el fin exclusivo del rango [0xd7610, 0xd7628) (0xd68f8, montado en
+0xd68a8–0xd68c4). `frontier/asm/palace_cro.s` se enlaza en **0xd7630** (568 bytes: 312 de código, 100 de tabla de
+naturalezas, 156 de grupos; quedan **1944**), y 0xd468 pasa a `bl 0xd7630`. Medido con
+`python frontier/palace_ai.py` → `work/frontier/palace/c/space-c1.txt`.
+
+`palace_moves`: llama a 0xe044; si devuelve 4 o no es el cliente 0 de interfaz con el bit 30, nada cambia. Si no:
+`rand(100)`, naturaleza, columna por `hp <= maxHP >> 1`, grupo, y pone a 0 los huecos usables de otro grupo; si
+ninguno usable es del grupo, los deja todos (la IA elige de los otros grupos: decisión, Esmeralda elige al azar).
+Devuelve el resultado retail. Desviaciones: la columna baja es instantánea (en Esmeralda queda fija hasta el
+cambio y no se activa dormido); sin «no obedece» ni textos.
+
+### Pruebas Unicorn
+
+`tests/test_frontier_palace.py` (CRO parcheada real a dos bases; stubs solo en 0xe044, 0x490 y 0x152f08): tabla
+de grupos (movimientos conocidos, sobrescrituras), tabla de naturalezas (Fuerte, Audaz, Grosera, Amable), que el
+blob cabe en el relleno de la región de código sin relocaciones, filtro con seis naturalezas (incluidas las
+extremas Grosera 88 % y Amable 90 %) en las dos columnas y los bordes de cada umbral, PS 50/100, 51/100, 50/101,
+51/101 y 1/100, cambio de columna (Amable al 50 %), grupo vacío, huecos no usables, cliente/tipo/bit ajenos y
+Forcejeo. `env -u ORCH_LANE python -m pytest -q tests` → **1066 passed, 1 skipped**
+(`work/frontier/palace/c/tests-c1.log`; con `ORCH_LANE` puesto, 9 tests del orquestador fallan por el entorno del
+carril, no por este cambio).

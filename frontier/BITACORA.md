@@ -2385,3 +2385,21 @@ Riesgo conocido: las dos pueden tocar `frontier/island_build.py` o `reports/fron
 Commits: el de esta entrada.
 Siguiente paso: el usuario lanza `frontier/orch/frontier-orch auto --parallel --max-runs 2`; revisar la integración,
 el commit de Codex desde su carril y los puertos.
+
+## 2026-11-11 01:30 — Claude Code (Opus 5.5) — F6-PALACIO-C: filtro en la CRO y Unicorn
+Estado: en curso (falta Azahar)
+Hecho: reglas y tabla de naturalezas de pokeemerald 731ad5bf (fuentes y sha256 en reports/frontier.md §36);
+tabla de grupos generada desde a/1/8/9 (regla por objetivo de Gen 6 calibrada contra Esmeralda en 1–354, 6
+excepciones). La IA decide en DllBattle 0xd0c8; 0xd468 `bl 0xe044` (huecos usables → IA+0x198) pasa a
+`palace_moves` (asm/palace_cro.s), enlazado en el relleno a cero de la región de código de la CRO (0xd7630, 568
+bytes) porque la cueva de code.bin solo tiene 12 libres. Sortea el grupo con rand(100), naturaleza (code 0x152f08)
+y PS (+0x10/+0xe) y deja usables solo los del grupo; si no hay ninguno, los deja todos. Reserva anotada en REPARTO.
+Evidencia: `python frontier/palace_ai.py` → work/frontier/palace/c/space-c1.txt; tests Unicorn nuevos en
+tests/test_frontier_palace.py; `env -u ORCH_LANE python -m pytest -q tests` → 1066 passed, 1 skipped
+(c/tests-c1.log). Con ORCH_LANE puesto fallan 9 tests de test_frontier_orch.py (entorno del carril).
+Commits: el de esta entrada.
+No probado: nada en Azahar (ejecución real del relleno de la CRO, naturaleza leída, grupos en combate).
+Siguiente paso: build `python frontier/overlay.py --out work/frontier/palace/c-build`; laboratorio (puerto 24690)
+con partida del Palacio delante de la puerta (`work/frontier/lab/` o las de §33), sonda GDB en CRO+0xd7630/0xd46c
+y en el resultado IA+0x278 (0xd61c); Pokémon de naturaleza marcada, varios turnos, PS < 50 % con fixture;
+regresión Arena y una instalación sin motor.

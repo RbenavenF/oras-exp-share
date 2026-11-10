@@ -115,3 +115,7 @@ Palacio B (2026-11-10, F6-PALACIO-B): bit 30 (`0x40000000`) del mismo word `Batt
 (encadenado tras `arena_start`) lo limpia y lo pone solo con ruta 3, work 16462 activo y estilo Individual. Ningún
 lector de `+0xa8` con máscara que incluya el bit 30 en code.bin ni en las 145 CRO (`frontier/probes/palace/audit_a8.py`,
 `reports/frontier.md` §33). El bit 31 sigue siendo de la Arena.
+
+Palacio C (2026-11-11, F6-PALACIO-C): DllBattle.cro **0xd7630–0xd7868** (filtro y tablas, en el relleno a cero
+0xd7628–0xd8000 de la región de código; quedan 1944 bytes hasta 0xd8000) y el `bl` de **0xd468**. No usa la cueva
+de code.bin (`reports/frontier.md` §36).
