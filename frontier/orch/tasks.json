@@ -116,9 +116,9 @@
       "owner": "codex",
       "design": "reports/diseno/domo.md",
       "accept": "La zona 456 deja de verse igual que la sala de la Fábrica (domo.md §3: «decoración, más adelante»): mapa de un donante retail con aspecto de estadio o sala amplia, elegido con datos (work/frontier/island/zones.tsv, como hizo la Pirámide v2A con las Ruinas del Desierto), conservando el script y flujo del Domo (ZO ≤ 17.248), su puerta y su salida a (6,57), sin superar LOAD_BUDGET y con la máscara de nativas de 517. Sin código nativo ni cambios en code.bin, patch.py o los CRO. En Azahar: entrar por la puerta, recepcionista que habla, inscripción, un combate del torneo, pausa, guardar y cargar dentro, salida a la plaza; regresión de la Fábrica y la Torre (entran y salen). Capturas antes y después. Si ningún donante cabe, status blocked con lo medido. Tests en verde.",
-      "status": "in_progress",
-      "notes": "Primera tanda del modo paralelo: corre a la vez que F6-PALACIO-C (Claude). No toques motor, code.bin, patch.py ni CRO.",
-      "evidence": ""
+      "status": "blocked",
+      "notes": "¿Puede el orquestador dar escritura al gitdir exacto /home/rbenaven/projects/oras-exp-share/.git/worktrees/codex y recoger los cambios sin commit de este carril? git add/commit fallan con index.lock: Read-only file system (findmnt confirma ro). Implementación y tests listos; falta aceptación Azahar completa. Ejecutar after_run reap desde HOST para limpiar posibles procesos del carril de dos shells interrumpidas; el último namespace se cerró con reap. No tocar el otro carril.",
+      "evidence": "Sin commit por sandbox. reports/frontier.md §36 y últimas entradas BITACORA; frontier/dome_room.py, island_build.py, tests/test_frontier_dome_room.py y README de sondas. work/frontier/dome/room: build-before.log/build-after.log; code.ips y script 456 idénticos, ZO15452/17248, carga305024/2724608; tests-clean-env.log 988 passed 1 skipped; before.png y after-entry2.png. Entrada por puerta probada; inscripción/combate/pausa/save-load nuevo/salida/regresión pendientes."
     }
   ]
 }
