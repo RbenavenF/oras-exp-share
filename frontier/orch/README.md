@@ -77,3 +77,46 @@ cambiar el orden, muévela en la lista. Una tarea `blocked` se desbloquea respon
 
 Codex también tiene la función *goals* (activa en esta versión). El supervisor no la usa: la continuación y el
 relevo los hace él.
+
+## Modo paralelo (`auto --parallel`, 2026-11-10)
+
+Cada agente trabaja a la vez en su **carril**:
+- un `git worktree` en `work/orch/lanes/<agente>`, rama `lane/<agente>`;
+- su propio `work/`, con su laboratorio de Azahar (`work/azahar-lab`) y su puerto de GDB (`work/lab-port`:
+  Claude 24690, Codex 24691; el 24689 queda para el checkout principal);
+- lo grande y de solo lectura enlazado al checkout principal (`inputs`, `tools`, `baseline`, `dist`, `.venv`, el
+  runtime de Azahar, la ROM del laboratorio); se copian los ajustes y partidas del laboratorio y `work/frontier/lab`.
+
+Reglas del carril (van en el mensaje del agente):
+- coge sus tareas abiertas; si el otro agente está sin cuota, también las de él (con aviso de relevo);
+- no toca `tasks.json` ni el turno: escribe `work/lane-task.json` (`status`, `notes`, `evidence`);
+- hace commit en su rama. Tras cada ejecución el supervisor hace `rebase` del carril sobre `main`, avanza `main`
+  (solo *fast-forward*), pasa la aceptación en `main` y apunta el estado en `tasks.json`;
+- `BITACORA.md` y `reports/frontier.md` se unen sin conflicto (`.gitattributes`, `merge=union`); cualquier otro
+  conflicto se aborta y bloquea esa tarea, sin tocar `main`.
+
+Límites: dos tareas que toquen lo mismo (el hueco de `code.bin`, `patch.py`, el CRO) chocan al integrar o, peor,
+integran sin conflicto pero se pisan en el juego: la aceptación de `main` solo pasa los tests. Repartir en paralelo
+tareas que no compartan motor; una regresión en Azahar con lo integrado sigue siendo trabajo de la tarea.
+
+Órdenes:
+- `frontier/orch/frontier-orch lanes setup`: crea o completa los carriles (lo hace también `auto --parallel`);
+- `frontier/orch/frontier-orch auto --parallel`;
+- `frontier/orch/frontier-orch status`: también los carriles y sus commits pendientes de integrar;
+- `frontier/orch/frontier-orch lanes remove`: borra los worktrees (antes quita los enlaces; lo compartido no se
+  toca) y las ramas ya integradas.
+
+Prueba de los dos laboratorios a la vez: `frontier/orch/lab_smoke.sh` (arranca uno por carril, conecta GDB a cada
+puerto, lee un registro de cada uno y comprueba que `reap` de uno no mata al otro).
+
+### Migración y marcha atrás
+
+Lo nuevo es opcional: `auto` sin `--parallel` funciona como antes. Cambios fuera del orquestador, compatibles:
+- `.gitignore` sin barra final en los directorios de la raíz (para ignorar también los enlaces de los carriles);
+- `scripts/azahar_lab.py`: puerto de GDB desde `ORAS_GDB_PORT` o `work/lab-port` (por defecto 24689) y orden `reap`;
+- `faraway/gdbctl.sh` y `faraway/walk.sh`: rutas relativas a su checkout y el mismo puerto;
+- `config.json`: `after_run` usa `reap` (solo el laboratorio de su carpeta), Codex escribe en `{git_common}` (el
+  `.git` principal, igual que antes en secuencial) y la sección `lanes`.
+
+Marcha atrás: `frontier/orch/frontier-orch lanes remove` y `git revert -m 1 <commit de la fusión de orch-parallel>`.
+Si un carril tiene commits sin integrar, `lanes remove` conserva su rama.

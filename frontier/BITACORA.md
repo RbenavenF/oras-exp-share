@@ -2322,3 +2322,25 @@ empezó el desafío de cero (racha 20 → 0, récord 20); sin aislar. La cinta d
 Siguiente paso: frontier-orch verifica y elige la siguiente tarea. Para reproducir: frontier/probes/pike/boot.sh con
 PIKE_BUILD=work/frontier/pike/v2/build-wild, `pk_want` en la sonda y fight.sh. Laboratorio detenido
 (sin procesos, use_gdbstub=false). Turno del orquestador intacto; sin push ni subagentes.
+
+## 2026-11-10 18:30 — Claude Code (Opus 5.5) — frontier-orch: modo paralelo (rama orch-parallel)
+Estado: en curso (rama `orch-parallel` en un worktree aparte, sin integrar en main; el orquestador secuencial tenía
+el turno con Codex en F6-PIRAMIDE-V2A y no se tocó nada de main)
+Hecho:
+- `frontier_orch.py`: `auto --parallel` con un carril por agente (worktree `work/orch/lanes/<agente>`, rama
+  `lane/<agente>`), `lanes setup|remove`, integración por rebase + fast-forward tras cada ejecución, estado del agente
+  en `work/lane-task.json`, aceptación en main, relevo entre carriles, `status` con los carriles.
+- Laboratorio por checkout: `azahar_lab.py` con puerto desde `ORAS_GDB_PORT`/`work/lab-port` y `reap` (mata solo
+  emulador, Xvfb y gdb de su carpeta; gdb se reconoce por su `out.log`, porque `gdb.pid` guarda el PID del espacio
+  de nombres del sandbox: 233 para un 1113858 real, medido hoy); `gdbctl.sh` y `walk.sh` con rutas relativas.
+  `after_run` pasa a `reap`. `.gitignore` sin barra final (ignora los enlaces de los carriles). `.gitattributes`:
+  union para BITACORA.md y reports/frontier.md.
+- README del orquestador: modo paralelo, límites, migración y marcha atrás. `frontier/orch/lab_smoke.sh`.
+Evidencia: `python -m pytest -q tests` en el worktree → 704 passed, 2 skipped; `tests/test_frontier_orch.py` 45
+passed cinco veces seguidas (8 tests nuevos: concurrencia real, unión de la bitácora, conflicto que bloquea sin
+ensuciar main, relevo entre carriles, aceptación fallida, `lanes remove` sin tocar lo compartido, raíz de escritura
+de Codex). Detección de procesos de `reap` contrastada en seco con el laboratorio vivo de Codex (sin matar nada).
+Sin probar: dos Azahar reales a la vez (`lab_smoke.sh`), agentes reales en carriles (sandbox de Codex escribiendo en
+el `.git` principal desde un worktree, `ORAS_GDB_PORT` dentro de su sandbox), la copia de `work/azahar-lab/data`.
+Siguiente paso: cuando el orquestador suelte el turno, con el usuario: integrar la rama, `lanes setup`,
+`lab_smoke.sh`, una tanda corta con `auto --parallel --max-runs 2`; marcha atrás según el README.
