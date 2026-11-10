@@ -99,9 +99,11 @@ STATUS_VALUE = {'toxic': 5, 'freeze': 3, 'paralysis': 1, 'sleep': 2, 'burn': 4}
 STATUS_TARGETS = [(4, 1), (9, 2), (ROOMS, 3)]   # rooms up to n: Pokémon affected
 # pret/pokeemerald 731ad5bf src/battle_pike.c DoesType/AbilityPreventStatus.
 # These are the Pike event's rules (including Ground vs paralysis), not a move's accuracy/type chart.
-# Type/ability IDs below match ORAS. Native selectors measured in DllField+0x4e688:
+# Types are ORAS's (no ??? type, so Emerald's Fire 10 / Electric 13 / Ice 15 are 9 / 12 / 14 here: game text 18 and the
+# personal table a/1/9/5, Blaziken 9/1, Pikachu 12, Lapras 10/14; measured 2026-11-10). Abilities keep their Gen 3
+# numbers. Native selectors measured in DllField+0x4e688:
 # 6/7 -> 0x3b3b48/0x4d3204 (current types, including form/Multitype), 22 -> 0x4d1730 (actual ability).
-STATUS_IMMUNE_TYPES = {'toxic': (3, 8), 'freeze': (15,), 'paralysis': (4, 13), 'sleep': (), 'burn': (10,)}
+STATUS_IMMUNE_TYPES = {'toxic': (3, 8), 'freeze': (14,), 'paralysis': (4, 12), 'sleep': (), 'burn': (9,)}
 STATUS_IMMUNE_ABILITIES = {'toxic': (17,), 'freeze': (40,), 'paralysis': (7,), 'sleep': (15, 72), 'burn': (41,)}
 SELECTED_SLOT = 256                          # pike_param: + position, real party or Battle Box selection
 

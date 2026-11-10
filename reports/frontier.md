@@ -2359,3 +2359,15 @@ combinaciones de ruta y work, sorteo de la sala salvaje por racha y limpieza en 
 Build `python frontier/overlay.py --out work/frontier/pike/v2/build-wild` (`build-wild.log`).
 **No probado aún en Azahar**: Bolsa/captura/experiencia con competitor 2, combate salvaje ganado y
 perdido, ni el resto de la aceptación.
+
+### Corrección del hito 2: números de tipo de ORAS
+
+Las inmunidades de tipo usaban los números de Esmeralda, que tiene el tipo «???» en el 9:
+Fuego 10, Eléctrico 13, Hielo 15. En ORAS no existe y son **Fuego 9, Eléctrico 12, Hielo 14**
+(texto de juego 18 en orden y tabla personal `a/1/9/5`: Blaziken 9/1, Pikachu 12/12, Lapras 10/14,
+Metagross 8/13, Garchomp 15/4). Con la tabla anterior el Agua protegía de quemaduras, el Dragón
+de congelación y el Psíquico de parálisis, mientras Fuego/Hielo/Eléctrico no protegían.
+Corregido `STATUS_IMMUNE_TYPES` = tóxico (3, 8), congelación (14), parálisis (4, 12), quemadura (9);
+las habilidades conservan sus números de Gen 3 (Inmunidad 17, Escudo Magma 40, Flexibilidad 7,
+Insomnio 15, Espíritu Vital 72, Velo Agua 41). Tests con las expectativas corregidas y un caso
+nuevo que comprueba que 10/13/15 ya no protegen. Suite: `tests-wild.log`.

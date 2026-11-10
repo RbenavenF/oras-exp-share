@@ -417,9 +417,9 @@ def status_seeds(shared):
 # Explicit expectations, independent of the implementation's immunity tables.
 @pytest.mark.parametrize('status,type_id,ability', [
     ('toxic', 3, 0), ('toxic', 8, 0), ('toxic', 0, 17),
-    ('freeze', 15, 0), ('freeze', 0, 40),
-    ('paralysis', 4, 0), ('paralysis', 13, 0), ('paralysis', 0, 7),
-    ('sleep', 0, 15), ('sleep', 0, 72), ('burn', 10, 0), ('burn', 0, 41)])
+    ('freeze', 14, 0), ('freeze', 0, 40),
+    ('paralysis', 4, 0), ('paralysis', 12, 0), ('paralysis', 0, 7),
+    ('sleep', 0, 15), ('sleep', 0, 72), ('burn', 9, 0), ('burn', 0, 41)])
 @pytest.mark.parametrize('secondary', [False, True])
 def test_status_respects_current_types_and_actual_ability(shared, status_seeds, status, type_id, ability, secondary):
     seed, door = status_seeds[pike.STATUS_VALUE[status]]
@@ -431,14 +431,24 @@ def test_status_respects_current_types_and_actual_ability(shared, status_seeds, 
     assert log[-1] == ('result', 0, pike.ROOM_DONE)
 
 
+# ORAS type numbers: Emerald's Fire 10 / Electric 13 / Ice 15 are Water / Psychic / Dragon here and protect nothing.
+@pytest.mark.parametrize('status,type_id', [('burn', 10), ('paralysis', 13), ('freeze', 15), ('sleep', 9),
+                                            ('toxic', 9)])
+def test_status_is_not_blocked_by_other_types(shared, status_seeds, status, type_id):
+    seed, door = status_seeds[pike.STATUS_VALUE[status]]
+    works, log, _ = room_run(shared, 10, door, seconds=seed*7919, rng=seed, traits=[(type_id, type_id, 0)] * 3)
+    assert [works[w] for w in fp.PIKE_ST] == [pike.STATUS_VALUE[status]] * 3
+    assert ('msg', pike.LINE_IMMUNE) not in log
+
+
 def test_immune_target_counts_toward_room_limit(shared):
     for seed in range(200):
         for door in ('hint', 'other'):
             works, log, _ = room_run(shared, 0, door, seconds=seed*7919, rng=seed)
             if room_type(log) == pike.STATUS:
                 value = next(works[w] for w in fp.PIKE_ST if works[w])
-                immune = {5: (8, 0, 0), 3: (15, 0, 0), 1: (13, 0, 0),
-                          2: (0, 0, 15), 4: (10, 0, 0)}[value]
+                immune = {5: (8, 0, 0), 3: (14, 0, 0), 1: (12, 0, 0),
+                          2: (0, 0, 15), 4: (9, 0, 0)}[value]
                 works, log, _ = room_run(shared, 0, door, seconds=seed*7919, rng=seed, traits=[immune]*3)
                 assert log.count(('msg', pike.LINE_IMMUNE)) == 1
                 assert [works[w] for w in fp.PIKE_ST] == [0, 0, 0]
