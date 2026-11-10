@@ -2148,3 +2148,15 @@ siguen esperando A como en retail; ¿se acepta o se investiga su avance automát
 Siguiente paso: según la respuesta: (a) marcar done con la evidencia de §33; (b) seguir las pistas de §33 «Pendiente»
 (importación CRO 0x1018 sobre `[[vista+0x1a0]]+0xcc`, argumento `r2=1` de 0x5c314/0x5c730), gatear con el bit 30,
 y repetir en Azahar una ronda con `lab-drive.sh` esperando 0 pulsaciones en combate.
+
+## 2026-11-10 18:00 — Claude Code (Opus 5.5) — F6-PALACIO-B cerrada (decisión del usuario)
+Estado: hecho
+Hecho: a la pregunta de `f1f3ce3` el usuario elige (a): se acepta que la presentación del entrenador y su frase de
+derrota sigan esperando A, como en retail. F6-PALACIO-B pasa a `done` en `tasks.json`; REPARTO, fila del Palacio:
+etapa B hecha, etapa C (naturaleza) pendiente.
+Evidencia: `python -m pytest -q tests` → 696 passed. Azahar: la de §33 (commits 7623899, 571586e, f1f3ce3).
+Sin probar: consola.
+Commits: el de esta entrada.
+Decisiones: el avance automático de esos dos textos solo en el Palacio queda como pulido opcional (§33 «Pendiente»),
+sin tarea.
+Siguiente paso: el usuario relanza `frontier/orch/frontier-orch auto` → F6-PIRAMIDE-V2A (Codex) y F6-TUBO-V2.
