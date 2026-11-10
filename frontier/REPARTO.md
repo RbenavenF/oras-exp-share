@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-libre (último: frontier-orch, 2026-11-05 15:04)
+Claude Code, 2026-11-10 10:30 (frontier-orch: compactación de Codex)
 
 ## Instalaciones
 
