@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-Claude Code, 2026-11-10 11:00 (tareas v2 de Codex)
+libre (último: Claude Code, 2026-11-10 11:05)
 
 ## Instalaciones
 

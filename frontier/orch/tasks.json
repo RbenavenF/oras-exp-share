@@ -79,6 +79,26 @@
       "status": "pending",
       "notes": "Decisión del usuario 2026-11-10: vía híbrida de reports/frontier.md §32 (interfaz del cliente 0 tipo 0, objeto IA con flags 7, comandos 3/5/6 despachados por la columna IA; mensajes y animaciones en la columna 0). Parte de reports/diseno/palacio-b-experimental.patch (base 18a464f) y de las sondas de frontier/probes/palace/; revisa qué sirve antes de aplicarlo. Bloqueo anterior: la conversión directa (tipo 1) dejó pantallas negras; no la retomes.",
       "evidence": ""
+    },
+    {
+      "id": "F6-PIRAMIDE-V2A",
+      "title": "Pirámide Batalla v2, parte barata: sin PC en los pisos, entrenadores vencidos ocultos y pisos con aspecto de cueva",
+      "owner": "codex",
+      "design": "reports/diseno/piramide.md",
+      "accept": "Sobre la v1 (reports/frontier.md §30, frontier/pyramid.py, asm/pyramid.s): los pisos 141/142 sin el PC de la Mansión; un entrenador vencido deja de verse (o no vuelve a combatir) al volver al piso y tras guardar y cargar; pisos con aspecto de cueva si se puede con un donante de piramide.md §3 sin superar LOAD_BUDGET ni el límite ZO, y si no, anotado con lo medido. Antes de escribir código nativo, medir el espacio libre del hueco de code.bin (lo comparte con el Palacio B) y apuntarlo. En Azahar: subir del piso 1 al 7 con PB, derrota con limpieza, exclusión mutua y una regresión de otra instalación. Tests en verde. PS persistentes, objetos y salvajes quedan para otra tarea.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F6-TUBO-V2",
+      "title": "Tubo Batalla v2: combates salvajes, PP que persisten entre salas y estados que respetan inmunidades",
+      "owner": "codex",
+      "design": "reports/diseno/tubo.md",
+      "accept": "Lo que la v1 dejó fuera por decisión del usuario (2026-11-03): (1) los PP se arrastran entre salas como los PS; (2) los estados de las salas respetan inmunidades de tipo y habilidad; (3) salas de combate salvaje (tubo.md §2, CallWildBattle o un gancho propio, midiendo primero equipo, experiencia y captura; sin captura ni experiencia dentro del Tubo). Medir antes el espacio libre de code.bin (compartido con el Palacio B) y apuntarlo; si no cabe, status blocked con la pregunta. En Azahar: PP gastados que siguen gastados en la sala siguiente, un estado rechazado por inmunidad, una sala salvaje ganada y otra perdida con la racha correcta, sala 14 con PB, equipo intacto al salir, exclusión mutua y regresión del Palacio y la Arena. Tests en verde. Doble, Lucy y pantalla de selección quedan fuera.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
     }
   ]
 }

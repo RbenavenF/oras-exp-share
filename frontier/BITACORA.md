@@ -2086,3 +2086,15 @@ Evidencia: `frontier/orch/frontier-orch status`.
 Sin probar: nada de la vía híbrida en build; solo las trazas GDB heredadas de §32.
 Commits: el de esta entrada.
 Siguiente paso: el usuario lanza `frontier/orch/frontier-orch auto` (dueño Claude; Codex por relevo).
+
+## 2026-11-10 11:05 — Claude Code (Opus 5.5) — frontier-orch: tareas v2 para Codex
+Estado: hecho (sin ejecutar el orquestador)
+Hecho: el usuario pide más tareas para Codex. `tasks.json` gana F6-PIRAMIDE-V2A (sin PC en los pisos, vencidos
+ocultos, aspecto de cueva) y F6-TUBO-V2 (PP persistentes, inmunidades, salvajes), las dos de Codex, `pending` y
+detrás de F6-PALACIO-B: las tres pueden necesitar el hueco de `code.bin` (620 bytes libres hoy, 348 con el
+experimento del Palacio B, §32), y cada una debe medirlo antes de escribir código nativo.
+Decisiones: sin paralelismo; el orquestador lleva una tarea a la vez porque hay un solo laboratorio de Azahar y
+ficheros compartidos (REPARTO normas 1 y 6).
+Evidencia: `frontier/orch/frontier-orch status`.
+Commits: el de esta entrada.
+Siguiente paso: el usuario lanza `frontier/orch/frontier-orch auto`.
