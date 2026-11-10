@@ -2098,3 +2098,35 @@ terminada?) y luego `0x5ca94(vista+0x1a0)`, pone `gestor(vista+0x444)+0x14` y av
 0x5e3cc). Las impresiones de la vista pasan `r2 = 1` a 0x5c314/0x5c730 (¿espera de tecla?). Sin probar.
 Opciones: (a) aceptar esas dos pulsaciones de texto (comportamiento retail); (b) investigar el modo automático de
 la ventana de texto y activarlo solo con el bit 30 (riesgo: toca la interfaz de todos los combates por el puente).
+
+## 34. F6-PIRAMIDE-V2A: pisos de cueva sin PC (2026-11-10)
+
+Medida previa, con `source scripts/env.sh; python` → `patch.assemble()` sobre ffec981:
+cueva compartida **0x579604–0x57a000**, capacidad 2556 bytes, gancho **2212 bytes**, fin **0x579ea8**,
+**344 libres** (el Palacio B corregido ocupa cuatro bytes más que la medida anterior de §33).
+Esta tarea no añade código nativo ni cambia el gancho.
+
+Donante elegido: **77, Ruinas Desierto**, uno de diseño §3. Sondeo reproducible con
+`faraway/run.sh Probe work/frontier/pyramid/build-island/game work/frontier/pyramid/v2/survey-ws entities 77 192 195 199`
+y modo `floor 77`: `work/frontier/pyramid/v2/{entities,floor77,floor192}.txt`.
+Primera sala: suelo a altura 0, x=5–19, y=5–17; salida sur (12,18). La segunda cámara del donante permanece
+como geometría, sin NPC y sin acceso interior (sus tres warps van al vestíbulo). No hay props en el donante.
+
+`frontier/pyramid.py`: llegada (12,0,16), entrenadores (8,10), (12,10), (16,10), encargado (12,6).
+`island_build.CLONES`: 141/142 ← 77, vestíbulo 140 ← 517. `NATIVE_DONORS` conserva 517 en los pisos.
+El plan elimina NPC y disparadores retail, redirige los tres warps a 140/0 y copia las cuatro entradas de modelos
+completas del área 214 (cabecera de 517 +2). `text.<zona>=619` conserva los textos de los ayudantes del script 517
+independientemente del donante visual. Los entrenadores siguen visibles, pero el bit de vencido 16686 impide
+combatir otra vez; es la alternativa admitida por la aceptación. Sin flags o works nuevos.
+
+Build: `python frontier/overlay.py --out work/frontier/pyramid/v2/build`, log `v2/build-final.log`.
+Cada piso: **ZO 16504** (cabecera 56, entidades 456, script 15952, otros 0/12), límite **17248**.
+Carga por piso **566272 bytes** = mundo 56064 + props 24320 + modelos 485888; menor que **LOAD_BUDGET 2724608**.
+El generador comprueba la carga antes de empaquetar y `pyramid.check_floor` valida ZO completo, ausencia de props y
+disparadores, tres salidas al vestíbulo, texto y round-trip del script. Prueba de exceso de ZO y salida retail negativa.
+Suite `python -m pytest -q tests`: **697 passed**, `work/frontier/pyramid/v2/tests-m1.log`.
+
+Azahar: aceptación en curso, todavía no declarada. PS persistentes, objetos y salvajes siguen fuera de esta tarea.
+Para actualizar una partida v1 guardada físicamente en un piso de la Mansión, salir primero al vestíbulo con v1:
+las coordenadas de ese piso guardado no corresponden a la nueva cueva. La reanudación desde el vestíbulo conserva
+piso y vencidos y usa las coordenadas nuevas. Recarga de guardados nuevos en cueva: pendiente de laboratorio.

@@ -2160,3 +2160,19 @@ Commits: el de esta entrada.
 Decisiones: el avance automático de esos dos textos solo en el Palacio queda como pulido opcional (§33 «Pendiente»),
 sin tarea.
 Siguiente paso: el usuario relanza `frontier/orch/frontier-orch auto` → F6-PIRAMIDE-V2A (Codex) y F6-TUBO-V2.
+
+## 2026-11-10 18:05 — Codex — F6-PIRAMIDE-V2A: cueva construida y límites comprobados
+Estado: en curso
+Hecho: leídos AGENTS (sin CLAUDE.md), PLAN, REPARTO, diseño y relevo; turno de frontier-orch intacto.
+Medido gancho actual: 2212/2556 bytes, 344 libres, 0x579604–0x579ea8; no se añade código nativo.
+Pisos 141/142 clonados de Ruinas Desierto 77, sin props/PC ni disparadores retail; tres salidas al vestíbulo,
+coordenadas en la primera sala, nativas 517 y texto 619 independientes del donante. Registro de modelos de área 214.
+Validación de carga y ZO completo en el generador; tests actualizados para donante visual/nativo distinto.
+Evidencia: reports/frontier.md §34; work/frontier/pyramid/v2/{entities,floor77,floor192}.txt y build-final.log:
+ZO 16504 ≤ 17248 por piso, carga 566272 ≤ 2724608. Suite tests-m1.log: 697 passed.
+Commits: el de esta entrada.
+Decisiones: usar alternativa aceptada «no vuelve a combatir» (work 16686 existente), conservar NPC visibles.
+No añadir flags ni gastar la cueva nativa compartida. No se tocaron inputs, informes ajenos sin seguir ni partida original.
+Siguiente paso: aceptación Azahar con v2/build, partida v2/start.sav (copia de py_lobby_saved.sav): reanudar,
+comprobar movimiento y NPC en cueva, siete pisos y PB, persistencia tras salir/guardar/recargar, derrota,
+exclusión y regresión. Laboratorio vivo en la shell persistente de esta sesión; al terminar debe detenerse.

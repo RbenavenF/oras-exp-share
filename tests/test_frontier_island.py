@@ -192,12 +192,12 @@ def test_every_island_clone_gets_its_donors_native_groups():
            f'{island_build.DONOR_HALL}:{island_build.ZONE_PALACE},' \
            f'{island_build.DONOR_HALL}:{island_build.ZONE_PIKE},' \
            f'{island_build.DONOR_HALL}:{island_build.ZONE_ARENA},' \
-           f'{island_build.DONOR_HALL}:140,{island_build.DONOR_HALL}:141,{island_build.DONOR_HALL}:142\n' \
+           f'{island_build.DONOR_HALL}:140,{island_build.pyramid.FLOOR_DONOR}:141,{island_build.pyramid.FLOOR_DONOR}:142\n' \
            in island_build.plan('s')
     code = bytearray(patch.REPOLISHED.read_bytes())
-    patch.zone_natives(code, island_build.CLONES)
+    patch.zone_natives(code, island_build.native_donors())
     mask = lambda zone: int.from_bytes(code[patch.ZONE_NATIVES - patch.BASE + 4 * zone:][:4], 'little')
-    for slot, donor in island_build.CLONES.items():
+    for slot, donor in island_build.native_donors().items():
         assert mask(slot) == mask(donor)
     assert all(mask(z) & patch.NATIVES_MAISON
                for z in (island_build.ZONE_HALL, island_build.ZONE_TOWER, island_build.ZONE_DOME,
@@ -233,7 +233,7 @@ def test_plaza_plan_links_the_tower_the_dome_the_factory_and_the_palace():
     assert f'zone.{island_build.ZONE_PIKE}.warp.0=0,{island_build.ZONE_ISLAND},4' in lines
     assert f'zone.{island_build.ZONE_ARENA}.warp.0=0,{island_build.ZONE_ISLAND},5' in lines
     assert f'zone.{island_build.ZONE_PALACE}.warp.0=0,{island_build.ZONE_ISLAND},6' in lines
-    assert ['zone.141.warp.0=0,140,0', 'zone.142.warp.0=0,140,0'] == [l for l in lines if l.startswith(('zone.141.', 'zone.142.'))
+    assert [f'zone.{z}.warp.{k}={k},140,0' for z in (141, 142) for k in range(3)] == [l for l in lines if l.startswith(('zone.141.', 'zone.142.'))
                                                                        and '.warp.' in l]
     assert buildings[arena].startswith(f'plaza.building.{arena}=Battle Resort thatched house|17|25')
     assert all(f'keeptext.{z}=1' in lines

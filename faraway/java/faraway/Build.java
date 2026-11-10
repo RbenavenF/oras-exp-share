@@ -69,6 +69,9 @@ public final class Build {
 		if (plan.getProperty("keeptext." + slot) != null) {
 			text = u16(MasterTable.read(s).row(slot), 0x06);
 		}
+		if (plan.getProperty("text." + slot) != null) {
+			text = num("text." + slot);
+		}
 		MasterTable table = MasterTable.read(s);
 		byte[] r = table.row(slot);
 		put16(r, 0x06, text);
@@ -188,6 +191,13 @@ public final class Build {
 		z.store();
 		if (regChanged) {
 			reg.store();
+		}
+		if (plan.getProperty(k + "loadBudget") != null) {
+			String budget = ctrmap.tests.FrontierPlaza.loadBudget(zoneIndex);
+			System.out.println("zone " + zoneIndex + " " + budget);
+			if (Long.parseLong(budget.split(" ")[2]) > num(k + "loadBudget")) {
+				throw new IllegalStateException("zone " + zoneIndex + " exceeds load budget");
+			}
 		}
 		System.out.println("zone " + zoneIndex + ": " + e.npcs.size() + " NPCs, " + e.warps.size() + " warps, "
 				+ e.triggers1.size() + " triggers; scripts " + zs.isFile() + "/" + es.isFile() + "; registry "

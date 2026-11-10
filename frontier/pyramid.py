@@ -2,12 +2,12 @@
 """Battle Pyramid v1 (reports/diseno/piramide.md §1): a lobby and seven fixed floors of trainers; no darkness, wild
 Pokémon, items or Brandon (v2).
 
-Interiors (frontier/REPARTO.md), all clones of the Battle Maison hall (zone 517) with its native groups:
+Interiors (frontier/REPARTO.md), all with the Battle Maison native groups:
 - LOBBY (140): the plaza's Pyramid door (32,57) leads here and its exit (warp 0) back to (32,58). The right-hand
   receptionist (event 2) runs `pyramid_reception`; every other event of the hall does nothing (0x1294).
-- FLOORS (141, 142): floor n is FLOORS[(n - 1) % 2], so every floor change is a change of zone (re-entering the
+- FLOORS (141, 142), cloned from Desert Ruins (77): floor n is FLOORS[(n - 1) % 2], so every floor change is a change of zone (re-entering the
   zone one is in was not needed). Their NPCs are replaced: TRAINERS trainers (events 2..) and an attendant (the
-  «stairs», event STAIRS_EVENT). Their exit (warp 0) leads to the lobby: the challenge stays in progress and the
+  «stairs», event STAIRS_EVENT). All three donor exits lead to the lobby: the challenge stays in progress and the
   receptionist offers to resume it.
 
 Experiment 0 (reports/frontier.md §30, Azahar): the Maison's facility work does not survive _MapChangeCore. So a
@@ -31,16 +31,18 @@ healed, no bag, no experience; the rival from the Maison's trainers by the Pyram
 
 Texts: text 637 lines from LINE_BASE (after the Pike's), said by shared script 5 case GLOBAL_SAY (`pyramid_say`;
 the zone passes the line in WORK_MSG, bit 8 = yes/no question answered in GlobalGetChildParam(0), and a number in
-WORK_ARG). Known deviations (design §1, §6): the floors are the Maison's hall (not a cave), the trainers stay after
-being beaten, a battle heals, held items are allowed, the Maison's banned species; reordering the party between
+WORK_ARG). Known deviations (design §1, §6): the trainers remain visible after
+being beaten (their saved bit prevents another battle), a battle heals, held items are allowed, the Maison's banned species; reordering the party between
 floors changes who fights (the three are party slots).
 """
 import sys
+import struct
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / 'scripts'), str(ROOT / 'frontier')]
-from pawn import OP, Op, Program  # noqa: E402
+from formats import zo_files
+from pawn import OP, Op, Program, Script  # noqa: E402
 import data as fd  # noqa: E402
 import factory  # noqa: E402
 import patch  # noqa: E402
@@ -50,6 +52,9 @@ import tower  # noqa: E402
 FACILITY = 'pyramid'
 LOBBY = 140                       # frontier/REPARTO.md; checked statically by frontier/zone_check.py (§30)
 FLOORS = (141, 142)
+FLOOR_DONOR = 77                # Desert Ruins, first chamber; reports/frontier.md §34
+ZO_LIMIT = 17248                # measured safe container size, reports/frontier.md §11
+FLOOR_WARPS = 3                # all donor exits are redirected to the lobby
 ZONES = (LOBBY, *FLOORS)
 ROUTE = patch.ROUTE[FACILITY]
 STREAK, ACTIVE, RECORD = (patch.STREAK_ROUTES[ROUTE][1] + k for k in range(3))   # ACTIVE = current floor, 0 = none
@@ -71,11 +76,11 @@ SAVE = 'L13d4'                    # GlobalCall 2003 (save prompt) -> 0 if saved 
 ADD_BP = 'L30'                    # (bp): PlayerGetBP + bp -> PlayerSetBP, RecordAdd 34
 AFTER_BATTLE = [('L4', 1), ('L74', 2, 4), ('L6c0',), ('Lf34', 10)]   # as zone 517 after StartBattle (0x1ef0-0x1f28)
 # _MapChangeCore destinations: zone, x, height, y, facing (0 = up; shared 79 @724 adds 0, 0, 1, 0).
-FLOOR_ARRIVAL = (20, 0, 29, 0)    # the hall's carpet, above its entrance (warp 0 at tiles 19-21, 31)
+FLOOR_ARRIVAL = (12, 0, 16, 0)    # inside Desert Ruins, above the south exit (12,18)
 LOBBY_RETURN = (LOBBY, 23, 0, 25, 0)   # in front of the receptionist (NPC 1 of zone 517, tile 23,24)
 # Floor NPCs (plan lines): (model, x, y, facing); models of zone 517's own registry (its NPCs 2, 3, 4, 9).
-TRAINER_NPCS = [(263, 17, 24, 1), (298, 23, 24, 1), (277, 28, 25, 1)]
-STAIRS_NPC = (62, 21, 26, 1)
+TRAINER_NPCS = [(263, 8, 10, 1), (298, 12, 10, 1), (277, 16, 10, 1)]
+STAIRS_NPC = (62, 12, 6, 1)
 
 TEXTS = {
     'es': {'intro': 'Te damos la bienvenida a la Pirámide Batalla.\nSube sus 7 pisos venciendo a todos\nlos Entrenadores de cada uno.',
@@ -447,9 +452,35 @@ def plan_lines():
     """CTRMap-F5 plan lines (island_build.plan): each floor's NPCs and its exit to the lobby."""
     out = []
     for zone in FLOORS:
-        out += [f'zone.{zone}.clearNpcs=1', f'zone.{zone}.warp.0=0,{LOBBY},0']
+        out += [f'zone.{zone}.clearNpcs=1', f'zone.{zone}.clearTriggers=1',
+                f'text.{zone}=619', f'zone.{zone}.loadBudget=2724608']
+        out += [f'zone.{zone}.warp.{k}={k},{LOBBY},0' for k in range(FLOOR_WARPS)]
         npcs = [(m, 2 + k, x, y, f) for k, (m, x, y, f) in enumerate(TRAINER_NPCS)]
         npcs.append((STAIRS_NPC[0], STAIRS_EVENT, *STAIRS_NPC[1:]))
         for i, (model, script, x, y, face) in enumerate(npcs):
             out.append(f'zone.{zone}.npc.{i}={model},{model},{script},0,{x},{y},0,{face}')
+    # Complete retail registry entries for the four Maison models, measured header area 214.
+    out += [f'regdonor.{m}=214' for m in [*(n[0] for n in TRAINER_NPCS), STAIRS_NPC[0]]]
     return out
+
+
+def check_floor(raw):
+    """Guard the complete generated ZO, including entities, against the measured field buffer limit.
+
+    A cave must not inherit interactive props, retail triggers or a way back into the story.
+    """
+    if len(raw) > ZO_LIMIT:
+        raise ValueError(f'Pyramid floor ZO {len(raw)} exceeds {ZO_LIMIT}')
+    files = zo_files(raw)
+    entities = files[1]
+    if tuple(entities[4:9]) != (0, TRAINERS + 1, FLOOR_WARPS, 0, 0):
+        raise ValueError('Pyramid floor has unexpected props/NPCs/warps/triggers')
+    start = 12 + (TRAINERS + 1) * 0x30
+    if any(struct.unpack_from('<HH', entities, start + k * 0x18) != (LOBBY, 0)
+           for k in range(FLOOR_WARPS)):
+        raise ValueError('Pyramid floor exit does not lead to the lobby')
+    if struct.unpack_from('<H', files[0], 6)[0] != 619:
+        raise ValueError('Pyramid floor does not have the Maison helper texts')
+    if Script.parse(files[2]).build() != files[2]:
+        raise ValueError('Pyramid floor script does not round-trip')
+    return len(raw)

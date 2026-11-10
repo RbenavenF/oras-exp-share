@@ -75,7 +75,11 @@ def test_pyramid_global_case_and_text_lines():
 def test_plan_lines_give_each_floor_three_trainers_an_attendant_and_the_lobby_exit():
     lines = py.plan_lines()
     for zone in py.FLOORS:
-        assert f'zone.{zone}.clearNpcs=1' in lines and f'zone.{zone}.warp.0=0,{py.LOBBY},0' in lines
+        assert f'zone.{zone}.clearNpcs=1' in lines and f'zone.{zone}.clearTriggers=1' in lines
+        assert f'text.{zone}=619' in lines
+        assert f'zone.{zone}.loadBudget={island_build.LOAD_BUDGET}' in lines
+        assert all(f'zone.{zone}.warp.{k}={k},{py.LOBBY},0' in lines for k in range(3))
+        assert island_build.CLONES[zone] == 77 and island_build.native_donors()[zone] == 517
         npcs = [l.split('=')[1].split(',') for l in lines if l.startswith(f'zone.{zone}.npc.')]
         assert [int(n[2]) for n in npcs] == [2, 3, 4, py.STAIRS_EVENT]
         assert len({(n[4], n[5]) for n in npcs}) == 4
@@ -414,3 +418,25 @@ def test_pyramid_save_keeps_the_selection_on_its_route(code):
                                     dict(route=py.ROUTE, selection=(1, 2, 6)), dict(route=py.ROUTE, work=0)])
 def test_pyramid_save_writes_nothing_otherwise(code, kwargs):
     assert run_delete(code, **kwargs) == ([0xBEEF] * 3, 0xBEEF)
+
+
+def test_complete_floor_container_guards(retail):
+    from formats import zo_build
+    head = bytearray(56)
+    struct.pack_into('<H', head, 6, 619)
+    ent = bytearray(12 + 4 * 0x30 + 3 * 0x18)
+    ent[4:9] = bytes([0, 4, 3, 0, 0])
+    for k in range(3):
+        struct.pack_into('<HH', ent, 12 + 4 * 0x30 + k * 0x18, 140, 0)
+    raw = py.zone_scripts(retail)[141]
+    files = [head, ent, raw, b'', b'']
+    assert py.check_floor(zo_build(files)) <= py.ZO_LIMIT
+    with pytest.raises(ValueError, match='exceeds'):
+        py.check_floor(zo_build(files + [bytes(py.ZO_LIMIT)]))
+    ent[4] = 1
+    with pytest.raises(ValueError, match='props'):
+        py.check_floor(zo_build(files))
+    ent[4] = 0
+    struct.pack_into('<H', ent, 12 + 4 * 0x30 + 2 * 0x18, 77)
+    with pytest.raises(ValueError, match='exit'):
+        py.check_floor(zo_build(files))

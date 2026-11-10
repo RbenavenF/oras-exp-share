@@ -86,7 +86,7 @@
       "owner": "codex",
       "design": "reports/diseno/piramide.md",
       "accept": "Sobre la v1 (reports/frontier.md §30, frontier/pyramid.py, asm/pyramid.s): los pisos 141/142 sin el PC de la Mansión; un entrenador vencido deja de verse (o no vuelve a combatir) al volver al piso y tras guardar y cargar; pisos con aspecto de cueva si se puede con un donante de piramide.md §3 sin superar LOAD_BUDGET ni el límite ZO, y si no, anotado con lo medido. Antes de escribir código nativo, medir el espacio libre del hueco de code.bin (lo comparte con el Palacio B) y apuntarlo. En Azahar: subir del piso 1 al 7 con PB, derrota con limpieza, exclusión mutua y una regresión de otra instalación. Tests en verde. PS persistentes, objetos y salvajes quedan para otra tarea.",
-      "status": "pending",
+      "status": "in_progress",
       "notes": "",
       "evidence": ""
     },
