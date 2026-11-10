@@ -1,0 +1,3 @@
+# frontier-orch parallel lanes append to these at the same time: keep both sides on a rebase
+frontier/BITACORA.md merge=union
+reports/frontier.md merge=union

@@ -244,3 +244,142 @@ def test_fresh_sessions_never_resume_and_say_the_task_is_started(repo):
     assert calls[1][2].startswith('Eres codex')         # the full brief, not «Continúa…»
     cmd, session, resumed = orch.command('codex', tasks['T2'], resuming=True)
     assert not resumed and 'La tarea ya está empezada' in cmd[-1]
+
+
+# ---- parallel lanes (auto --parallel) ---------------------------------------------------------------------------
+@pytest.fixture
+def lanes_repo(repo):
+    cfg = json.loads((repo / 'frontier/orch/config.json').read_text())
+    cfg['lanes']['link'], cfg['lanes']['copy'] = ['shared-input'], []
+    (repo / 'frontier/orch/config.json').write_text(json.dumps(cfg))
+    (repo / 'frontier/BITACORA.md').write_text('# Bitácora\n')
+    (repo / '.gitattributes').write_text((ROOT / '.gitattributes').read_text())
+    (repo / 'shared.txt').write_text('base\n')
+    (repo / '.gitignore').write_text('/work\n/shared-input\n')
+    (repo / 'shared-input').mkdir()
+    (repo / 'shared-input/big.bin').write_text('read-only input')
+    git(repo, '-c', 'user.name=t', '-c', 'user.email=t@t', 'add', '-A')
+    git(repo, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'lanes base')
+    return repo
+
+
+def run_parallel(repo, plan, max_runs=10):
+    Path(__import__('os').environ['FAKE_PLAN']).write_text(json.dumps(plan))
+    clock, log = Clock(), []
+    orch = fo.Orch(repo, now=clock.now, sleep=clock.sleep, out=log.append)
+    outcome = orch.auto_parallel(max_runs)
+    calls = [json.loads(line) for line in Path(__import__('os').environ['FAKE_CALLS']).read_text().splitlines()]
+    tasks = {t['id']: t for t in json.loads((repo / 'frontier/orch/tasks.json').read_text())['tasks']}
+    return outcome, calls, tasks, orch, log
+
+
+def test_lanes_run_both_agents_at_once_and_land_their_work_on_main(lanes_repo):
+    outcome, calls, tasks, orch, log = run_parallel(
+        lanes_repo, {'claude': ['sleep5', 'lanedone'], 'codex': ['sleep5', 'lanedone']})
+    assert outcome == 'done' and tasks['T1']['status'] == tasks['T2']['status'] == 'done'
+    assert {c[3] for c in calls} == {'claude', 'codex'}                    # each agent in its own lane
+    assert {Path(c[4]).name for c in calls} == {'claude', 'codex'}
+    assert all('MODO PARALELO' in c[5] for c in calls)
+    files = git(lanes_repo, 'ls-files').split()
+    assert 'done-claude.txt' in files and 'done-codex.txt' in files      # both fast-forwarded into main
+    assert tasks['T2']['evidence'] == 'codex in codex'
+    assert fo.TURN.search((lanes_repo / 'frontier/REPARTO.md').read_text()).group(2).startswith('libre')
+    lane = orch.lane_path('codex')
+    assert (lane / 'shared-input').is_symlink() and (lane / 'work/lab-port').read_text().strip() == '24691'
+    assert not git(lanes_repo, 'status', '--porcelain')                  # main is clean
+
+
+def test_lanes_overlap_in_time(lanes_repo, monkeypatch):
+    """The two agents' runs are concurrent, not one after the other."""
+    import time as _t
+    spans = {}
+    real = fo.Orch.lane_run
+
+    def timed(self, agent, task, resuming):
+        start = _t.monotonic()
+        result = real(self, agent, task, resuming)
+        spans[agent] = (start, _t.monotonic())
+        return result
+    monkeypatch.setattr(fo.Orch, 'lane_run', timed)
+    run_parallel(lanes_repo, {'claude': ['sleep8', 'lanedone'], 'codex': ['sleep8', 'lanedone']})
+    (a0, a1), (b0, b1) = spans['claude'], spans['codex']
+    assert a0 < b1 and b0 < a1
+
+
+def test_both_lanes_appending_to_the_log_merge_without_conflict(lanes_repo):
+    outcome, calls, tasks, *_ = run_parallel(
+        lanes_repo, {'claude': ['bitacora', 'lanedone'], 'codex': ['bitacora', 'lanedone']})
+    text = (lanes_repo / 'frontier/BITACORA.md').read_text()
+    assert outcome == 'done' and text.count('## entry by claude') == 1 and text.count('## entry by codex') == 1
+    assert '<<<<<<<' not in text
+
+
+def test_a_real_conflict_blocks_that_task_and_keeps_main_clean(lanes_repo):
+    outcome, calls, tasks, orch, log = run_parallel(lanes_repo, {'claude': ['clash', 'lanedone'], 'codex': ['clash', 'lanedone']})
+    assert outcome == 'stop'
+    blocked = [t for t in tasks.values() if t['status'] == 'blocked']
+    assert len(blocked) == 1 and 'conflicto al integrar' in blocked[0]['notes'] and 'shared.txt' in blocked[0]['notes']
+    assert not git(lanes_repo, 'status', '--porcelain')
+    assert (lanes_repo / 'shared.txt').read_text() in ('claude\n', 'codex\n')     # the first one landed
+
+
+def test_a_lane_out_of_quota_hands_its_task_to_the_other_lane(lanes_repo):
+    outcome, calls, tasks, orch, log = run_parallel(
+        lanes_repo, {'claude': ['lanedone', 'lanedone'], 'codex': ['limit']})
+    assert outcome == 'done' and tasks['T2']['status'] == 'done'
+    claude = [c for c in calls if c[0] == 'claude']
+    assert len(claude) == 2 and [c[0] for c in calls].count('codex') == 1
+    relay = [c for c in claude if c[2].startswith('AVISO DE RELEVO: la sesión anterior (codex)')]
+    assert len(relay) == 1 and relay[0][3] == 'claude'          # in claude's own lane
+
+
+def test_a_blocked_lane_task_stops_only_when_nothing_else_is_left(lanes_repo):
+    outcome, calls, tasks, *_ = run_parallel(lanes_repo, {'claude': ['blocked'], 'codex': ['sleep3', 'lanedone']})
+    assert outcome == 'stop' and tasks['T1']['status'] == 'blocked' and tasks['T2']['status'] == 'done'
+    assert tasks['T1']['notes'] == '¿A o B?'
+
+
+def test_failed_acceptance_in_a_lane_reopens_the_task(lanes_repo):
+    cfg = json.loads((lanes_repo / 'frontier/orch/config.json').read_text())
+    cfg['acceptance'] = [['false']]
+    (lanes_repo / 'frontier/orch/config.json').write_text(json.dumps(cfg))
+    git(lanes_repo, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qam', 'acceptance off')
+    outcome, calls, tasks, *_ = run_parallel(lanes_repo, {'claude': ['lanedone', 'noop', 'noop'], 'codex': ['lanedone', 'noop', 'noop']},
+                                             max_runs=6)
+    assert all(t['status'] in ('in_progress', 'blocked') for t in tasks.values())
+    assert all('aceptación fallida' in t['notes'] for t in tasks.values())
+
+
+def test_lanes_remove_deletes_worktrees_but_not_shared_inputs(lanes_repo):
+    run_parallel(lanes_repo, {'claude': ['lanedone'], 'codex': ['lanedone']})
+    clock = Clock()
+    orch = fo.Orch(lanes_repo, now=clock.now, sleep=clock.sleep, out=lambda line: None)
+    orch.lanes_remove()
+    assert not orch.lane_path('claude').exists() and (lanes_repo / 'shared-input/big.bin').exists()
+    assert 'lane/' not in git(lanes_repo, 'branch')
+
+
+def test_codex_may_write_the_main_git_dir_from_a_lane(lanes_repo):
+    real = json.loads((ROOT / 'frontier/orch/config.json').read_text())
+    assert any('{git_common}' in part for part in real['agents']['codex']['new'])
+    clock = Clock()
+    orch = fo.Orch(lanes_repo, now=clock.now, sleep=clock.sleep, out=lambda line: None)
+    orch.cfg['agents']['codex'] = real['agents']['codex']
+    task = {'id': 'T2', 'title': 'two', 'owner': 'codex', 'status': 'pending'}
+    cmd, *_ = orch.command('codex', task, False, lane=orch.lane_path('codex'))
+    assert f'sandbox_workspace_write.writable_roots=["{lanes_repo.resolve() / ".git"}"]' in cmd
+    assert cmd[cmd.index('-C') + 1] == str(orch.lane_path('codex'))
+
+
+def test_a_kept_lane_branch_is_reused_not_reset(lanes_repo):
+    clock = Clock()
+    orch = fo.Orch(lanes_repo, now=clock.now, sleep=clock.sleep, out=lambda line: None)
+    orch.lanes_setup()
+    lane = orch.lane_path('codex')
+    (lane / 'unmerged.txt').write_text('x')
+    subprocess.run(['git', '-C', str(lane), 'add', '-A'], check=True)
+    subprocess.run(['git', '-C', str(lane), 'commit', '-qm', 'unmerged'], check=True)
+    orch.lanes_remove()
+    assert 'lane/codex' in git(lanes_repo, 'branch')             # kept: not in main
+    orch.lanes_setup()
+    assert (orch.lane_path('codex') / 'unmerged.txt').exists()

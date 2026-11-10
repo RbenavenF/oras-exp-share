@@ -2,7 +2,7 @@
 # Laboratory: tap the D-pad N times (one tile each) and print the player's tile from RAM.
 # Usage: walk.sh DIR COUNT   (DIR: t up, g down, f left, h right)   or   walk.sh pos
 set -euo pipefail
-cd /home/rbenaven/projects/oras-exp-share
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
 source scripts/env.sh
 POS=${FARAWAY_POS_ADDR:-0x8187bf4}
 pos() {
