@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-Claude Code, 2026-11-10 10:45 (F6-PALACIO-B: vía híbrida)
+libre (último: Claude Code, 2026-11-10 10:50)
 
 ## Instalaciones
 
@@ -40,6 +40,9 @@ Decisiones del usuario (2026-11-03):
 - Palacio y Arena: primero sin su mecánica especial (etapa A, como la Torre); la mecánica del motor, después.
 - Tubo v1: los PP no se arrastran, los estados ignoran inmunidades y no hay salvajes (van a la v2).
 - La tabla de PB de la Fábrica se revisa en el trabajo común.
+
+Decisión del usuario (2026-11-10): Palacio etapa B por la vía híbrida de `reports/frontier.md` §32 (interfaz
+conservada, decisiones 3/5/6 por la IA), no por la conversión directa del cliente 0 ni por las alternativas 2 o 3.
 
 | Instalación | Dueño | Estado | Interior (por verificar) | Diseño | Dificultad v1 (según su diseño) |
 | --- | --- | --- | --- | --- | --- |

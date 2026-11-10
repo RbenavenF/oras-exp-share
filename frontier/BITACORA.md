@@ -2074,3 +2074,15 @@ Sin probar: la compactación no se ha disparado aún (la ejecución del Palacio 
 Commits: el de esta entrada.
 Siguiente paso: decisión del usuario sobre F6-PALACIO-B (notas de `tasks.json`, `reports/frontier.md` §32); después
 relanzar `frontier/orch/frontier-orch auto`.
+
+## 2026-11-10 10:50 — Claude Code (Opus 5.5) — F6-PALACIO-B reabierta por la vía híbrida
+Estado: hecho (sin ejecutar el orquestador)
+Hecho: el usuario elige la vía híbrida de `reports/frontier.md` §32 para el Palacio B (frente a la alternativa 2,
+ficha recortada, y a la 3, truco de Multi). `tasks.json`: F6-PALACIO-B pasa de `blocked` a `pending`, con notas
+(punto de partida: `reports/diseno/palacio-b-experimental.patch`, base 18a464f, y `frontier/probes/palace/`; no
+retomar la conversión directa) y criterios nuevos (marca propia, guarded_writes sobre v0.5/Tubo/Arena, M4, ronda
+sin pulsaciones en Azahar con resultado, racha y PB, regresiones manuales). Decisión anotada en REPARTO.
+Evidencia: `frontier/orch/frontier-orch status`.
+Sin probar: nada de la vía híbrida en build; solo las trazas GDB heredadas de §32.
+Commits: el de esta entrada.
+Siguiente paso: el usuario lanza `frontier/orch/frontier-orch auto` (dueño Claude; Codex por relevo).
