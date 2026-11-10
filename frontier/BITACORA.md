@@ -2206,3 +2206,24 @@ Decisiones: intento v2-round7 inválido (no guardó por diálogo abierto); su es
 recompensa medida además con fixture, sin presentar esa fixture como recorrido. No cambios nativos.
 Siguiente paso: Pirámide rechaza Torre activa (boot en curso), Fábrica rechaza Pirámide activa y regresión Torre.
 Después, detener laboratorio y cerrar tasks.json si todo pasa. Tarea in_progress.
+
+## 2026-11-10 19:09 — Codex — F6-PIRAMIDE-V2A cerrada: exclusión, regresión y recarga
+Estado: hecho
+Hecho: Pirámide rechaza Torre activa y Fábrica rechaza Pirámide activa, sin StartBattle.
+Torre con selección y menú de lucha manual: victoria asistida raw=1, racha/récord 12→13, ruta 2,
+marca nativa 0 y Pirámide 0/0/0/0. Reinicio desde el guardado real floor1-beaten0.sav:
+el entrenador dice «Ya hemos combatido» y no arranca combate. tasks.json pasa a done.
+Evidencia: reports/frontier.md §34; work/frontier/pyramid/v2/{pyramid-refuses-tower,factory-refuses-pyramid,
+tower-menu,tower-win,beaten-after-reload}.png; gdb-{busy,factory-busy,tower,reload-refusal}.log.
+Suite final: python -m pytest -q tests, 697 passed in 18.43s (tests-close.log); audit_round.py confirma
+21 victorias/siete transiciones; compileall, bash -n y git diff --check correctos.
+Azahar, Xvfb y GDB detenidos en la misma shell; ningún proceso del runtime ni sesión viva,
+use_gdbstub=false restaurado (lab-stopped.log 19:07:45 CET). Un solo laboratorio, sin push ni subagentes.
+Commits: ddd8428 cueva/límites, 61d0910 persistencia/sondas, f2dfbb7 siete pisos/PB/derrota y el de esta entrada.
+Decisiones: aceptación por «no vuelve a combatir», NPC vencido visible. Donante 77 dentro de ambos límites;
+344 bytes nativos libres medidos y ninguno añadido. Combates asistidos HP 1/Salpicadura en RAM,
+resultados/works/PB sin escribir. Recompensa adicional documentada como fixture, no como segundo recorrido.
+No probado en consola ni dificultad; PS persistentes, objetos y salvajes siguen fuera de v2A.
+Siguiente paso: frontier-orch verifica la tarea y selecciona la siguiente (F6-TUBO-V2 pendiente).
+No tocar REPARTO: el turno sigue siendo del orquestador. Para rehacer la aceptación, usar v2/build y
+frontier/probes/pyramid/README.md; guardados v1 físicamente dentro de Mansión deben salir antes al vestíbulo.

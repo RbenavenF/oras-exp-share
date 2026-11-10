@@ -11,6 +11,13 @@ No forman parte de la build. Ejecutar `source scripts/env.sh` primero.
 - `climb.sh`: desde llegada (12,16), recorre tres entrenadores y encargado
   de los siete pisos; `FIRST` para empezar más arriba. `SKIP0=1` desde (8,11)
   tras verificar al entrenador 0 vencido del piso 1.
+- `audit_round.py`: comprueba los 21 IsWin y las siete transiciones de los logs
+  conservados de §34. La primera victoria se hizo antes de reiniciar el juego.
+- `save.sh NOMBRE`: desde el campo, sin diálogo; rechaza un archivo sin cambios.
+  Revisar siempre captura y JSON antes de usar el snapshot como evidencia.
+- `walk_to.py`: aborta ante respuesta vacía del FIFO GDB o colisión. No ejecutar
+  dos conductores simultáneamente. En la plaza hubo respuestas vacías persistentes:
+  la exclusión inversa se terminó con teclas y capturas, sin teletransportar.
 
 Azahar, GDB y conductores deben ejecutarse en una única shell persistente:
 las llamadas exec independientes tienen namespaces PID distintos. Parar GDB y

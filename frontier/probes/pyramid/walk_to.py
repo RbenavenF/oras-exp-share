@@ -10,8 +10,12 @@ def pos():
     subprocess.run(['faraway/gdbctl.sh', 'halt'], stdout=subprocess.DEVNULL, check=True)
     out = subprocess.check_output(['faraway/gdbctl.sh', 'cmd', 'x/3fw 0x8187bf4'], text=True)
     subprocess.run(['faraway/gdbctl.sh', 'run'], stdout=subprocess.DEVNULL, check=True)
-    line = next(l for l in out.splitlines() if l.startswith('0x8187bf4:'))
-    x, height, y = map(float, line.split(':')[1].split())
+    # A prompt can share the response line. Empty replies remain a lab error;
+    # retry only after checking that no other driver is using the GDB FIFO.
+    match = re.search(r'0x8187bf4:\s*([^\n]+)', out)
+    if match is None:
+        raise RuntimeError(f'No position in GDB response: {out!r}')
+    x, height, y = map(float, match.group(1).split())
     return round((x - 9) / 18), round((y - 9) / 18)
 
 

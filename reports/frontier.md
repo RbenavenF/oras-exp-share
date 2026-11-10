@@ -2170,3 +2170,32 @@ Modo `loss` de la sonda: 1 PS/Salpicadura a nuestros tres elegidos, sustitucione
 **3a2410afe9af564d9e8b3f2dfd106fe60d57cca00997afe5c67ac4bb0e83abaa**, zona 140, **0/0/7**, PB **5→5**.
 Fuentes `loss-drive*.log`, `loss-save.log`. Tests de hito: 60 passed (`tests-m3.log`), audit_round, compileall y bash -n.
 Exclusión y regresión aún pendientes en esta entrada.
+
+### Exclusión y regresión cerradas (Azahar, misma build)
+
+Fuentes bajo `work/frontier/pyramid/v2/`:
+- Pirámide rechaza Torre activa: fixture `work/frontier/lab/py_fx_tower_busy.sav`
+  (SHA eaba58496f7d7266da5606eaff6e84ca179ce93dcd34d86389c7e3a0837e0445, work 16442=1),
+  `pyramid-refuses-tower.png` y `gdb-busy.log`: mensaje de desafío pendiente, ningún StartBattle.
+- Fábrica rechaza Pirámide activa: `work/frontier/lab/py_exit_plaza.sav`
+  (SHA f2237dccc7350f48f345692b35f65357467061e9ff4e61789c1dfc19262feab9, piso 2),
+  entrada caminando desde la plaza y opción Fábrica Batalla de la recepción derecha;
+  `factory-refuses-pyramid.png`, `gdb-factory-busy.log`, ningún StartBattle.
+  El conductor de posición sufrió respuestas vacías del FIFO; el trayecto se terminó con teclas y capturas.
+- Torre, fixture `work/frontier/arena/b2-tower-in.sav`
+  (SHA df1b162bf818a9a27b9862646f297336fe4e36d7a57c7eed72db411934d2155a):
+  selección del equipo, `tower-menu.png` con Luchar manual, victoria asistida HP 1/Salpicadura,
+  `gdb-tower.log` IsWin raw=1, ruta 2, marca nativa 0. `TOWER AFTER`: racha/récord **12→13**,
+  activo 1; Pirámide racha/piso/récord/vencidos **0/0/0/0**. `tower-win.png`: próximo combate número 14.
+
+Reinicio adicional desde `floor1-beaten0.sav` (SHA 9c58778b… indicado arriba):
+`beaten-after-reload.png` muestra «Ya hemos combatido. ¡Sigue adelante!» en la cueva;
+`gdb-reload-refusal.log` no contiene ningún Start ni IsWin. Se completa así la comprobación explícita
+de rechazo después de guardar y cargar, además de salir y volver al piso.
+
+Cierre: `python -m pytest -q tests` **697 passed in 18.43s** (`v2/tests-close.log`),
+auditoría de 21 victorias/siete transiciones, compileall y bash -n correctos. `git diff --check` limpio.
+Azahar/Xvfb/GDB detenidos en su misma shell; sin procesos del runtime ni sesión viva,
+`use_gdbstub=false` restaurado (`v2/lab-stopped.log`, 2026-11-10 19:07 CET).
+Aceptación v2A cerrada. No probado en consola ni el equilibrio de dificultad; PS persistentes, objetos y
+salvajes siguen para otra tarea. Los vencidos permanecen visibles y rechazan combatir, alternativa admitida.
