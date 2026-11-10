@@ -2199,3 +2199,43 @@ Azahar/Xvfb/GDB detenidos en su misma shell; sin procesos del runtime ni sesión
 `use_gdbstub=false` restaurado (`v2/lab-stopped.log`, 2026-11-10 19:07 CET).
 Aceptación v2A cerrada. No probado en consola ni el equilibrio de dificultad; PS persistentes, objetos y
 salvajes siguen para otra tarea. Los vencidos permanecen visibles y rechazan combatir, alternativa admitida.
+
+## 35. Tubo v2 — PP persistentes y medidas iniciales (2026-11-10, Codex; en curso)
+
+Antes de escribir código nativo se ejecutó `patch.assemble()` sobre af89165:
+`work/frontier/pike/v2/space-before.json`, cueva compartida **0x579604–0x57a000**,
+2556 bytes, gancho **2212**, fin **0x579ea8**, **344 libres**. Todo el relleno de entrada
+es cero; SHA256 de code.bin Repolished `3999d658b66d684df352a82c19e355b0afdb4561154bc8900e17dc0221d5f293`.
+El turno de frontier-orch permanece intacto. Sin tocar los informes/scripts ajenos sin seguimiento.
+
+### Hito 1: PP en el equipo copia
+
+Fuente reproducible: `python frontier/probes/pike/measure.py`, salida
+`work/frontier/pike/v2/pp-accessors.lst`. `PokePartyGetParam` (DllField.cro 0x4e618,
+tabla de saltos 0x4e688), parámetro **4** = PP, índice de movimiento en el tercer argumento:
+envuelve `code.bin 0x1531c0`, que carga core desde PokemonParam+0xc y entra en **0x1531c8**.
+Ese getter descifra, accede al bloque B (0x16bd00), lee byte **+0x22+movimiento**, y vuelve
+a cifrar. `PokePartyRecoverAll` llama a 0x139c00, cuya rutina de curación recorre los cuatro
+movimientos: getter 0x1531c8, máximo vía 0x153314/0x15311c/0x14ffd8 y setter
+**0x14f4f8(core, movimiento, PP)** (0x139d04). El setter escribe el mismo byte B+0x22,
+con descifrado y recálculo de checksum/cifrado retail. Bytes guardados en FUNCTION_HEADS.
+
+`pike_pp` se llama desde H1 para restaurar y H2 para guardar, solo con ruta 6. Works
+**16721–16723**: PP de movimientos 1–2, **16725–16727**: PP 3–4; cada u16 tiene dos bytes,
+un work por combatiente. Reservados en REPARTO tras `python frontier/ids.py` (1157 scripts,
+147 ficheros, intervalos libres 16721–23/16725–27). Cada byte 0xff deja PP llenos; valores
+guardados se limitan al PP de la copia recién curada para tolerar una selección distinta al
+reanudar. Inicio de desafío y curas totales/parciales restablecen los works correspondientes.
+La reanudación sigue por posición como PS/estado en v1. Guardados v1 con desafío activo no
+tienen PP inicializados: para actualizar, terminar/retirarse del desafío e iniciar uno nuevo.
+
+Gancho integrado **2348 bytes**, fin **0x579f30**, **208 libres**. No hay parche CRO nuevo.
+Pruebas: `tests-pp.log` **116 passed**; incluye persistencia entre dos construcciones,
+PP cero, centinela, límite al cambiar movimientos y exclusión de las otras siete rutas.
+Además se ejecutaron **los accesores retail reales** en Unicorn con los 32 órdenes de bloques,
+comprobando cifrado, checksum y todos los bytes ajenos a PP.
+`python -m pytest -q tests` → **741 passed** (`tests-m1.log`).
+Build reproducible `python frontier/overlay.py --out work/frontier/pike/v2/build`
+(`build-pp.log`): gancho 2348, script compartido 17295 bytes, sin superar ZO/carga.
+**No probado aún en Azahar**. Inmunidades, salvajes (equipo/experiencia/captura), sala 14,
+regresiones Palacio/Arena y aceptación completa v2 siguen pendientes.

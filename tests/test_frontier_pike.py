@@ -52,7 +52,8 @@ def shared():
 # --- constants -----------------------------------------------------------------------------------------------------
 
 def test_pike_works_are_distinct_free_and_outside_the_cleared_block():
-    works = [*fp.PIKE_HP, *fp.PIKE_ST, pike.WORK_RNG, pike.STREAK, pike.ACTIVE, pike.RECORD]
+    works = [*fp.PIKE_HP, *fp.PIKE_ST, *(w for pair in fp.PIKE_PP for w in pair),
+             pike.WORK_RNG, pike.STREAK, pike.ACTIVE, pike.RECORD]
     others = [fp.WORK_IV, *fp.WORK_SETS, *fp.WORK_RIVAL, fp.WORK_ROUTE, *dome.WORKS, factory.WORK_RNG,
               *(w for f, s in fp.STREAK_ROUTES.values() if f != 'pike' for w in (s, s + 1, s + 2))]
     assert len(set(works)) == len(works) and not set(works) & set(others)
@@ -388,6 +389,7 @@ def machine(code, works, members):
     for p, (hp, top, st) in zip(pointers, members):
         uc.mem_write(p + 0xC, struct.pack('<I', p + 0x80))
         uc.mem_write(p + 0x80, struct.pack('<3I', hp, top, st))
+        uc.mem_write(p + 0x90, bytes([20, 15, 10, 5]))  # fake PP storage
     uc.mem_write(WORK + 0x73C, b'\x01')
     return uc
 
@@ -411,6 +413,10 @@ def stub_accessors(uc, calls):
             uc.mem_write(r0 + setters[address], struct.pack('<I', r1))
         elif address == f['BUILD_PARTY']:
             calls.append(('build', r0, uc.reg_read(REGS['r3'])))
+        elif address == f['GET_PP']:
+            uc.reg_write(REGS['r0'], uc.mem_read(r0 + 0x10 + r1, 1)[0])
+        elif address == f['SET_PP']:
+            uc.mem_write(r0 + 0x10 + r1, bytes([uc.reg_read(REGS['r2'])]))
         else:
             return
         uc.reg_write(REGS['pc'], uc.reg_read(REGS['lr']))
@@ -491,6 +497,71 @@ def test_h2_is_iswin_on_other_routes(code, route):
 def test_h2_without_a_battle_party(code):
     r0, saved, calls = run_iswin(code, 6, [(1, 9, 1)] * 3, party=0)
     assert r0 == 1 and saved == [0] * 6 and calls == []
+
+
+@pytest.mark.parametrize('route', range(8))
+def test_pp_survive_two_battles_only_in_pike(code, route):
+    """IsWin captures all four PP; a rebuilt/healed party restores them, including zero PP."""
+    uc = machine(code, {fp.WORK_ROUTE: route}, [(80, 80, 0)] * 3)
+    spent = [bytes([0, 14, 8, 1]), bytes([11, 0, 7, 4]), bytes([19, 9, 0, 3])]
+    for k, pp in enumerate(spent):
+        uc.mem_write(MEMBERS + 0x100 * k + 0x90, pp)
+    stub_accessors(uc, [])
+    def run(address, stop, regs):
+        for name, value in {'sp': STACK - 0x100, 'lr': RETURN, **regs}.items():
+            uc.reg_write(REGS[name], value)
+        uc.emu_start(address, stop, count=20000)
+    run(fp.ISWIN, RETURN, {'r0': WORK})
+    for k, pp in enumerate(spent):
+        pair = [struct.unpack('<H', uc.mem_read(work_address(group[k]), 2))[0] for group in fp.PIKE_PP]
+        assert struct.pack('<2H', *pair) == (pp if route == pike.ROUTE else b'\x00' * 4)
+        uc.mem_write(MEMBERS + 0x100 * k + 0x90, bytes([20, 15, 10, 5]))
+    run(fp.BUILD_SITE, fp.BUILD_SITE + 4, {'r0': WORK, 'r3': PARTY})
+    for k, pp in enumerate(spent):
+        assert bytes(uc.mem_read(MEMBERS + 0x100 * k + 0x90, 4)) == (
+            pp if route == pike.ROUTE else bytes([20, 15, 10, 5]))
+
+
+@pytest.mark.parametrize('saved, expected', [(0xffff, [20, 15, 10, 5]), (0xfefe, [20, 15, 10, 5]),
+                                            (0, [0, 0, 0, 0]), (0x0102, [2, 1, 2, 1])])
+def test_pp_restore_full_sentinel_and_cap_to_new_moves(code, saved, expected):
+    works = {fp.WORK_ROUTE: pike.ROUTE, **{w: saved for pair in fp.PIKE_PP for w in pair}}
+    uc = machine(code, works, [(80, 80, 0)] * 3)
+    stub_accessors(uc, [])
+    for name, value in {'sp': STACK - 0x100, 'lr': RETURN, 'r0': WORK, 'r3': PARTY}.items():
+        uc.reg_write(REGS[name], value)
+    uc.emu_start(fp.BUILD_SITE, fp.BUILD_SITE + 4, count=20000)
+    for k in range(3):
+        assert list(uc.mem_read(MEMBERS + 0x100 * k + 0x90, 4)) == expected
+
+
+@pytest.mark.parametrize('shuffle', range(32))
+def test_pp_retail_accessors_preserve_encryption_checksum_and_other_fields(code, shuffle):
+    """Execute the actual getter/setter, including the game's crypto, for every block order."""
+    from save_fixture import encode_pk, decode_pk, PKSIZE
+    uc = machine(code, {}, [])
+    core, pk, battle = MEMBERS, MEMBERS + 0x100, MEMBERS + 0x300
+    raw = bytearray(PKSIZE)
+    struct.pack_into('<I', raw, 0, (shuffle << 13) | 0x10000001)
+    raw[0x62:0x66] = bytes([20, 15, 10, 5])
+    encoded = encode_pk(raw)
+    uc.mem_write(pk, bytes(encoded[:0xe8]))
+    uc.mem_write(battle, bytes(encoded[0xe8:]))
+    uc.mem_write(core, struct.pack('<3I', 0, battle, pk) + b'\x01\x00')
+    def run(name, slot, value=0):
+        for reg, v in {'r0': core, 'r1': slot, 'r2': value, 'sp': STACK - 0x100, 'lr': RETURN}.items():
+            uc.reg_write(REGS[reg], v)
+        uc.emu_start(fp.FUNCTIONS[name], RETURN, count=100000)
+        return uc.reg_read(REGS['r0'])
+    for slot, pp in enumerate([20, 15, 10, 5]):
+        assert run('GET_PP', slot) == pp
+        run('SET_PP', slot, slot)
+    final = decode_pk(bytes(uc.mem_read(pk, 0xe8)) + bytes(uc.mem_read(battle, 0x1c)))
+    original = decode_pk(encoded)
+    assert final[0x62:0x66] == bytes(range(4))
+    final[6:8] = original[6:8]
+    final[0x62:0x66] = original[0x62:0x66]
+    assert final == original
 
 
 @pytest.fixture(scope='module')

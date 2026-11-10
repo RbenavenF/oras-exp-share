@@ -1,4 +1,4 @@
-@ Battle Pike v1 (frontier/pike.py, reports/diseno/tubo.md): HP and status carry over between the Pike's battles.
+@ Battle Pike (frontier/pike.py, reports/diseno/tubo.md): HP, status and PP carry over between the Pike's battles.
 @ The Battle Maison fights with a copy of the party, healed (0x3b5d34, PokePartyRecoverAll, on the real party) and
 @ rebuilt for every battle, so the Pike keeps each fighter's HP and status in saved works, by position in the battle
 @ party: PIKE_HP0 + i (0xFFFF = full) and PIKE_ST0 + i (the u32 status field of the battle block, low half).
@@ -66,6 +66,11 @@ pike_build:
     ldrh    r1, [r0, #(2 * (PIKE_ST0 - PIKE_HP0))]
     mov     r0, r4
     bl      SET_SICK
+    mov     r0, r4
+    add     r1, r6, r8, lsl #1
+    add     r1, r1, #(2 * (PIKE_PP0 - PIKE_HP0))
+    mov     r2, #0                  @ restore PP, capped to the freshly healed copy
+    bl      pike_pp
     add     r8, r8, #1
     b       1b
 9:
@@ -101,6 +106,11 @@ pike_iswin:
     bl      GET_SICK
     add     r1, r6, r8, lsl #1
     strh    r0, [r1, #(2 * (PIKE_ST0 - PIKE_HP0))]
+    mov     r0, r9
+    add     r1, r6, r8, lsl #1
+    add     r1, r1, #(2 * (PIKE_PP0 - PIKE_HP0))
+    mov     r2, #1                  @ save PP
+    bl      pike_pp
     add     r8, r8, #1
     b       1b
 9:
@@ -108,3 +118,36 @@ pike_iswin:
     cmp     r0, #1
     movne   r0, #0
     pop     {r4-r10, pc}
+
+@ Transfer four PP bytes using retail core accessors (decrypt/checksum/encrypt).
+@ r0 = core, r1 = &work[PP low pair + fighter], r2 = 0 restore / 1 save.
+@ Each byte 0xff restores the full PP; smaller values are capped to the healed PP.
+@ Saved PP positions follow the selected party positions, as HP/status do in v1.
+    .global pike_pp
+pike_pp:
+    push    {r4-r8, lr}
+    mov     r4, r0
+    mov     r5, r1
+    mov     r6, r2
+    mov     r7, #0
+1:
+    mov     r0, r4
+    mov     r1, r7
+    bl      GET_PP
+    add     r8, r5, r7
+    tst     r7, #2
+    addne   r8, r8, #PIKE_PP_GAP
+    cmp     r6, #0
+    strbne  r0, [r8]
+    bne     2f
+    ldrb    r2, [r8]
+    cmp     r2, r0
+    movhi   r2, r0
+    mov     r0, r4
+    mov     r1, r7
+    bl      SET_PP
+2:
+    add     r7, r7, #1
+    cmp     r7, #4
+    blo     1b
+    pop     {r4-r8, pc}

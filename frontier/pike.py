@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Battle Pike v1 (reports/diseno/tubo.md, user's decisions of 2026-11-03 in frontier/REPARTO.md): the zone script of
+"""Battle Pike (v2 in progress; reports/diseno/tubo.md): the zone script of
 its interior (a clone of the Battle Maison hall) and its room routine in shared script 5.
 
 Singles, Level 50, rank Normal, with three of the player's own Pokémon chosen on the Maison's screens (as the Tower,
@@ -7,8 +7,9 @@ frontier/tower.py). A round is ROOMS rooms; before each one the player picks one
 right) after a hint about one of them (its category, as Emerald's sRoomTypeHints). Room types: single battle, hard
 battle, full heal, partial heal (one or two Pokémon), status (Kirlia/Dusclops: one status for 1, 2 or 3 Pokémon by
 room, Emerald's odds, **no immunities**) and an empty NPC room. The battle rooms are the Maison's battles; HP and
-status carry over between them (code.bin hooks, frontier/asm/pike.s, by position in the battle party); **PP do not**
-(the Maison heals the party it copies). The streak counts rooms (own streak and record by route 6); BP as Emerald
+status and PP carry over between them (code.bin hooks, frontier/asm/pike.s, by position in the battle party).
+PP use two saved u16 works per fighter (two move slots per work), 0xffff for full; all healing rooms reset them.
+The streak counts rooms (own streak and record by route 6); BP as Emerald
 after each 14th room (data.FRONTIER_BP['pike']); the Maison's continue / rest / retire menu after each battle; a loss
 ends the challenge. Out of v1 (user, 2026-11-03): wild Pokémon rooms; also double battles, Lucy, the selection
 screen of Emerald.
@@ -30,7 +31,8 @@ ROOM_DONE).
 Known deviations (design §1): one zone instead of a lobby and a three-path room (the doors are a menu); the room
 number in the Maison's «next battle» line; the Maison's texts and party rules; PP and status immunities (user); toxic
 is stored as poison (STATUS_VALUE, hypothesis); hard battles are the Maison's Super rank; on resuming, the player
-picks the three again and the saved HP and status apply by position.
+picks the three again and the saved HP, status and PP apply by position (PP capped to the new moves' full PP).
+V2 acceptance in Azahar, status immunities and wild rooms are still pending.
 """
 import sys
 from pathlib import Path
@@ -301,6 +303,8 @@ def room_routine(p, helpers):
     for k in range(FIGHTERS):
         r.sysreq('WorkSet', patch.PIKE_HP[k], patch.PIKE_FULL)
         r.sysreq('WorkSet', patch.PIKE_ST[k], 0)
+        for pair in patch.PIKE_PP:
+            r.sysreq('WorkSet', pair[k], patch.PIKE_FULL)
     r.set('result', ROOM_DONE)
     r.op('JUMP', end)
 
@@ -332,6 +336,8 @@ def room_routine(p, helpers):
             r.op('JZER', nxt)
             r.sysreq('WorkSet', patch.PIKE_HP[k], patch.PIKE_FULL)
             r.sysreq('WorkSet', patch.PIKE_ST[k], 0)
+            for pair in patch.PIKE_PP:
+                r.sysreq('WorkSet', pair[k], patch.PIKE_FULL)
             _say(r, helpers, LINE_HEALED + k)
             r.op('JUMP', healed)
             r.p.label(nxt)
@@ -429,6 +435,8 @@ def rooms_routine(p):
     for k in range(FIGHTERS):                    # a new challenge: a fresh team
         r.sysreq('WorkSet', patch.PIKE_HP[k], patch.PIKE_FULL)
         r.sysreq('WorkSet', patch.PIKE_ST[k], 0)
+        for pair in patch.PIKE_PP:
+            r.sysreq('WorkSet', pair[k], patch.PIKE_FULL)
     r.p.label('pike_rooms_loop')
     r.sysreq('GlobalCall', GLOBAL_ROOM)
     r.sysreq('GlobalGetChildParam', 0)

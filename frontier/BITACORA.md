@@ -2227,3 +2227,18 @@ No probado en consola ni dificultad; PS persistentes, objetos y salvajes siguen 
 Siguiente paso: frontier-orch verifica la tarea y selecciona la siguiente (F6-TUBO-V2 pendiente).
 No tocar REPARTO: el turno sigue siendo del orquestador. Para rehacer la aceptación, usar v2/build y
 frontier/probes/pyramid/README.md; guardados v1 físicamente dentro de Mansión deben salir antes al vestíbulo.
+
+## 2026-11-10 19:15 — Codex — F6-TUBO-V2: PP persistentes, primer hito
+Estado: en curso
+Hecho: lectura de normas/diseño/relevo; turno del orquestador intacto. Medidos antes de cambios
+2212/2556 bytes nativos (344 libres). H1/H2 guardan/restauran los cuatro PP mediante accesores retail;
+works 16721–16723 y 16725–16727 reservados; inicio y curas restablecen PP. Generador valida bytes.
+Evidencia: reports/frontier.md §35; work/frontier/pike/v2/space-before.json, pp-accessors.lst,
+build-pp.log; tests-pp.log 116 passed, tests-m1.log 741 passed. Unicorn ejecuta además los accesores
+retail con cifrado/checksum y 32 permutaciones. Gancho ahora 2348 bytes, 208 libres.
+Commits: el de esta entrada.
+Decisiones: dos movimientos por work, 0xff por byte = lleno, límite al máximo de la copia reconstruida.
+Guardados v1 con desafío activo requieren retirarse y empezar otro al actualizar (PP antiguos sin inicializar).
+Sin probar: Azahar con la v2, inmunidades y salvajes, racha/PB/equipo/exclusión/regresiones de aceptación.
+Siguiente paso: comprobar PP entre dos combates en Azahar (build v2/build), medir ruta salvaje y selección
+para inmunidades; no declarar done. Laboratorio aún no arrancado. Tarea in_progress; sin push ni subagentes.

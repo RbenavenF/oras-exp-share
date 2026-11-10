@@ -62,10 +62,12 @@ FUNCTIONS = {'LOAD_SET': 0x1EFC18, 'MAKE_PARAM': 0x1EF904, 'ADD_MEMBER': 0x3B645
              'RESUME': RESUME, 'BUILD_PARTY': 0x1E3D2C, 'WORK_DELETE_CALL': 0x12B8FC,
              # PokemonParam core accessors (reports/frontier.md §28; the battle block at [core+4])
              'GET_HP': 0x153174, 'GET_MAX_HP': 0x153254, 'SET_HP': 0x14F450, 'GET_SICK': 0x4D22E4,
-             'SET_SICK': 0x14F814}
+             'SET_SICK': 0x14F814, 'GET_PP': 0x1531C8, 'SET_PP': 0x14F4F8}
 FUNCTION_HEADS = {0x1E3D2C: 0xE92D47F0, 0x1E5C48: 0xE92D4070, 0x1E5C4C: 0xE1A05000, 0x1E5C50: 0xE5904064, 0x153174: 0xE92D4070, 0x153254: 0xE92D4070, 0x14F450: 0xE92D4070,
                   ae.UDIV: 0xE3B02000,
                   0x4D22E4: 0xE92D4070, 0x14F814: 0xE92D4070,
+                  0x1531C8: 0xE92D4070, 0x14F4F8: 0xE92D4070,
+                  0x15320C: 0xE5D04022, 0x14F53C: 0xE5C05022,
                   0x1531A8: 0xE1D050B8, 0x153288: 0xE1D050BA, 0x14F488: 0xE1C050B8, 0x4D2318: 0xE5905000,
                   0x14F84C: 0xE5805000,
                   0x1EFC18: 0xE92D4030, 0x1EF904: 0xE92D4FF0, 0x3B645C: 0xE92D4070, 0x3B5D34: 0xE92D4070,
@@ -103,6 +105,7 @@ DOME_FORCED = (16657, 16658)
 # Free per frontier/ids.py (2026-11-04); assigned in frontier/REPARTO.md.
 PIKE_HP = (16661, 16662, 16663)
 PIKE_ST = (16669, 16670, 16671)
+PIKE_PP = ((16721, 16722, 16723), (16725, 16726, 16727))  # two moves per u16, by fighter
 PIKE_FULL = 0xFFFF
 # Battle Pyramid (frontier/asm/pyramid.s, frontier/pyramid.py): with WORK_ROUTE = ROUTE['pyramid'] the party slots
 # chosen in the lobby are saved here when its facility work is deleted (the count 3 in PYRAMID_COUNT) and become the
@@ -134,6 +137,7 @@ CONSTANTS = {'WORK_IV': WORK_IV, 'WORK_SET0': WORK_SETS[0], 'ARCHIVE_NORMAL': 0x
              'DOME_ROUTE': ROUTE['dome'], 'DOME_FIGHT0': DOME_FIGHT[0], 'DOME_FORCED0': DOME_FORCED[0],
              'DOME_FIGHTERS': len(DOME_FIGHT),
              'PIKE_ROUTE': ROUTE['pike'], 'PIKE_HP0': PIKE_HP[0], 'PIKE_ST0': PIKE_ST[0], 'PIKE_FIGHTERS': len(PIKE_HP),
+             'PIKE_PP0': PIKE_PP[0][0], 'PIKE_PP_GAP': 2 * (PIKE_PP[1][0] - PIKE_PP[0][0]) - 2,
              'PYRAMID_ROUTE': ROUTE['pyramid'], 'PYRAMID_SEL0': PYRAMID_SEL[0], 'PYRAMID_COUNT': PYRAMID_COUNT,
              'PYRAMID_PICKS': len(PYRAMID_SEL),
              **{f'SLOT_DELTA_{route}': MAISON_BASE - SAVE_WORKS - 2 * (streak - 0x4000) + 0x1C4
