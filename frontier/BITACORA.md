@@ -2242,3 +2242,20 @@ Guardados v1 con desafío activo requieren retirarse y empezar otro al actualiza
 Sin probar: Azahar con la v2, inmunidades y salvajes, racha/PB/equipo/exclusión/regresiones de aceptación.
 Siguiente paso: comprobar PP entre dos combates en Azahar (build v2/build), medir ruta salvaje y selección
 para inmunidades; no declarar done. Laboratorio aún no arrancado. Tarea in_progress; sin push ni subagentes.
+
+## 2026-11-10 19:31 — Codex — F6-TUBO-V2: inmunidades y PP medidos en Azahar
+Estado: en curso
+Hecho: inmunidades del evento fijadas a pokeemerald 731ad5bf. Consulta de tipos/habilidad actual retail;
+slots virtuales 256–258 consultan selección real o Caja de Combate mediante puente DllField+0x4e644.
+Rehechos hashes CRO/CRR, bytes/hash de entrada guardados. Texto de rechazo y líneas reasignadas.
+Azahar con build PP: tres victorias asistidas; PP 10→6, restaurados 6 en siguiente combate, terminan 3.
+PS 156→137; sala 14 muestra 1 PB. Guardado final/equipo aún no medidos.
+Evidencia: reports/frontier.md §35; v2/gdb-pp.log, before-room14.png; tests-immune.log 302 passed;
+tests-m2.log 927 passed; build-immune.log (2452 bytes nativos, 104 libres). compileall/bash -n/diff correctos.
+Commits: b0d4bd6 y el de esta entrada.
+Decisiones: reglas de inmunidad específicas del Tubo de Esmeralda, incluido Tierra contra parálisis;
+no se añaden habilidades posteriores ni clima. Un inmune cuenta para el límite de objetivos.
+No probado: puente/inmunidad en Azahar; salvajes/equipo/experiencia/captura; regresiones Palacio/Arena/exclusión.
+Siguiente paso: cerrar/guardar el lab PP, probar inmunidad en build-immune; medir y construir salvajes.
+Laboratorio vivo en shell persistente (PID namespace 4026533377, Azahar 18/Xvfb 15); parar antes de acabar.
+Tarea sigue in_progress; orquestador conserva turno; sin push ni subagentes.

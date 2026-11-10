@@ -71,7 +71,7 @@ def test_pike_global_case_is_in_the_row():
 @pytest.mark.parametrize('lang', [2, 7])
 def test_pike_text_lines(lang):
     out = pike.lines(lang)
-    assert len(out) == pike.LINE_END - pike.LINE_BASE == 41 and pike.LINE_BASE == dome.LINE_WON + 1
+    assert len(out) == pike.LINE_END - pike.LINE_BASE == 42 and pike.LINE_BASE == dome.LINE_WON + 1
     assert out[0].count('[VAR 0203 1,0]') == 1
     assert all(len(line.split('\n')) <= 2 for line in out)
 
@@ -199,7 +199,7 @@ def helpers(labels):
     return {name: labels[f'z{name}_{address:x}'] for name, address in factory.HELPERS.items()}
 
 
-def room_run(shared, streak, door, team=None, seconds=1234567, rng=0, answers=None):
+def room_run(shared, streak, door, team=None, seconds=1234567, rng=0, answers=None, traits=None):
     """pike_room with the door menu answering `door` (an int, or 'hint' / 'other' relative to the hinted door)."""
     script, labels = shared
     works = {pike.STREAK: streak, pike.WORK_RNG: rng}
@@ -222,6 +222,8 @@ def room_run(shared, streak, door, team=None, seconds=1234567, rng=0, answers=No
         return hinted if door == 'hint' else (hinted + 1) % 3 if door == 'other' else door
 
     stubs = natives({
+        'PokePartyGetParam': lambda vm, a: (traits or [(0, 0, 0)] * 3)[a[0] - pike.SELECTED_SLOT][
+            {6: 0, 7: 1, 22: 2}[a[1]]],
         'WorkGet': lambda vm, a: works.get(a[0], 0),
         'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
         '_GetRealTimeToSecond': lambda vm, a: seconds,
@@ -344,6 +346,53 @@ def test_status_room_skips_fainted_and_already_affected(shared):
 def test_generator_state_is_saved(shared):
     works, _, _ = room_run(shared, streak=3, door=0, rng=5)
     assert works[pike.WORK_RNG] != 5
+
+
+@pytest.fixture(scope='module')
+def status_seeds(shared):
+    seeds = {}
+    for seed in range(150):
+        for door in ('hint', 'other'):
+            works, log, _ = room_run(shared, 10, door, seconds=seed*7919, rng=seed)
+            if room_type(log) == pike.STATUS:
+                status = works[fp.PIKE_ST[0]]
+                seeds.setdefault(status, (seed, door))
+        if len(seeds) == 5:
+            break
+    assert set(seeds) == set(pike.STATUS_VALUE.values())
+    return seeds
+
+
+# Explicit expectations, independent of the implementation's immunity tables.
+@pytest.mark.parametrize('status,type_id,ability', [
+    ('toxic', 3, 0), ('toxic', 8, 0), ('toxic', 0, 17),
+    ('freeze', 15, 0), ('freeze', 0, 40),
+    ('paralysis', 4, 0), ('paralysis', 13, 0), ('paralysis', 0, 7),
+    ('sleep', 0, 15), ('sleep', 0, 72), ('burn', 10, 0), ('burn', 0, 41)])
+@pytest.mark.parametrize('secondary', [False, True])
+def test_status_respects_current_types_and_actual_ability(shared, status_seeds, status, type_id, ability, secondary):
+    seed, door = status_seeds[pike.STATUS_VALUE[status]]
+    immune = (0, type_id, ability) if secondary else (type_id, 0, ability)
+    works, log, _ = room_run(shared, 10, door, seconds=seed*7919, rng=seed,
+                             traits=[immune, (0, 0, 0), immune])
+    assert [works[w] for w in fp.PIKE_ST] == [0, pike.STATUS_VALUE[status], 0]
+    assert log.count(('msg', pike.LINE_IMMUNE)) == 2
+    assert log[-1] == ('result', 0, pike.ROOM_DONE)
+
+
+def test_immune_target_counts_toward_room_limit(shared):
+    for seed in range(200):
+        for door in ('hint', 'other'):
+            works, log, _ = room_run(shared, 0, door, seconds=seed*7919, rng=seed)
+            if room_type(log) == pike.STATUS:
+                value = next(works[w] for w in fp.PIKE_ST if works[w])
+                immune = {5: (8, 0, 0), 3: (15, 0, 0), 1: (13, 0, 0),
+                          2: (0, 0, 15), 4: (10, 0, 0)}[value]
+                works, log, _ = room_run(shared, 0, door, seconds=seed*7919, rng=seed, traits=[immune]*3)
+                assert log.count(('msg', pike.LINE_IMMUNE)) == 1
+                assert [works[w] for w in fp.PIKE_ST] == [0, 0, 0]
+                return
+    pytest.fail('No status room found')
 
 
 # --- code.bin hooks (Unicorn) -------------------------------------------------------------------------------------
@@ -610,3 +659,55 @@ def test_battle_copy_back_rejects_wrong_input(tmp_path):
     (tmp_path / fp.BATTLE_CRO).write_bytes(original)
     with pytest.raises(SystemExit, match='not the v0.5 one'):
         fp.battle_cro(tmp_path)
+
+
+def test_field_bridge_changes_only_guarded_instructions_and_updates_crr(battle_module):
+    import hashlib
+    from build_patch import cro_hashes
+    from cro import Cro
+    from analyze_assets import CRO
+    original = (fp.MOD_ROMFS / fp.FIELD_CRO).read_bytes()
+    changed = battle_module[fp.FIELD_CRO]
+    assert len(original) == len(changed)
+    assert changed[:0x80] == b''.join(cro_hashes(changed))
+    assert all(i < 0x80 or fp.PIKE_PARAM_SITE <= i < fp.PIKE_PARAM_SITE+16
+               for i, (a, b) in enumerate(zip(original, changed)) if a != b)
+    assert not any(fp.PIKE_PARAM_SITE <= t < fp.PIKE_PARAM_SITE+16 for t, _, _ in Cro(original).relocs)
+    imports = CRO(fp.MOD_ROMFS / fp.FIELD_CRO).static_imports(CRO(overlay.ROMFS / 'static.crs'))
+    assert not any(fp.PIKE_PARAM_SITE <= item['offset'] < fp.PIKE_PARAM_SITE+16 for item in imports)
+    crr = battle_module[fp.CRR]
+    off, count = struct.unpack_from('<II', crr, 0x350)
+    hashes = [crr[off+32*i:off+32*(i+1)] for i in range(count)]
+    assert hashes.count(hashlib.sha256(changed[:0x80]).digest()) == 1
+    assert hashlib.sha256(original[:0x80]).digest() not in hashes
+
+
+@pytest.mark.parametrize('route', range(8))
+@pytest.mark.parametrize('boxed', [False, True])
+@pytest.mark.parametrize('slot', [0, 2, 5, 6, 255, 256, 257, 258, 259, 65535])
+def test_virtual_selected_slots_and_retail_slots(code, battle_module, route, boxed, slot):
+    """Execute actual CRO bridge and code stub, including retail party-count accessor.
+
+    Nontrivial selection 5/0/3 verifies it is selected position, not raw party slot.
+    """
+    base, box = 0x01000000, PARTY+0x100
+    uc = machine(code, {fp.WORK_ROUTE: route}, [(90, 90, 0)] * 6)
+    uc.mem_map(base, 0x100000)
+    uc.mem_write(base+fp.PIKE_PARAM_SITE,
+                 battle_module[fp.FIELD_CRO][fp.PIKE_PARAM_SITE:fp.PIKE_PARAM_SITE+16])
+    uc.mem_write(CTX+0x64, struct.pack('<I', WORK))
+    uc.mem_write(WORK+0x2C, struct.pack('<4I', boxed, 5, 0, 3))
+    uc.mem_write(WORK+0xB84, struct.pack('<I', box))
+    uc.mem_write(box+0x18, b'\x06')
+    regs = {'r3': 0x33, 'r4': 0x44, 'r5': CTX, 'r6': slot, 'r7': 22, 'r8': PARTY,
+            'sb': 0x99, 'sl': 0xaa, 'fp': 0xbb, 'sp': STACK-0x100}
+    for name, value in regs.items(): uc.reg_write(REGS[name], value)
+    mapped = [5, 0, 3][slot-256] if route == 6 and 256 <= slot <= 258 else slot
+    valid = mapped < 6
+    resume = base + (0x4E654 if valid else 0x4EAAC)
+    uc.emu_start(base+fp.PIKE_PARAM_SITE, resume, count=100)
+    assert uc.reg_read(REGS['pc']) == resume
+    assert uc.reg_read(REGS['r6']) == mapped
+    assert uc.reg_read(REGS['r8']) == (box if boxed and route == 6 and 256 <= slot <= 258 else PARTY)
+    for name in ('r3', 'r4', 'r5', 'r7', 'sb', 'sl', 'fp', 'sp'):
+        assert uc.reg_read(REGS[name]) == regs[name], name

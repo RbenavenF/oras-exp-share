@@ -62,9 +62,9 @@ FUNCTIONS = {'LOAD_SET': 0x1EFC18, 'MAKE_PARAM': 0x1EF904, 'ADD_MEMBER': 0x3B645
              'RESUME': RESUME, 'BUILD_PARTY': 0x1E3D2C, 'WORK_DELETE_CALL': 0x12B8FC,
              # PokemonParam core accessors (reports/frontier.md §28; the battle block at [core+4])
              'GET_HP': 0x153174, 'GET_MAX_HP': 0x153254, 'SET_HP': 0x14F450, 'GET_SICK': 0x4D22E4,
-             'SET_SICK': 0x14F814, 'GET_PP': 0x1531C8, 'SET_PP': 0x14F4F8}
+             'SET_SICK': 0x14F814, 'GET_PP': 0x1531C8, 'SET_PP': 0x14F4F8, 'PARTY_COUNT': 0x4D3424}
 FUNCTION_HEADS = {0x1E3D2C: 0xE92D47F0, 0x1E5C48: 0xE92D4070, 0x1E5C4C: 0xE1A05000, 0x1E5C50: 0xE5904064, 0x153174: 0xE92D4070, 0x153254: 0xE92D4070, 0x14F450: 0xE92D4070,
-                  ae.UDIV: 0xE3B02000,
+                  ae.UDIV: 0xE3B02000, 0x4D3424: 0xE5D00018,
                   0x4D22E4: 0xE92D4070, 0x14F814: 0xE92D4070,
                   0x1531C8: 0xE92D4070, 0x14F4F8: 0xE92D4070,
                   0x15320C: 0xE5D04022, 0x14F53C: 0xE5C05022,
@@ -269,6 +269,10 @@ BATTLE_CRO_SHA256 = '46153fa373b8166a3a65a31272008dc8d63207f3b2498752c69c1a0c742
 COPY_BACK = 0x15398                         # file offset: cmp r1, #0; cmpne r1, #1; bne 0x1580c
 COPY_BACK_BEFORE = (0xE3510000, 0x13510001, 0x1A000119)
 COPY_BACK_AFTER = (0xE3510002, 0xE1A00000, 0x8A000119)   # cmp r1, #2; nop; bhi 0x1580c
+FIELD_CRO = 'DllField.cro'
+FIELD_CRO_SHA256 = '8c9da930a13b56b797dedfc87940b85b5b3cad9a1cf35390c4796b0c6f5cb53a'
+PIKE_PARAM_SITE = 0x4E644
+PIKE_PARAM_BEFORE = bytes.fromhex('0800a0e134c9feeb060050e11501009a')
 
 
 def battle_cro(romfs=MOD_ROMFS):
@@ -292,7 +296,14 @@ def battle_cro(romfs=MOD_ROMFS):
     changed = guarded_writes(original, dict(path=BATTLE_CRO, sha256=BATTLE_CRO_SHA256, writes=writes))
     changed = rehash_cro(original, changed)
     crr = update_crr((romfs / CRR).read_bytes(), original, changed)
-    return {BATTLE_CRO: changed, CRR: crr}
+    field = (romfs / FIELD_CRO).read_bytes()
+    field_write = dict(offset=PIKE_PARAM_SITE, before=PIKE_PARAM_BEFORE.hex(),
+                       after=struct.pack('<4I', 0xE59FC004, 0xE12FFF3C, 0xEA000000,
+                                         symbols['pike_param']).hex())
+    field_changed = guarded_writes(field, dict(path=FIELD_CRO, sha256=FIELD_CRO_SHA256, writes=[field_write]))
+    field_changed = rehash_cro(field, field_changed)
+    crr = update_crr(crr, field, field_changed)
+    return {BATTLE_CRO: changed, FIELD_CRO: field_changed, CRR: crr}
 
 
 def main():

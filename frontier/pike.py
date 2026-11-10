@@ -6,7 +6,7 @@ Singles, Level 50, rank Normal, with three of the player's own Pokémon chosen o
 frontier/tower.py). A round is ROOMS rooms; before each one the player picks one of three doors (left, centre,
 right) after a hint about one of them (its category, as Emerald's sRoomTypeHints). Room types: single battle, hard
 battle, full heal, partial heal (one or two Pokémon), status (Kirlia/Dusclops: one status for 1, 2 or 3 Pokémon by
-room, Emerald's odds, **no immunities**) and an empty NPC room. The battle rooms are the Maison's battles; HP and
+room, Emerald's odds and type/ability immunities) and an empty NPC room. The battle rooms are the Maison's battles; HP and
 status and PP carry over between them (code.bin hooks, frontier/asm/pike.s, by position in the battle party).
 PP use two saved u16 works per fighter (two move slots per work), 0xffff for full; all healing rooms reset them.
 The streak counts rooms (own streak and record by route 6); BP as Emerald
@@ -29,10 +29,10 @@ doors, the hint, the door menu and the room's effect on the works; GlobalSetPare
 ROOM_DONE).
 
 Known deviations (design §1): one zone instead of a lobby and a three-path room (the doors are a menu); the room
-number in the Maison's «next battle» line; the Maison's texts and party rules; PP and status immunities (user); toxic
+number in the Maison's «next battle» line; the Maison's texts and party rules; toxic
 is stored as poison (STATUS_VALUE, hypothesis); hard battles are the Maison's Super rank; on resuming, the player
 picks the three again and the saved HP, status and PP apply by position (PP capped to the new moves' full PP).
-V2 acceptance in Azahar, status immunities and wild rooms are still pending.
+V2 acceptance in Azahar and wild rooms are still pending.
 """
 import sys
 from pathlib import Path
@@ -69,6 +69,13 @@ STATUSES = ['toxic', 'freeze', 'paralysis', 'sleep', 'burn']
 STATUS_ODDS = [35, 25, 20, 10, 10]
 STATUS_VALUE = {'toxic': 5, 'freeze': 3, 'paralysis': 1, 'sleep': 2, 'burn': 4}
 STATUS_TARGETS = [(4, 1), (9, 2), (ROOMS, 3)]   # rooms up to n: Pokémon affected
+# pret/pokeemerald 731ad5bf src/battle_pike.c DoesType/AbilityPreventStatus.
+# These are the Pike event's rules (including Ground vs paralysis), not a move's accuracy/type chart.
+# Type/ability IDs below match ORAS. Native selectors measured in DllField+0x4e688:
+# 6/7 -> 0x3b3b48/0x4d3204 (current types, including form/Multitype), 22 -> 0x4d1730 (actual ability).
+STATUS_IMMUNE_TYPES = {'toxic': (3, 8), 'freeze': (15,), 'paralysis': (4, 13), 'sleep': (), 'burn': (10,)}
+STATUS_IMMUNE_ABILITIES = {'toxic': (17,), 'freeze': (40,), 'paralysis': (7,), 'sleep': (15, 72), 'burn': (41,)}
+SELECTED_SLOT = 256                          # pike_param: + position, real party or Battle Box selection
 
 TEXTS = {
     'es': {'room': 'Sala [VAR 0203 1,0] de 14.',
@@ -88,6 +95,7 @@ TEXTS = {
                       'Una enfermera ha curado\na tu segundo Pokémon.',
                       'Una enfermera ha curado\na tu tercer Pokémon.'],
            'status_intro': '¡Un Pokémon salvaje ha usado un\nataque extraño contra tu equipo!',
+           'immune': '¡Su tipo o habilidad lo protege\ndel estado!',
            'positions': ['primer', 'segundo', 'tercer'],
            'status': {'toxic': '¡Tu {} Pokémon ha sido\ngravemente envenenado!',
                       'freeze': '¡Tu {} Pokémon ha sido\ncongelado!',
@@ -110,6 +118,7 @@ TEXTS = {
            'healed': ['A nurse healed\nyour first Pokémon.', 'A nurse healed\nyour second Pokémon.',
                       'A nurse healed\nyour third Pokémon.'],
            'status_intro': 'A wild Pokémon used a strange\nattack on your team!',
+           'immune': 'Its type or Ability protects it\nfrom the status condition!',
            'positions': ['first', 'second', 'third'],
            'status': {'toxic': 'Your {} Pokémon was\nbadly poisoned!',
                       'freeze': 'Your {} Pokémon was\nfrozen solid!',
@@ -127,7 +136,8 @@ LINE_SINGLE, LINE_HARD, LINE_NPC, LINE_HEAL_FULL = (LINE_DOOR + 3 + k for k in r
 LINE_HEALED = LINE_DOOR + 7                    # + position
 LINE_STATUS_INTRO = LINE_HEALED + 3
 LINE_STATUS = LINE_STATUS_INTRO + 1            # + 5 * position + status
-LINE_END = LINE_STATUS + 3 * len(STATUSES)
+LINE_IMMUNE = LINE_STATUS + 3 * len(STATUSES)
+LINE_END = LINE_IMMUNE + 1
 
 
 def lines(lang):
@@ -138,6 +148,7 @@ def lines(lang):
     out += [t['choose'], *t['door_names'], t['single'], t['hard'], t['npc'], t['heal_full'], *t['healed'],
             t['status_intro']]
     out += [t['status'][s].format(pos) for pos in t['positions'] for s in STATUSES]
+    out += [t['immune']]
     assert len(out) == LINE_END - LINE_BASE
     return out
 
@@ -155,6 +166,7 @@ def room_routine(p, helpers):
     state = p.data_labels['factory_rng']
     category = p.data_block('pike_category', list(CATEGORY))
     names = ['room', 'healthy', 'cat', 'hint', 'door', 'type', 'value', 'count', 'start', 'status', 'result',
+             'type0', 'type1', 'ability',
              *(f'{f}{k}' for f in ('hp', 'st', 't') for k in range(3))]
     r = factory.Routine(p, 'pike_room', names)
     end = 'pike_room_end'
@@ -382,14 +394,29 @@ def room_routine(p, helpers):
             r.op('JZER', done_j)                 # fainted
             r.load(f'st{k}')
             r.op('JNZ', done_j)                  # already has a status
+            for var, selector in [('type0', 6), ('type1', 7), ('ability', 22)]:
+                r.sysreq('PokePartyGetParam', SELECTED_SLOT + k, selector, 0)
+                r.store(var)
+            immune, counted_target = r.new_label('immune'), r.new_label('counttarget')
             for s, name in enumerate(STATUSES):
                 other = r.new_label('st')
                 r.load('status')
                 r.op('EQ_P_C_PRI', s)
                 r.op('JZER', other)
+                for var, values in [('type0', STATUS_IMMUNE_TYPES[name]),
+                                    ('type1', STATUS_IMMUNE_TYPES[name]),
+                                    ('ability', STATUS_IMMUNE_ABILITIES[name])]:
+                    for value in values:
+                        r.load(var)
+                        r.op('EQ_P_C_PRI', value)
+                        r.op('JNZ', immune)
                 r.sysreq('WorkSet', patch.PIKE_ST[k], STATUS_VALUE[name])
                 _say(r, helpers, LINE_STATUS + len(STATUSES) * k + s)
                 r.p.label(other)
+            r.op('JUMP', counted_target)
+            r.p.label(immune)
+            _say(r, helpers, LINE_IMMUNE)
+            r.p.label(counted_target)
             r.load('count')
             r.add(-1)
             r.store('count')

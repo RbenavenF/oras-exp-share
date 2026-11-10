@@ -151,3 +151,37 @@ pike_pp:
     cmp     r7, #4
     blo     1b
     pop     {r4-r8, pc}
+
+@ DllField 0x4e644 PokePartyGetParam: virtual slots 256..258 mean Pike
+@ selected positions. Ordinary slots keep retail semantics on every route.
+@ r5 field context, r6 slot, r8 real party. Bridge LR = CRO base+0x4e64c.
+@ The selected source can be the real party or the Battle Box, as BUILD_PARTY.
+    .global pike_param
+pike_param:
+    sub     r0, r6, #0x100
+    cmp     r0, #PIKE_FIGHTERS
+    bhs     1f
+    ldr     ip, [r5, #0x64]
+    cmp     ip, #0
+    beq     1f
+    ldr     r1, [r5, #0x1c]
+    ldr     r1, [r1]
+    add     r1, r1, #0x13000
+    add     r1, r1, #0x144
+    ldrh    r1, [r1, #(2 * (WORK_ROUTE - 0x4000))]
+    cmp     r1, #PIKE_ROUTE
+    bne     1f
+    ldrb    r1, [ip, #0x2c]
+    cmp     r1, #0
+    ldrne   r8, [ip, #0xb84]
+    add     ip, ip, #0x30
+    ldr     r6, [ip, r0, lsl #2]
+1:
+    mov     r0, r8
+    push    {r3, lr}
+    bl      PARTY_COUNT
+    cmp     r0, r6
+    pop     {r3, lr}
+    addhi   lr, lr, #8             @ valid: next instruction, CRO+0x4e654
+    addls   lr, lr, #0x460         @ invalid: retail zero, CRO+0x4eaac
+    bx      lr

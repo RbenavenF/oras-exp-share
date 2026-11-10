@@ -2239,3 +2239,50 @@ Build reproducible `python frontier/overlay.py --out work/frontier/pike/v2/build
 (`build-pp.log`): gancho 2348, script compartido 17295 bytes, sin superar ZO/carga.
 **No probado aún en Azahar**. Inmunidades, salvajes (equipo/experiencia/captura), sala 14,
 regresiones Palacio/Arena y aceptación completa v2 siguen pendientes.
+
+### Hito 2: consulta de los inscritos e inmunidades
+
+Fuente de reglas fijada: `pret/pokeemerald` **731ad5bf**, `src/battle_pike.c`, funciones
+`DoesAbilityPreventStatus` y `DoesTypePreventStatus`; copias de lectura en
+`work/frontier/pike/v2/emerald/`. Se respeta su regla específica del Tubo: Veneno/Acero
+contra tóxico, Hielo contra congelación, Tierra/Eléctrico contra parálisis, Fuego contra
+quemadura; Inmunidad, Escudo Magma, Flexibilidad, Insomnio/Espíritu Vital y Velo Agua.
+No hay estado nuevo para quien está debilitado o ya afectado. Un objetivo inmune cuenta
+para el límite de 1/2/3 intentos de la sala, como en ese origen, y se anuncia el rechazo.
+No se han añadido reglas de habilidades posteriores a Esmeralda ni efectos de clima.
+
+Medición de las consultas retail: `DllField.cro` tabla 0x4e688, índices **6** y **7** llaman
+a `0x3b3b48` y `0x4d3204`: especie/forma actuales, personal 6/7, con excepción Arceus/
+Multitipo que usa 0x4d2454. Índice **22** llama a `0x4d1730`: carga core+0xc y el byte
+A+0xc de la PK6, la habilidad **actual**, no una habilidad posible de la especie.
+La selección de Mansión puede reordenar el equipo o elegir la Caja de Combate: el constructor
+0x1e3d2c usa `work+0x2c` para fuente y `work+0x30+4*k` para índice; la caja está en work+0xb84.
+
+`pike_param` convierte los slots virtuales 256–258 a esos índices, solo en ruta 6, en
+`PokePartyGetParam`. El resto de slots/rutas mantiene el control de límites retail.
+Puente **DllField.cro+0x4e644**, 16 bytes originales
+`0800a0e134c9feeb060050e11501009a`, sin relocaciones internas ni imports sobre ellos.
+Entrada v0.5 SHA256 **8c9da930a13b56b797dedfc87940b85b5b3cad9a1cf35390c4796b0c6f5cb53a**.
+Se rehacen hashes CRO y se actualiza CRR después del de DllBattle, preservando ambos.
+Gancho integrado **2452/2556 bytes**, fin **0x579f98**, **104 libres**.
+
+`tests-immune.log`: **302 passed** (incluye ambos tipos, cada habilidad, objetivo inmune
+que cuenta para el límite, selección reordenada 5/0/3, caja/equipo y ocho rutas en Unicorn,
+ejecutando el puente y el contador real de miembros). `tests-m2.log`: **927 passed**.
+Build `v2/build-immune`, `build-immune.log`: compartido 19794 bytes, gancho 2452,
+ZO de Mansión 15864. Textos 637: nueva línea inmune 1055; Pirámide se desplaza a 1056–1070.
+**Aún no probado en Azahar este puente y las inmunidades**. Salvajes no implementados.
+
+### Primera comprobación dinámica de PP (build del hito 1)
+
+Sonda `frontier/probes/pike/lab_probe.py`, log `v2/gdb-pp.log`, fixture de entrada
+`work/frontier/lab/pk_saved_458.sav` (desafío iniciado de nuevo para inicializar PP).
+Selección Torchic/Poochyena/Beldum (son motes de Pokémon modificados de la copia de laboratorio).
+Enemigos debilitados solo en RAM, PS 1 y Salpicadura; resultados, works y PB sin escribir.
+Tres IsWin reales raw=1. En el segundo, primer movimiento **10→6 PP**; en la construcción
+siguiente el work contiene **[6,10,15,30]**, H1 lo restaura, y el tercer combate deja **3 PP**.
+PS de entrada también bajan **156→137**. Primer combate gastó 10→7, pero hubo curaciones
+antes del segundo: no se usa esa pareja como prueba de persistencia.
+`before-room14.png` está mal nombrada: muestra «Ruben ha obtenido 1 PB» tras la sala 14;
+el segundo resultado tenía racha 13 antes de AddWinCount y el tercero 14 (pasó a 15).
+El guardado en disco aún no había cambiado al tomar esta medida: PB/equipo al salir pendientes.
