@@ -2373,3 +2373,15 @@ Marcha atrás: `frontier/orch/frontier-orch lanes remove` y `git revert -m 1 300
 Commits: 300fcc1 (fusión) y el de esta entrada.
 Siguiente paso: crear tareas para los dos agentes que no se pisen y lanzar `frontier/orch/frontier-orch auto
 --parallel --max-runs 2` como primera tanda vigilada.
+
+## 2026-11-11 00:45 — Claude Code (Opus 5.5) — tareas de la primera tanda paralela
+Estado: hecho (sin ejecutar el orquestador)
+Hecho: `tasks.json` gana F6-PALACIO-C (Claude: filtro de movimientos por naturaleza y PS sobre la vía híbrida, con
+tablas de a/1/8/9 y pokeemerald) y F6-DOMO-SALA (Codex: mapa propio para la zona 456 desde un donante retail, sin
+código nativo, como la Pirámide v2A). Elegidas para no pisarse: la primera toca motor y code.bin; la segunda solo
+zona, mapa y su script.
+Riesgo conocido: las dos pueden tocar `frontier/island_build.py` o `reports/frontier.md`; el informe se une solo
+(union), un conflicto en el código bloquea la tarea (README del orquestador).
+Commits: el de esta entrada.
+Siguiente paso: el usuario lanza `frontier/orch/frontier-orch auto --parallel --max-runs 2`; revisar la integración,
+el commit de Codex desde su carril y los puertos.
