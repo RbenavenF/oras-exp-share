@@ -2304,3 +2304,27 @@ instalado coincida con el código del que se calculan los símbolos de la sonda.
 Un arranque anterior (`boot-immune.log`) usó código desfasado respecto a la sonda y se
 interrumpió; no aporta evidencia. El válido es `boot-immune2.log`.
 Todavía no se ha medido la conservación completa del equipo al salir con esta corrección.
+
+### Hito 4: recuperar espacio compartido
+
+`arena_start` y `palace_start` comparten ahora una sola lectura del save/ruta y limpian
+ambas marcas antes de habilitar la correspondiente a un desafío Individual activo.
+Se mantienen registros, pila, bits ajenos y continuación. Elimina **52 bytes**:
+**2416/2556**, fin **0x579f74**, **140 libres** (`v2/space-shared.txt`).
+`tests-shared-real.log`: 252 passed; suite `tests-shared-full.log`: **935 passed in 20.60s**.
+Build `v2/build-shared` generada (`build-shared.log`). Regresión dinámica de estos cambios
+Arena/Palacio todavía **no probada**.
+
+Sonda salvaje **solo RAM**, build anterior de 2468 bytes, `competitor=0`, setup+0xb3=1,
+rival count=1. `gdb-wild-experiment.log` / `fight-wild-experiment.log`: victoria raw=1
+contra un rival único, PP 3→2, sin escribir resultado/racha. No equivale a sala salvaje
+implementada: conserva presentación de entrenador y un set de Mansión a nivel 50.
+`boot-wild2.log`, `wild-bag-open.png`, `wild-balls-available.png`, `wild-ball-consumed.png`:
+se puede abrir Bolsa/Poké Balls y usar una; existencias 13→12 (captura no conseguida en
+ese intento). Por tanto esta propuesta **no garantiza ausencia de captura**; no instalarla.
+Las dos puertas de experiencia retail DllBattle+0x25590 y +0x6bc94 excluyen setup+0xb3 != 0
+(`bag-gate.lst`), pero aún falta prueba dinámica de experiencia y equipo al salir.
+El candidato sin integrar `frontier/probes/pike/wild_candidate.s` añade 168 bytes
+(`wild-size.json`, medido antes de compactar: 2468+168=2636/2556, exceso 80).
+No es un mínimo ni un bloqueo definitivo: comparte código pendiente de integrar y todavía
+requiere desvíos validados, sets propios y prohibición de captura. No reservar su work provisional.

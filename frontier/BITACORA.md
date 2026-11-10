@@ -2273,3 +2273,17 @@ No probado: equipo idéntico al salir con la corrección, inmunidad en Azahar, s
 Siguiente paso: experimento propio de salvaje en Azahar (competitor=0, copia, noexp=1, rival único),
 medir bolsa/captura/experiencia antes de implementarlo; después inmunidad y aceptación pendiente.
 Lab vivo en shell persistente; parar al terminar. tasks.json sigue in_progress; turno del orquestador intacto.
+
+## 2026-11-10 19:58 — Codex — F6-TUBO-V2: espacio compartido y captura medida
+Estado: en curso
+Hecho: Arena/Palacio comparten inicio; recuperados 52 bytes, 2416/2556, 140 libres.
+Sonda salvaje solo RAM con rival único gana raw=1; conserva intro de entrenador. En otra prueba,
+Bolsa/Poké Balls accesibles y una Ball consumida 13→12: cambiar competitor no impide captura.
+Evidencia: reports/frontier.md §35 hito 4; space-shared.txt, tests-shared-real.log 252 passed,
+tests-shared-full.log 935 passed, build-shared.log; gdb-wild-experiment.log y capturas wild-*.png.
+Commits: b0d4bd6, 449494f, c357a7d y el de esta entrada.
+Decisiones: sonda no es implementación; candidato 168 bytes sin integrar no prueba mínimo de espacio.
+Aún no probado: inmunidad dinámica, no exp/captura, equipo al salir, derrota salvaje y regresiones.
+Siguiente paso: medir restricción retail de bolsa (regla 0x2000 candidata, sin asumir significado),
+probar inmunidad y conservación del equipo; integrar salvajes solo si caben y se bloquea captura.
+Lab aún vivo en shell persistente; apagar al cerrar sesión. Tarea in_progress, turno sin tocar.

@@ -27,16 +27,18 @@
     blx     ip
     .endm
 
-@ code.bin 0x1e33d8: original mov r0,r5. Only r0/ip/flags are scratch here.
-@ Also check the route: a paused Arena must not affect the retail Maison.
-    .global arena_start
+@ code.bin 0x1e33d8: r0/ip/flags are scratch. Shared Arena/Palace setup:
+@ clear both stale marks, select only this route's active Singles challenge.
+@ Both public names enter the same routine (no duplicate save/route traversal).
+    .global arena_start, palace_start
 arena_start:
-    ldr     ip, [r4, #0x6c8]        @ setup+0xa8
-    bic     ip, ip, #ARENA_RULE
+palace_start:
+    ldr     ip, [r4, #0x6c8]
+    bic     ip, ip, #(ARENA_RULE | PALACE_RULE)
     str     ip, [r4, #0x6c8]
-    ldrb    r0, [r4, #0x621]        @ battle style: Singles only
+    ldrb    r0, [r4, #0x621]
     cmp     r0, #0
-    bne     1f
+    bne     9f
     ldr     r0, [r4, #0xb78]
     ldr     r0, [r0, #0x1c]
     ldr     r0, [r0]
@@ -44,14 +46,24 @@ arena_start:
     add     r0, r0, #0x144
     ldrh    ip, [r0, #(2 * (WORK_ROUTE - 0x4000))]
     cmp     ip, #ARENA_ROUTE
-    bne     1f
+    beq     1f
+    cmp     ip, #PALACE_ROUTE
+    bne     9f
+    ldrh    r0, [r0, #(2 * (PALACE_ACTIVE - 0x4000))]
+    cmp     r0, #0
+    ldrne   ip, [r4, #0x6c8]
+    orrne   ip, ip, #PALACE_RULE
+    b       2f
+1:
     ldrh    r0, [r0, #(2 * (ARENA_ACTIVE - 0x4000))]
     cmp     r0, #0
     ldrne   ip, [r4, #0x6c8]
     orrne   ip, ip, #ARENA_RULE
+2:
     strne   ip, [r4, #0x6c8]
-1:
-    b       palace_start            @ frontier/asm/palace.s: its bit, then mov r0,r5 and resume
+9:
+    mov     r0, r5
+    b       ARENA_START_RESUME
 
 @ CRO 0x724c0, r4 server / r5 entrant / fp global turn. Reproduce all displaced
 @ instructions, including the native age reset, then snapshot the entrant's HP.

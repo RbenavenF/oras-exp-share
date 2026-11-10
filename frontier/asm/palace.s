@@ -11,31 +11,7 @@
     .arm
     .section .text
 
-@ code.bin 0x1e33d8, reached from arena_start: r4 work, r5 the value for r0; r0/ip/flags scratch.
-    .global palace_start
-palace_start:
-    ldr     ip, [r4, #0x6c8]        @ setup+0xa8
-    bic     ip, ip, #PALACE_RULE
-    str     ip, [r4, #0x6c8]
-    ldrb    r0, [r4, #0x621]        @ battle style: Singles only
-    cmp     r0, #0
-    bne     1f
-    ldr     r0, [r4, #0xb78]
-    ldr     r0, [r0, #0x1c]
-    ldr     r0, [r0]
-    add     r0, r0, #0x13000
-    add     r0, r0, #0x144
-    ldrh    ip, [r0, #(2 * (WORK_ROUTE - 0x4000))]
-    cmp     ip, #PALACE_ROUTE
-    bne     1f
-    ldrh    r0, [r0, #(2 * (PALACE_ACTIVE - 0x4000))]
-    cmp     r0, #0
-    ldrne   ip, [r4, #0x6c8]
-    orrne   ip, ip, #PALACE_RULE
-    strne   ip, [r4, #0x6c8]
-1:
-    mov     r0, r5
-    b       ARENA_START_RESUME
+@ Shared code.bin StartBattle entry lives in arena.s (arena_start = palace_start).
 
 @ CRO 0x731f0 in the client constructor 0x72f40, r4 client, sp its frame (untouched before the reads).
 @ Returns Z set to create the AI object. Retail: thinker 1 and argument [sp,#0x6c] 0. Palace: also the
