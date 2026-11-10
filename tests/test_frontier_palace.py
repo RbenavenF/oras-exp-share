@@ -366,17 +366,24 @@ def test_palace_ai_flags_bridge(palace_engine_code, cro_base, ident, thinker, fl
 @pytest.mark.parametrize('ident, thinker, flag, command, column', [
     (0, 0, True, 3, 1), (0, 0, True, 5, 1), (0, 0, True, 6, 1),    # decisions: AI
     (0, 0, True, 7, 0), (0, 0, True, 10, 0), (0, 0, True, 2, 0),   # display and the rest: UI
-    (0, 0, True, 257, 0), (0, 0, True, 4, 0), (0, 0, True, 8, 0),
+    (0, 0, True, 0x101, 0), (0, 0, True, 4, 0), (0, 0, True, 8, 0),
+    (0, 0, True, 0x103, 0),                                        # 0x103: byte 0 = command 3 (with byte 1 set)
     (0, 0, False, 3, 0), (0, 0, False, 5, 0),                      # unmarked battle: retail
     (1, 1, True, 3, 1), (1, 1, False, 7, 1),                       # rival unchanged
     (0, 2, True, 3, 2),                                            # replay unchanged
 ])
-def test_palace_dispatch_bridge_columns(palace_engine_code, cro_base, ident, thinker, flag, command, column):
+@pytest.mark.parametrize('r1', [0, 1, 3])
+def test_palace_dispatch_bridge_columns(palace_engine_code, cro_base, ident, thinker, flag, command, column, r1):
+    """At CRO 0x49ec r1 holds the row's byte-1 flag, not the command (Azahar 2026-11-10, §33): the command is the
+    row's byte 0, so r1 must not matter."""
     uc, put, regs, AR = pmachine(palace_engine_code, cro_base)
     pclient(put, ident, thinker, flag)
     table, row = PMEM + 0x8000, 5
+    put(table + 0x1C * row, command)
+    if command == 0x103:
+        column = 1 if (ident, thinker, flag) == (0, 0, True) else column   # byte 0 = 3: a decision
     put(PSTACK, 0x11223344)                       # [sp] is read by 0x4a74 after the dispatch
-    for reg, value in zip(regs, (row, command, table)):
+    for reg, value in zip(regs, (row, r1, table)):
         uc.reg_write(reg, value)
     uc.reg_write(regs[4], PCLIENT)
     uc.reg_write(regs[6], 0)
@@ -386,7 +393,7 @@ def test_palace_dispatch_bridge_columns(palace_engine_code, cro_base, ident, thi
     assert uc.reg_read(AR.UC_ARM_REG_PC) == site + 16
     assert uc.reg_read(regs[3]) == column
     assert uc.reg_read(regs[0]) == 7 * row and uc.reg_read(regs[2]) == table + 0x1C * row
-    assert uc.reg_read(regs[5]) == PCLIENT + 0x1E4 and uc.reg_read(regs[1]) == command
+    assert uc.reg_read(regs[5]) == PCLIENT + 0x1E4 and uc.reg_read(regs[1]) == r1
     assert [uc.reg_read(r) for r in (regs[4], regs[6], *regs[7:12])] == before
     assert uc.reg_read(AR.UC_ARM_REG_SP) == PSTACK and uc.mem_read(PSTACK, 4) == struct.pack('<I', 0x11223344)
 
@@ -428,3 +435,16 @@ def test_palace_menu_has_no_video_item_and_the_towers_keeps_it(built):
         return [(x.op, x.args) for x in program.items if isinstance(x, Op) and x.args == [palace.VIDEO_MENU]]
     assert video_jumps(palace.palace_program(retail)) == [(OP['JUMP'], [palace.VIDEO_MENU])]
     assert video_jumps(tower.tower_program(retail)) == [(OP['JNZ'], [palace.VIDEO_MENU])]
+
+
+def test_palace_record_routine_returns_at_once_and_the_towers_records(built):
+    _, retail, _, _ = built
+
+    def routine(program):
+        i = [k for k, x in enumerate(program.items) if not isinstance(x, Op) and x[1] == palace.VIDEO_RECORD][0]
+        return [(x.op, x.args) for x in program.items[i + 1:i + 4]]
+    assert routine(palace.palace_program(retail)) == [(OP['PROC'], [0]), (OP['ZERO_PRI'], [0]), (OP['RETN'], [0])]
+    tower_program = tower.tower_program(retail)
+    assert routine(tower_program)[1] == (OP['PUSH_P_S'], [12])
+    calls = [x for x in palace.palace_program(retail).items if isinstance(x, Op) and x.args == [palace.VIDEO_RECORD]]
+    assert len(calls) == 3

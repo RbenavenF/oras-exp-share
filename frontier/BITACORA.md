@@ -2115,3 +2115,18 @@ Commits: el de esta entrada.
 Siguiente paso: aceptación en Azahar con `c-build` (sonda pasiva `work/frontier/palace/b3-probe.gdb`, direcciones
 comprobadas contra los símbolos enlazados): ronda sin pulsaciones desde `b3-streak6-in.sav` (racha 6) y una desde
 `b1-in.sav`; KO con cambio automático; IsWin, racha ruta 3 y PB; pausa/reanudación/derrota; regresiones manuales.
+
+## 2026-11-10 11:35 — Claude Code (Opus 5.5) — F6-PALACIO-B: build en Azahar, despacho corregido, vídeo de derrota oculto
+Estado: en curso
+Hecho:
+- En Azahar el parche experimental no desviaba nada (r1 en CRO+0x49ec no es el comando): corregido `palace_dispatch`
+  (byte 0 de la fila), test Unicorn reescrito. Con la build corregida: ronda de 7 victorias con decisiones y cambio
+  automático por la IA, derrota (IsWin 0), PB 4, racha 0/0/7; reanudación 2→4 y pausa 4/1/4 (reports/frontier.md §33).
+- «Guardar vídeo» también salía tras la derrota: `palace.hide_record` anula la rutina L3fdc en el Palacio.
+- Los textos del entrenador (presentación y derrota) siguen esperando A como en retail: mecanismo medido en §33,
+  sin resolver. Criterio «sin ninguna pulsación» no cumplido en esos dos textos.
+Evidencia: §33; `work/frontier/palace/c/` (gdb-s1.log, presses*.log, capturas), partidas c2-after-loss.sav,
+c3-paused4.sav; `python -m pytest -q tests` → 696 passed.
+Commits: el de esta entrada.
+Siguiente paso: regresiones con control manual (Fábrica, Torre, Arena, Mansión, entrenador del mundo) con c-build3;
+después decidir los textos del entrenador (seguir el gestor `vista+0x444`, vtable CRO 0xe5168, o preguntar).

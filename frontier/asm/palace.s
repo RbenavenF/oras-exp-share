@@ -81,26 +81,28 @@ palace_ai_flags:
     addeq   lr, lr, #(0x732b0 - 0x73260)
     bx      lr
 
-@ CRO 0x49ec, the command dispatch of client proc 0x4914: r0 row, r1 command, r2 table, r4 client.
-@ Reproduces `ldrb r3,[r4,#0x91]; rsb r0,r0,r0,lsl#3; add r5,r4,#0x1e4; add r2,r2,r0,lsl#2`, with
-@ column 1 (AI) for the Palace's client 0 on commands 3, 5 and 6. ip/flags scratch.
+@ CRO 0x49ec, the command dispatch of client proc 0x4914: r0 row, r2 table, r4 client. r1 is NOT the
+@ command here: 0x49d4..0x49e8 left in it the row's byte 1 != 0 (and 0x4a00 overwrites it). The command is the
+@ row's byte 0 (0x49c0 `ldrb r3,[r2,r0*28]`; e.g. 0x101 = command 1 with byte 1 set). Reproduces
+@ `ldrb r3,[r4,#0x91]; rsb r0,r0,r0,lsl#3; add r5,r4,#0x1e4; add r2,r2,r0,lsl#2`, with column 1 (AI) for the
+@ Palace's client 0 on commands 3, 5 and 6. ip/flags scratch.
     .global palace_dispatch
 palace_dispatch:
+    rsb     r0, r0, r0, lsl #3
+    add     r5, r4, #0x1e4
+    add     r2, r2, r0, lsl #2
     ldrb    r3, [r4, #0x91]
     ldrb    ip, [r4, #0x90]
-    orrs    ip, ip, r3
-    bne     1f
-    cmp     r1, #3
-    cmpne   r1, #5
-    cmpne   r1, #6
-    bne     1f
+    orrs    ip, ip, r3              @ thinker 0 (UI) and client 0
+    bxne    lr
+    ldrb    ip, [r2]                @ the row's command
+    cmp     ip, #3
+    cmpne   ip, #5
+    cmpne   ip, #6
+    bxne    lr
     ldr     ip, [r4]
     ldr     ip, [ip, #0x10]
     ldr     ip, [ip, #0xa8]
     tst     ip, #PALACE_RULE
     movne   r3, #1
-1:
-    rsb     r0, r0, r0, lsl #3
-    add     r5, r4, #0x1e4
-    add     r2, r2, r0, lsl #2
     bx      lr

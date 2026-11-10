@@ -2024,3 +2024,45 @@ clasificación sobre code.bin y las 145 CRO de Repolished (+ las dos de la v0.5)
 Build: `python frontier/overlay.py --out work/frontier/palace/c-build` (`c-build.log`), **idéntica** (`diff -r`) a la
 build experimental `b3-build` de §32; code.ips 330cf5e6…, DllBattle.cro a9b91f85….
 Suite: `python -m pytest -q tests` → 633 passed.
+
+### Azahar con la build (2026-11-10, sesión 1)
+
+Laboratorio con GDB y sonda **pasiva** `work/frontier/palace/c-probe2.gdb` (solo registra; la única escritura es el
+fixture de PS = 1 indicado abajo). Registro `work/faraway/gdb/out.log` copiado a `work/frontier/palace/c/gdb-s1.log`.
+
+**Fallo del parche experimental, corregido.** Con `c-build` (= `b3-build`) el combate llegó al menú de acción del
+jugador: el despacho nunca desviaba. En CRO+0x49ec `r1` **no es el comando**: 0x49d4..0x49e8 dejan en él
+`byte1 != 0` de la fila; el comando es el **byte 0** de la fila (0x49c0 `ldrb r3,[r2,r0*28]`; la palabra 0x101 de la
+fila 0 = comando 1 con el byte 1 puesto). `palace_dispatch` lee ahora `ldrb [fila]`. El test Unicorn se reescribió con
+la fila en memoria y `r1` en 0/1/3 (indiferente). Gancho 2212 bytes, **344 libres**. Las trazas GDB de §32 no tenían
+este fallo porque su sonda leía la fila.
+
+**Ronda completa (`c-build2`, desde `c1-door.sav` = `pa_strong.sav` delante de la puerta, 5db91b68…):** puerta →
+340 → Combatir → Individual → Metagross/Blaziken/Garchomp → guardado → 7 combates **ganados** (`PALACE RESULT raw=1`
+×7). En cada combate `PALACE START … a8=40000000 palace=1 arena=0 style=0`; objeto IA del cliente 0 con flags 7;
+`cmd=3 col=1` (acción) y `cmd=5 col=1` (sustituto) para el cliente 0; el resto de comandos por la columna 0. En el
+combate 3 la sonda dejó a 1 PS al primer Pokémon (fixture de RAM): cayó y el cliente 0 eligió sustituto por la IA
+sin pulsación (`PALACE ENTER lab: hp=1 on id=0` → `cmd=5 col=1` → `ENTER id=1`). Menú entre combates: solo
+Continuar/Pausar (`c/c2-menu-novideo.png`). Combate 8 con los tres a 1 PS: `RESULT raw=0` (derrota).
+Partida tras la derrota `c2-after-loss.sav` (aecf494e…): **Palacio 0/0/7**, **PB 4** = `FRONTIER_BP['palace'][0]`,
+Mansión 0x1BBC0 a cero, Torre/Fábrica a 0, ruta 3 (limitación de §15).
+
+**Pulsaciones.** El conductor `work/frontier/palace/drive.sh` solo pulsa A fuera del combate o cuando el cliente 0
+ejecuta el proc de interfaz del comando 1 (CRO+0x73ec, presentación) o del 12 (CRO+0x10bec, fin); cada pulsación
+queda en `c/presses.log`/`presses3.log` con su motivo. **Ninguna pulsación durante decisiones ni cambios.** Pero
+los dos textos del entrenador **esperan A como en retail**: «¡… te desafía!» y su frase de derrota. Medido en la
+presentación: vista = cliente0+0xc8, secuencia 0 (tabla CRO 0xe0fd0; la 1 se usa si el byte 0 del setup es 4) en
+el estado 20, callback 0x48010 en el subestado 2, que espera `[[vista+0x444]+0xc]+8 == 0`; esa cola contiene una
+línea de tiempo (nodo con fotograma 0x2a de 0x7e) **congelada** por su dueño (gestor `vista+0x444`, vtable CRO
+0xe5168, `+0x14` = 0) hasta pulsar A; al pulsar, code.bin 0x3c4ff0 la retira. Sin probar: dónde se lee la tecla.
+Por eso el criterio «sin ninguna pulsación» **no se cumple** en esos dos textos.
+
+**Vídeo tras la derrota.** Con `c-build2` el flujo retail ofreció guardar el vídeo tras perder y A lo guardó
+(«Se ha guardado el Vídeo de Combate», `c/c2-loss-1.png`). `palace.hide_record` deja `L3fdc` (SaveBattleRecord +
+espera; llamadas en 0x21d0, 0x2250 y 0x25dc) en `PROC; ZERO_PRI; RETN` solo en el programa del Palacio; test.
+`c-build3`: solo cambia `a/0/1/3` respecto a `c-build2`; code.ips 10e9eece…, DllBattle.cro a9b91f85….
+
+**Reanudación y pausa (`c-build3`, desde `c3-resume-in.sav` = `b1-in.sav`, 2/1/2 en 340):** «Tu racha … asciende a
+2», selección, combates 3 y 4 ganados con la IA (sin pulsaciones salvo los textos), Pausar → `c3-paused4.sav`
+(aebef83e…): **4/1/4, PB 0**, Mansión a cero, bloque de equipo idéntico al de entrada (12355b31…).
+Sin pantallas negras ni cuelgues en 12 combates. Suite: `python -m pytest -q tests` → 696 passed.
