@@ -95,7 +95,7 @@ Reglas del carril (van en el mensaje del agente):
 - `BITACORA.md` y `reports/frontier.md` se unen sin conflicto (`.gitattributes`, `merge=union`); cualquier otro
   conflicto se aborta y bloquea esa tarea, sin tocar `main`.
 
-Límites: dos tareas que toquen lo mismo (el hueco de `code.bin`, `patch.py`, el CRO) chocan al integrar o, peor,
+Límites: lo que un agente deja sin commit al quedarse sin cuota se queda en su carril; si el otro hereda la tarea, no lo ve (el aviso de relevo lo dice; el brief ya pide commit en cada hito). Dos tareas que toquen lo mismo (el hueco de `code.bin`, `patch.py`, el CRO) chocan al integrar o, peor,
 integran sin conflicto pero se pisan en el juego: la aceptación de `main` solo pasa los tests. Repartir en paralelo
 tareas que no compartan motor; una regresión en Azahar con lo integrado sigue siendo trabajo de la tarea.
 

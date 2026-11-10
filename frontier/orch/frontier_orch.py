@@ -354,7 +354,10 @@ class Orch:
             path = self.lane_path(agent)
             if not (path / '.git').exists():
                 path.parent.mkdir(parents=True, exist_ok=True)
-                self.git('worktree', 'add', '-B', f'lane/{agent}', str(path), 'HEAD')
+                if self.git('branch', '--list', f'lane/{agent}').strip():     # kept by lanes remove: reuse it
+                    self.git('worktree', 'add', str(path), f'lane/{agent}')
+                else:
+                    self.git('worktree', 'add', '-b', f'lane/{agent}', str(path), 'HEAD')
             for rel in lanes.get('link', []):
                 src, dst = self.root / rel, path / rel
                 if src.exists() and not (dst.exists() or dst.is_symlink()):

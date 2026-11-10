@@ -369,3 +369,17 @@ def test_codex_may_write_the_main_git_dir_from_a_lane(lanes_repo):
     cmd, *_ = orch.command('codex', task, False, lane=orch.lane_path('codex'))
     assert f'sandbox_workspace_write.writable_roots=["{lanes_repo.resolve() / ".git"}"]' in cmd
     assert cmd[cmd.index('-C') + 1] == str(orch.lane_path('codex'))
+
+
+def test_a_kept_lane_branch_is_reused_not_reset(lanes_repo):
+    clock = Clock()
+    orch = fo.Orch(lanes_repo, now=clock.now, sleep=clock.sleep, out=lambda line: None)
+    orch.lanes_setup()
+    lane = orch.lane_path('codex')
+    (lane / 'unmerged.txt').write_text('x')
+    subprocess.run(['git', '-C', str(lane), 'add', '-A'], check=True)
+    subprocess.run(['git', '-C', str(lane), 'commit', '-qm', 'unmerged'], check=True)
+    orch.lanes_remove()
+    assert 'lane/codex' in git(lanes_repo, 'branch')             # kept: not in main
+    orch.lanes_setup()
+    assert (orch.lane_path('codex') / 'unmerged.txt').exists()
