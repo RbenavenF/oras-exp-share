@@ -2344,3 +2344,32 @@ Sin probar: dos Azahar reales a la vez (`lab_smoke.sh`), agentes reales en carri
 el `.git` principal desde un worktree, `ORAS_GDB_PORT` dentro de su sandbox), la copia de `work/azahar-lab/data`.
 Siguiente paso: cuando el orquestador suelte el turno, con el usuario: integrar la rama, `lanes setup`,
 `lab_smoke.sh`, una tanda corta con `auto --parallel --max-runs 2`; marcha atrás según el README.
+
+## 2026-11-11 00:30 — Claude Code (Opus 5.5) — frontier-orch: migración al modo paralelo
+Estado: hecho (falta una tanda con agentes reales en carriles: no queda ninguna tarea abierta)
+Hecho:
+- El orquestador secuencial terminó el 2026-11-10 a las 20:49 («all tasks done»): F6-PIRAMIDE-V2A (Codex,
+  17:59→19:09) y F6-TUBO-V2 (Codex 19:09→19:59, cuota; Claude 19:59→20:49). Codex con Sol y compactación a 150k
+  aguantó **2 h** seguidas (17:59→19:59) frente a 77 min el 5 de noviembre: sesiones de 293 y 201 llamadas, contexto
+  medio ~84k y ~89k, máx. ~150k, 2 y 3 compactaciones (`~/.codex/sessions/2026/11/10/`).
+- Rama `orch-parallel` rebasada sobre main (conflicto solo en BITACORA.md, resuelto a mano añadiendo la entrada de
+  las 18:30 al final) y fusionada con `--no-ff` (300fcc1). Etiqueta `pre-parallel` = main justo antes (64b2eeb).
+- `frontier-orch lanes setup`: carriles `work/orch/lanes/claude` (24690) y `…/codex` (24691) en 0,5 s; enlaces a
+  inputs, tools, baseline, dist, analysis, downloads, .venv, runtime de Azahar, `work/extracted` y la ROM;
+  copiados `azahar-lab/{config,data}` (229 MB) y `work/frontier/lab` (176 MB) por carril.
+- Prueba real de dos laboratorios a la vez (`frontier/orch/lab_smoke.sh`): los dos Azahar arrancan, cada gdb lee
+  el PC de su emulador, el `reap` de un carril deja vivo al otro (su gdb sigue respondiendo) y al final no queda
+  ningún proceso de los carriles. Tres pasadas seguidas en verde tras dos correcciones:
+  - `gdbctl.sh start` esperaba 2 s fijos tras `target remote`; con dos laboratorios el `halt` llegaba a mitad de
+    la conexión («Quit»). Ahora espera a que el stub responda (hasta 30 s).
+  - el stub deja de escuchar en su puerto cuando tiene un gdb conectado: `lab_smoke.sh` comprueba el proceso y su
+    gdb, no el puerto. Además el stub rechaza conexiones unos segundos después de abrir el puerto.
+  Con los dos a la vez, Azahar iba al 77 % de velocidad (captura del carril de Codex en la pantalla de título).
+Evidencia: `python -m pytest -q tests` en main → 983 passed; `frontier/orch/lab_smoke.sh` ×3.
+Sin probar: agentes reales en carriles (commit de Codex desde un worktree con `{git_common}`, `ORAS_GDB_PORT` en su
+sandbox, el aviso del brief paralelo), la integración con trabajo real de dos agentes a la vez.
+Marcha atrás: `frontier/orch/frontier-orch lanes remove` y `git revert -m 1 300fcc1` (o volver a `pre-parallel`);
+`auto` sin `--parallel` sigue igual.
+Commits: 300fcc1 (fusión) y el de esta entrada.
+Siguiente paso: crear tareas para los dos agentes que no se pisen y lanzar `frontier/orch/frontier-orch auto
+--parallel --max-runs 2` como primera tanda vigilada.

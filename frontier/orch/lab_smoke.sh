@@ -17,6 +17,7 @@ for lane in "${LANES[@]}"; do
   (cd "$lane" && python scripts/azahar_lab.py start >/dev/null)
   for i in $(seq 1 90); do ss -ltn | grep -q ":$port " && break; sleep 1; done
   ss -ltn | grep -q ":$port " || { echo "FAIL: lab of $lane does not listen on $port"; exit 1; }
+  sleep 8     # the stub refuses connections for a few seconds after the port opens (measured 2026-11-11)
   echo "lab $(basename "$lane") listening on $port"
 done
 for lane in "${LANES[@]}"; do
@@ -26,9 +27,16 @@ for lane in "${LANES[@]}"; do
 done
 (cd "${LANES[0]}" && python scripts/azahar_lab.py reap)
 sleep 2
-other=$(cat "${LANES[1]}/work/lab-port")
-if ss -ltn | grep -q ":$other "; then echo "OK: reap of $(basename "${LANES[0]}") left the other lab running"
+# not the port: the stub stops listening once its gdb is attached (measured 2026-11-11)
+other=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['azahar_pid'])" \
+        "${LANES[1]}/work/azahar-lab/session.json")
+if kill -0 "$other" 2>/dev/null && (cd "${LANES[1]}" && faraway/gdbctl.sh halt >/dev/null &&
+     faraway/gdbctl.sh cmd 'p/x $pc' | grep -q '0x' && faraway/gdbctl.sh run); then
+  echo "OK: reap of $(basename "${LANES[0]}") left the other lab running (its gdb still answers)"
 else echo "FAIL: the other lab died with the first one's reap"; fi
 (cd "${LANES[1]}" && python scripts/azahar_lab.py reap)
 sleep 1
-ps -eo pid,args | grep -E '[o]rch/lanes/.*(AppRun|Xvfb|azahar-lab)' && echo "FAIL: lane processes left" || echo "OK: both labs gone"
+left=$(ps -eo pid,comm | awk '$2 ~ /^(AppRun|Xvfb|gdb-multiarch)/ {print $1}' | while read -r pid; do
+  tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null | grep -q 'orch/lanes/' && echo "$pid"
+  readlink "/proc/$pid/fd/1" 2>/dev/null | grep -q 'orch/lanes/' && echo "$pid"; done | sort -u)
+[ -z "$left" ] && echo "OK: both labs gone" || echo "FAIL: lane processes left: $left"

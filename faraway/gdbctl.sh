@@ -19,7 +19,9 @@ case "$1" in
     echo $! > "$D/gdb.pid"; sleep 1
     send "set pagination off"; send "set confirm off"; send "set width 0"
     send "set architecture arm"
-    send "target remote 127.0.0.1:$PORT"; sleep 2
+    send "target remote 127.0.0.1:$PORT"
+    # wait for the stub to answer (it stops the game): 2 s were not enough with two labs at once (2026-11-11)
+    for _ in $(seq 1 60); do grep -qE 'in \?\? \(\)|could not connect|Connection (refused|timed out)' "$D/out.log" && break; sleep 0.5; done
     send "continue"; sleep 1; tail -5 "$D/out.log";;
   halt) kill -INT "$(cat "$D/gdb.pid")"; sleep 0.5; wait_quiet 3;;
   run) send "continue"; sleep 0.3;;

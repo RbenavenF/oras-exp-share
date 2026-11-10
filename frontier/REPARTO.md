@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-Claude Code, 2026-11-11 00:00 (migración al modo paralelo)
+libre (último: Claude Code, 2026-11-11 00:30)
 
 ## Instalaciones
 
