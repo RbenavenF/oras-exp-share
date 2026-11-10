@@ -50,7 +50,7 @@ dome_rival:
 
 @ Rival count: replaces `mov r6, #3` at 0x1e3548 (trainer party 0x1e3480, Singles row of its jump table on work+0x839;
 @ r6 goes to the builder as the number of members and to the AddMember loop at 0x1e35b8). r5 = facility work. The
-@ Dome's rival brings DOME_FIGHTERS. Uses ip and the flags (0x1e3568 sets them again).
+@ Dome's rival brings DOME_FIGHTERS, a Battle Pike wild room's rival one. Uses ip and the flags (0x1e3568 sets them again).
     .global dome_count
 dome_count:
     mov     r6, #3
@@ -62,4 +62,8 @@ dome_count:
     ldrh    ip, [ip, #(2 * (WORK_ROUTE - 0x4000))]
     cmp     ip, #DOME_ROUTE
     moveq   r6, #DOME_FIGHTERS
-    bx      lr
+    push    {r0, lr}
+    mov     r0, r5
+    bl      pike_wild               @ a Battle Pike wild room: one wild Pokémon (frontier/asm/pike.s)
+    movne   r6, #1
+    pop     {r0, pc}

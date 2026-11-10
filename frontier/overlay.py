@@ -217,6 +217,23 @@ def facility_scripts(romfs=ROMFS):
             arena.ZONE: arena.zone_script(retail), **pyramid.zone_scripts(retail)}
 
 
+MAISON_SETS = fd.ARCHIVES['maisonpkN'][0]
+
+
+def maison_sets(romfs=ROMFS):
+    """maisonpkN with the Battle Pike's wild sets (pike.WILD_SETS) in its empty entries from patch.PIKE_WILD_FIRST."""
+    data = source(romfs, MAISON_SETS)
+    if hashlib.sha256(data).hexdigest() != fd.ARCHIVES['maisonpkN'][1]:
+        raise ValueError(f'{MAISON_SETS} differs from Repolished 1.7.6')
+    entries = garc_entries(data)
+    wild = pike.wild_sets()
+    for k in range(len(wild)):
+        _, _, offset, length = entries[patch.PIKE_WILD_FIRST + k]
+        if data[offset:offset + length] != bytes(fd.SET_SIZE):
+            raise ValueError(f'{MAISON_SETS} entry {patch.PIKE_WILD_FIRST + k} is not an empty set')
+    return rebuild_garc(data, {(patch.PIKE_WILD_FIRST + k, 0): raw for k, raw in enumerate(wild)})
+
+
 def build(romfs=ROMFS):
     """{romfs path: archive} for a/0/1/3, a/0/2/9 and the story texts; (zone 517 script, shared script 5)."""
     sets, table, levels, cells = rentals()
@@ -230,6 +247,7 @@ def build(romfs=ROMFS):
     out = {'a/0/1/3': rebuild_garc(data, zones)}
     out[SHARED], script5 = shared(romfs, retail, cells, levels)
     out.update(texts(romfs, sets, table))
+    out[MAISON_SETS] = maison_sets(romfs)
     return out, (files[2], script5)
 
 

@@ -187,3 +187,47 @@ pike_param:
     addhi   lr, lr, #8             @ valid: next instruction, CRO+0x4e654
     addls   lr, lr, #0x460         @ invalid: retail zero, CRO+0x4eaac
     bx      lr
+
+@ Wild rooms (v2): saved work PIKE_WILD (0 = none) is the maisonpkN set index of the room's wild Pokémon, written by
+@ the room routine (frontier/pike.py) and cleared by every other room. The battle stays the Maison's (competitor 2:
+@ no Bag, no capture, no experience, measured in reports/frontier.md §35); its rival brings that one set, at level
+@ 50 - 4 (Seviper and Milotic, the first two wild sets) or 50 - 5 (the third ones), as Emerald's sLvl50Mons.
+@ r0 = facility work -> r0 = PIKE_WILD with the Pike's route, else 0; Z set when 0. Uses ip.
+    .global pike_wild
+pike_wild:
+    ldr     ip, [r0, #0xb78]
+    ldr     ip, [ip, #0x1c]
+    ldr     ip, [ip]                @ save data
+    add     ip, ip, #0x13000
+    add     ip, ip, #0x144          @ &work[0x4000]
+    ldrh    r0, [ip, #(2 * (WORK_ROUTE - 0x4000))]
+    cmp     r0, #PIKE_ROUTE
+    addeq   ip, ip, #0x200
+    ldrheq  r0, [ip, #(2 * (PIKE_WILD - 0x4000) - 0x200)]
+    movne   r0, #0
+    cmp     r0, #0
+    bx      lr
+
+@ Rival set: jumped to by rival_hook with the Pike's route (r0 = &work[0x4000], r4 = drawn set index, lr = the
+@ builder). With a wild room, r4 = PIKE_WILD and r2 = maisonpkN, as dome_rival. Uses r0, r1, r2, r4, the flags.
+    .global pike_rival
+pike_rival:
+    add     r0, r0, #0x200
+    ldrh    r1, [r0, #(2 * (PIKE_WILD - 0x4000) - 0x200)]
+    cmp     r1, #0
+    movne   r4, r1
+    movne   r2, #ARCHIVE_NORMAL
+    bx      lr
+
+@ Rival level: replaces `mov r1, #50` at 0x1e4e80 in the rival builder (fp = facility work; r0 is reloaded at
+@ 0x1e4e84, r1 is MAKE_PARAM's level). Uses r0, ip, the flags (the loop sets them again at 0x1e4e98).
+    .global pike_level
+pike_level:
+    push    {r3, lr}
+    mov     r0, fp
+    bl      pike_wild
+    mov     r1, #50
+    subne   r1, r1, #4
+    cmp     r0, #PIKE_WILD_FAR
+    subhs   r1, r1, #1
+    pop     {r3, pc}

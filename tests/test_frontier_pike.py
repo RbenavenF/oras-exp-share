@@ -53,7 +53,7 @@ def shared():
 
 def test_pike_works_are_distinct_free_and_outside_the_cleared_block():
     works = [*fp.PIKE_HP, *fp.PIKE_ST, *(w for pair in fp.PIKE_PP for w in pair),
-             pike.WORK_RNG, pike.STREAK, pike.ACTIVE, pike.RECORD]
+             pike.WORK_RNG, fp.PIKE_WILD, pike.STREAK, pike.ACTIVE, pike.RECORD]
     others = [fp.WORK_IV, *fp.WORK_SETS, *fp.WORK_RIVAL, fp.WORK_ROUTE, *dome.WORKS, factory.WORK_RNG,
               *(w for f, s in fp.STREAK_ROUTES.values() if f != 'pike' for w in (s, s + 1, s + 2))]
     assert len(set(works)) == len(works) and not set(works) & set(others)
@@ -71,7 +71,7 @@ def test_pike_global_case_is_in_the_row():
 @pytest.mark.parametrize('lang', [2, 7])
 def test_pike_text_lines(lang):
     out = pike.lines(lang)
-    assert len(out) == pike.LINE_END - pike.LINE_BASE == 42 and pike.LINE_BASE == dome.LINE_WON + 1
+    assert len(out) == pike.LINE_END - pike.LINE_BASE == 43 and pike.LINE_BASE == dome.LINE_WON + 1
     assert out[0].count('[VAR 0203 1,0]') == 1
     assert all(len(line.split('\n')) <= 2 for line in out)
 
@@ -201,8 +201,12 @@ def helpers(labels):
 
 def room_run(shared, streak, door, team=None, seconds=1234567, rng=0, answers=None, traits=None):
     """pike_room with the door menu answering `door` (an int, or 'hint' / 'other' relative to the hinted door)."""
+    return _room_run(shared, streak, door, team, seconds, rng, answers, traits)
+
+
+def _room_run(shared, streak, door, team=None, seconds=1234567, rng=0, answers=None, traits=None, extra=None):
     script, labels = shared
-    works = {pike.STREAK: streak, pike.WORK_RNG: rng}
+    works = {**(extra or {}), pike.STREAK: streak, pike.WORK_RNG: rng}
     for k, (hp, st) in enumerate(team or [(fp.PIKE_FULL, 0)] * 3):
         works[fp.PIKE_HP[k]], works[fp.PIKE_ST[k]] = hp, st
     log, state, answers = [], {'menu': None, 'hint': None}, list(answers or [])
@@ -242,7 +246,8 @@ def room_type(log):
     """The room type the chosen door led to, from its messages."""
     msgs = [x[1] for x in log if x[0] == 'msg']
     for line, kind in ((pike.LINE_SINGLE, pike.SINGLE), (pike.LINE_HARD, pike.HARD), (pike.LINE_NPC, pike.NPC),
-                       (pike.LINE_HEAL_FULL, pike.HEAL_FULL), (pike.LINE_STATUS_INTRO, pike.STATUS)):
+                       (pike.LINE_HEAL_FULL, pike.HEAL_FULL), (pike.LINE_STATUS_INTRO, pike.STATUS),
+                       (pike.LINE_WILD, pike.WILD)):
         if line in msgs:
             return kind
     if any(pike.LINE_HEALED <= m < pike.LINE_HEALED + 3 for m in msgs):
@@ -250,7 +255,7 @@ def room_type(log):
     raise AssertionError(f'no room message in {msgs}')
 
 
-RESULT = {pike.SINGLE: pike.ROOM_BATTLE, pike.HARD: pike.ROOM_HARD}
+RESULT = {pike.SINGLE: pike.ROOM_BATTLE, pike.HARD: pike.ROOM_HARD, pike.WILD: pike.ROOM_BATTLE}
 
 
 def test_room_number_and_doors_menu(shared):
@@ -341,6 +346,52 @@ def test_status_room_skips_fainted_and_already_affected(shared):
     team = [(0, 0), (20, 4), (fp.PIKE_FULL, 0)]
     for works, log in find_room(shared, pike.STATUS, 12, team, limit=150):
         assert works[fp.PIKE_ST[0]] == 0 and works[fp.PIKE_ST[1]] == 4 and works[fp.PIKE_ST[2]] != 0
+
+
+@pytest.mark.parametrize('streak, third', [(0, 0), (280, 0), (281, 1), (560, 1), (561, 2), (840, 2), (841, 3),
+                                           (5000, 3)])
+def test_wild_room_sets_one_of_three_wild_sets_by_streak(shared, streak, third):
+    picks = set()
+    for works, log in find_room(shared, pike.WILD, streak, limit=200):
+        value = works[fp.PIKE_WILD]
+        assert value in (fp.PIKE_WILD_FIRST, fp.PIKE_WILD_FIRST + 1, fp.PIKE_WILD_FAR + third)
+        assert value == pike.wild_set(streak, value - fp.PIKE_WILD_FIRST if value < fp.PIKE_WILD_FAR else 2)
+        assert log[-1] == ('result', 0, pike.ROOM_BATTLE)
+        picks.add(value)
+    assert len(picks) == 3
+
+
+def test_every_other_room_clears_the_wild_set(shared):
+    seen = set()
+    for seed in range(200):
+        for door in ('hint', 'other'):
+            works, log, _ = _room_run(shared, seed % 14, door, seconds=seed * 7919, rng=seed,
+                                      extra={fp.PIKE_WILD: fp.PIKE_WILD_FAR + 1})
+            kind = room_type(log) if ('msg', pike.LINE_LAST) not in log else 'last'
+            seen.add(kind)
+            if kind != pike.WILD:
+                assert works[fp.PIKE_WILD] == 0
+    assert seen >= {'last', *range(pike.TYPES)}
+
+
+def test_wild_sets_are_emeralds_and_written_to_empty_entries():
+    sets = [fd.parse_set(raw) for raw in pike.wild_sets()]
+    assert [s['species'] for s in sets] == [336, 350, 356, 101, 286, 202]
+    assert all(s['evs'] == s['item'] == s['form'] == 0 for s in sets)
+    if not overlay.ROMFS.exists():
+        pytest.skip('Local baseline required')
+    data = overlay.maison_sets()
+    entries = garc_entries(data)
+    maison = fd.load()
+    assert len(entries) == len(maison['maisonpkN']) == 999
+    trainers = [fd.parse_trainer(t) for t in maison['maisontrN']]
+    assert max(max(t['sets']) for t in trainers) < fp.PIKE_WILD_FIRST
+    for k, (_, _, offset, length) in enumerate(entries):
+        raw = data[offset:offset + length]
+        if fp.PIKE_WILD_FIRST <= k < fp.PIKE_WILD_FIRST + 6:
+            assert raw == pike.wild_sets()[k - fp.PIKE_WILD_FIRST]
+        else:
+            assert raw == maison['maisonpkN'][k]
 
 
 def test_generator_state_is_saved(shared):
@@ -718,3 +769,54 @@ def test_virtual_selected_slots_and_retail_slots(code, battle_module, route, box
     assert uc.reg_read(REGS['r8']) == (box if boxed and route == 6 and 256 <= slot <= 258 else PARTY)
     for name in ('r3', 'r4', 'r5', 'r7', 'sb', 'sl', 'fp', 'sp'):
         assert uc.reg_read(REGS[name]) == regs[name], name
+
+
+# --- wild rooms: rival count, set and level (Unicorn, patched code.bin) ---------------------------------------------
+
+KEEP = {'r4': 0x44, 'r5': WORK, 'r7': 0, 'r8': 0x88, 'sb': 0x99, 'sl': 0xAA, 'fp': WORK, 'sp': STACK - 0x100}
+
+
+def run_site(code, site, works, regs):
+    uc = machine(code, works, [])
+    for name, value in {**KEEP, 'lr': RETURN, **regs}.items():
+        uc.reg_write(REGS[name], value)
+    uc.emu_start(site, site + 4, count=2000)
+    return {name: uc.reg_read(REGS[name]) for name in REGS}
+
+
+@pytest.mark.parametrize('route, wild, count', [(6, 0, 3), (6, 219, 1), (6, 217, 1), (5, 0, 2), (5, 219, 2),
+                                                (0, 219, 3), (2, 219, 3), (1, 219, 3), (7, 219, 3)])
+def test_rival_count_is_one_only_in_a_pike_wild_room(code, route, wild, count):
+    regs = run_site(code, fp.COUNT_SITE, {fp.WORK_ROUTE: route, fp.PIKE_WILD: wild}, {'r0': 0x1234})
+    assert regs['r6'] == count and regs['r0'] == 0x1234
+    assert all(regs[k] == v for k, v in KEEP.items() if k != 'r4')
+
+
+@pytest.mark.parametrize('route, wild, expected', [(6, 0, (77, 0xB8)), (6, 219, (219, 0xB6)),
+                                                   (6, 222, (222, 0xB6)), (0, 219, (77, 0xB8)),
+                                                   (2, 219, (77, 0xB8))])
+def test_rival_set_is_the_wild_one_only_in_a_pike_wild_room(code, route, wild, expected):
+    lst = WORK + 0x800                       # the trainer's list: ldrh r4, [r0, #4] reads the drawn set
+    uc_works = {fp.WORK_ROUTE: route, fp.PIKE_WILD: wild}
+    uc = machine(code, uc_works, [])
+    uc.mem_write(lst + 4, struct.pack('<H', 77))
+    for name, value in {**KEEP, 'r0': lst, 'r2': 0xB8, 'lr': RETURN}.items():
+        uc.reg_write(REGS[name], value)
+    uc.emu_start(fp.RIVAL_SITE, fp.RIVAL_SITE + 4, count=2000)
+    assert (uc.reg_read(REGS['r4']), uc.reg_read(REGS['r2'])) == expected
+    assert uc.reg_read(REGS['sp']) == KEEP['sp'] and uc.reg_read(REGS['r7']) == 0
+
+
+@pytest.mark.parametrize('route, wild, level', [(6, 0, 50), (6, 217, 46), (6, 218, 46), (6, 219, 45), (6, 222, 45),
+                                                (5, 219, 50), (0, 217, 50), (1, 219, 50)])
+def test_rival_level_is_emeralds_only_in_a_pike_wild_room(code, route, wild, level):
+    regs = run_site(code, fp.LEVEL_SITE, {fp.WORK_ROUTE: route, fp.PIKE_WILD: wild}, {'r3': 0x3333})
+    assert regs['r1'] == level and regs['r3'] == 0x3333
+    assert all(regs[k] == v for k, v in KEEP.items())
+
+
+def test_wild_levels_match_emerald():
+    deltas = {336: 4, 350: 4, 356: 5, 101: 5, 286: 5, 202: 5}      # sLvl50_Mons levelDelta
+    for k, (species, _) in enumerate(pike.WILD_SETS):
+        index = fp.PIKE_WILD_FIRST + k
+        assert (45 if index >= fp.PIKE_WILD_FAR else 46) == 50 - deltas[species]

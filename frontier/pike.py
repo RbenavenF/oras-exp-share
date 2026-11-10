@@ -11,8 +11,9 @@ status and PP carry over between them (code.bin hooks, frontier/asm/pike.s, by p
 PP use two saved u16 works per fighter (two move slots per work), 0xffff for full; all healing rooms reset them.
 The streak counts rooms (own streak and record by route 6); BP as Emerald
 after each 14th room (data.FRONTIER_BP['pike']); the Maison's continue / rest / retire menu after each battle; a loss
-ends the challenge. Out of v1 (user, 2026-11-03): wild Pokémon rooms; also double battles, Lucy, the selection
-screen of Emerald.
+ends the challenge. Wild rooms (v2): one battle against Seviper, Milotic or the streak's third Pokémon of Emerald's
+sLvl50_Mons, at level 46/45, with the Maison's battle rules (no Bag, capture or experience; patch.PIKE_WILD,
+frontier/asm/pike.s). Out: double battles, Lucy, the selection screen of Emerald.
 
 Zone script: zone 517's **retail** script run as the Tower (tower.facility_program(retail, 'pike'): reception with
 the mutual exclusion, mode and party screens, route, pause, loss, BP every tower.STAGES['pike'] = 14), plus:
@@ -32,7 +33,8 @@ Known deviations (design §1): one zone instead of a lobby and a three-path room
 number in the Maison's «next battle» line; the Maison's texts and party rules; toxic
 is stored as poison (STATUS_VALUE, hypothesis); hard battles are the Maison's Super rank; on resuming, the player
 picks the three again and the saved HP, status and PP apply by position (PP capped to the new moves' full PP).
-V2 acceptance in Azahar and wild rooms are still pending.
+A wild room's battle keeps the Maison's presentation (its trainer walks in and sends out the wild Pokémon).
+V2 acceptance in Azahar is still pending.
 """
 import sys
 from pathlib import Path
@@ -57,11 +59,37 @@ WORK_RNG = 16674                 # generator state between rooms (free per front
 GLOBAL_ROOM = 9776
 ROOM_BATTLE, ROOM_HARD, ROOM_DONE = 0, 1, 2
 
-# Room types and hint categories (v1 subset of Emerald's; wild and double left out).
-SINGLE, HEAL_FULL, NPC, STATUS, HEAL_PART, HARD = range(6)
-TYPES = 6
+# Room types and hint categories (Emerald's without the double battle).
+SINGLE, HEAL_FULL, NPC, STATUS, HEAL_PART, HARD, WILD = range(7)
+TYPES = 7
 PEOPLE, WHISPERING, NOSTALGIA, POKEMON = range(4)
-CATEGORY = [PEOPLE, PEOPLE, WHISPERING, NOSTALGIA, NOSTALGIA, POKEMON]   # by room type
+CATEGORY = [PEOPLE, PEOPLE, WHISPERING, NOSTALGIA, NOSTALGIA, POKEMON, POKEMON]   # by room type
+# Wild rooms (v2): pret/pokeemerald 731ad5bf src/battle_pike.c sLvl50_Mons1-4. Seviper and Milotic always; the third
+# by the streak (GetBattlePikeWildMonHeaderId: up to 20, 40, 60 rounds, then the last). One of the three at random
+# (deviation: Emerald's room has grass with several encounters; here, one battle). Written to maisonpkN's empty
+# entries from patch.PIKE_WILD_FIRST on, in this order (the third ones from patch.PIKE_WILD_FAR on, level 50 - 5; the first
+# two 50 - 4). Set format of data.parse_set: species, four moves, EV bits (none), nature (0, Hardy), item (none), form.
+WILD_SETS = [(336, (92, 137, 34, 188)),     # Seviper: Toxic, Glare, Body Slam, Sludge Bomb
+             (350, (92, 95, 34, 57)),       # Milotic: Toxic, Hypnosis, Body Slam, Surf
+             (356, (261, 212, 92, 325)),    # Dusclops: Will-O-Wisp, Mean Look, Toxic, Shadow Punch
+             (101, (153, 120, 87, 92)),     # Electrode: Explosion, Self-Destruct, Thunder, Toxic
+             (286, (147, 78, 77, 237)),     # Breloom: Spore, Stun Spore, Poison Powder, Hidden Power
+             (202, (68, 243, 219, 194))]    # Wobbuffet: Counter, Mirror Coat, Safeguard, Destiny Bond
+WILD_HEADER_ROOMS = [20 * 14, 40 * 14, 60 * 14]   # streak <= n: third Pokémon of header 0, 1, 2; above: 3
+assert patch.PIKE_WILD_FAR == patch.PIKE_WILD_FIRST + 2 and len(WILD_SETS) == 6
+
+
+def wild_sets():
+    """The maisonpkN entries of the wild sets (16 bytes each, data.parse_set's layout)."""
+    import struct
+    return [struct.pack('<5HBBHH', species, *moves, 0, 0, 0, 0) for species, moves in WILD_SETS]
+
+
+def wild_set(streak, pick):
+    """Set index of a wild room: pick 0 Seviper, 1 Milotic, 2 the third by the streak (as room_routine)."""
+    if pick < 2:
+        return patch.PIKE_WILD_FIRST + pick
+    return patch.PIKE_WILD_FAR + sum(streak > n for n in WILD_HEADER_ROOMS)
 # Status room: Emerald's odds (percent) and the value written to the status work (the battle block's u32 status,
 # PK6 +0xE8). Values: pml's sick enum (1 paralysis, 2 sleep, 3 freeze, 4 burn, 5 poison), hypothesis checked in
 # Azahar (reports/frontier.md §28); toxic has no field value of its own there and is stored as poison.
@@ -96,6 +124,7 @@ TEXTS = {
                       'Una enfermera ha curado\na tu tercer Pokémon.'],
            'status_intro': '¡Un Pokémon salvaje ha usado un\nataque extraño contra tu equipo!',
            'immune': '¡Su tipo o habilidad lo protege\ndel estado!',
+           'wild': '¡Un Pokémon salvaje se lanza\nal ataque!',
            'positions': ['primer', 'segundo', 'tercer'],
            'status': {'toxic': '¡Tu {} Pokémon ha sido\ngravemente envenenado!',
                       'freeze': '¡Tu {} Pokémon ha sido\ncongelado!',
@@ -119,6 +148,7 @@ TEXTS = {
                       'A nurse healed\nyour third Pokémon.'],
            'status_intro': 'A wild Pokémon used a strange\nattack on your team!',
            'immune': 'Its type or Ability protects it\nfrom the status condition!',
+           'wild': 'A wild Pokémon\nattacks you!',
            'positions': ['first', 'second', 'third'],
            'status': {'toxic': 'Your {} Pokémon was\nbadly poisoned!',
                       'freeze': 'Your {} Pokémon was\nfrozen solid!',
@@ -137,7 +167,8 @@ LINE_HEALED = LINE_DOOR + 7                    # + position
 LINE_STATUS_INTRO = LINE_HEALED + 3
 LINE_STATUS = LINE_STATUS_INTRO + 1            # + 5 * position + status
 LINE_IMMUNE = LINE_STATUS + 3 * len(STATUSES)
-LINE_END = LINE_IMMUNE + 1
+LINE_WILD = LINE_IMMUNE + 1
+LINE_END = LINE_WILD + 1
 
 
 def lines(lang):
@@ -148,7 +179,7 @@ def lines(lang):
     out += [t['choose'], *t['door_names'], t['single'], t['hard'], t['npc'], t['heal_full'], *t['healed'],
             t['status_intro']]
     out += [t['status'][s].format(pos) for pos in t['positions'] for s in STATUSES]
-    out += [t['immune']]
+    out += [t['immune'], t['wild']]
     assert len(out) == LINE_END - LINE_BASE
     return out
 
@@ -191,6 +222,7 @@ def room_routine(p, helpers):
     r.store('room')
     r.add(1)
     r.store('value')
+    r.sysreq('WorkSet', patch.PIKE_WILD, 0)       # no wild Pokémon unless this room is a wild one
     r.sysreq('WordSetNumber', 1, 'value', 4, 0)   # as zone 517 at 0x3c3c, line «[VAR 0203 1,0]»
     _say(r, helpers, LINE_ROOM)
     r.set('result', ROOM_BATTLE)
@@ -291,7 +323,8 @@ def room_routine(p, helpers):
     r.p.label(chosen)
 
     handlers = {SINGLE: r.new_label('single'), HARD: r.new_label('hard'), NPC: r.new_label('npc'),
-                HEAL_FULL: r.new_label('healfull'), HEAL_PART: r.new_label('healpart'), STATUS: r.new_label('status')}
+                HEAL_FULL: r.new_label('healfull'), HEAL_PART: r.new_label('healpart'), STATUS: r.new_label('status'),
+                WILD: r.new_label('wild')}
     for kind, label in handlers.items():
         r.load('type')
         r.op('EQ_P_C_PRI', kind)
@@ -304,6 +337,34 @@ def room_routine(p, helpers):
     r.p.label(handlers[HARD])
     _say(r, helpers, LINE_HARD)
     r.set('result', ROOM_HARD)
+    r.op('JUMP', end)
+    # Wild: Seviper, Milotic or the streak's third (wild_set); a battle against that one Pokémon (pike.s).
+    r.p.label(handlers[WILD])
+    _say(r, helpers, LINE_WILD)
+    r.call('factory_rand', 3)
+    r.store('value')
+    r.op('EQ_P_C_PRI', 2)
+    third = r.new_label('third')
+    r.op('JNZ', third)
+    r.load('value')
+    r.add(patch.PIKE_WILD_FIRST)
+    r.store('value')
+    r.op('JUMP', 'pike_room_wildset')
+    r.p.label(third)
+    r.set('value', patch.PIKE_WILD_FAR)
+    r.sysreq('WorkGet', STREAK)
+    r.store('count')
+    for n in WILD_HEADER_ROOMS:
+        nxt = r.new_label('header')
+        r.load('count')
+        r.const_alt(n)
+        r.op('JSLEQ', nxt)                       # streak <= n: stays
+        r.load('value')
+        r.add(1)
+        r.store('value')
+        r.p.label(nxt)
+    r.p.label('pike_room_wildset')
+    r.sysreq('WorkSet', patch.PIKE_WILD, 'value')
     r.op('JUMP', end)
     r.p.label(handlers[NPC])
     _say(r, helpers, LINE_NPC)

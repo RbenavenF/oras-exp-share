@@ -98,8 +98,8 @@ en `DllField.cro` 0x4e644 usa 104 bytes de la cueva común. Medida acumulada: 24
 | Palacio | 3 | 16461 | 16462 | 16463 | |
 | Arena | 4 | 16465 | 16466 | 16467 | 16693–16694 reservados para PS iniciales de cada lado en B (§31) |
 | Domo | 5 | 16473 | 16474 | 16475 | 16493–16495 inscritos, 16649–16650 combatientes (code.bin), 16651 racha para el script 5, 16653–16655 rival, 16657–16658 sets forzados (code.bin), 16659 generador; casos 9773–9775 del script 5; líneas 998–1013 del texto 637 |
-| Tubo | 6 | 16477 | 16478 | 16479 | 16661–16663 PS, 16669–16671 estado (code.bin), 16674 generador; 16721–16723 PP movimientos 1–2 y 16725–16727 PP 3–4 (v2, dos bytes por work, 0xffff = llenos); caso 9776 del script 5; líneas 1014–1055 del texto 637 |
-| Pirámide | 7 | 16481 | 16482 (piso actual) | 16483 | 16681–16683 selección y 16685 cuenta (code.bin), 16686 vencidos, 16687 línea, 16689 número; caso 9777 del script 5; líneas 1056–1070 del texto 637 |
+| Tubo | 6 | 16477 | 16478 | 16479 | 16661–16663 PS, 16669–16671 estado (code.bin), 16674 generador; 16675 set salvaje (v2, code.bin; 0 = sin sala salvaje); 16721–16723 PP movimientos 1–2 y 16725–16727 PP 3–4 (v2, dos bytes por work, 0xffff = llenos); entradas 217–222 de maisonpkN (sets salvajes); caso 9776 del script 5; líneas 1014–1056 del texto 637 |
+| Pirámide | 7 | 16481 | 16482 (piso actual) | 16483 | 16681–16683 selección y 16685 cuenta (code.bin), 16686 vencidos, 16687 línea, 16689 número; caso 9777 del script 5; líneas 1057–1071 del texto 637 |
 
 Libres para pedir (según `python frontier/ids.py`, 2026-11-03; 16485–16487 y 16489–16490 son de la Fábrica y 16493–16495,
 16649–16651, 16653–16655 y 16657–16659 del Domo desde el 2026-11-04): 16661–16663, 16669–16671, 16673–16675 y más; 16665 y 16667 son del evento de Mew.

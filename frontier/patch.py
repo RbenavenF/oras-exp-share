@@ -53,6 +53,8 @@ COUNT_SITE = 0x1E3548                         # trainer party 0x1e3480, Singles:
 COUNT_BEFORE = 0xE3A06003
 BUILD_SITE = 0x1E3110                         # StartBattle 0x1e30b8: bl 0x1e3d2c (party builder), Pike H1
 BUILD_BEFORE = 0xEB000305
+LEVEL_SITE = 0x1E4E80                         # rival builder 0x1e4a94: mov r1, #50 (MAKE_PARAM level). Pike wild level
+LEVEL_BEFORE = 0xE3A01032
 ISWIN = 0x1E5664                              # IsWin: ldrb r0, [r0, #0x73c]; cmp; movne; bx lr. Pike H2
 ISWIN_BEFORE = (0xE5D0073C, 0xE3500001, 0x13A00000, 0xE12FFF1E)
 WORK_DELETE = 0x1E5C48                        # BattleInstWorkDelete (DllField.cro 0x956b4 -> thunk 0x3738), holder r0
@@ -107,6 +109,13 @@ PIKE_HP = (16661, 16662, 16663)
 PIKE_ST = (16669, 16670, 16671)
 PIKE_PP = ((16721, 16722, 16723), (16725, 16726, 16727))  # two moves per u16, by fighter
 PIKE_FULL = 0xFFFF
+# Wild rooms (v2): the maisonpkN index of the room's wild set, 0 = no wild room (pike.s pike_wild/rival/level). The
+# sets go into maisonpkN entries PIKE_WILD_FIRST.. (pike.WILD_SETS), written by frontier/overlay.py: maisonpkN has 999
+# entries, 0-216 used by the Maison's trainers (maisontrN's highest index is 216) and 217-998 all zero (measured
+# 2026-11-10). From PIKE_WILD_FAR on the level is 50 - 5, below it 50 - 4. Work free per frontier/ids.py
+# (2026-11-10); REPARTO.md.
+PIKE_WILD = 16675
+PIKE_WILD_FIRST, PIKE_WILD_FAR = 217, 219
 # Battle Pyramid (frontier/asm/pyramid.s, frontier/pyramid.py): with WORK_ROUTE = ROUTE['pyramid'] the party slots
 # chosen in the lobby are saved here when its facility work is deleted (the count 3 in PYRAMID_COUNT) and become the
 # selection of every floor battle. Free per frontier/ids.py (2026-11-05); assigned in frontier/REPARTO.md.
@@ -137,6 +146,7 @@ CONSTANTS = {'WORK_IV': WORK_IV, 'WORK_SET0': WORK_SETS[0], 'ARCHIVE_NORMAL': 0x
              'DOME_ROUTE': ROUTE['dome'], 'DOME_FIGHT0': DOME_FIGHT[0], 'DOME_FORCED0': DOME_FORCED[0],
              'DOME_FIGHTERS': len(DOME_FIGHT),
              'PIKE_ROUTE': ROUTE['pike'], 'PIKE_HP0': PIKE_HP[0], 'PIKE_ST0': PIKE_ST[0], 'PIKE_FIGHTERS': len(PIKE_HP),
+             'PIKE_WILD': PIKE_WILD, 'PIKE_WILD_FAR': PIKE_WILD_FAR,
              'PIKE_PP0': PIKE_PP[0][0], 'PIKE_PP_GAP': 2 * (PIKE_PP[1][0] - PIKE_PP[0][0]) - 2,
              'PYRAMID_ROUTE': ROUTE['pyramid'], 'PYRAMID_SEL0': PYRAMID_SEL[0], 'PYRAMID_COUNT': PYRAMID_COUNT,
              'PYRAMID_PICKS': len(PYRAMID_SEL),
@@ -155,6 +165,7 @@ assert DOME_FIGHT[1] == DOME_FIGHT[0] + 1 and DOME_FORCED[1] == DOME_FORCED[0] +
 assert 0 < DOME_FIGHT[0] - WORK_ROUTE and len(DOME_FIGHT) == len(DOME_FORCED) == 2
 assert list(PIKE_HP) == [PIKE_HP[0] + k for k in range(3)] and list(PIKE_ST) == [PIKE_ST[0] + k for k in range(3)]
 assert 0 < 2 * (PIKE_ST[0] - PIKE_HP[0]) < 256                                       # pike.s: ldrh/strh imm8
+assert 0 <= 2 * (PIKE_WILD - 0x4000) - 0x200 < 256 and PIKE_WILD_FIRST > 0               # pike.s: imm8 after +0x200
 assert list(PYRAMID_SEL) == [PYRAMID_SEL[0] + k for k in range(3)] and 0 < PYRAMID_COUNT - PYRAMID_SEL[0] < 128
 assert 0 < 2 * (PYRAMID_SEL[0] - WORK_ROUTE) < 0x10000                                # pyramid.s: ADDW
 
@@ -230,6 +241,9 @@ def build(native_clones=None):
     if word(code, COUNT_SITE) != COUNT_BEFORE:
         sys.exit(f'rival count site word differs: {word(code, COUNT_SITE):08x}')
     struct.pack_into('<I', code, COUNT_SITE - BASE, arm_branch(COUNT_SITE, symbols['dome_count'], link=True))
+    if word(code, LEVEL_SITE) != LEVEL_BEFORE:
+        sys.exit(f'rival level site word differs: {word(code, LEVEL_SITE):08x}')
+    struct.pack_into('<I', code, LEVEL_SITE - BASE, arm_branch(LEVEL_SITE, symbols['pike_level'], link=True))
     if word(code, BUILD_SITE) != BUILD_BEFORE:
         sys.exit(f'party build call {BUILD_SITE:#x} differs: {word(code, BUILD_SITE):08x}')
     struct.pack_into('<I', code, BUILD_SITE - BASE, arm_branch(BUILD_SITE, symbols['pike_build'], link=True))

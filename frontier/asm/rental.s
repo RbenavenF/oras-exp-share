@@ -112,6 +112,8 @@ rival_hook:
     ldrh    r1, [r0, #(2 * (WORK_ROUTE - 0x4000))]
     cmp     r1, #DOME_ROUTE
     beq     dome_rival              @ Battle Dome: its forced sets (frontier/asm/dome.s); returns to lr
+    cmp     r1, #PIKE_ROUTE
+    beq     pike_rival              @ Battle Pike: a wild room's set (frontier/asm/pike.s); returns to lr
     cmp     r7, #RENTALS
     bxge    lr
     add     r0, r0, #(2 * (WORK_IV - 0x4000))

@@ -2328,3 +2328,34 @@ El candidato sin integrar `frontier/probes/pike/wild_candidate.s` añade 168 byt
 (`wild-size.json`, medido antes de compactar: 2468+168=2636/2556, exceso 80).
 No es un mínimo ni un bloqueo definitivo: comparte código pendiente de integrar y todavía
 requiere desvíos validados, sets propios y prohibición de captura. No reservar su work provisional.
+
+### Hito 5: salas salvajes integradas (Claude, relevo de Codex)
+
+Relevo: Codex se cortó por cuota con dos cambios sin commit (`lab_probe.py`: sondas de consulta y
+setup salvaje solo RAM; `wild_candidate.s` sin seguimiento). Se conservan; el candidato queda marcado
+como sustituido. Ningún laboratorio vivo al empezar (`ps`: sin Azahar/Xvfb/GDB del Tubo).
+
+Diseño elegido para caber: el combate sigue siendo el de la Mansión (competitor 2), que ya es el
+que no da experiencia (`noexp` de la Mansión) y no permite capturar por ser de entrenador; cambiar
+competitor a 0 abría la Bolsa y gastaba Poké Balls (hito 4). La sala salvaje solo cambia el rival:
+- work **16675** `PIKE_WILD` (libre según `python frontier/ids.py`: 1157 scripts, 147 ficheros,
+  «free 16673-16675»; reservado en REPARTO): índice de maisonpkN del set salvaje, 0 = ninguno.
+  La rutina de la sala lo pone a 0 en cada sala y solo la sala salvaje lo escribe.
+- sets en **maisonpkN 217–222** (Seviper, Milotic, Dusclops, Electrode, Breloom, Wobbuffet con los
+  movimientos de `sLvl50_Mons` de pokeemerald 731ad5bf). Medido: el archivo tiene **999** entradas,
+  los entrenadores de maisontrN usan como máximo la **216** y 217–998 son ceros; overlay.py exige
+  que las seis estén vacías y reescribe solo esas (`a/1/8/2` en la build).
+- `dome_count` (0x1e3548) devuelve **1** con ruta 6 y `PIKE_WILD` ≠ 0; `rival_hook` salta a
+  `pike_rival` con ruta 6 (r4 = set salvaje, r2 = 0xb6); nuevo sitio **0x1e4e80** `mov r1, #50`
+  (`e3a01032`) del constructor del rival → `pike_level`: 46 para 217–218, 45 desde 219, 50 si no.
+- Tercer Pokémon según racha como `GetBattlePikeWildMonHeaderId` (≤280, ≤560, ≤840 salas).
+- Pista POKÉMON = combate duro o salvaje, como Esmeralda. Texto nuevo 1056; Pirámide 1057–1071.
+
+Espacio: `patch.assemble()` → gancho **2544/2556 bytes**, fin **0x579ff4**, **12 libres**.
+Desviaciones: un solo combate por sala (Esmeralda: hierba con encuentros); presentación del combate
+de la Mansión (entra un entrenador que saca al Pokémon salvaje); naturaleza fija Fuerte, sin EV.
+Tests: `python -m pytest -q tests` → **968 passed** (incluye Unicorn de cuenta/set/nivel en 9/5/8
+combinaciones de ruta y work, sorteo de la sala salvaje por racha y limpieza en todas las salas).
+Build `python frontier/overlay.py --out work/frontier/pike/v2/build-wild` (`build-wild.log`).
+**No probado aún en Azahar**: Bolsa/captura/experiencia con competitor 2, combate salvaje ganado y
+perdido, ni el resto de la aceptación.

@@ -2287,3 +2287,19 @@ Aún no probado: inmunidad dinámica, no exp/captura, equipo al salir, derrota s
 Siguiente paso: medir restricción retail de bolsa (regla 0x2000 candidata, sin asumir significado),
 probar inmunidad y conservación del equipo; integrar salvajes solo si caben y se bloquea captura.
 Lab aún vivo en shell persistente; apagar al cerrar sesión. Tarea in_progress, turno sin tocar.
+
+## 2026-11-10 20:25 — Claude — F6-TUBO-V2: relevo y salas salvajes integradas
+Estado: en curso
+Hecho: relevo de Codex (cuota). Revisados status/diff: `lab_probe.py` (sondas de consulta/setup salvaje) y
+`wild_candidate.s` (marcado como sustituido) se conservan en este commit; ningún laboratorio vivo.
+Sala salvaje integrada con el combate de la Mansión (competitor 2): work 16675 = set salvaje (0 = ninguno),
+sets de Esmeralda en maisonpkN 217–222 (entradas vacías medidas), rival de un Pokémon a nivel 46/45;
+nuevo sitio 0x1e4e80. Tipo WILD en la pista POKÉMON, texto 1056 (Pirámide 1057–1071), REPARTO actualizado.
+Evidencia: reports/frontier.md §35 hito 5; gancho 2544/2556 (12 libres, `patch.assemble()`);
+`python -m pytest -q tests` 968 passed; build `work/frontier/pike/v2/build-wild` (build-wild.log).
+Commits: el de esta entrada.
+Decisiones: no cambiar competitor (a 0 abría la Bolsa y gastaba Balls, hito 4); la Mansión ya no da exp.
+Desviaciones: un combate por sala; presentación de entrenador; naturaleza Fuerte sin EV.
+No probado: nada de la sala salvaje en Azahar (Bolsa/captura/exp con competitor 2, victoria/derrota).
+Siguiente paso: laboratorio con build-wild: sala salvaje ganada y perdida, Bolsa bloqueada, equipo al salir,
+inmunidad, PP, sala 14/PB, exclusión, regresión Palacio/Arena. Turno del orquestador intacto.
