@@ -36,7 +36,7 @@ def work_address(number):
     return SAVE + 0x13144 + 2 * (number - 0x4000)
 
 
-def run(code, count, iv, sets=(0, 0, 0), stop=fp.RESUME):
+def run(code, count, iv, sets=(0, 0, 0), stop=fp.RESUME, route=0):
     uc = Uc(UC_ARCH_ARM, UC_MODE_ARM)
     uc.mem_map(0x100000, (len(code) + 0xFFF) & ~0xFFF)
     uc.mem_write(0x100000, code)
@@ -50,6 +50,7 @@ def run(code, count, iv, sets=(0, 0, 0), stop=fp.RESUME):
     uc.mem_write(GAMEDATA, struct.pack('<I', SAVE))
     uc.mem_write(GAMEDATA + 0x14, struct.pack('<I', PLAYER_PARTY))
     uc.mem_write(work_address(fp.WORK_IV), struct.pack('<H', iv))
+    uc.mem_write(work_address(fp.WORK_ROUTE), struct.pack('<H', route))
     for number, value in zip(fp.WORK_SETS, sets):
         uc.mem_write(work_address(number), struct.pack('<H', value))
     uc.mem_write(VTABLE + 8, struct.pack('<I', FREE))
@@ -103,6 +104,13 @@ def test_inactive_factory_keeps_the_retail_branch(patched):
     assert calls == [('prepare', PLAYER_PARTY)]
     preserved(uc, r8=PLAYER_PARTY)
     assert struct.unpack('<I', uc.mem_read(WORK + 0x48, 4))[0] == 3
+
+
+@pytest.mark.parametrize('route', range(8))
+def test_only_pike_skips_healing_the_real_party(patched, route):
+    uc, calls, _ = run(patched[0], 3, iv=0, stop=AFTER_ORIGINAL_PREPARE, route=route)
+    assert calls == ([] if route == 6 else [('prepare', PLAYER_PARTY)])
+    preserved(uc, r8=PLAYER_PARTY)
 
 
 @pytest.mark.parametrize('count', [3, 4, 6, 2, 0])

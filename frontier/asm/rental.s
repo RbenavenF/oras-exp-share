@@ -33,7 +33,9 @@ rental_hook:
 
     ldr     r6, [r0, #0x14]         @ player party (original 0x1e3d94)
     mov     r0, r6
-    bl      PARTY_PREPARE           @ original 0x1e3d9c
+    ldrh    r1, [r8, #(-2 * (WORK_IV - WORK_ROUTE))]
+    cmp     r1, #PIKE_ROUTE
+    blne    PARTY_PREPARE           @ Pike heals its copy in H1, keeping the real party intact
     mov     r0, r4                  @ work
     sub     r1, r8, #(2 * (WORK_IV - WORK_ROUTE))   @ &work[WORK_ROUTE]
     bl      dome_party              @ Battle Dome: its 2 fighters as the selection (frontier/asm/dome.s)

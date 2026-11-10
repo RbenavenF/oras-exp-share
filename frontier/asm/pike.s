@@ -1,6 +1,6 @@
 @ Battle Pike (frontier/pike.py, reports/diseno/tubo.md): HP, status and PP carry over between the Pike's battles.
-@ The Battle Maison fights with a copy of the party, healed (0x3b5d34, PokePartyRecoverAll, on the real party) and
-@ rebuilt for every battle, so the Pike keeps each fighter's HP and status in saved works, by position in the battle
+@ The Battle Maison rebuilds a copy for every battle. Pike skips healing the real party in rental_hook and
+@ heals only that copy (0x3b5d34), then restores each fighter's HP, status and PP from saved works, by position in the battle
 @ party: PIKE_HP0 + i (0xFFFF = full) and PIKE_ST0 + i (the u32 status field of the battle block, low half).
 @ Everything here only acts while saved work WORK_ROUTE = PIKE_ROUTE (the Pike's challenge; patch.STREAK_ROUTES).
 @
@@ -38,6 +38,8 @@ pike_build:
     bl      BUILD_PARTY
     PIKE_WORKS
     bne     9f
+    mov     r0, r5
+    bl      PARTY_PREPARE           @ heal the copy, never the original party (rental_hook)
     ADDW    r6, (2 * (PIKE_HP0 - 0x4000))
     ldrb    r7, [r5, #0x18]         @ members
     cmp     r7, #PIKE_FIGHTERS

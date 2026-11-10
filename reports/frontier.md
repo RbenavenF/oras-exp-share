@@ -2286,3 +2286,21 @@ antes del segundo: no se usa esa pareja como prueba de persistencia.
 `before-room14.png` está mal nombrada: muestra «Ruben ha obtenido 1 PB» tras la sala 14;
 el segundo resultado tenía racha 13 antes de AddWinCount y el tercero 14 (pasó a 15).
 El guardado en disco aún no había cambiado al tomar esta medida: PB/equipo al salir pendientes.
+
+### Hito 3: curar solo la copia del Tubo
+
+Al pausar y guardar después de la prueba PP se obtuvo `v2/pp-paused.sav`: sala 15,
+activo 1, récord 15 y PB 1; work 16721 = 0x0a03, conserva 3 PP en el primer movimiento.
+La comparación descifrada con `work/frontier/lab/pk_saved_458.sav` detectó dos cambios
+indeseados: PS PK6+0xf0, 26→34 y 25→35. El constructor retail 0x1e3d8c cura el equipo
+original antes de copiarlo. `rental_hook` ahora omite esa llamada solo en ruta 6 y H1
+cura la copia antes de restaurar los works. Las demás rutas conservan la llamada anterior.
+
+`v2/tests-copy-final.log`: **935 passed in 20.64s**; incluye ocho rutas del constructor,
+H1/H2 con copia curada y selección del Domo. compileall, bash -n y diff --check correctos.
+`v2/space-copy.txt`: **2468/2556 bytes**, fin **0x579fa8**, **88 libres**.
+Build regenerada en `v2/build-immune` (`build-copy.log`). `boot.sh` exige que el IPS
+instalado coincida con el código del que se calculan los símbolos de la sonda.
+Un arranque anterior (`boot-immune.log`) usó código desfasado respecto a la sonda y se
+interrumpió; no aporta evidencia. El válido es `boot-immune2.log`.
+Todavía no se ha medido la conservación completa del equipo al salir con esta corrección.

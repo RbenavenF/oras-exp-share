@@ -3,6 +3,16 @@
 set -euo pipefail
 source scripts/env.sh
 build=${PIKE_BUILD:-work/frontier/pike/v2/build-immune}
+python - "$build/code.ips" <<'PY'
+import sys
+from pathlib import Path
+sys.path[:0] = ['frontier', 'scripts']
+import patch
+from formats import apply_ips, read_ips
+from island_build import native_donors
+installed = apply_ips(patch.CLEAN.read_bytes(), read_ips(Path(sys.argv[1]).read_bytes()))
+assert installed == patch.build(native_donors())[0], 'Rebuild first: probe symbols do not match installed code'
+PY
 lab=work/azahar-lab
 mod=$lab/data/azahar-emu/load/mods/000400000011C400
 savedir="$lab/data/azahar-emu/sdmc/Nintendo 3DS/00000000000000000000000000000000/00000000000000000000000000000000/title/00040000/0011c400/data/00000001"

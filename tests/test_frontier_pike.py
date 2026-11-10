@@ -462,6 +462,13 @@ def stub_accessors(uc, calls):
             uc.mem_write(r0 + setters[address], struct.pack('<I', r1))
         elif address == f['BUILD_PARTY']:
             calls.append(('build', r0, uc.reg_read(REGS['r3'])))
+        elif address == f['PARTY_PREPARE']:
+            calls.append(('heal', r0))
+            for k in range(uc.mem_read(r0+0x18, 1)[0]):
+                mon, = struct.unpack('<I', uc.mem_read(r0+4*k, 4))
+                core, = struct.unpack('<I', uc.mem_read(mon+0xc, 4))
+                uc.mem_write(core, bytes(uc.mem_read(core+4, 4)))
+                uc.mem_write(core+8, bytes(4))
         elif address == f['GET_PP']:
             uc.reg_write(REGS['r0'], uc.mem_read(r0 + 0x10 + r1, 1)[0])
         elif address == f['SET_PP']:

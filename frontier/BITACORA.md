@@ -2259,3 +2259,17 @@ No probado: puente/inmunidad en Azahar; salvajes/equipo/experiencia/captura; reg
 Siguiente paso: cerrar/guardar el lab PP, probar inmunidad en build-immune; medir y construir salvajes.
 Laboratorio vivo en shell persistente (PID namespace 4026533377, Azahar 18/Xvfb 15); parar antes de acabar.
 Tarea sigue in_progress; orquestador conserva turno; sin push ni subagentes.
+
+## 2026-11-10 19:43 — Codex — F6-TUBO-V2: curación de la copia, equipo original
+Estado: en curso
+Hecho: al auditar el guardado PP se detecta curación retail del equipo real (solo dos PS cambiados).
+Constructor omite esa curación en ruta 6; H1 cura la copia y restaura PS/estado/PP. Otras rutas intactas.
+Añadida precondición al boot para no mezclar IPS instalado y símbolos de sonda de otra build.
+Evidencia: reports/frontier.md §35; v2/pp-paused.sav, build-copy.log, space-copy.txt (2468/2556, 88 libres),
+tests-copy-final.log 935 passed; compileall, bash -n y diff --check correctos.
+Commits: b0d4bd6, 449494f y el de esta entrada.
+Decisiones: guardado PP confirma sala 15, activo/récord 1/15, PB 1 y primer movimiento 3 PP.
+No probado: equipo idéntico al salir con la corrección, inmunidad en Azahar, salvajes y regresiones.
+Siguiente paso: experimento propio de salvaje en Azahar (competitor=0, copia, noexp=1, rival único),
+medir bolsa/captura/experiencia antes de implementarlo; después inmunidad y aceptación pendiente.
+Lab vivo en shell persistente; parar al terminar. tasks.json sigue in_progress; turno del orquestador intacto.

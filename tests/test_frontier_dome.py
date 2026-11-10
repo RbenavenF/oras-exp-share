@@ -449,7 +449,7 @@ def run_party(code, route, selection=(3, 5, 1), count=3):
     for name, value in {'r4': WORK + 0x2C, 'r5': 0x55, 'r6': WORK, 'r7': 1, 'r8': PLAYER_PARTY, 'sb': PARTY_NEW,
                         'sl': 0xAA, 'fp': 0xBB, 'sp': STACK - 0x100}.items():
         assert uc.reg_read(REGS[name]) == value, name
-    assert prepared == [PLAYER_PARTY]
+    assert prepared == ([] if route == fp.ROUTE['pike'] else [PLAYER_PARTY])
     return sel, n
 
 
