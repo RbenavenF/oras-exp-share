@@ -2860,3 +2860,26 @@ Decisiones: bloque nuevo tras 1099 en vez de cambiar el paso de 4 líneas por ru
 No probado: consola; captura de la línea de plata ganada (PB y símbolo sí); revancha 63 en Azahar (VM sí); inglés.
 Siguiente paso: el orquestador integra el carril y pasa la suite; F8-CEREBRO-FABRICA hecho. Las demás instalaciones
   conectan «Símbolos» con `brains.symbols_option` en sus tareas.
+
+## 2026-11-12 — Claude Code (Opus 5.5) — F8-CEREBRO-TORRE: Anabel completa (consulta, oro en Azahar)
+Estado: hecho
+Hecho:
+- Relevo: la tarea estaba recién tomada por el orquestador (413ef1a), árbol limpio. BASE ya tenía a Anabel
+  plata/oro, textos y derrota; faltaba la consulta en la recepción de la Torre y el oro ganado en Azahar.
+- `frontier/tower.py`: «Símbolos» en el menú de la Torre (`brains.symbols_option`, línea 190 del texto 619,
+  valor 5), solo en `tower_program` (Palacio/Arena/Tubo comparten `facility_program` y no cambian).
+- `tests/test_frontier_brain_tower.py`: 15 tests VM del script de la Torre (desafío 0→174, derrotas, revanchas,
+  reanudar, rutas ajenas, consulta, menú); `test_frontier_tower.py` y `test_frontier_brains.py` ajustados.
+- Informe `reports/frontier.md` §41.
+Evidencia:
+- `env -u ORCH_LANE python -m pytest -q tests`: 1239 passed, 1 skipped (`work/frontier/cerebros/tower/tests-final.log`).
+- Azahar 24690, build de f113c4d (code.ips f64e527c…, sin cambio de motor): consulta plata; Anabel oro desde
+  racha 69 (entrenador 132, PK6 Raikou/Latios/Snorlax validados con `check_team.py --variant gold`); victoria
+  asistida en copias, línea de oro, `tower70-gold.sav` con símbolos 12, racha 70, PB 1→21, equipo intacto;
+  recarga y consulta «oro». Tabla con hashes en §41; artefactos en `work/frontier/cerebros/tower/`.
+Commits: f113c4d (código y tests), el de esta entrada (informe y bitácora).
+Decisiones: política de regresión caso a (solo script de zona de la Torre): sin Palacio/Arena/Tubo/historia ni
+  plaza. Plata ganada y derrota se reutilizan de BASE (§39), que el cambio no invalida. Sin reservas nuevas.
+No probado: consola; revanchas 105/140 y consulta «Aún no…» en Azahar (VM sí); dificultad sin asistencia.
+  La línea de victoria de una revancha de plata con oro dice «Has obtenido… de plata» (conserva el oro).
+Siguiente paso: el orquestador integra el carril y pasa la suite; F8-CEREBRO-TORRE hecho.

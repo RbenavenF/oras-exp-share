@@ -2950,3 +2950,43 @@ caso **b** (DllField y la ruta común de derrota) y **c** (overlay.py), en `regr
 
 **No probado:** consola; oro en Azahar con la build 4f1976a (sí con 10fb540); revancha 63 (VM); PB medidos en
 RAM durante el combate (solo en el guardado); dificultad real sin asistencia; inglés en el juego.
+
+## 41. Anabel — Cerebro de la Torre (F8-CEREBRO-TORRE)
+
+BASE (§39) ya entregó a Anabel: elegibilidad 35/70 y repeticiones, equipos exactos plata/oro (anexo de
+`reports/diseno/cerebros.md` §7), nombre y clase (Entrenadora Guay, clase 9; modelo de campo/combate de
+sustitución femenino de ORAS, ver §39), textos intro/plata/oro/victoria (texto 637), derrota (bloque 1100–1127,
+§40) y premio (+10 PB, `brains_won`). Esta tarea añade lo que faltaba a la Torre y la evidencia de oro:
+
+- `frontier/tower.py` `tower_program`: «Símbolos» en el menú de recepción de la Torre (texto 619 línea
+  `factory.LINE_SYMBOLS` = 190, valor `brains.MENU_SYMBOLS` = 5, antes de «Nada»), con `brains.symbols_option`
+  como la Fábrica. Solo cambia el script de la zona 329: Palacio/Arena/Tubo comparten `facility_program`, pero la
+  opción se añade en `tower_program`, fuera de él. Sin reservas nuevas (línea, valor y casos ya en REPARTO por §40).
+- `tests/test_frontier_brain_tower.py` (VM sobre el script de la Torre construido): desafío completo de 0 a 174
+  (Anabel en 35 plata, 70/105/140 oro; símbolos 0→1→3; +10 PB por victoria; líneas en orden), derrota ante oro
+  conserva la plata y una racha nueva no repite la plata, derrota ante plata sin premio y revancha, plata con
+  ambos símbolos conserva el oro, reanudar repite la elegibilidad sin premio, otras rutas sin Anabel, consulta
+  0/1/2/3 (2 se lee como oro) y el menú y su despacho. `test_frontier_tower.py` acepta la nueva entrada.
+
+Azahar (carril 24690, build `python frontier/overlay.py --out work/frontier/cerebros/tower/build` con f113c4d;
+code.ips f64e527c… igual que la de §40: no cambia el motor, política del usuario **caso a**, solo la Torre).
+Evidencia en `work/frontier/cerebros/tower/` (no en Git). Asistencia `pv_mode='win'` solo en las copias del
+rival, tras exportar sus PK6.
+
+| Prueba | Resultado medido | Evidencia |
+| --- | --- | --- |
+| Fixture | copia de `work/frontier/brains/t34.sav` (0fc1c711…, zona 329, racha 34) editada con `faraway/save_event.py` a 16441 = 16443 = 69, 16729 = 4 (plata), 16730 = 0 → `t69-silver.sav` (7a3a5ea8…) | `saved-gold.json` |
+| Consulta con plata | menú «Combatir / Quiero información / Cambiar la melodía / Símbolos»; «Tienes el Símbolo Habilidad de plata de la Torre Batalla.» y vuelta al menú | `menu.png`, `consult-silver.png` |
+| Oro, racha 69 | «Has vuelto a llegar hasta mí. Soy Anabel. ¡Esta vez combatiré con todas mis fuerzas!»; «¡La Entrenadora Guay Anabel te desafía!»; `BRAINS START` entrenador **132**, pendiente **18**, flag retail 0; PK6 Raikou/Latios/Snorlax IV 31, EV/naturaleza/objeto/movimientos/amistad 255 exactos (`check_team.py … --variant gold`, rc 0) | `b2.png`, `b3.png`, `g1.png`, `gold-team.json`, `gold-win-gdb.log` |
+| Oro ganado | `BRAINS RESULT raw=1`; «¡Has obtenido el Símbolo Habilidad de oro! Recibes 10 PB más.»; RAM 16729 = **12**, racha/récord 70; «Ruben ha obtenido 10 PB» de ronda; «El próximo combate será el número 71» | `gold-won-line.png`, `g3.png`, `g4.png` |
+| Guardado | Pausar → `tower70-gold.sav` (8bb678f9…): símbolos **12** (plata + oro de la ruta 2), racha/récord 70, activo 1, pendiente 0, PB **1 → 21** (10 del Cerebro + 10 de ronda), equipo intacto (hash 12355b31… igual a la fixture) | `saved-gold.json` |
+| Recarga | reinicio con `tower70-gold.sav`: «Tienes el Símbolo Habilidad de oro de la Torre Batalla.» | `consult-gold.png`, `reload-gdb.log` |
+
+Plata ganada, guardado/recarga de plata y derrota contra oro: evidencia de BASE (§39), sin cambios que la
+invaliden (el motor y las rutinas de Cerebro son las mismas; esta tarea solo añade la opción del menú).
+Laboratorio parado (`reap`, `use_gdbstub=false`).
+
+Desviaciones conocidas: la línea de victoria de una revancha de plata con oro ya obtenido dice «¡Has obtenido el
+Símbolo Habilidad de plata!» aunque el oro se conserva (VM); textos de la Mansión en la recepción (§F6).
+**No probado:** consola; revanchas 105/140 en Azahar (VM sí); consulta «Aún no…» en Azahar (VM sí; la línea
+de la Fábrica equivalente sí se vio en §40.1); dificultad real sin asistencia; inglés en el juego.
