@@ -6,7 +6,7 @@ the facility the Brain comes at its silver unit, with silver only at its gold un
 (silver team) and at the gold unit and every `period` after it (gold team). `due` is the reference; the zone script
 runs the same rule (`check_routine`) before each rival is chosen, from the facility streak, so a resumed challenge
 recomputes it. Facilities whose unit is not a battle (Dome, Pike, Pyramid) get their own adapter; BASE enables the
-Tower only (ENABLED).
+Tower initially; the Factory adapter also enables Noland (ENABLED).
 
 Symbols: saved work WORK_SYMBOLS, two bits per route r at 2*(r-1): 0 none, 1 silver, 3 silver and gold (2 is
 invalid and read as 3). Never cleared by a loss, a retirement or another challenge.
@@ -25,7 +25,8 @@ Zone script (517 clones run as the Tower, `install`):
 Native (frontier/asm/brains_cro.s, DllField.cro padding, SITES): the chooser returns the Brain's trainer
 (maisontrN entry TRAINER_FIRST + 2 * (route - 1) + variant - 1, class/name of TRAINERS), the load clears the Maison
 boss flag on Frontier routes, and once the battle is set up the rival's three members are remade from the Brain's
-row: set, IV, ability slot 0 and exact EV, in order. Without a Brain due, a Frontier route only differs from retail
+row: set, IV, ability slot 0 and exact EV, in order. Noland uses the seeded rental sets, their EV masks,
+Frustration instead of Return, friendship 0 and IV 15/31 (factory_brain.py). Without a Brain due, a Frontier route only differs from retail
 in the boss: rank Normal from the 19th win draws trainers 70-109 instead of the Maison's boss (19) or trainer 0.
 """
 import struct

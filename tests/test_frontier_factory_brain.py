@@ -96,3 +96,32 @@ def test_native_preserves_dynamic_team_across_retail_builder(variant, iv, ids):
     assert [v[2] for v in calls if v[0] == c['CODE_FRIENDSHIP']] == [0, 0, 0]
     assert [struct.unpack('<H', uc.mem_read(works + 2 * (w - 0x4000), 2))[0] for w in patch.WORK_RIVAL] == ids
     assert struct.unpack('<H', uc.mem_read(works + 2 * (patch.WORK_IV - 0x4000), 2))[0] == 9
+
+
+@pytest.mark.parametrize('variant,symbols', [(1, 0), (2, 1), (2, 3)])
+def test_factory_loss_clears_pending_before_retail_streak_cleanup(scripts, variant, symbols):
+    """Execute the real loss branch through ClearWinCount; no award can run first."""
+    from pawn_vm import Stop
+    script, labels = scripts['factory']
+    works = {patch.WORK_ROUTE: 1, patch.WORK_IV: 9,
+             patch.WORK_FSTREAK: 20 if variant == 1 else 41,
+             patch.WORK_FRECORD: 50, brains.WORK_BRAIN: 1 + 8 * variant,
+             brains.WORK_SYMBOLS: symbols | 0x3000}
+    reached = []
+
+    def clear(vm, args):
+        assert works[patch.WORK_IV] == works[brains.WORK_BRAIN] == 0
+        assert works[brains.WORK_SYMBOLS] == symbols | 0x3000
+        assert works[patch.WORK_FRECORD] == 50
+        reached.append('ClearWinCount')
+        raise Stop
+
+    stubs = {h: lambda vm, a: pytest.fail(f'Unexpected loss native {h}') for _, h in script.natives}
+    stubs.update(base.natives({'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
+                               'GetMyWinCount': lambda vm, a: works[patch.WORK_FSTREAK],
+                               'ClearWinCount': clear}))
+    with pytest.raises(Stop):
+        VM(script, stubs, {labels['L533c']: lambda vm, a: 0,
+                           labels['L3fdc']: lambda vm, a: 0,
+                           labels['L30']: lambda vm, a: pytest.fail('No BP on a loss')}).run(labels[factory.LOST])
+    assert reached == ['ClearWinCount']

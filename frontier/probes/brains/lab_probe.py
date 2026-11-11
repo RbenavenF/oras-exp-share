@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
-"""Emit the BASE lab probe against current patch symbols.
+"""Emit the Brains lab probe against current patch symbols.
 
 Default passive. pv_mode='win'/'loss' assists only battle copies through the
 existing Pyramid probe. It never writes results, works or the saved party.
 COPY exports are captured before assistance, to check the actual rival PK6.
 """
 from pathlib import Path
+import argparse
 import runpy
 
 
-def script():
+def script(directory='work/frontier/cerebros/base'):
     shared = runpy.run_path(str(Path(__file__).parents[1] / 'pyramid/lab_probe.py'))
     s = shared['script']().replace('PYRAMID', 'BRAINS')
     s = s.replace('16438,16441,16442,16443,16481,16482,16483,16686',
-                  '16438,16437,16489,16441,16442,16443,16461,16462,16465,16466,16473,16474,16477,16478,16481,16482,16729,16730')
+                  '16438,16437,16489,16485,16486,16487,16490,16433,16434,16435,16441,16442,16443,16461,16462,16465,16466,16473,16474,16477,16478,16481,16482,16729,16730')
     s = s.replace("state=%s mode=%s'%(rd(w+0x6c8),state(save),pv_mode)",
                   "trainer=%u state=%s mode=%s'%(rd(w+0x6c8),rd(w+4),state(save),pv_mode)")
-    return s + '''python
+    s += '''python
 from pathlib import Path
 brain_copy = False
 brain_copies = 0
@@ -39,7 +40,10 @@ Hook(0x3b2444,copy_start)
 Hook(0x3b245c,copy_export)
 end
 '''
+    return s.replace("Path('work/frontier/cerebros/base')", f'Path({directory!r})')
 
 
 if __name__ == '__main__':
-    print(script(), end='')
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--directory', default='work/frontier/cerebros/base')
+    print(script(parser.parse_args().directory), end='')
