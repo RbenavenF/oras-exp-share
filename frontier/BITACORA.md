@@ -2616,3 +2616,31 @@ Hecho:
 Lección: dos carriles arreglaron el mismo fallo a la vez. Cuando un agente encuentra un fallo de otra instalación que
 está en curso en el otro carril, debería anotarlo en lugar de arreglarlo (pendiente de añadir al brief si se repite).
 Siguiente paso: el usuario lanza `frontier/orch/frontier-orch auto --follow`; para parar, `frontier-orch drain`.
+
+## 2026-11-11 20:16 — Codex — F7-VIDEO: siete instalaciones sin grabación
+Estado: hecho
+Hecho:
+- Extraída la solución del Palacio a frontier/battle_video.py, reutilizada en Torre/Palacio/Arena/Tubo,
+  Domo y vestíbulo/pisos de Pirámide. Se salta Guardar vídeo y la rutina de grabación retorna sin applet
+  ni espera; Continuar/Pausar conservan sus valores, textos y flujo.
+- En Fábrica la supresión depende de WORK_ROUTE=1 (WORK_IV ya se limpia antes de grabar tras perder).
+  La Mansión original, ruta 0, conserva su opción y grabación: test de comparación con retail.
+- Tests por instalación ejecutando menús/rutina de vídeo en pawn_vm; además pisos de Pirámide y Mansión.
+  Palacio conserva script idéntico byte a byte al anterior (15016 bytes). Diseño/evidencia en informe §33.1.
+Evidencia:
+- work/frontier/video/tests-clean-env.log: env -u ORCH_LANE bash -c 'source scripts/env.sh;
+  python -m pytest -q tests' → 1105 passed, 1 skipped, 39.86 s. script-tests.log: 9 passed.
+  Primera suite con ORCH_LANE heredado: 9 fallos de tests del orquestador (tests.log); limpia sin la variable.
+- build.log: python frontier/overlay.py --out work/frontier/video/build, ZO 517 15892.
+  Fábrica victoria raw=1/ruta1, próximo combate 3; Arena victoria raw=1/marca 80000000, próximo combate 11.
+  Capturas {factory,arena}-win-menu.png: solo Continuar/Pausar; {factory,arena}-pause.png: confirmación de pausa.
+  Logs {factory,arena}.gdb.log, fixtures/hashes.txt. Victorias asistidas en RAM: sondas existentes de
+  Pirámide win y Arena win, sin escribir resultados, rachas ni PB; detalles y límites en reports/frontier.md §33.1.
+- scope-check.txt: fuentes del motor y construcción compartida intactas frente a 0497f9c;
+  palace-byte-check.txt: Palacio idéntico. git diff --check correcto.
+- lab-cleanup.txt: reap desde la shell persistente del arranque, GDB desactivado, own_processes=[], puerto 24691.
+Commits: el de esta entrada, «frontier: remove battle video saving from all seven facilities» (Agent: Codex).
+Decisiones: política de regresión del usuario: solo Fábrica y Arena en Azahar; derrota/finales y Mansión
+  cubiertos por scripts, no repetidos en emulador. Sin cambios de motor ni de construcción; consola no probada.
+  Turno de REPARTO y tasks.json intactos; estado del carril en work/lane-task.json.
+Siguiente paso: el orquestador integra el commit de lane/codex y pasa aceptación en main; F7-VIDEO done.

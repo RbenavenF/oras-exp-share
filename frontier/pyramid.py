@@ -45,6 +45,7 @@ from formats import zo_files
 from pawn import OP, Op, Program, Script  # noqa: E402
 import data as fd  # noqa: E402
 import factory  # noqa: E402
+import battle_video  # noqa: E402
 import patch  # noqa: E402
 import pike  # noqa: E402
 import tower  # noqa: E402
@@ -427,7 +428,7 @@ def lobby_program(retail):
     dispatch(p, {RECEPTION_EVENT: 'pyramid_reception'})
     reception_routine(p)
     goto_floor_routine(p)
-    return p
+    return battle_video.suppress(p)
 
 
 def floor_program(retail):
@@ -438,7 +439,7 @@ def floor_program(retail):
         trainer_routine(p, k)
     stairs_routine(p)
     goto_floor_routine(p)
-    return p
+    return battle_video.suppress(p)
 
 
 def zone_scripts(retail):

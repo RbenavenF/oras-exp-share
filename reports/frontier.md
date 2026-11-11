@@ -2099,6 +2099,53 @@ terminada?) y luego `0x5ca94(vista+0x1a0)`, pone `gestor(vista+0x444)+0x14` y av
 Opciones: (a) aceptar esas dos pulsaciones de texto (comportamiento retail); (b) investigar el modo automático de
 la ventana de texto y activarlo solo con el bit 30 (riesgo: toca la interfaz de todos los combates por el puente).
 
+## 33.1. F7-VIDEO: sin vídeos en las siete instalaciones (2026-11-11)
+
+Decisión del usuario: quitar los vídeos de todo el Frente, conservando la Mansión original.
+Se extraen `palace.hide_video` / `hide_record` de §33 a `frontier/battle_video.py`, conservando las
+comprobaciones de las instrucciones de entrada. El menú `L3b90` salta la entrada 68 («Guardar vídeo»)
+y mantiene 67/valor 0 (Continuar) y 69/valor 2 (Pausar). La rutina `L3fdc` devuelve 0 sin llamar a
+`SaveBattleRecord` ni a su espera `L4`; sus tres llamadas retail (0x21d0, 0x2250, 0x25dc) se conservan.
+
+- Torre, Palacio, Arena y Tubo aplican la supresión en `tower.facility_program`; Domo en su propio
+  constructor; Pirámide en vestíbulo y pisos (también cubre las rutinas retail heredadas sin uso actual).
+- Fábrica: `factory.reception` la aplica **solo con WORK_ROUTE = 1**. Comparar WORK_IV no serviría tras
+  la derrota: el script lo limpia antes del diálogo de vídeo. La ruta sigue activa hasta regresar de
+  `CHALLENGE`. Con ruta 0, el desafío de la Mansión conserva el menú y la grabación originales, incluso
+  en la zona 517 que comparte script con la Fábrica. No se alteran textos ni valores de las otras opciones.
+- Palacio: conserva los alias públicos anteriores. Comparación con sus constructores de `0497f9c`:
+  script **idéntico byte a byte, 15016 bytes** (`work/frontier/video/palace-byte-check.txt`).
+
+Prueba principal: `tests/test_frontier_video.py`, un caso parametrizado por instalación (más los pisos
+  de Pirámide), ejecuta el script generado en `pawn_vm`: ambos valores del argumento que condicionaba
+  el vídeo, menú exacto Continuar/Pausar, rutina de grabación que retorna sin applet/espera y tres sitios
+  de llamada conservados. Otro caso compara el menú y la grabación de la Mansión original con retail.
+  Los tests anteriores del Palacio se actualizan para que la Torre también suprima el vídeo.
+
+Verificación en `work/frontier/video/`:
+- Suite: `env -u ORCH_LANE bash -c 'source scripts/env.sh; python -m pytest -q tests'` → **1105 passed,
+  1 skipped**, 39.86 s (`tests-clean-env.log`); tests de vídeo → **9 passed** (`script-tests.log`).
+  La primera suite, con ORCH_LANE heredado, dio 9 fallos exclusivamente en `test_frontier_orch.py`
+  (`tests.log`); se repitió sin esa variable, como en las aceptaciones anteriores del carril.
+- Build: `python frontier/overlay.py --out work/frontier/video/build` (`build.log`), ZO 517 **15892**;
+  SHA256 del archivo a/0/1/3: `ce68b2700418e41cd5ec4f8c13f6d9acdbfb5e7a42c763d8464f43cd7eec4120`.
+- Azahar, esa build sobre v0.5: Fábrica desde `f6td_factory_paused1.sav` (hash en `hashes.txt`),
+  alquileres, victoria `raw=1` con ruta 1 → próximo combate 3, solo Continuar/Pausar
+  (`factory-win-menu.png`, `factory.gdb.log`). Pausar llega a su confirmación (`factory-pause.png`).
+  Sonda `frontier/probes/pyramid/lab_probe.py`, `pv_mode='win'`: rivales a 1 PS/Salpicadura en sus copias
+  cliente/servidor; se elige Pulso Dragón de Latias después de Paz Mental. Sin escribir resultado ni racha.
+- Arena desde `lab_arena.py ar_paused9.sav arena.sav` (fixture y hash en `arena-fixture.txt`): marca
+  **0x80000000**, tres juicios de tres turnos y victoria `ARENA RESULT raw=1` → próximo combate 11,
+  solo Continuar/Pausar (`arena-win-menu.png`, `arena.gdb.log`); confirmación de pausa (`arena-pause.png`).
+  Sonda `lab_arena_probe.py --mode win`: rivales con Salpicadura y PS controlados al juicio, sin escribir
+  resultado, works ni PB. Son pruebas de flujo asistidas, no de dificultad.
+- Política aplicada: solo las dos instalaciones solicitadas. No cambian motor, ASM, patch.py,
+  overlay.py ni island_build.py (`scope-check.txt`); no se repite el circuito de paquete ni historia.
+  Las derrotas y finales quedan cubiertos por scripts; no repetidos en Azahar. Consola no probada.
+- Laboratorio del carril, puerto **24691**, detenido con `scripts/azahar_lab.py reap` desde la misma shell
+  persistente que lo arrancó (necesaria para compartir namespace de procesos); GDB desactivado y
+  `own_processes=[]` (`lab-cleanup.txt`). No se toca el laboratorio del otro carril.
+
 ## 34. F6-PIRAMIDE-V2A: pisos de cueva sin PC (2026-11-10)
 
 Medida previa, con `source scripts/env.sh; python` → `patch.assemble()` sobre ffec981:

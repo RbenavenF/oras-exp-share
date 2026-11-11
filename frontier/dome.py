@@ -55,6 +55,7 @@ sys.path[:0] = [str(ROOT / 'scripts'), str(ROOT / 'frontier')]
 from pawn import OP, Op, Program  # noqa: E402
 import data as fd  # noqa: E402
 import factory  # noqa: E402
+import battle_video  # noqa: E402
 import patch  # noqa: E402
 
 FACILITY = 'dome'
@@ -541,7 +542,7 @@ def dome_program(retail):
     battle_points(p)
     reception_routine(p)
     before_battle_routine(p)
-    return p
+    return battle_video.suppress(p)
 
 
 def zone_script(retail):

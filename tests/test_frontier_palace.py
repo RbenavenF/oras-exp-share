@@ -428,16 +428,16 @@ def test_palace_bridges_do_not_overwrite_relocations_or_incoming_destinations(pa
             assert int(ins.op_str[1:], 16) not in middle
 
 
-def test_palace_menu_has_no_video_item_and_the_towers_keeps_it(built):
+def test_palace_and_tower_menus_have_no_video_item(built):
     _, retail, _, _ = built
 
     def video_jumps(program):
         return [(x.op, x.args) for x in program.items if isinstance(x, Op) and x.args == [palace.VIDEO_MENU]]
     assert video_jumps(palace.palace_program(retail)) == [(OP['JUMP'], [palace.VIDEO_MENU])]
-    assert video_jumps(tower.tower_program(retail)) == [(OP['JNZ'], [palace.VIDEO_MENU])]
+    assert video_jumps(tower.tower_program(retail)) == [(OP['JUMP'], [palace.VIDEO_MENU])]
 
 
-def test_palace_record_routine_returns_at_once_and_the_towers_records(built):
+def test_palace_and_tower_record_routines_return_at_once(built):
     _, retail, _, _ = built
 
     def routine(program):
@@ -445,7 +445,7 @@ def test_palace_record_routine_returns_at_once_and_the_towers_records(built):
         return [(x.op, x.args) for x in program.items[i + 1:i + 4]]
     assert routine(palace.palace_program(retail)) == [(OP['PROC'], [0]), (OP['ZERO_PRI'], [0]), (OP['RETN'], [0])]
     tower_program = tower.tower_program(retail)
-    assert routine(tower_program)[1] == (OP['PUSH_P_S'], [12])
+    assert routine(tower_program) == routine(palace.palace_program(retail))
     calls = [x for x in palace.palace_program(retail).items if isinstance(x, Op) and x.args == [palace.VIDEO_RECORD]]
     assert len(calls) == 3
 

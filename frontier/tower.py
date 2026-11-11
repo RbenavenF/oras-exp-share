@@ -33,6 +33,7 @@ sys.path[:0] = [str(ROOT / 'scripts'), str(ROOT / 'frontier')]
 from pawn import OP, Op, Program  # noqa: E402
 import data as fd  # noqa: E402
 import factory  # noqa: E402
+import battle_video  # noqa: E402
 import patch  # noqa: E402
 
 FACILITY = 'tower'
@@ -192,7 +193,7 @@ def facility_program(retail, facility):
     p.items[at + 1:at + 1] = _ops(p, lambda b: b.sysreq('WorkSet', active, 0))
     battle_points(p, facility)
     reception_routine(p, facility)
-    return p
+    return battle_video.suppress(p)
 
 
 def tower_program(retail):

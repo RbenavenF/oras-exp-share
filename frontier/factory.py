@@ -43,6 +43,7 @@ sys.path[:0] = [str(ROOT / 'scripts'), str(ROOT / 'frontier')]
 from formats import garc_entries, text_lines, words_to_text  # noqa: E402
 from pawn import ARGC, CASETBL, OP, PACKED, Op, Program  # noqa: E402
 import data as fd  # noqa: E402
+import battle_video  # noqa: E402
 import patch  # noqa: E402
 
 WORK_RNG = 16490                 # free saved works (frontier/ids.py): generator state between drafts,
@@ -749,3 +750,4 @@ def reception(p):
     battle_points(p)
     reception_routine(p)
     after_win_routine(p)
+    battle_video.suppress(p, patch.ROUTE['factory'])
