@@ -2674,3 +2674,32 @@ Decisiones: solo diseño/documentación y JSON de propuestas, sin código del ju
   o puerta de aceptación de BASE. Turno y tasks.json intactos; estado final del carril en work/lane-task.json.
 Siguiente paso: el orquestador integra y pasa su suite; F8-CEREBROS-BASE empieza auditando espacio e identidad rival,
   asigna reservas en REPARTO antes de escribirlas e implementa Anabel plata según §3, conservando Mansión ruta 0.
+
+## 2026-11-11 20:32 — Codex — F9-MODOS-DISENO: Libre y Dobles
+Estado: hecho
+Hecho:
+- reports/diseno/modos.md: Nivel Libre Individual en las siete instalaciones, Dobles 50/Libre en Torre/Fábrica,
+  Multi fuera. Rango Normal/Súper separado del nivel; mantener SetRank(0). Niveles propios sin limitar en Libre,
+  rival max(60,máximo inscritos), Fábrica ambos 100. Adaptadores de PS/PP del Tubo, dos de tres del Domo,
+  pisos de Pirámide, juicio Arena, filtro Palacio y Cerebros F8.
+- Solicitud simbólica de 53 posiciones u16 para bancos de racha/récord, modalidad/nivel persistentes, cuarto
+  alquiler/rival y contadores de cambios. No asigna IDs ni modifica REPARTO. Rachas Dobles deben medirse en sus
+  cuatro accesores; PB Dobles con columna propia y saturación 15. Cuatro en Fábrica es adaptación explícita
+  respecto de los tres de Esmeralda. Rangos Libre/legendarios equivalentes ORAS pendientes de medir.
+- frontier/orch/propuestas/modos.json: seis tareas nuevas serializadas, owner any, dependencias y criterios de
+  aceptación listos para add, con regresión del usuario. BASE depende de F8-CEREBROS-BASE y exige medir espacio
+  tras integrar: foto previa 12 bytes libres. Sin implementación ni laboratorio.
+Evidencia:
+- Lecturas de fuente local pokeemerald HEAD 731ad5bfd6e6f265508d0efcca0ba42f9dcf5881 y enlaces al commit en diseño.
+  work/frontier/modos/maison-map.txt: hashes base y nativas comprobados. set-rank.txt: code 0x1e567c solo strb
+  en +0x838, sin validación. selector.txt, types.txt y player-level.txt: desensamblados estáticos; comandos en diseño.
+- work/frontier/modos/design-check.txt: check_task válido para las seis propuestas contra cola actual, IDs nuevos,
+  dependencias previas/existentes y sin ciclos. No se ejecutó add.
+- env -u ORCH_LANE bash -c 'source scripts/env.sh; python -m pytest -q tests': 1105 passed, 1 skipped, 39.97 s
+  (work/frontier/modos/tests.log). git diff --check correcto.
+Commits: el de esta entrada, «docs(frontier): design open level and doubles implementation tasks» (Agent: Codex).
+Decisiones: solo diseño/documentación/JSON; juego, Azahar y consola de modalidades nuevas no probados. Suite
+  obligatoria aplicada; no corresponde regresión de emulador para diseño. Turno REPARTO y tasks.json intactos;
+  estado final en work/lane-task.json. No se arrancó laboratorio ni se tocaron inputs o partida original.
+Siguiente paso: el orquestador integra y pasa su aceptación; encolar propuestas con frontier-orch add tras cotejar
+  IDs. F9-MODOS-BASE comienza cuando F8-BASE termine: medir selector/accesores/espacio y registrar reservas.
