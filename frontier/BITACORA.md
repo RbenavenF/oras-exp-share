@@ -2585,3 +2585,15 @@ Evidencia: en el worktree, `tests/test_frontier_orch.py` 62 passed ×3 (13 nuevo
 Sin probar: con agentes reales; una noche entera.
 Siguiente paso: cuando la tanda actual suelte el turno, integrar, encolar las tareas siguientes y lanzar
 `auto --follow`.
+
+## 2026-11-11 14:10 — Claude Code (Opus 5.5) — política de regresión y cola (rama orch-nonstop)
+Estado: en curso (rama sin integrar)
+Hecho: a petición del usuario («no necesitamos tanto tiempo de emulador»), política de regresión en el `brief` de
+`config.json` y en el README del orquestador: la suite siempre (y al integrar); en Azahar solo lo que el cambio
+puede romper (una instalación; motor → Palacio, Arena, Tubo y un combate normal; isla → plaza y puertas); el
+recorrido completo solo en un paquete para la consola. Cola de 12 tareas lista para `frontier-orch add` en
+`frontier/orch/cola/cola-2026-11-11.json` (F7-VIDEO, diseño y base de los Cerebros, siete Cerebros, diseño de
+modalidades y de personalidad), con criterios reescritos según la política.
+Evidencia: `tests/test_frontier_orch.py` 62 passed; las 12 tareas pasan `check_task`.
+Siguiente paso: integrar la rama al acabar la tanda; `frontier-orch add frontier/orch/cola/cola-2026-11-11.json`;
+`auto --follow`.

@@ -1,0 +1,162 @@
+{
+  "tasks": [
+    {
+      "id": "F7-VIDEO",
+      "owner": "any",
+      "after": [
+        "F6-DOMO-SALA"
+      ],
+      "title": "Quitar «Guardar vídeo» en las siete instalaciones",
+      "design": "reports/frontier.md §33 (Palacio: vídeo oculto tras la derrota)",
+      "accept": "Decisión del usuario 2026-11-11: no queremos vídeos de combate. En ninguna instalación (Fábrica, Torre, Palacio, Arena, Domo, Tubo, Pirámide) aparece la opción de guardar el vídeo, ni tras ganar, ni tras perder, ni al pausar; el resto del menú intacto. Reutiliza lo del Palacio (§33). La prueba principal es la suite: un test de script por instalación que compruebe que la opción no está. Azahar (política de regresión, caso a): el menú tras una victoria en dos instalaciones de flujo distinto (la Fábrica y una con motor propio) y nada más. La Mansión Batalla original no cambia (test). Tests en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F8-CEREBROS-DISENO",
+      "owner": "any",
+      "after": [],
+      "title": "Diseño de los Cerebros del Frente (los siete jefes) y de los símbolos",
+      "design": "reports/diseno/ (nuevo: cerebros.md)",
+      "accept": "Solo lectura y diseño, sin laboratorio ni código del juego. reports/diseno/cerebros.md con: por instalación, su Cerebro de Esmeralda (Noland, Anabel, Tucker, Spenser, Greta, Lucy, Brandon), en qué combate o racha aparece (plata y oro) y con qué equipo, según pokeemerald (con commit fijado; lo que no se fije, como hipótesis); cómo montarlo en ORAS con lo medido (IsBoss/BattleHouse_SetRibbon de la Mansión, §1; SetTrainer; works de racha de REPARTO; texto 637), qué modelo de entrenador y clase usar, dónde guardar los símbolos (works o flags libres, a asignar en REPARTO) y qué los muestra (p. ej. el recepcionista o un cartel); qué es común a todos (infraestructura) y qué es de cada instalación; riesgos (espacio de code.bin, ~600 bytes) y estimación. Además, frontier/orch/propuestas/cerebros.json con las tareas de implementación listas para `frontier-orch add` (ids F8-CEREBROS-BASE y F8-CEREBRO-<INSTALACIÓN>, owner, after, accept concretos). Tests en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F8-CEREBROS-BASE",
+      "owner": "claude",
+      "after": [
+        "F8-CEREBROS-DISENO"
+      ],
+      "title": "Cerebros: infraestructura común (aparición en la racha, combate de jefe, símbolos)",
+      "design": "reports/diseno/cerebros.md",
+      "accept": "Lo común del diseño cerebros.md: works/flags de símbolos asignados en REPARTO; el combate de jefe aparece en la racha que marca el diseño en una instalación de prueba (la Torre), con su entrenador, presentación y equipo; al ganarlo se guarda el símbolo de plata u oro; al perderlo, la racha se limpia como siempre. Si propuestas/cerebros.json trae otro reparto, se sigue el diseño y se anota. Tests de VM/Unicorn de lo nuevo, incluido que sin racha de jefe todo sigue igual en las siete instalaciones. Azahar: jefe de la Torre con partida editada en la racha justa, victoria con símbolo y una derrota; si tocaste motor o code.bin, la regresión del caso b de la política y nada más. Tests en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F8-CEREBRO-FABRICA",
+      "owner": "any",
+      "after": [
+        "F8-CEREBROS-BASE"
+      ],
+      "title": "Cerebro de la Fábrica",
+      "design": "reports/diseno/cerebros.md",
+      "accept": "El Cerebro de la Fábrica según reports/diseno/cerebros.md (si frontier/orch/propuestas/cerebros.json trae criterios más concretos para esta instalación, mandan esos): aparece en la racha de plata y en la de oro, con su equipo y textos, usando la infraestructura de F8-CEREBROS-BASE; símbolo guardado al ganar; derrota limpia. Tests de su script (plata, oro, derrota). Azahar, con partida editada a la racha justa: el combate de plata ganado con su símbolo y uno de oro o una derrota, solo en esta instalación (política de regresión, caso a; caso b si tocaste el motor). Tests en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F8-CEREBRO-TORRE",
+      "owner": "any",
+      "after": [
+        "F8-CEREBROS-BASE"
+      ],
+      "title": "Cerebro de la Torre",
+      "design": "reports/diseno/cerebros.md",
+      "accept": "El Cerebro de la Torre según reports/diseno/cerebros.md (si frontier/orch/propuestas/cerebros.json trae criterios más concretos para esta instalación, mandan esos): aparece en la racha de plata y en la de oro, con su equipo y textos, usando la infraestructura de F8-CEREBROS-BASE; símbolo guardado al ganar; derrota limpia. Tests de su script (plata, oro, derrota). Azahar, con partida editada a la racha justa: el combate de plata ganado con su símbolo y uno de oro o una derrota, solo en esta instalación (política de regresión, caso a; caso b si tocaste el motor). Tests en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F8-CEREBRO-PALACIO",
+      "owner": "any",
+      "after": [
+        "F8-CEREBROS-BASE"
+      ],
+      "title": "Cerebro del Palacio",
+      "design": "reports/diseno/cerebros.md",
+      "accept": "El Cerebro del Palacio según reports/diseno/cerebros.md (si frontier/orch/propuestas/cerebros.json trae criterios más concretos para esta instalación, mandan esos): aparece en la racha de plata y en la de oro, con su equipo y textos, usando la infraestructura de F8-CEREBROS-BASE; símbolo guardado al ganar; derrota limpia. Tests de su script (plata, oro, derrota). Azahar, con partida editada a la racha justa: el combate de plata ganado con su símbolo y uno de oro o una derrota, solo en esta instalación (política de regresión, caso a; caso b si tocaste el motor). Tests en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F8-CEREBRO-ARENA",
+      "owner": "any",
+      "after": [
+        "F8-CEREBROS-BASE"
+      ],
+      "title": "Cerebro de la Arena",
+      "design": "reports/diseno/cerebros.md",
+      "accept": "El Cerebro de la Arena según reports/diseno/cerebros.md (si frontier/orch/propuestas/cerebros.json trae criterios más concretos para esta instalación, mandan esos): aparece en la racha de plata y en la de oro, con su equipo y textos, usando la infraestructura de F8-CEREBROS-BASE; símbolo guardado al ganar; derrota limpia. Tests de su script (plata, oro, derrota). Azahar, con partida editada a la racha justa: el combate de plata ganado con su símbolo y uno de oro o una derrota, solo en esta instalación (política de regresión, caso a; caso b si tocaste el motor). Tests en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F8-CEREBRO-DOMO",
+      "owner": "any",
+      "after": [
+        "F8-CEREBROS-BASE"
+      ],
+      "title": "Cerebro del Domo",
+      "design": "reports/diseno/cerebros.md",
+      "accept": "El Cerebro del Domo según reports/diseno/cerebros.md (si frontier/orch/propuestas/cerebros.json trae criterios más concretos para esta instalación, mandan esos): aparece en la racha de plata y en la de oro, con su equipo y textos, usando la infraestructura de F8-CEREBROS-BASE; símbolo guardado al ganar; derrota limpia. Tests de su script (plata, oro, derrota). Azahar, con partida editada a la racha justa: el combate de plata ganado con su símbolo y uno de oro o una derrota, solo en esta instalación (política de regresión, caso a; caso b si tocaste el motor). Tests en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F8-CEREBRO-TUBO",
+      "owner": "any",
+      "after": [
+        "F8-CEREBROS-BASE"
+      ],
+      "title": "Cerebro del Tubo",
+      "design": "reports/diseno/cerebros.md",
+      "accept": "El Cerebro del Tubo según reports/diseno/cerebros.md (si frontier/orch/propuestas/cerebros.json trae criterios más concretos para esta instalación, mandan esos): aparece en la racha de plata y en la de oro, con su equipo y textos, usando la infraestructura de F8-CEREBROS-BASE; símbolo guardado al ganar; derrota limpia. Tests de su script (plata, oro, derrota). Azahar, con partida editada a la racha justa: el combate de plata ganado con su símbolo y uno de oro o una derrota, solo en esta instalación (política de regresión, caso a; caso b si tocaste el motor). Tests en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F8-CEREBRO-PIRAMIDE",
+      "owner": "any",
+      "after": [
+        "F8-CEREBROS-BASE"
+      ],
+      "title": "Cerebro de la Pirámide",
+      "design": "reports/diseno/cerebros.md",
+      "accept": "El Cerebro de la Pirámide según reports/diseno/cerebros.md (si frontier/orch/propuestas/cerebros.json trae criterios más concretos para esta instalación, mandan esos): aparece en la racha de plata y en la de oro, con su equipo y textos, usando la infraestructura de F8-CEREBROS-BASE; símbolo guardado al ganar; derrota limpia. Tests de su script (plata, oro, derrota). Azahar, con partida editada a la racha justa: el combate de plata ganado con su símbolo y uno de oro o una derrota, solo en esta instalación (política de regresión, caso a; caso b si tocaste el motor). Tests en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F9-MODOS-DISENO",
+      "owner": "any",
+      "after": [],
+      "title": "Diseño de las modalidades que faltan: Nivel Libre y Dobles (Torre y Fábrica)",
+      "design": "reports/diseno/ (nuevo: modos.md)",
+      "accept": "Solo lectura y diseño, sin laboratorio ni código del juego. reports/diseno/modos.md: cómo añadir Nivel Libre a las siete instalaciones (rango del selector de la Mansión, SetRank, niveles del rival, PB y racha por modalidad: works nuevos a pedir en REPARTO) y Dobles en la Torre y la Fábrica (tipos 0–3 del montador de combate, §1; equipo de 4; Multi queda fuera), qué reutiliza la Mansión y qué hay que medir; riesgos y estimación; y frontier/orch/propuestas/modos.json con las tareas listas para `frontier-orch add`. Tests en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    },
+    {
+      "id": "F10-PERSONALIDAD-DISENO",
+      "owner": "any",
+      "after": [
+        "F8-CEREBRO-FABRICA",
+        "F8-CEREBRO-TORRE",
+        "F8-CEREBRO-PALACIO",
+        "F8-CEREBRO-ARENA",
+        "F8-CEREBRO-DOMO",
+        "F8-CEREBRO-TUBO",
+        "F8-CEREBRO-PIRAMIDE"
+      ],
+      "title": "Diseño de la personalidad de cada edificio (interior, letrero, exterior)",
+      "design": "reports/diseno/ (nuevo: personalidad.md)",
+      "accept": "Solo lectura y diseño. Prioridad del usuario: lo último. Solo recursos de ORAS (Emerald 3DS de ZallaxDev solo como referencia visual, sin copiar: CC BY-NC-SA). reports/diseno/personalidad.md: por instalación, un interior propio (donante retail medido en work/frontier/island/zones.tsv, como la Pirámide v2A y el Domo), un letrero con su nombre en la puerta y un retoque o cambio del exterior que quepa en LOAD_BUDGET (§23) manteniendo la puerta; medidas de tamaño; y frontier/orch/propuestas/personalidad.json con las tareas. Tests en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
+    }
+  ]
+}

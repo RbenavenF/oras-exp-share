@@ -68,6 +68,16 @@ a la terminal); estado (sesiones, esperas) en `work/orch/state.json`.
 Cada ejecución gasta cuota. Con `max_runs` y el freno por falta de progreso no hay bucles infinitos, pero una tarea
 larga puede consumir mucho. `status` dice cuántas ejecuciones lleva.
 
+## Política de regresión (2026-11-11)
+
+Va en el mensaje de cada agente (`brief` de `config.json`). Al integrar, el orquestador solo pasa la suite
+(`pytest`, unos 40 s). En Azahar, cada tarea prueba solo lo que su cambio puede romper:
+- script, zona o textos de una instalación → esa instalación;
+- motor (`DllBattle.cro`, `DllField.cro`, `code.bin`, `frontier/asm/`, `patch.py`) → un combate del Palacio, la Arena
+  y el Tubo y uno de la historia, además de lo propio;
+- isla o construcción común (`island_build.py`, `overlay.py`, `faraway/java/`) → plaza y puertas afectadas;
+- recorrido completo (siete instalaciones, Repartir Exp., DexNav) → solo en un paquete para la consola.
+
 ## Tareas
 
 `tasks.json`: `id`, `title`, `owner` (`claude` o `codex`), `design`, `accept` (criterios), `status`
