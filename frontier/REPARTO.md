@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-libre (último: frontier-orch, 2026-11-11 15:02)
+Claude Code, 2026-11-11 17:55 (conflicto del Domo, modo sin parar y cola)
 
 ## Instalaciones
 
