@@ -2798,7 +2798,7 @@ Validación de esta continuación (laboratorio del carril, puerto **24691**, art
 - Build completa: `source scripts/env.sh; python frontier/overlay.py --out work/frontier/cerebros/base/build`
   (`build.log`); usa v0.5 más esta build en el perfil aislado.
 - Suite completa con entorno del supervisor retirado de sus tests de orquestación:
-  `env -u ORCH_LANE python -m pytest -q tests`: **1188 passed, 1 skipped** (`tests-final.log`). La primera ejecución
+  `env -u ORCH_LANE python -m pytest -q tests`: **1188 passed, 1 skipped** (`tests-acceptance.log`, 44.33 s; también `tests-final.log`). La primera ejecución
   con ORCH_LANE heredado falló en nueve tests del propio orquestador; no fue un fallo del parche. Sin esa variable
   ya pasó antes de ampliar la cobertura (1182/1). Unicorn cubre StartBattle sin jefe en las siete rutas, además
   del elector, carga y construcción plata/oro; VM cubre umbral, presentación, premio y limpieza.
@@ -2817,6 +2817,38 @@ Validación de esta continuación (laboratorio del carril, puerto **24691**, art
   `0102574bcc5c199bbf7ca0d1b2fb01a00639375cd7020b279e995cf4c2c60ddd`, con 58 bloques válidos y
   **símbolo 4 / racha 35** (`saved-symbol.json`).
 
-Pendiente en este hito: recarga de ese guardado, derrota ante Anabel y regresión caso b (un combate de Palacio,
-Arena, Tubo e historia). No probado todavía: esos pasos, Anabel oro en Azahar, PB medidos en RAM, consola.
-La política del usuario sustituye cualquier petición de circuito completo: no es una entrega de paquete.
+- Persistencia: reinicio real con `tower35-silver.sav`, símbolo **4**, racha **35**, activo **1** y pendiente **0**
+  al reanudar en la Torre (`reload-gdb.log`, `reload-verified.png`).
+- Derrota contra Anabel oro: copia del guardado anterior editada solo a racha **69**, pendiente 0, conservando
+  la plata (`gold-fixture.json`). Entrenador **132**, pendiente **18**, flag retail 0 (`gold-start-driver.log`).
+  PK6 reales comprobados antes de asistencia: Raikou/Latios/Snorlax, IV 31 y resto exacto del diseño
+  (`gold-team.json`, `check_team.py .../gold-team --variant gold`). Asistencia `pv_mode='loss'` solo a nuestras
+  copias: resultado **0**; tras textos, ruta **0**, racha **0**, activo **0**, récord **35**, símbolo **4**,
+  pendiente **0** (`gold-loss-gdb.log`, `gold-loss.png`). La derrota conserva la plata y limpia la racha.
+
+Regresión aplicada: caso **b** de la política del usuario, porque la implementación toca DllField.cro. Una batalla
+por motor propio y una normal de historia, todas con la misma build; sin circuito completo de siete instalaciones.
+Fuentes de las copias y SHA256 en `regression-sources.json`; no se modifica ninguna fuente.
+
+| Prueba en Azahar | Resultado medido | Evidencia en `work/frontier/cerebros/base/` |
+| --- | --- | --- |
+| Palacio, racha 7 | flag 0x40000000, entrenador 59; derrota 0; ruta/racha/activo a 0, símbolo/pendiente 0 | `palace-start-driver.log`, `palace-battle-driver.log`, `palace-gdb.log`, `palace-end.png` |
+| Arena, racha 9 | flag 0x80000000, entrenador 67; derrota 0; ruta/racha/activo a 0, símbolo/pendiente 0 | `arena-start-driver.log`, `arena-battle-driver.log`, `arena-gdb.log`, `arena-end.png` |
+| Tubo, sala 0 | entrenador 5, regla single; victoria 1, sala 1, activo 1, símbolo/pendiente 0 | `pike-start-driver.log`, `pike-battle-driver.log`, `pike-gdb.log`, `pike-end.png` |
+| Historia, Ruta 102 | Zigzagoon Nv. 3 contra Torchic Nv. 12, daño y regreso al campo; ruta/símbolos/pendiente permanecen 0 | `story-battle.png`, `story-4.png` a `story-9.png`, `story-gdb.log` |
+
+Palacio/Arena usan asistencia de derrota en copias; Tubo usa su sonda existente `pk_mode='win'` (rival PS 1 /
+Salpicadura), y fuerza únicamente los segundos del reloj a 100005 para escoger una sala de combate single por la
+puerta izquierda (`PIKECLOCK` en `pike-gdb.log`). Historia usa copia exacta de la partida original (SHA256
+`a30034d1e34d6c2e752e245b23295a6fa7924d26f03153a75e351362ed2561e2`), sin editarla ni asistir el combate.
+No se midió EXP ni resultado IsWin de historia: la evidencia es el combate y el regreso al campo.
+
+Identidad de la build probada (`build-manifest.json`, SHA256):
+- `code.ips`: `f64e527c6348571ca8c83780ecd23152dd144bfe108abad7e286b9cdef19c4ce`.
+- `DllField.cro`: `791fef103b8bbf2a6a07587b575fd749a68e1c34251868854df6386ebcd3c750`.
+- `DllBattle.cro`: `3ea58b3999e5c1335a95d67778a3d1abc920c3b7eb8f884f557d9af440017bfe`.
+
+Aceptación F8-CEREBROS-BASE completa. `frontier/probes/brains/README.md` explica reproducción y lectura de la sonda.
+Laboratorio propio parado con `azahar_lab.py reap`, sin procesos restantes; bus D-Bus privado parado y GDB
+inhabilitado en el perfil (`cleanup.log`). No probado: concesión de oro en Azahar (sí VM), PB medidos en RAM,
+dificultad sin asistencia, consola. Los otros seis Cerebros siguen desactivados para sus tareas específicas.

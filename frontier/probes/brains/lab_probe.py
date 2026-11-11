@@ -13,7 +13,9 @@ def script():
     shared = runpy.run_path(str(Path(__file__).parents[1] / 'pyramid/lab_probe.py'))
     s = shared['script']().replace('PYRAMID', 'BRAINS')
     s = s.replace('16438,16441,16442,16443,16481,16482,16483,16686',
-                  '16438,16441,16442,16443,16729,16730')
+                  '16438,16437,16489,16441,16442,16443,16461,16462,16465,16466,16473,16474,16477,16478,16481,16482,16729,16730')
+    s = s.replace("state=%s mode=%s'%(rd(w+0x6c8),state(save),pv_mode)",
+                  "trainer=%u state=%s mode=%s'%(rd(w+0x6c8),rd(w+4),state(save),pv_mode)")
     return s + '''python
 from pathlib import Path
 brain_copy = False

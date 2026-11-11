@@ -2785,3 +2785,31 @@ al caso b del usuario, sin circuito de siete. No probado: recarga, derrota, regr
 consola. Laboratorio continúa activo para el siguiente paso.
 Siguiente paso: recargar símbolo, derrota ante Anabel, Palacio/Arena/Tubo/historia; documentar, parar lab, suite y
 commit final; marcar done solo con aceptación completa.
+
+## 2026-11-11 21:59 — Codex — F8-CEREBROS-BASE hito 3: aceptación y cierre del laboratorio
+Estado: hecho
+Hecho: completada la aceptación común iniciada en 57df06a y continuada en 5d4172e. Recarga real del símbolo de
+plata; Anabel oro con equipo exacto y derrota; regresión acotada Palacio/Arena/Tubo/historia. Sonda ampliada con
+entrenador y rachas de todas las rutas; README de reproducción. Informe reports/frontier.md §39 actualizado con
+resultados, fuentes, hashes y límites. No fue necesario corregir el motor de la implementación heredada.
+Evidencia:
+- env -u ORCH_LANE python -m pytest -q tests: 1188 passed, 1 skipped en 44.33 s (tests-acceptance.log).
+  Build completa overlay ya ejecutada (build.log), mismo code.ips/DllField/DllBattle en todas las pruebas, hashes
+  en build-manifest.json y §39. VM/Unicorn: umbrales, premios/limpieza y ruta ordinaria de las siete instalaciones.
+- Azahar 24691: recarga de tower35-silver.sav conserva símbolo 4, racha 35, activo 1 (reload-gdb.log).
+  Copia a racha 69: entrenador 132, pendiente 18, equipo oro capturado antes de asistencia y validado completo
+  por check_team.py (gold-team.json). Derrota raw=0: ruta/racha/activo/pendiente=0, récord 35, plata 4 conservada
+  (gold-loss-gdb.log). La victoria de plata y su guardado ya constan en hito 2.
+- Caso b del usuario: Palacio y Arena combate/derrota con flags propios 0x40000000/0x80000000 y limpieza normal;
+  Tubo combate single/victoria, sala 0→1; todos sin símbolo ni jefe pendiente. Historia sin asistencia: Zigzagoon
+  Nv.3 contra Torchic Nv.12 en Ruta 102, daño y regreso al campo, works comunes a 0. Fuentes y SHA256 en
+  regression-sources.json; logs palace-*, arena-*, pike-*, story-* bajo work/frontier/cerebros/base/.
+- Laboratorio propio reap sin procesos restantes, bus privado parado, GDB deshabilitado (cleanup.log).
+Commits: 57df06a (infraestructura), 5d4172e (plata/cobertura), el de esta entrada «test(frontier): complete brain
+acceptance and scoped engine regression» (Agent: Codex).
+Decisiones: asistencia solo en copias de batalla para las instalaciones, jamás resultados/works/premios. En Tubo
+se fija solo el reloj para una sala single. No probado: concesión de oro en Azahar (VM sí), PB medidos en RAM,
+EXP/IsWin de historia, dificultad sin asistencia y consola. No se amplía al circuito completo: política caso b.
+REPARTO/tasks.json intactos, sin push ni cambios de inputs/partida original; entrega en work/lane-task.json.
+Siguiente paso: orquestador integra el carril y pasa aceptación en main; F8-CEREBROS-BASE done. Los demás Cerebros
+permanecen desactivados a la espera de sus tareas específicas.
