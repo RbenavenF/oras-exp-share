@@ -250,7 +250,8 @@ def fresh(out, replace, parser):
     """`out` (under dist/ or work/) and its ZIP, removed first with --replace."""
     out = out.resolve()
     archive = out.parent / (out.name + '.zip')
-    if not any(out.is_relative_to(ROOT / folder) for folder in ('dist', 'work')) or out in (ROOT / 'dist', ROOT / 'work'):
+    roots = [(ROOT / folder).resolve() for folder in ('dist', 'work')]   # both may be symlinks (worktrees)
+    if not any(out.is_relative_to(r) for r in roots) or out in roots:
         parser.error('Output must be a folder under dist/ or work/')
     if out.exists() or archive.exists():
         if not replace:
