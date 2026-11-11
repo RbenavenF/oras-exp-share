@@ -433,7 +433,8 @@ def start(route, brain, trainer, count=3):
 
 
 @pytest.mark.parametrize('route, brain, trainer, count', [
-    (0, 0, 0, 3), (2, 0, 131, 3), (2, 2 + 8, 5, 3), (3, 3 + 8, 131, 3), (2, 2 + 8, 131, 2), (5, 0, 0, 2)])
+    *[(route, 0, 131, 3) for route in range(1, 8)],
+    (0, 0, 0, 3), (2, 2 + 8, 5, 3), (3, 3 + 8, 131, 3), (2, 2 + 8, 131, 2), (5, 0, 0, 2)])
 def test_start_leaves_the_party_alone_without_its_brain(route, brain, trainer, count):
     result, calls = start(route, brain, trainer, count)
     assert result == 0x55 and [c[:4] for c in calls] == [(C['CODE_START'], WORK, 1, 0)]

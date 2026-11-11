@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+"""Emit the BASE lab probe against current patch symbols.
+
+Default passive. pv_mode='win'/'loss' assists only battle copies through the
+existing Pyramid probe. It never writes results, works or the saved party.
+COPY exports are captured before assistance, to check the actual rival PK6.
+"""
+from pathlib import Path
+import runpy
+
+
+def script():
+    shared = runpy.run_path(str(Path(__file__).parents[1] / 'pyramid/lab_probe.py'))
+    s = shared['script']().replace('PYRAMID', 'BRAINS')
+    s = s.replace('16438,16441,16442,16443,16481,16482,16483,16686',
+                  '16438,16441,16442,16443,16729,16730')
+    return s + '''python
+from pathlib import Path
+brain_copy = False
+brain_copies = 0
+def copy_start():
+    global brain_copy
+    # code.bin callers are below 0x600000; our CRO is above it.
+    brain_copy = reg('lr') > 0x600000
+    if brain_copy:
+        print('BRAINS COPY src=%x dst=%x lr=%x'%(reg('r1'),reg('r0'),reg('lr')))
+def copy_export():
+    global brain_copy, brain_copies
+    if not brain_copy: return
+    brain_copy = False
+    brain_copies += 1
+    buf = rd(0x3b246c)
+    p = Path('work/frontier/cerebros/base') / ('rival-%02u.pk6'%brain_copies)
+    p.write_bytes(bytes(gdb.selected_inferior().read_memory(buf,260)))
+    print('BRAINS EXPORTED',p)
+Hook(0x3b2444,copy_start)
+Hook(0x3b245c,copy_export)
+end
+'''
+
+
+if __name__ == '__main__':
+    print(script(), end='')

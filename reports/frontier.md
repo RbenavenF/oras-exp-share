@@ -2770,3 +2770,53 @@ probados (`work/frontier/pkg/tested-manifest-fec40b9.json`; solo cambian `LEEME.
 Palacio, Tubo, Domo y Pirámide (equipo débil); juicio de 3 turnos de la Arena; ferry de Portual con este paquete;
 otros idiomas. Trampa del conductor: el marinero deambula; `circuit.py` no comprueba que el diálogo se abra (en una
 pasada se habló a destiempo y acabó en el Resort): repetir el paso a mano mirando la captura.
+
+## 39. Cerebros: infraestructura común y Anabel — F8-CEREBROS-BASE
+
+Implementación inicial en `57df06a`; continuación de Codex tras relevo de Claude del 2026-11-11.
+Al revisar `git status`, `git diff` y el último commit, el carril estaba limpio: no había cambios parciales que
+completar o deshacer. Diseño aplicado: `reports/diseno/cerebros.md`, con las reservas de REPARTO (no se usa el
+reparto alternativo de propuestas). Solo está activada la Torre (`brains.ENABLED`).
+
+`frontier/brains.py` contiene los umbrales de las siete instalaciones, símbolo persistente en **16729**
+(dos bits por ruta, Torre plata = 4, oro+plata = 12), jefe pendiente en **16730**, reserva Pirámide **16731** y
+mensaje **16733**. Comprueba la aparición antes de elegir el rival; sustituye la presentación; al ganar concede
+símbolo y 10 PB antes de la recompensa de ronda. Derrota/limpieza borran el jefe pendiente, conservando símbolos.
+Entrenadores 129–142, sets 223–264, caso 9778 del script 5, texto 637 líneas 1072–1099; la Torre usa entrenadores
+131/132 y sets 229–234. Los demás Cerebros quedan para sus tareas específicas.
+
+Nativo `frontier/asm/brains_cro.s`: DllField.cro **0xf0480–0xf08c0**, 1088 bytes, con saltos en **0x94f04,
+0x94f18 y 0x95044**. No pisa DexNav (0xf0400–0xf046c); quedan 1856 bytes hasta 0xf1000. SetTrainer selecciona al
+Cerebro y evita la bandera de jefe de Mansión en rutas del Frente; StartBattle reconstruye los tres rivales con
+los parámetros del diseño. Sin jefe pendiente conserva el equipo. En Normal, tras la victoria 19, el elector
+del Frente usa el tramo 70–109 para evitar el jefe de Mansión y el entrenador 0 posterior; ruta 0 conserva retail.
+Fuente de direcciones y tamaño: `brains.SITES`, `brains.assemble`, `brains.CODE` y `brains_cro.s`; tests Unicorn.
+
+Validación de esta continuación (laboratorio del carril, puerto **24691**, artefactos locales en
+`work/frontier/cerebros/base/`):
+
+- Build completa: `source scripts/env.sh; python frontier/overlay.py --out work/frontier/cerebros/base/build`
+  (`build.log`); usa v0.5 más esta build en el perfil aislado.
+- Suite completa con entorno del supervisor retirado de sus tests de orquestación:
+  `env -u ORCH_LANE python -m pytest -q tests`: **1188 passed, 1 skipped** (`tests-final.log`). La primera ejecución
+  con ORCH_LANE heredado falló en nueve tests del propio orquestador; no fue un fallo del parche. Sin esa variable
+  ya pasó antes de ampliar la cobertura (1182/1). Unicorn cubre StartBattle sin jefe en las siete rutas, además
+  del elector, carga y construcción plata/oro; VM cubre umbral, presentación, premio y limpieza.
+- Fixture: copia de `work/frontier/lab/f6tc_paused14.sav` (SHA256
+  `eb6d1fa2ce58e3dafaec9847d36b344bfecff622cf05ba9b46f8f7ee799d4eb9`), editada con `faraway/save_event.py`
+  a racha 16441=34, símbolos 16729=0 y pendiente 16730=0. Nunca se escribe la fuente.
+- Anabel plata aparece: `BRAINS START` registra ruta 2, racha 34, pendiente **10** y flag retail 0.
+  Presentación «Soy Anabel, Cerebro … Torre» (`anabel-intro.png`), sustituto visual femenino de ORAS.
+  `frontier/probes/brains/lab_probe.py` exporta los tres PK6 de COPY antes de asistencia;
+  `check_team.py work/frontier/cerebros/base/silver-team` valida checksum, orden, especie, objeto, naturaleza,
+  movimientos, nivel 50, amistad 255, seis IV 24, seis EV exactos y PS completos (`silver-team.json`).
+- Victoria: asistencia explícita `pv_mode='win'`, solo copias del combate (PS 1/Salpicadura del rival), heredada
+  de la sonda Pirámide; no se escriben resultados, works, recompensas ni equipo guardado. `BRAINS RESULT raw=1`,
+  después **16441=35, 16443=35, 16729=4, 16730=0** (`win-gdb.log`). Pausa mediante el menú real devuelve ruta a 0;
+  el juego escribe `tower35-silver.sav`, SHA256
+  `0102574bcc5c199bbf7ca0d1b2fb01a00639375cd7020b279e995cf4c2c60ddd`, con 58 bloques válidos y
+  **símbolo 4 / racha 35** (`saved-symbol.json`).
+
+Pendiente en este hito: recarga de ese guardado, derrota ante Anabel y regresión caso b (un combate de Palacio,
+Arena, Tubo e historia). No probado todavía: esos pasos, Anabel oro en Azahar, PB medidos en RAM, consola.
+La política del usuario sustituye cualquier petición de circuito completo: no es una entrega de paquete.

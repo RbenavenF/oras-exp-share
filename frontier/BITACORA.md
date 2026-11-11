@@ -2765,3 +2765,23 @@ Evidencia: `tests/test_frontier_brains.py` 75 passed (reglas S-1/S/S+1 y 0/1/2 s
 No probado: nada en Azahar todavía (identidad, nombre, modelo, EV reales, texto, guardado del símbolo).
 Siguiente paso: build completa, partida con racha 34 en la Torre, jefe en Azahar (victoria con símbolo y derrota) y
   regresión caso b (Palacio, Arena, Tubo y un combate de historia) porque se toca DllField.cro.
+
+## 2026-11-11 21:40 — Codex — F8-CEREBROS-BASE hito 2: Anabel plata y símbolo guardado
+Estado: en curso
+Hecho: revisión del relevo (`git status`, `git diff`, último commit 57df06a): limpio, sin cambio parcial pendiente.
+Build completa generada. Añadida sonda reproducible `frontier/probes/brains/lab_probe.py` y verificador PK6
+`check_team.py`; ampliado StartBattle sin jefe a las siete rutas en Unicorn. Informe §39 con direcciones,
+reservas, comandos y límites de evidencia.
+Evidencia: `env -u ORCH_LANE python -m pytest -q tests`: 1188 passed, 1 skipped (tests-final.log). Build overlay
+correcta (build.log). Azahar del carril 24691: Anabel plata con racha 34, pendiente 10, presentación propia;
+PK6 reales comprobados antes de asistencia contra todo el equipo del diseño (silver-team.json). Victoria
+asistida solo en copias de combate: resultado 1; racha 35, símbolo 4, pendiente 0. Pausa y guardado por el juego
+(tower35-silver.sav, SHA256 0102574bcc5c199bbf7ca0d1b2fb01a00639375cd7020b279e995cf4c2c60ddd), símbolo 4 y
+racha 35 comprobados en archivo con 58 bloques válidos. Artefactos work/frontier/cerebros/base/.
+Commits: 57df06a (infraestructura de Claude); el de esta entrada (prueba y cobertura de Codex).
+Decisiones: no cambios de REPARTO/tasks.json; estado en work/lane-task.json. Suite sin ORCH_LANE porque nueve tests
+de orquestación dependen de su ausencia (también pasa la suite previa 1182/1 sin la variable). Regresión limitada
+al caso b del usuario, sin circuito de siete. No probado: recarga, derrota, regresión b, oro en Azahar, PB medidos,
+consola. Laboratorio continúa activo para el siguiente paso.
+Siguiente paso: recargar símbolo, derrota ante Anabel, Palacio/Arena/Tubo/historia; documentar, parar lab, suite y
+commit final; marcar done solo con aceptación completa.
