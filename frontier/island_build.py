@@ -44,6 +44,7 @@ from pawn import OP, Op, Program, Script  # noqa: E402
 import factory  # noqa: E402
 import island  # noqa: E402
 import pyramid  # noqa: E402
+import dome_room  # noqa: E402
 
 STAGED = ['a/0/1/4', 'a/0/3/9', 'a/0/4/0', 'a/0/7/3', 'a/0/8/1', 'a/0/1/3', 'a/0/2/3', 'a/1/3/7', 'a/0/2/1',
           'a/0/3/6', 'a/0/3/7', 'a/0/3/8', 'a/1/9/5', 'a/1/8/9', 'a/1/9/7', 'a/0/2/9', 'a/1/8/2', 'a/1/8/3',
@@ -63,13 +64,13 @@ ZONE_PIKE = 458               # the Pike's interior (frontier/pike.py; idem, rep
 ZONE_ARENA = 457              # the Arena's interior (frontier/arena.py; idem, reports/frontier.md §29)
 ZONE_PYRAMID = pyramid.LOBBY  # the Pyramid's lobby (140) and floors (141, 142) (frontier/pyramid.py; §30)
 CLONES = {ZONE_ISLAND: DONOR_ISLAND, ZONE_HALL: DONOR_HALL,   # slot: donor of its map, area, entities and script
-          ZONE_TOWER: DONOR_HALL, ZONE_DOME: DONOR_HALL, ZONE_PALACE: DONOR_HALL,
+          ZONE_TOWER: DONOR_HALL, ZONE_DOME: dome_room.DONOR, ZONE_PALACE: DONOR_HALL,
           ZONE_PIKE: DONOR_HALL, ZONE_ARENA: DONOR_HALL, ZONE_PYRAMID: DONOR_HALL, **{z: pyramid.FLOOR_DONOR for z in pyramid.FLOORS}}
 # Facility zones are added here by the integrator (frontier/REPARTO.md). Every clone gets the place name PLACE; one in
 # KEEP_TEXT keeps its donor's story text (the Maison's 619 for a 517 clone); one in NATIVE_DONORS registers that
 # zone's native groups instead of its donor's (a floor cloned from a cave that runs Maison battles needs 517's).
 KEEP_TEXT = {ZONE_HALL, ZONE_TOWER, ZONE_DOME, ZONE_PALACE, ZONE_PIKE, ZONE_ARENA, *pyramid.ZONES}
-NATIVE_DONORS = {z: DONOR_HALL for z in pyramid.FLOORS}
+NATIVE_DONORS = {ZONE_DOME: dome_room.NATIVE_DONOR, **{z: DONOR_HALL for z in pyramid.FLOORS}}
 
 
 def native_donors():
@@ -159,6 +160,8 @@ def plan(scripts):
         lines.append(f'plaza.building.{i}={name}|{x}|{y}')
         if facility in DOORS:
             lines.append(f'plaza.door.{i}=' + ','.join(map(str, DOORS[facility])))
+    if ZONE_DOME in CLONES:
+        lines += dome_room.plan_lines(LOAD_BUDGET)
     lines += pyramid.plan_lines()   # the Pyramid's floors: NPCs and exit to its lobby
     return '\n'.join(lines) + '\n'
 
@@ -240,6 +243,10 @@ def build(archives, source, work, zone_scripts=None):
     for zone in pyramid.FLOORS:
         _, _, offset, length = garc_entries(out['a/0/1/3'])[zone]
         pyramid.check_floor(lz11_decompress(out['a/0/1/3'][offset:offset + length]))
+    if ZONE_DOME in zone_scripts:
+        _, _, offset, length = garc_entries(out['a/0/1/3'])[ZONE_DOME]
+        dome_room.check_room(lz11_decompress(out['a/0/1/3'][offset:offset + length]),
+                             zone_scripts[ZONE_DOME], ZONE_ISLAND, door_warp('Dome'))
     check_budget(text)
     out.update(place_names(out, source))
     return out, text

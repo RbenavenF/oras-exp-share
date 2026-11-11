@@ -2426,3 +2426,48 @@ Estado: hecho
 Hecho: fila del Palacio en REPARTO: etapa C hecha (§36). Corrección: las dos entradas anteriores de F6-PALACIO-C
 llevan horas estimadas (01:30 y 01:20); las reales son anteriores a las 01:13 (`date`), en el orden en que figuran.
 Commits: el de esta entrada. Siguiente paso: el de la entrada anterior.
+## 2026-11-11 00:29 — Codex — F6-DOMO-SALA: donante y build verificadas
+Estado: en curso
+Hecho: sala 456 con mapa/área propios de 365 (sala amplia de Liga); tres NPC, texto y máscara de nativas de 517,
+salida a su puerta de plaza. Script del Domo y code.ips generados idénticos a la build anterior. Guardas de ZO,
+script, entidades, texto y salida en frontier/dome_room.py; integración en island_build; seis tests nuevos.
+Evidencia: reports/frontier.md §36; work/frontier/island/zones.tsv, work/frontier/dome/room/{entities,floor*,budget*}.txt,
+build-before.log/build-after.log. Carga 305024/2724608; ZO 15452/17248. Tests con `env -u ORCH_LANE python -m pytest -q tests`:
+988 passed, 1 skipped. Sin quitar ORCH_LANE fallaban nueve tests del orquestador: el agente ficticio heredaba el
+carril y escribía lane-task.json en lugar de tasks.json; no se cambió el orquestador. diff --check correcto.
+Commits: el de esta entrada.
+Decisiones: 365 cubre en altura 0 las coordenadas retail de la coreografía Individual; no se modifica el script.
+No probado: todavía el ciclo del torneo en esta sala ni consola. Captura antes en room/before.png (build anterior).
+Siguiente paso: entrar desde la puerta de plaza en Azahar, inspeccionar la sala, inscripción/combate/pausa,
+guardar/cargar dentro y salir; regresión de puertas Fábrica/Torre. Laboratorio activo solo en este carril, puerto 24691.
+Turno y tasks.json intactos; estado en work/lane-task.json.
+
+## 2026-11-11 00:24 — Codex — corrección del hito anterior: commit rechazado por sandbox
+Estado: en curso
+Hecho: la entrada anterior lleva una hora adelantada por error (00:29); el comando de commit se intentó antes
+ de las 00:22. No hubo commit: `git add` y `git commit` fallan al crear
+`/home/rbenaven/projects/oras-exp-share/.git/worktrees/codex/index.lock`: Read-only file system.
+Evidencia: `findmnt -T /home/rbenaven/projects/oras-exp-share/.git/worktrees/codex` muestra montaje ext4 `ro`.
+La raíz .git es escribible pero el gitdir específico del worktree está montado solo lectura por el sandbox.
+Commits: sin commit; los seis ficheros del hito anterior permanecen en el carril, sin stage.
+Decisiones: no alterar montajes ni el gitdir para eludir el sandbox. Continuar con las pruebas independientes;
+se necesita que el orquestador dé escritura al gitdir del carril para poder integrar.
+Siguiente paso: finalizar evidencia de Azahar, cerrar el laboratorio y dejar estado del carril explícito.
+
+## 2026-11-11 00:28 — Codex — F6-DOMO-SALA: relevo bloqueado por gitdir de solo lectura
+Estado: bloqueado
+Hecho: implementación de sala 365 lista en el carril, sin commit por el rechazo de index.lock documentado arriba.
+Entrada por puerta comprobada: plaza (6,58), norte dos veces, llegada a 456 tile (16,31); sala de piedra amplia
+con tres NPC (captura room/after-entry2.png). Captura previa room/before.png. README de pruebas en
+frontier/probes/dome_room. No probado: inscripción, combate, pausa, guardar/cargar nuevo, salida y regresiones.
+Evidencia: reports/frontier.md §36; room/build-after.log y tests-clean-env.log (988 passed, 1 skipped);
+compileall y diff --check correctos. Script y code.ips antes/después idénticos. Ningún cambio en motor/CRO/patch.py.
+Commits: sin commit (gitdir ro), ni stage. No push. REPARTO y tasks.json intactos.
+Decisiones: status blocked en work/lane-task.json para corregir infraestructura antes de integrar. El orquestador
+necesita añadir .git/worktrees/codex como raíz escribible y recoger TODOS los cambios sin commit de este carril.
+Laboratorio: última shell detenida con reap y use_gdbstub=false. Se interrumpieron dos shells anteriores: sus
+procesos no son visibles desde el namespace actual; after_run debe ejecutar reap desde el host y verificar que
+no quede ningún Azahar/Xvfb/GDB de este carril. No tocar el otro carril. No declarar limpieza total verificada aquí.
+Siguiente paso: corregir permiso del gitdir y hacer commit del hito; desde una sola shell persistente, entrar por
+plaza y caminar primero al norte por el acceso central (el lateral de y31 está bloqueado), después hacia la
+recepcionista. Completar aceptación de juego pendiente; no marcar done antes.

@@ -188,7 +188,7 @@ def test_every_island_clone_gets_its_donors_native_groups():
     assert f'clones={island_build.DONOR_ISLAND}:{island_build.ZONE_ISLAND},' \
            f'{island_build.DONOR_HALL}:{island_build.ZONE_HALL},' \
            f'{island_build.DONOR_HALL}:{island_build.ZONE_TOWER},' \
-           f'{island_build.DONOR_HALL}:{island_build.ZONE_DOME},' \
+           f'{island_build.dome_room.DONOR}:{island_build.ZONE_DOME},' \
            f'{island_build.DONOR_HALL}:{island_build.ZONE_PALACE},' \
            f'{island_build.DONOR_HALL}:{island_build.ZONE_PIKE},' \
            f'{island_build.DONOR_HALL}:{island_build.ZONE_ARENA},' \

@@ -2539,3 +2539,54 @@ DllBattle medida **0x6f3000** (lr − 0x73260 en `palace_ai_flags`).
 **No probado**: consola (ldr:ro y permisos de la región de código de la CRO), el juicio de la Arena con este
 parche, Doble/Multi, la Fábrica/Torre/Tubo/Pirámide/Domo con esta build. «No obedece» y textos, fuera.
 Suite: `env -u ORCH_LANE python -m pytest -q tests` → 1066 passed, 1 skipped (`c/tests-c2.log`).
+## 37. F6-DOMO-SALA: sala amplia retail propia (2026-11-11, Codex)
+
+Hito estático: `frontier/dome_room.py` y `island_build.py`: 456 clona el mapa/área de **365**, la sala amplia
+final de la Liga; conserva script del Domo y nativas de 517. La puerta de plaza y salida siguen en warp 1
+(6,57). Sin cambios en `patch.py`, ensamblador, CRO ni código ejecutable generado: `code.ips` antes/después
+idéntico (SHA256 `f64e527c6348571ca8c83780ecd23152dd144bfe108abad7e286b9cdef19c4ce`).
+
+Selección reproducible: build inicial `python frontier/overlay.py --out work/frontier/dome/room/before`;
+`faraway/run.sh Probe work/frontier/dome/room/before-island/game work/frontier/dome/room/survey-ws zones`
+→ `work/frontier/island/zones.tsv`. Medidos `entities 517 315 314 449 448 365 354`, `floor 314|315|365|354|448`
+y `WorldTextures` para esos candidatos (`work/frontier/dome/room/{entities,floor*,budget*}.txt`).
+
+| Donante | Datos de zones.tsv | Carga en bytes | Decisión |
+| --- | --- | ---: | --- |
+| 314, vestíbulo de concursos | matrix 358, área 179, 22 NPC, 2 warps, 4 triggers, 7 props | 1.221.632 | Pasillo x13–17 desde y21; no cubre la recepción y escenas de 517. |
+| 315, sala de concursos anexa | matrix 359, área 179, 8 NPC, 1 warp, 1 prop | 1.165.696 | Suelo x5–19/y4–14, demasiado corto para las escenas. |
+| 354, Liga | matrix 261, área 149, 2 NPC, 2 warps, sin props | 545.536 | Menos adecuada que la sala amplia plana. |
+| 448, Instituto de Combate | matrix 350, área 199, 5 NPC, 1 warp, 1 prop | 326.144 | Menos amplia que 365. |
+| **365, Liga** | **matrix 272, área 160, 1 NPC, 1 warp, sin props** | **305.024** | Suelo plano x6–26/y4–32; cubre recepción y coreografía Individual (x19–23/y12–25). |
+
+Build `work/frontier/dome/room/after`, log `build-after.log`: carga **305.024** = mundo 21.760 + props 42.112
++ modelo 241.152, menor que `LOAD_BUDGET` 2.724.608. ZO completo **15.452 bytes** (56/360/14996/0/12),
+menor que 17.248. Script antes/después idéntico: SHA256
+`9caf56fceb24c52be75b59a5c39c4ead3a7de8a1178fd128b0e881047d00bd53`.
+Solo quedan tres NPC: espectador uid0, recepcionistas uid1/2 (modelos 297/62 registrados desde área 214);
+sin eventos de Liga ni triggers. `dome_room.check_room` guarda tamaño, entidades, salida, texto 619 y script.
+`tests/test_frontier_dome_room.py` incluye rechazo de tamaño, salida retail, texto, script y triggers dañados.
+Azahar y aceptación completa: en curso; no probado aún el ciclo del torneo en este mapa ni consola.
+
+**Relevo bloqueado (00:28)**: no hay commit de esta implementación. El sandbox permite escribir en la raíz
+`.git`, pero monta `.git/worktrees/codex` en solo lectura (`findmnt -T …/worktrees/codex`); `git add` y
+`git commit` fallan al crear `index.lock`. El orquestador debe incluir ese gitdir exacto entre sus raíces de
+escritura y recoger los cambios sin commit del carril (incluidos dome_room.py y tests nuevos).
+
+Azahar ejecutado: build anterior con `f6dm_saved_456.sav` → `room/before.png` (solicitud de inscripción en la
+sala de la Fábrica). Build nueva con `f6h_saved_plaza.sav`, caminar hasta (6,58), norte dos veces →
+`room/{dome-door,after-entry,after-entry2}.png`: puerta e interior amplio de piedra, tres NPC visibles, RAM
+(297,2,567), tile (16,31). **No probados** inscripción, combate, pausa, guardar/cargar con guardado nuevo,
+salida a plaza ni regresiones Fábrica/Torre en esta build. El primer intento de caminar lateralmente desde la
+entrada se detuvo en (17,31): el muestreo de alturas no detecta las barreras de la entrada. Ir primero al norte;
+receta propuesta en `frontier/probes/dome_room/README.md`, todavía no validada completa.
+
+Se interrumpieron dos shells conductoras y se reinició el laboratorio; al perder esas shells, sus namespaces PID
+no son visibles desde llamadas posteriores de Codex. La última shell se cierra con `reap` y use_gdbstub=false;
+el `after_run` del orquestador debe hacer **reap desde el host** y comprobar que no quedan procesos de este
+carril de las shells anteriores. No se han señalado procesos de otros carriles.
+
+Suite final ejecutada antes de los cambios solo documentales: `env -u ORCH_LANE python -m pytest -q tests` →
+**988 passed, 1 skipped** (`room/tests-clean-env.log`); compileall de dome_room.py y `git diff --check` correctos.
+Con ORCH_LANE heredado fallan nueve tests del supervisor porque el agente ficticio escribe lane-task en vez de
+tasks.json; el orquestador no se modificó. Estado del carril: blocked por el gitdir, aceptación de juego pendiente.
