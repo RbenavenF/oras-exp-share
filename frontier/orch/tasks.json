@@ -305,9 +305,9 @@
       "title": "Corregir el LEEME del paquete alfa (Arena y Palacio)",
       "design": "frontier/package.py (README)",
       "accept": "Solo el texto README de frontier/package.py (sin reconstruir ni probar el paquete en Azahar): la Arena juzga SOLO por Cuerpo (hoy dice «mente, técnica y cuerpo»; Mente y Técnica no están hechas), cambio prohibido; el Palacio: «la presentación y la frase de derrota del entrenador esperan que pulses A» (hoy dice «te piden ordenar»); añadir que la v0.1 aún muestra «Guardar vídeo» (quitado en main en 31ba2d4, entra en la próxima versión). Revisar el resto del README contra reports/frontier.md (§24–§38) y corregir cualquier otra afirmación falsa. Test que compruebe esas frases. Tests en verde.",
-      "status": "in_progress",
-      "notes": "Encontrado al revisar dist/oras-frontier-alpha-v0.1/LEEME.txt (2026-11-11 21:05).",
-      "evidence": ""
+      "status": "done",
+      "notes": "F7-LEEME completada. Solo README de package.py, tests del texto y bitácora. Sin reconstruir paquete ni abrir Azahar. REPARTO/tasks.json intactos.",
+      "evidence": "7057fa8 docs(frontier): correct alpha README rules and validation limits; env -u ORCH_LANE python -m pytest -q tests: 1107 passed, 1 skipped (35.88 s), work/frontier/leeme/tests.log; git diff --check correcto; AST idéntico salvo README, work/frontier/leeme/scope-check.txt."
     }
   ]
 }
