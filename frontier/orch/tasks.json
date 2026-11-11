@@ -106,8 +106,8 @@
       "owner": "claude",
       "design": "reports/diseno/palacio.md",
       "accept": "Sobre la etapa B (reports/frontier.md §33, vía híbrida con el bit 30): tabla de grupo por movimiento (ataque, defensa, apoyo; 2 bits) generada desde el GARC de movimientos a/1/8/9 con su fuente, y tabla de porcentajes por naturaleza en dos columnas (PS por encima o por debajo del 50 %) con su fuente (pokeemerald, apuntando commit o hipótesis). En cada turno del Palacio se sortea el grupo y la IA solo puede elegir movimientos de ese grupo; si no hay ninguno usable, otro grupo. Solo con el Palacio activo; el rival sigue con su IA normal. Espacio de code.bin medido antes de escribir. Unicorn del filtro (naturalezas de los extremos, PS por encima y por debajo del 50 %, grupo vacío); en Azahar, un Pokémon de naturaleza muy marcada cuyos movimientos elegidos en varios turnos encajan con su tabla (registro con GDB), cambio de columna al bajar del 50 %, ronda sin cuelgues; regresión de la Arena y una instalación sin motor. «No obedece» y textos quedan fuera. Tests en verde.",
-      "status": "in_progress",
-      "notes": "Primera tanda del modo paralelo: corre a la vez que F6-DOMO-SALA (Codex), que no toca motor ni code.bin.",
+      "status": "blocked",
+      "notes": "Primera tanda del modo paralelo: corre a la vez que F6-DOMO-SALA (Codex), que no toca motor ni code.bin.\n[frontier-orch] conflicto al integrar con main en e tell me who you are.\n\nRun\n\n  git config --global user.email \"you@example.com\"\n  git config --global user.name \"Your Name\"\n\nto set your account's default identity.\nOmit --global to set the identity only in this repository.\n\nfatal: unable to auto-detect email address (got 'rbenaven@ibn5100.(none)')",
       "evidence": ""
     },
     {
