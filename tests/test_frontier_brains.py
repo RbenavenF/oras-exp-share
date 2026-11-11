@@ -41,7 +41,7 @@ def test_design_table_values():
     assert reps == [35, 70, 105, 140, 175]
     assert [u for u in range(1, 300) if brains.due('pike', u, 3)] == [28, 140, 196, 252]
     assert [u for u in range(1, 150) if brains.due('pyramid', u, 3)] == [21, 70, 105, 140]
-    assert brains.ENABLED == ('factory', 'tower')
+    assert brains.ENABLED == ('factory', 'tower', 'palace')
 
 
 def test_symbols_work():
@@ -81,7 +81,9 @@ def game_names():
 
 
 def test_ids_match_the_game_text(game_names):
-    spanish = {'ALAKAZAM': 'Alakazam', 'ENTEI': 'Entei', 'SNORLAX': 'Snorlax', 'RAIKOU': 'Raikou', 'LATIOS': 'Latios'}
+    spanish = {'ALAKAZAM': 'Alakazam', 'ENTEI': 'Entei', 'SNORLAX': 'Snorlax', 'RAIKOU': 'Raikou', 'LATIOS': 'Latios',
+               'CROBAT': 'Crobat', 'SLAKING': 'Slaking', 'LAPRAS': 'Lapras', 'ARCANINE': 'Arcanine',
+               'SUICUNE': 'Suicune'}
     assert {k: game_names['species'][v] for k, v in brains.SPECIES.items()} == spanish
     assert game_names['moves'][brains.MOVES['RETURN']] == 'Retribución'
     assert game_names['moves'][brains.MOVES['THUNDER_PUNCH']] == 'Puño Trueno'
@@ -89,9 +91,19 @@ def test_ids_match_the_game_text(game_names):
     assert game_names['moves'][brains.MOVES['BELLY_DRUM']] == 'Tambor'
     assert {k: game_names['items'][v] for k, v in brains.ITEMS.items()} == {
         'BRIGHT_POWDER': 'Polvo Brillo', 'LUM_BERRY': 'Baya Ziuela', 'QUICK_CLAW': 'Garra Rápida',
-        'CHESTO_BERRY': 'Baya Atania'}
+        'CHESTO_BERRY': 'Baya Atania', 'SCOPE_LENS': 'Periscopio', 'WHITE_HERB': 'Hierba Blanca',
+        'KINGS_ROCK': 'Roca del Rey'}
     assert {k: game_names['natures'][v] for k, v in brains.NATURES.items()} == {
-        'LONELY': 'huraña', 'ADAMANT': 'firme', 'MODEST': 'modesta'}
+        'HARDY': 'fuerte', 'LONELY': 'huraña', 'ADAMANT': 'firme', 'HASTY': 'activa', 'MODEST': 'modesta',
+        'QUIET': 'mansa'}
+    spanish_moves = {'CONFUSE_RAY': 'Rayo Confuso', 'DOUBLE_TEAM': 'Doble Equipo', 'TOXIC': 'Tóxico', 'FLY': 'Vuelo',
+                     'EARTHQUAKE': 'Terremoto', 'SWAGGER': 'Contoneo', 'SHADOW_BALL': 'Bola Sombra',
+                     'BRICK_BREAK': 'Demolición', 'ICE_BEAM': 'Rayo Hielo', 'HORN_DRILL': 'Perforador',
+                     'PROTECT': 'Protección', 'OVERHEAT': 'Sofoco', 'EXTREME_SPEED': 'Veloc. Extrema',
+                     'ROAR': 'Rugido', 'HYPER_BEAM': 'Hiperrayo', 'YAWN': 'Bostezo', 'BLIZZARD': 'Ventisca',
+                     'SURF': 'Surf', 'BITE': 'Mordisco'}
+    assert {k: game_names['moves'][brains.MOVES[k]] for k in spanish_moves} == spanish_moves
+    assert game_names['classes'][brains.CLASSES['palace']] == 'Médium'
     assert game_names['classes'][brains.CLASSES['tower']] == 'Entrenadora Guay'
     assert len(game_names['trainers']) == brains.TRAINER_FIRST       # names of the 129 retail Normal trainers
 
@@ -105,7 +117,7 @@ def test_anabel_sets_are_the_annex():
     assert silver[1]['moves'] == (126, 347, 216, 46) and silver[1]['nature'] == 1
     assert gold[2]['moves'] == (174, 216, 156, 247) and gold[2]['item'] == 150 and gold[2]['nature'] == 3
     assert silver[0]['evs'] == 0b011101                      # HP, Def, Spe, SpA (source order HP Atk Def Spe SpA SpD)
-    assert sorted(sets) == list(range(229, 235))            # the Tower's block of 6 (route 2) in 223-264
+    assert sorted(sets) == list(range(229, 241))            # the Tower's and the Palace's blocks of 6 in 223-264
     assert brains.SET_FIRST == fp.PIKE_WILD_FIRST + 6 == 223
 
 
@@ -127,7 +139,7 @@ def test_trainers_and_rows():
     assert first == (229, 106, 0, 152, 100, 0, 152)          # pml order HP Atk Def SpA SpD Spe
     trainer, iv, _ = struct.unpack_from('<HBB', rows, brains.ENTRY * (k + 1))
     assert (trainer, iv) == (132, 31)
-    assert all(struct.unpack_from('<H', rows, brains.ENTRY * j)[0] == 0 for j in range(14) if j not in (0, 1, k, k + 1))
+    assert all(struct.unpack_from('<H', rows, brains.ENTRY * j)[0] == 0 for j in range(14) if j not in (0, 1, k, k + 1, k + 2, k + 3))
 
 
 def test_texts():
@@ -290,7 +302,7 @@ def test_factory_symbols_menu_entry(scripts):
     assert ins[k + 4].address + ins[k + 4].args[0] == labels['brains_symbols']
     assert ins[k + 5].op == OP['CONST_S'] and ins[k + 5].args == [factory.RECEPTION_AGAIN, 1]
     assert ins[k + 6].op == OP['JUMP'] and ins[k + 6].address + ins[k + 6].args[0] == labels[factory.RECEPTION_NEXT]
-    for other in ('palace', 'arena', 'pike', 'dome'):         # other receptions connect theirs in their own tasks
+    for other in ('arena', 'pike', 'dome'):         # other receptions connect theirs in their own tasks
         assert 'brains_symbols' not in scripts[other][1]
 
 
@@ -462,7 +474,8 @@ def test_choose_gives_the_brain():
     assert choose(tower, brain=tower + 8, streak=34)[0] == 131
     assert choose(tower, brain=tower + 16, streak=69)[0] == 132
     assert choose(tower, brain=3 + 8, streak=5)[0] == 42                  # another route's Brain
-    assert choose(3, brain=3 + 8, streak=5)[0] == 42                      # a route without a Brain
+    assert choose(4, brain=4 + 8, streak=5)[0] == 42                      # a route without a Brain
+    assert choose(3, brain=3 + 8, streak=20)[0] == 133                    # Spenser (Palace, route 3)
     assert choose(tower, brain=tower + 24, streak=5)[0] == 42             # invalid variant
 
 
@@ -493,24 +506,25 @@ def start(route, brain, trainer, count=3):
 
 @pytest.mark.parametrize('route, brain, trainer, count', [
     *[(route, 0, 131, 3) for route in range(1, 8)],
-    (0, 0, 0, 3), (2, 2 + 8, 5, 3), (3, 3 + 8, 131, 3), (2, 2 + 8, 131, 2), (5, 0, 0, 2)])
+    (0, 0, 0, 3), (2, 2 + 8, 5, 3), (3, 3 + 8, 131, 3), (4, 4 + 8, 133, 3), (2, 2 + 8, 131, 2), (5, 0, 0, 2)])
 def test_start_leaves_the_party_alone_without_its_brain(route, brain, trainer, count):
     result, calls = start(route, brain, trainer, count)
     assert result == 0x55 and [c[:4] for c in calls] == [(C['CODE_START'], WORK, 1, 0)]
 
 
+@pytest.mark.parametrize('facility', ['tower', 'palace'])
 @pytest.mark.parametrize('variant', [brains.SILVER, brains.GOLD])
-def test_start_remakes_the_brain_team_in_order(variant):
-    tower = fp.ROUTE['tower']
-    result, calls = start(tower, tower + 8 * variant, brains.trainer_id('tower', variant))
+def test_start_remakes_the_brain_team_in_order(variant, facility):
+    route = fp.ROUTE[facility]
+    result, calls = start(route, route + 8 * variant, brains.trainer_id(facility, variant))
     assert result == 0x55 and calls[0][:4] == (C['CODE_START'], WORK, 1, 0)
-    iv, team = brains.TEAMS[('tower', variant)]
+    iv, team = brains.TEAMS[(facility, variant)]
     rest = calls[1:]
     per = len(rest) // 3
     assert per * 3 == len(rest)
     for k, temp in enumerate(TEMPS):
         part = rest[per * k:per * (k + 1)]
-        assert part[0][:4] == (C['CODE_LOAD_SET'], HEAP, 0xB6, brains.set_index('tower', variant, k))
+        assert part[0][:4] == (C['CODE_LOAD_SET'], HEAP, 0xB6, brains.set_index(facility, variant, k))
         make = part[1]
         assert make[0] == C['CODE_MAKE_PARAM'] and make[2:5] == (50, iv, HEAP) and make[5:7] == (0, 0xFF)
         evs = [c[2:4] for c in part if c[0] == C['CODE_EV_SET']]

@@ -61,7 +61,7 @@ def test_palace_menu_is_the_maisons_and_party_selection_is_retail(built):
     add = s32(gf_hash('ListMenuAdd'))
     menu = [ins[i - 1].args[0] for i, x in enumerate(ins) if labels['L14f4'] <= x.address < labels['L1634']
             and x.op == OP['SYSREQ_N'] and names[x.args[0]] == add]
-    assert menu == tower.RECEPTION_MENU
+    assert menu == tower.RECEPTION_MENU[:-1] + [factory.LINE_SYMBOLS] + tower.RECEPTION_MENU[-1:]   # «Símbolos» (F8)
 
     def routine(program):
         at = program.items.index(('label', f'L{overlay.PARTY_SELECT:x}'))

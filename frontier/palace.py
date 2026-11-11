@@ -12,14 +12,21 @@ Stage B (reports/frontier.md §32): in its battles the game's AI decides for the
 palace.s, frontier/palace_engine.py; nature table in stage C). The battle video does not record
 those decisions, so the Palace's «next battle» menu drops «Guardar vídeo» (VIDEO_ITEM, `hide_video`) and the
 record routine offered after a loss or at the end (VIDEO_RECORD: SaveBattleRecord + wait) returns at once. Same known deviations as the Tower: the Maison's texts
-(«Mansión Batalla»), its party rules, its boss on the streak; no Spenser, Doubles or Open Level.
+(«Mansión Batalla»), its party rules; no Doubles or Open Level.
+
+Frontier Brain (F8-CEREBRO-PALACIO, frontier/brains.py): Spenser at battles 21/42 and every 21 after both symbols
+(brains.APPEARANCES), with his fixed teams (reports/diseno/cerebros.md §7), no Maison boss on route 3, and «Symbols»
+in the reception menu (value brains.MENU_SYMBOLS). His battle keeps the Palace engine (B/C: the AI decides for the
+player's Pokémon by nature); the rival side is the game's usual AI.
 """
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / 'scripts'), str(ROOT / 'frontier')]
+import brains  # noqa: E402
 import data as fd  # noqa: E402
+import factory  # noqa: E402
 import patch  # noqa: E402
 import tower  # noqa: E402
 
@@ -34,8 +41,11 @@ PALACE_BP = fd.FRONTIER_BP[FACILITY]
 
 
 def palace_program(retail):
-    """Zone 517's retail script with the Palace (module docstring)."""
-    return tower.facility_program(retail, FACILITY)
+    """Zone 517's retail script with the Palace (module docstring) and «Symbols» in its reception menu (Spenser's
+    symbol, brains.symbols_option; text 619 line factory.LINE_SYMBOLS, as the Factory and the Tower)."""
+    p = tower.facility_program(retail, FACILITY)
+    brains.symbols_option(p, FACILITY, factory.LINE_SYMBOLS)
+    return p
 
 
 def zone_script(retail):
