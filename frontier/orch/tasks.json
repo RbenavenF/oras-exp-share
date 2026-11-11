@@ -149,7 +149,7 @@
       "title": "Quitar «Guardar vídeo» en las siete instalaciones",
       "design": "reports/frontier.md §33 (Palacio: vídeo oculto tras la derrota)",
       "accept": "Decisión del usuario 2026-11-11: no queremos vídeos de combate. En ninguna instalación (Fábrica, Torre, Palacio, Arena, Domo, Tubo, Pirámide) aparece la opción de guardar el vídeo, ni tras ganar, ni tras perder, ni al pausar; el resto del menú intacto. Reutiliza lo del Palacio (§33). La prueba principal es la suite: un test de script por instalación que compruebe que la opción no está. Azahar (política de regresión, caso a): el menú tras una victoria en dos instalaciones de flujo distinto (la Fábrica y una con motor propio) y nada más. La Mansión Batalla original no cambia (test). Tests en verde.",
-      "status": "pending",
+      "status": "in_progress",
       "notes": "",
       "evidence": ""
     },
