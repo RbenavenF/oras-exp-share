@@ -2644,3 +2644,33 @@ Decisiones: política de regresión del usuario: solo Fábrica y Arena en Azahar
   cubiertos por scripts, no repetidos en emulador. Sin cambios de motor ni de construcción; consola no probada.
   Turno de REPARTO y tasks.json intactos; estado del carril en work/lane-task.json.
 Siguiente paso: el orquestador integra el commit de lane/codex y pasa aceptación en main; F7-VIDEO done.
+
+## 2026-11-11 20:25 — Codex — F8-CEREBROS-DISENO: siete Cerebros y símbolos
+Estado: hecho
+Hecho:
+- reports/diseno/cerebros.md: fuente pokeemerald fijada a 731ad5bfd6e6f265508d0efcca0ba42f9dcf5881,
+  apariciones plata/oro/revanchas y conversión a rachas ORAS. Equipos completos (36 conjuntos con EV/IV,
+  naturaleza, objeto y movimientos); Noland aleatorio con IV 15/31, no el trío de la tabla fija no usada.
+- Diseño de infraestructura SetTrainer/IsBoss/cinta de Mansión, identidad y constructor rival, bonus +10,
+  símbolos persistentes y consulta desde recepcionistas. Candidatos 16729–16731, sin asignar ni tocar REPARTO;
+  modelos de campo fallback y clases ORAS explícitos, estética y enlace de modelo de combate por medir en BASE.
+  Adaptadores por instalación; finales del Domo, salas del Tubo y cima de Pirámide distinguen sus unidades.
+- Medida actual de patch.assemble(): 2544/2556 bytes, fin 0x579ff4, 12 libres; los ~600 bytes son históricos.
+  BASE debe medir/reservar otra ubicación o recuperar espacio. Riesgos, estimación y política de regresión.
+- frontier/orch/propuestas/cerebros.json: BASE y siete tareas con owner/after/accept concretos. Los ocho IDs ya
+  están en la cola; no ejecutar add de duplicados. Las aceptaciones actuales remiten al diseño/propuestas;
+  se deja explicado el relevo sin editar tasks.json. BASE cubre Anabel plata; TORRE completa oro/revanchas.
+Evidencia:
+- Checkout de fuente en /tmp y enlaces al commit en el diseño; 36 filas cotejadas campo a campo contra el C.
+  work/frontier/cerebros/design-check.txt: check_task válido para ocho propuestas; dependencias existentes;
+  duplicados rechazados frente a cola actual; siete clases comprobadas en gametext ES a/0/7/7 entrada 21;
+  espacio medido, REPARTO/tasks.json intactos. work/frontier/cerebros/ids.txt: 1157 scripts, 147 ficheros de código.
+- env -u ORCH_LANE bash -c 'source scripts/env.sh; python -m pytest -q tests': 1105 passed, 1 skipped,
+  40.14 s (work/frontier/cerebros/tests.log). git diff --check correcto.
+Commits: el de esta entrada, «docs(frontier): design seven Frontier Brains and symbol implementation tasks»
+  (Agent: Codex).
+Decisiones: solo diseño/documentación y JSON de propuestas, sin código del juego ni laboratorio, build o parche;
+  Azahar/consola de los Cerebros no probados. Las mediciones son estáticas; lo pendiente se marca como hipótesis
+  o puerta de aceptación de BASE. Turno y tasks.json intactos; estado final del carril en work/lane-task.json.
+Siguiente paso: el orquestador integra y pasa su suite; F8-CEREBROS-BASE empieza auditando espacio e identidad rival,
+  asigna reservas en REPARTO antes de escribirlas e implementa Anabel plata según §3, conservando Mansión ruta 0.

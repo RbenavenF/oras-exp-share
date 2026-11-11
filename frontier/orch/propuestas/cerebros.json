@@ -1,0 +1,108 @@
+{
+  "tasks": [
+    {
+      "id": "F8-CEREBROS-BASE",
+      "owner": "claude",
+      "after": [
+        "F8-CEREBROS-DISENO"
+      ],
+      "title": "Cerebros: infraestructura común y Anabel plata",
+      "design": "reports/diseno/cerebros.md §1–§6",
+      "accept": "Suite completa python -m pytest -q tests en verde y entrada de BITACORA con fuentes, commits y pruebas. No tocar inputs ni partida original. Aplicar política de regresión del usuario: si cambia motor/code.bin/CRO/asm/patch, un combate Palacio, Arena, Tubo e historia además de lo propio; si cambia isla/construcción común, plaza y puertas afectadas; recorrido completo solo en paquete de consola. Auditar primero espacio: foto actual 2544/2556, 12 bytes libres, no 600. Reservar ubicación verificada y works/flags/casos/textos en REPARTO antes de usarlos (16729–16731 son candidatos). Implementar elegibilidad por ruta/unidad/símbolos según §1, tabla de equipos §7 y Noland §2; no interpretar SetTrainer(tipo) como ID. Identidad/nombre/clase/modelo y constructor rival privado con IV/EV exactos, naturaleza, amistad y habilidades documentadas; no modificar datos compartidos de Mansión. Ruta vertical Anabel plata a S=34 con equipo del anexo: victoria da plata persistente y PB de ronda +10 una sola vez; derrota limpia racha y conserva símbolos previos; guardar/cargar y pausa sin duplicar premio. Sustituir ruta IsBoss/cinta/diario retail solo en Frente, suprimir líder de Mansión accidental en las siete rutas; ruta 0 conserva líderes y cintas. Consulta de símbolos compartida sin cambiar ruta. VM de fronteras y máscaras/rutas, Unicorn de hooks nuevos, byte guards y tamaño ZO <=17248. Azahar: Torre plata ganada, guardar/cargar símbolo y una derrota de jefe; medición de equipo real antes de victoria asistida si se usa. Documentar limitaciones visuales. API/adaptadores comunes listos para las siete instalaciones; no declarar los otros jefes jugables.",
+      "status": "pending",
+      "notes": "Propuesta: este ID ya existe en la cola integrada. Reconciliar especificación, no añadir duplicado. BASE incluye plata Torre; F8-CEREBRO-TORRE completa oro/revanchas.",
+      "evidence": ""
+    },
+    {
+      "id": "F8-CEREBRO-FABRICA",
+      "owner": "any",
+      "after": [
+        "F8-CEREBROS-BASE"
+      ],
+      "title": "Noland: Cerebro de Fabrica y símbolos",
+      "design": "reports/diseno/cerebros.md",
+      "accept": "Suite completa python -m pytest -q tests en verde y entrada de BITACORA con fuentes, commits y pruebas. No tocar inputs ni partida original. Aplicar política de regresión del usuario: si cambia motor/code.bin/CRO/asm/patch, un combate Palacio, Arena, Tubo e historia además de lo propio; si cambia isla/construcción común, plaza y puertas afectadas; recorrido completo solo en paquete de consola. Noland: ruta 1, zona 213, S=20/41, combates 21/42; tras ambos repetir 21,42,63…, con reglas de 0/1/2 símbolos de §1. Generar tres rivales aleatorios según §2: rangos de alquiler ronda 3/6 e IV 15/31, excluir IDs de los seis alquileres y repetición interna de especie/objeto; no usar trío fijo de tabla FACTORY. Mantener alquileres del jugador, registro rival/cambio, pausa reproducible y cierre de ronda sin cambio. Documentar adaptación de conjuntos Mansión. Usar API BASE, modelo/clase de §4 (sustitución visual documentada), nombre real en combate y textos intro/plata/oro/victoria/derrota/consulta. Registrar nuevas reservas en REPARTO antes de usarlas. Victoria otorga símbolo y +10 al PB correspondiente una vez; derrota/empate/abandono limpia racha/desafío y conserva símbolos/récord; pausa conserva estado. VM: umbrales anterior/exacto/posterior, plata/oro/revanchas, derrota y guardado sin premios duplicados; comprobar conjunto/IV/EV y no-jefe sin cambios. Azahar solo esta instalación si no cambia motor/construcción: plata desde S=20 ganada con símbolo, guardar/cargar y oro desde S=41 o derrota de jefe. Equipo/caja reales intactos.",
+      "status": "pending",
+      "notes": "Propuesta con ID ya presente en la cola: reconciliar criterios, no ejecutar add de duplicados.",
+      "evidence": ""
+    },
+    {
+      "id": "F8-CEREBRO-TORRE",
+      "owner": "any",
+      "after": [
+        "F8-CEREBROS-BASE"
+      ],
+      "title": "Anabel: Cerebro de Torre y símbolos",
+      "design": "reports/diseno/cerebros.md",
+      "accept": "Suite completa python -m pytest -q tests en verde y entrada de BITACORA con fuentes, commits y pruebas. No tocar inputs ni partida original. Aplicar política de regresión del usuario: si cambia motor/code.bin/CRO/asm/patch, un combate Palacio, Arena, Tubo e historia además de lo propio; si cambia isla/construcción común, plaza y puertas afectadas; recorrido completo solo en paquete de consola. Anabel: ruta 2, zona 329, S=34/69, combates 35/70; tras ambos 35,70,105…, con reglas de 0/1/2 símbolos de §1. Completar oro y revanchas sobre Anabel plata de BASE, equipos exactos §7 y textos. No repetir implementación ni laboratorio de plata de BASE si no se modifica; verificar consulta de símbolos. Usar API BASE, modelo/clase de §4 (sustitución visual documentada), nombre real en combate y textos intro/plata/oro/victoria/derrota/consulta. Registrar nuevas reservas en REPARTO antes de usarlas. Victoria otorga símbolo y +10 al PB correspondiente una vez; derrota/empate/abandono limpia racha/desafío y conserva símbolos/récord; pausa conserva estado. VM: umbrales anterior/exacto/posterior, plata/oro/revanchas, derrota y guardado sin premios duplicados; comprobar conjunto/IV/EV y no-jefe sin cambios. Azahar solo esta instalación si no cambia motor/construcción: oro desde S=69 con equipo de Raikou/Latios/Snorlax y símbolo persistente; reutilizar evidencia plata/derrota de BASE salvo cambio que la invalide. Equipo/caja reales intactos.",
+      "status": "pending",
+      "notes": "Propuesta con ID ya presente en la cola: reconciliar criterios, no ejecutar add de duplicados.",
+      "evidence": ""
+    },
+    {
+      "id": "F8-CEREBRO-PALACIO",
+      "owner": "any",
+      "after": [
+        "F8-CEREBROS-BASE"
+      ],
+      "title": "Spenser: Cerebro de Palacio y símbolos",
+      "design": "reports/diseno/cerebros.md",
+      "accept": "Suite completa python -m pytest -q tests en verde y entrada de BITACORA con fuentes, commits y pruebas. No tocar inputs ni partida original. Aplicar política de regresión del usuario: si cambia motor/code.bin/CRO/asm/patch, un combate Palacio, Arena, Tubo e historia además de lo propio; si cambia isla/construcción común, plaza y puertas afectadas; recorrido completo solo en paquete de consola. Spenser: ruta 3, zona 340, S=20/41, combates 21/42; tras ambos 21,42,63…, con reglas de 0/1/2 símbolos de §1. Equipos exactos §7; conservar control IA/filtro naturaleza de Palacio C y bit30, sin habilitar órdenes manuales. No declarar IA rival por naturaleza implementada por este jefe. Usar API BASE, modelo/clase de §4 (sustitución visual documentada), nombre real en combate y textos intro/plata/oro/victoria/derrota/consulta. Registrar nuevas reservas en REPARTO antes de usarlas. Victoria otorga símbolo y +10 al PB correspondiente una vez; derrota/empate/abandono limpia racha/desafío y conserva símbolos/récord; pausa conserva estado. VM: umbrales anterior/exacto/posterior, plata/oro/revanchas, derrota y guardado sin premios duplicados; comprobar conjunto/IV/EV y no-jefe sin cambios. Azahar solo esta instalación si no cambia motor/construcción: plata desde S=20 ganada con símbolo, guardar/cargar y oro desde S=41 o derrota de jefe; confirmar reglas Palacio activas. Equipo/caja reales intactos.",
+      "status": "pending",
+      "notes": "Propuesta con ID ya presente en la cola: reconciliar criterios, no ejecutar add de duplicados.",
+      "evidence": ""
+    },
+    {
+      "id": "F8-CEREBRO-ARENA",
+      "owner": "any",
+      "after": [
+        "F8-CEREBROS-BASE"
+      ],
+      "title": "Greta: Cerebro de Arena y símbolos",
+      "design": "reports/diseno/cerebros.md",
+      "accept": "Suite completa python -m pytest -q tests en verde y entrada de BITACORA con fuentes, commits y pruebas. No tocar inputs ni partida original. Aplicar política de regresión del usuario: si cambia motor/code.bin/CRO/asm/patch, un combate Palacio, Arena, Tubo e historia además de lo propio; si cambia isla/construcción común, plaza y puertas afectadas; recorrido completo solo en paquete de consola. Greta: ruta 4, zona 457, S=27/55, combates 28/56; tras ambos 28,56,84…, con reglas de 0/1/2 símbolos de §1. Equipos exactos §7; conservar bit31, cambio prohibido y juicio por Cuerpo a tres turnos. Mente/Técnica siguen fuera. Usar API BASE, modelo/clase de §4 (sustitución visual documentada), nombre real en combate y textos intro/plata/oro/victoria/derrota/consulta. Registrar nuevas reservas en REPARTO antes de usarlas. Victoria otorga símbolo y +10 al PB correspondiente una vez; derrota/empate/abandono limpia racha/desafío y conserva símbolos/récord; pausa conserva estado. VM: umbrales anterior/exacto/posterior, plata/oro/revanchas, derrota y guardado sin premios duplicados; comprobar conjunto/IV/EV y no-jefe sin cambios. Azahar solo esta instalación si no cambia motor/construcción: plata desde S=27 ganada con símbolo, guardar/cargar y oro desde S=55 o derrota de jefe; confirmar juicio/cambio prohibido. Equipo/caja reales intactos.",
+      "status": "pending",
+      "notes": "Propuesta con ID ya presente en la cola: reconciliar criterios, no ejecutar add de duplicados.",
+      "evidence": ""
+    },
+    {
+      "id": "F8-CEREBRO-DOMO",
+      "owner": "any",
+      "after": [
+        "F8-CEREBROS-BASE"
+      ],
+      "title": "Tucker: Cerebro de Domo y símbolos",
+      "design": "reports/diseno/cerebros.md",
+      "accept": "Suite completa python -m pytest -q tests en verde y entrada de BITACORA con fuentes, commits y pruebas. No tocar inputs ni partida original. Aplicar política de regresión del usuario: si cambia motor/code.bin/CRO/asm/patch, un combate Palacio, Arena, Tubo e historia además de lo propio; si cambia isla/construcción común, plaza y puertas afectadas; recorrido completo solo en paquete de consola. Tucker: ruta 5, zona 456, S=19/39 y S%4=3: finales torneos 5/10, combates 20/40; tras ambos finales 5,10,15…, con reglas de 0/1/2 símbolos de §1. Presentar trío exacto §7 antes de preview, elegir dos rivales y dos del jugador de sus tríos; alimentar DOME_FORCED, impedir regeneración tras preview/pausa. Selección rival según GetDomeTrainerSelectedMons o aproximación aleatoria declarada. Sin Tucker en rondas previas. PB torneo +10 una vez. Usar API BASE, modelo/clase de §4 (sustitución visual documentada), nombre real en combate y textos intro/plata/oro/victoria/derrota/consulta. Registrar nuevas reservas en REPARTO antes de usarlas. Victoria otorga símbolo y +10 al PB correspondiente una vez; derrota/empate/abandono limpia racha/desafío y conserva símbolos/récord; pausa conserva estado. VM: umbrales anterior/exacto/posterior, plata/oro/revanchas, derrota y guardado sin premios duplicados; comprobar conjunto/IV/EV y no-jefe sin cambios. Azahar solo esta instalación si no cambia motor/construcción: final plata S=19 ganada con símbolo, guardar/cargar y final oro S=39 o derrota; vista previa corresponde a los dos rivales reales. Equipo/caja reales intactos.",
+      "status": "pending",
+      "notes": "Propuesta con ID ya presente en la cola: reconciliar criterios, no ejecutar add de duplicados.",
+      "evidence": ""
+    },
+    {
+      "id": "F8-CEREBRO-TUBO",
+      "owner": "any",
+      "after": [
+        "F8-CEREBROS-BASE"
+      ],
+      "title": "Lucy: Cerebro de Tubo y símbolos",
+      "design": "reports/diseno/cerebros.md",
+      "accept": "Suite completa python -m pytest -q tests en verde y entrada de BITACORA con fuentes, commits y pruebas. No tocar inputs ni partida original. Aplicar política de regresión del usuario: si cambia motor/code.bin/CRO/asm/patch, un combate Palacio, Arena, Tubo e historia además de lo propio; si cambia isla/construcción común, plaza y puertas afectadas; recorrido completo solo en paquete de consola. Lucy: ruta 6, zona 458, S=27/139: salas 28/140; tras ambos salas 28,140,196…, con reglas de 0/1/2 símbolos de §1. Sustituir sorteo final con equipo exacto §7; PIKE_WILD=0, tres rivales, rango normal. Mantener PS/PP/estados v2 sin cura total silenciosa; curación previa exacta Esmeralda fuera y desviación documentada. Incrementar una sala al ganar, bonus +10 una vez. Usar API BASE, modelo/clase de §4 (sustitución visual documentada), nombre real en combate y textos intro/plata/oro/victoria/derrota/consulta. Registrar nuevas reservas en REPARTO antes de usarlas. Victoria otorga símbolo y +10 al PB correspondiente una vez; derrota/empate/abandono limpia racha/desafío y conserva símbolos/récord; pausa conserva estado. VM: umbrales anterior/exacto/posterior, plata/oro/revanchas, derrota y guardado sin premios duplicados; comprobar conjunto/IV/EV y no-jefe sin cambios. Azahar solo esta instalación si no cambia motor/construcción: sala plata S=27 ganada con símbolo, guardar/cargar y sala oro S=139 o derrota; medir PS/PP/estado arrastrados. Equipo/caja reales intactos.",
+      "status": "pending",
+      "notes": "Propuesta con ID ya presente en la cola: reconciliar criterios, no ejecutar add de duplicados.",
+      "evidence": ""
+    },
+    {
+      "id": "F8-CEREBRO-PIRAMIDE",
+      "owner": "any",
+      "after": [
+        "F8-CEREBROS-BASE"
+      ],
+      "title": "Brandon: Cerebro de Piramide y símbolos",
+      "design": "reports/diseno/cerebros.md",
+      "accept": "Suite completa python -m pytest -q tests en verde y entrada de BITACORA con fuentes, commits y pruebas. No tocar inputs ni partida original. Aplicar política de regresión del usuario: si cambia motor/code.bin/CRO/asm/patch, un combate Palacio, Arena, Tubo e historia además de lo propio; si cambia isla/construcción común, plaza y puertas afectadas; recorrido completo solo en paquete de consola. Brandon: ruta 7, zonas 140/141/142, tras contar piso S=21/70, ascensiones 3/10; tras ambos pisos 21,70,105…, con reglas de 0/1/2 símbolos de §1. Separar piso completado de ascensión cerrada en stairs_routine: estado pendiente persistente antes del jefe, equipo exacto §7 en cima lógica de sala actual sin nueva zona; jefe no suma piso, ni salida/PB antes de ganarlo. Recargar pendiente no permite saltarlo ni repetir premio. PS persistentes y bolsa siguen fuera. Usar API BASE, modelo/clase de §4 (sustitución visual documentada), nombre real en combate y textos intro/plata/oro/victoria/derrota/consulta. Registrar nuevas reservas en REPARTO antes de usarlas. Victoria otorga símbolo y +10 al PB correspondiente una vez; derrota/empate/abandono limpia racha/desafío y conserva símbolos/récord; pausa conserva estado. VM: umbrales anterior/exacto/posterior, plata/oro/revanchas, derrota y guardado sin premios duplicados; comprobar conjunto/IV/EV y no-jefe sin cambios. Azahar solo esta instalación si no cambia motor/construcción: cima plata tras piso 21 ganada con símbolo, guardar/cargar pendiente y símbolo; cima oro tras piso 70 o derrota; probar que no se duplica piso/PB. Equipo/caja reales intactos.",
+      "status": "pending",
+      "notes": "Propuesta con ID ya presente en la cola: reconciliar criterios, no ejecutar add de duplicados.",
+      "evidence": ""
+    }
+  ]
+}
