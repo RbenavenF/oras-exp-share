@@ -155,7 +155,8 @@ def plan(scripts):
     if len(set(names)) != len(names) or NOT_DRAWN & set(names):
         raise ValueError(f'plaza buildings must be distinct and drawn (not {sorted(NOT_DRAWN)}): {names}')
     for facility, (zone, _) in DOORS.items():   # each interior's exit (its warp 0) comes back to its own door
-        lines.append(f'zone.{zone}.warp.0=0,{ZONE_ISLAND},{door_warp(facility)}')
+        lines.append(f'zone.{zone}.warp.0=0,{ZONE_ISLAND},{door_warp(facility)}'
+                     + (',2' if zone == ZONE_DOME else ''))
     for i, (facility, (name, x, y)) in enumerate(FACILITIES.items()):
         lines.append(f'plaza.building.{i}={name}|{x}|{y}')
         if facility in DOORS:

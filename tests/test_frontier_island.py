@@ -227,7 +227,7 @@ def test_plaza_plan_links_the_tower_the_dome_the_factory_and_the_palace():
     assert buildings[factory].startswith(f'plaza.building.{factory}=Gym|')
     assert not any(line.startswith(f'zone.{island_build.ZONE_ISLAND}.warp.') for line in lines)
     assert f'zone.{island_build.ZONE_TOWER}.warp.0=0,{island_build.ZONE_ISLAND},0' in lines
-    assert f'zone.{island_build.ZONE_DOME}.warp.0=0,{island_build.ZONE_ISLAND},1' in lines
+    assert f'zone.{island_build.ZONE_DOME}.warp.0=0,{island_build.ZONE_ISLAND},1,2' in lines
     assert f'zone.{island_build.ZONE_HALL}.warp.0=0,{island_build.ZONE_ISLAND},2' in lines
     assert f'zone.{island_build.ZONE_PYRAMID}.warp.0=0,{island_build.ZONE_ISLAND},3' in lines   # door (32,57)
     assert f'zone.{island_build.ZONE_PIKE}.warp.0=0,{island_build.ZONE_ISLAND},4' in lines

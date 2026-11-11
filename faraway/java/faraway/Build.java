@@ -107,10 +107,29 @@ public final class Build {
 			e.triggers2.clear();
 		}
 		for (int i = 0; plan.getProperty(k + "warp." + i) != null; i++) {
+			// index,targetZone,targetWarp[,transitionType]
 			String[] w = plan.getProperty(k + "warp." + i).split(",");
 			ZoneEntities.Warp warp = e.warps.get(Integer.parseInt(w[0]));
 			warp.targetZone = Integer.parseInt(w[1]);
 			warp.targetWarpId = Integer.parseInt(w[2]);
+			if (w.length > 3) warp.transitionType = Integer.parseInt(w[3]);
+		}
+		if (plan.getProperty(k + "exitTiles") != null) {
+			// Restore the measured retail Maison exit tuple, in this clone's own field data.
+			String[] t = plan.getProperty(k + "exitTiles").split(",");
+			int x = Integer.parseInt(t[0]), y = Integer.parseInt(t[1]);
+			byte[] mm = java.nio.file.Files.readAllBytes(s.staged(ArchiveType.MAP_MATRIX, z.header.mapmatrixID).toPath());
+			ctrmap.formats.mapmatrix.MapMatrix.Grid grid = ctrmap.formats.mapmatrix.MapMatrix.Grid.of(mm);
+			java.nio.file.Path path = s.staged(ArchiveType.FIELD_DATA, grid.id((y / 40) * grid.width + x / 40)).toPath();
+			byte[] fd = java.nio.file.Files.readAllBytes(path);
+			int base = ctrmap.util.LittleEndian.i32(fd, 4);
+			for (int dx = 0; dx < 3; dx++) {
+				int off = base + 4 + ((y % 40) * 40 + x % 40 + dx) * 4;
+				if ((fd[off] & 255) != 0x20 || (fd[off+1] & 255) != 0x30 || fd[off+2] != 0 || fd[off+3] != 0)
+					throw new IllegalStateException("unexpected Dome donor exit tile");
+				fd[off+1] = 0;
+			}
+			java.nio.file.Files.write(path, fd);
 		}
 		for (int i = 0; plan.getProperty(k + "trigger." + i) != null; i++) {
 			// script,work,value,x,y,w,h (tiles),height: fires while WorkGet(work) == value, like retail story triggers

@@ -17,7 +17,7 @@ NPCS = ((297, 5, 10, 17, 1), (62, 2, 23, 24, 1), (62, 3, 17, 24, 1))
 
 
 def plan_lines(budget):
-    return [f'text.{ZONE}={TEXT}', f'zone.{ZONE}.clearNpcs=1',
+    return [f'text.{ZONE}={TEXT}', f'zone.{ZONE}.exitTiles=15,31', f'zone.{ZONE}.clearNpcs=1',
             f'zone.{ZONE}.clearTriggers=1', f'zone.{ZONE}.loadBudget={budget}',
             *(f'zone.{ZONE}.npc.{i}={m},{m},{event},0,{x},{y},0,{face}'
               for i, (m, event, x, y, face) in enumerate(NPCS)),
@@ -34,6 +34,11 @@ def check_room(raw, script, exit_zone, exit_warp):
         raise ValueError('Dome room has unexpected props/NPCs/warps/triggers')
     if struct.unpack_from('<HH', entities, 12 + len(NPCS) * 0x30) != (exit_zone, exit_warp):
         raise ValueError('Dome room exit does not lead to its plaza door')
+    # Retail 365 is arrival-only. Keep its plane/position; enable walking out.
+    warp = 12 + len(NPCS) * 0x30
+    if (entities[warp + 5] != 2 or
+            struct.unpack_from('<hh', entities, warp + 10) != (0, 567)):
+        raise ValueError('Dome room exit is not a walkable return warp')
     if struct.unpack_from('<H', files[0], 6)[0] != TEXT:
         raise ValueError('Dome room does not have the Maison helper texts')
     if files[2] != script or Script.parse(files[2]).build() != script:

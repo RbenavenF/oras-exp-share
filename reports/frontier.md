@@ -2590,3 +2590,69 @@ Suite final ejecutada antes de los cambios solo documentales: `env -u ORCH_LANE 
 **988 passed, 1 skipped** (`room/tests-clean-env.log`); compileall de dome_room.py y `git diff --check` correctos.
 Con ORCH_LANE heredado fallan nueve tests del supervisor porque el agente ficticio escribe lane-task en vez de
 tasks.json; el orquestador no se modificó. Estado del carril: blocked por el gitdir, aceptación de juego pendiente.
+
+### 37.1. Continuación de aceptación (2026-11-11, Codex)
+
+El orquestador recogió la implementación anterior en **80068a1** y habilitó escritura del gitdir del carril.
+Se retoma desde ese commit; el bloqueo de commit descrito arriba pertenece a la sesión anterior.
+Artefactos de esta aceptación: `work/frontier/dome/room/` (locales, no comerciales en Git).
+
+- Puerta de plaza → sala 456: `accept-entry.png`; recepcionista hablando: `accept-reception.png`.
+  Recorrido ejecutado: (16,31) → (16,25) → (23,25), mirar norte. No se alteran colisiones para atravesar las barreras.
+- Inscripción de Torchic/Beldum/Poochyena y selección de dos para el torneo: `accept-registration.png`.
+  Recepcionista, rival y jugador recorren la sala amplia: `accept-choreography.png`; combate: `accept-battle.png`.
+- Primer intento perdido; segundo torneo ganado: `accept-win.png`, `accept-next-round.png` (Continuar/Pausa).
+  `accept-battle.gdb.log`: RESULT n=1 raw=0 y n=2 raw=1. Victoria asistida en RAM de combate, sin escribir
+  resultado, racha, PB, works ni partida: rival a 1 PS/Salpicadura, y primer movimiento del inscrito 0 a Pistola Agua
+  para poder golpear al Fantasma/Absorbe Fuego del fixture. Se corrige la sonda: las copias cliente/servidor del Domo
+  están separadas por **0x910** (dos * 0x488), no 0xd98 de la Pirámide. Generador reproducible nuevo:
+  `frontier/probes/dome_room/lab_probe.py`, normal pasivo por defecto, ayudantes optativos. Prueba de flujo,
+  **no de dificultad**. Los movimientos de Torchic en el guardado siguen siendo (10,45,52,28).
+- Pausa elegida en el menú real tras ganar: `accept-paused.png`. RAM: work 16438=0 (ruta libre), Torre
+  16441–16443=0/0/0, Domo 16473–16475=1/1/1. Guardado real mediante X → Guardar, checksums válidos con
+  `save_event.sf.blocks`; `save-inspect.txt`, copia `paused-456.sav`, SHA256
+  `ec03f883df59a59703cff24a8a3da15df2d249c48eeae25a0fbdc6bb063d25d1`.
+  Zona guardada 456, centro de tile (23.5,25.5), altura 2. Apagar y volver a cargar conserva posición y sala;
+  se puede hablar con la recepcionista: `accept-reloaded.png`.
+
+La salida retail necesita adaptación: 365 tiene warp tipo **0, sin retorno**, a altura 0. El render sitúa
+al jugador a altura 2; subir el plano del warp a 2 fue una hipótesis que **no** pasó la prueba. Tampoco pasaron
+las builds `final` (tipo 2/plano 0), `return2` (2/plano 2), `final-walk` (5/plano 2) y `return30` (2/plano 2/y30).
+Una transición experimental cambiando el tipo a 5 en RAM llegó a plaza (117,2,1035) = tile **(6,57)**,
+`experiment-type5-exit.png`, pero no basta para aceptar la build. `return5zero` (tipo 5/plano 0/y31) tampoco salió.
+El constructor admite una cuarta columna opcional de datos
+`warp.index=índice,zona,warp,tipo`; solo 456 la usa. Destino intacto 209/warp1, sin cambiar script ni nativas.
+
+
+**Salida resuelta y aceptación cerrada (13:48).** No era necesario mover el warp ni cambiar el motor.
+`Probe tuples` mide en 365, (15–17,31), **20300000**; en la salida equivalente de 517, **20000000**
+(`tuples365.txt`, `tuples517.txt`). El constructor cambia solo el segundo byte de esas tres casillas en el
+FIELD_DATA **propio del clon**, con comprobación de los cuatro bytes originales, y el tipo del warp 0→2.
+Plano 0, posición (279,0,567), ancho 3 y destino 209/warp1 se conservan. `exit-tuples.txt` confirma los
+3 tuples finales 20000000 al leer los archivos empaquetados de la build desde un workspace nuevo.
+La sala 364 también se midió (`floor364.txt`, `entities364.txt`): suelo y4–22, insuficiente para la recepción y25.
+No se cambian los movimientos del torneo ni las otras puertas.
+
+Build aceptada: `python frontier/overlay.py --out work/frontier/dome/room/exit-tiles`,
+`build-exit-tiles.log`: ZO **15452 <= 17248**, carga **305024 <= 2724608**, nativas del donante 517.
+Desde apagado, carga del guardado de pausa dentro: `accept-exit-tiles-reload.png`; caminar por (16,29) y sur
+sale a plaza, RAM (117,2,1035) = **(6,57)**, `accept-exit-tiles-out.png`. Se repite entrada por la puerta y
+salida (`accept-final-entry.png`, `accept-final-exit.png`). La inscripción/combate/pausa/guardado anteriores
+se probaron con este mismo mapa y script, antes de corregir solo estas tres casillas de salida.
+Regresión de puertas en la build final: Fábrica y Torre entran y salen, capturas
+`accept-factory-{in,out}.png`, `accept-tower-{in,out}.png`, log `accept-final-doors.gdb.log`.
+Interiores RAM (369,2,567); tras salir y pasos adicionales, plaza (369,2,1089) y (351,2,891).
+Comparación visual: `before.png` (Fábrica) frente a `accept-final-entry.png` (sala amplia de piedra).
+
+`accept-hashes.txt`: script Domo y code.ips idénticos al antes. El DllBattle.cro de `before` es anterior a la
+integración del Palacio C: difiere del actual; los CRO actuales son idénticos entre `final` (antes de los cambios
+de salida de esta continuación) y `exit-tiles`. Ninguna fuente nativa, CRO, code.bin ni patch.py modificados
+por esta tarea. La prueba asistida del combate no acredita dificultad ni consola; consola **no probada**.
+
+Verificación final: `env -u ORCH_LANE bash -c 'source scripts/env.sh; python -m pytest -q tests'` →
+**1077 passed, 1 skipped** en 39 s (`tests-exit-tiles.log`); `git diff --check` correcto.
+Laboratorio detenido mediante `scripts/azahar_lab.py reap` desde su shell conductora; use_gdbstub=false;
+`own_processes()` → **[]** (`lab-cleanup.txt`). Puerto usado 24691, sin tocar el laboratorio del otro carril.
+
+Reconstrucción independiente `repro-exit-tiles`: **27 archivos idénticos byte a byte** frente a la build
+aceptada (`build-repro-exit-tiles.log`, `repro-check.txt`). Generación y py_compile de la sonda correctos.

@@ -2510,3 +2510,37 @@ Pendiente para terminar el Frente (fuera de la alfa): F5 (jefes, récords, Doble
 pendientes de cada instalación.
 Commits: el de esta entrada.
 Siguiente paso: el usuario lanza `frontier/orch/frontier-orch auto --parallel`.
+
+
+## 2026-11-11 13:50 — Codex — F6-DOMO-SALA: aceptación y salida de la sala amplia
+Estado: hecho
+Hecho:
+- Retomado 80068a1 (implementación donante 365, sala propia de 456) desde lane/codex. Turno de REPARTO y
+  tasks.json intactos; estado del carril en work/lane-task.json. El permiso del gitdir ya permite el commit.
+- Probado en Azahar: entrada por plaza, recepcionista, inscripción de tres y elección de dos, combate,
+  victoria asistida, pausa real, guardar y cargar dentro. Sonda reproducible frontier/probes/dome_room/lab_probe.py:
+  copias del Domo separadas por 0x910, ayudantes opcionales solo RAM de combate. No se falsifica resultado,
+  racha, PB ni works; movimientos del equipo guardado intactos. Prueba de flujo, no dificultad.
+- La salida de retail 365 no funciona sin adaptar datos. Tras medir tipos/planos sin éxito y tuples de 365/517,
+  Build.java admite tipo de transición opcional y zone.456.exitTiles=15,31: cambia tipo 0→2 y solo tres bytes
+  0x30→0x00 de casillas (15–17,31) del mapa privado clonado, con guard de los cuatro bytes originales.
+  Plano 0, posición y destino 209/warp1 intactos. Sin cambios nativos, code.bin, patch.py ni CRO.
+- Build final exit-tiles: carga guardado de pausa dentro, sale a (6,57); repetida entrada/salida. Fábrica y
+  Torre entran y salen. Capturas antes y después. Laboratorio del carril detenido, GDB desactivado, own_processes=[];
+  solo puerto 24691, ningún proceso del otro carril tocado.
+Evidencia: reports/frontier.md §37.1 y frontier/probes/dome_room/README.md; work/frontier/dome/room/:
+- accept-registration/choreography/battle/win/next-round/paused/reloaded.png, accept-battle.gdb.log;
+  save-inspect.txt y paused-456.sav (checksums válidos, SHA256
+  ec03f883df59a59703cff24a8a3da15df2d249c48eeae25a0fbdc6bb063d25d1).
+- before.png frente a accept-final-entry.png; accept-exit-tiles-reload/out.png, accept-final-exit.png;
+  accept-factory-{in,out}.png, accept-tower-{in,out}.png, accept-final-doors.gdb.log, lab-cleanup.txt.
+- build-exit-tiles.log: ZO 15452 <= 17248, carga 305024 <= 2724608, nativas 517. tuples365/517.txt y
+  exit-tuples.txt; repro-check.txt: segunda build reproducible, 27 archivos iguales; script y code.ips idénticos
+  al antes. CRO actuales idénticos a la build final de esta continuación, anterior al arreglo de salida;
+  DllBattle.cro difiere del before histórico por la integración previa del Palacio C (no por esta tarea).
+- env -u ORCH_LANE bash -c 'source scripts/env.sh; python -m pytest -q tests': 1077 passed, 1 skipped, 39 s
+  (tests-exit-tiles.log). Generación/py_compile de sonda y git diff --check correctos. Consola no probada.
+Commits: 80068a1 (base heredada); commit de esta entrada: «Dome hall: repair retail exit and complete Azahar acceptance».
+Decisiones: conservar 365; 364 medido también pero solo llega a y22, insuficiente para recepción y25.
+  No mover el warp a altura 2: no funcionó. Cambiar solo tres flags de suelo con datos medidos de la salida 517.
+Siguiente paso: el orquestador integra el commit y ejecuta su aceptación en main; F6-DOMO-SALA done en lane-task.
