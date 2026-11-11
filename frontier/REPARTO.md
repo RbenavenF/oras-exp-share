@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-Claude Code, 2026-11-11 17:55 (conflicto del Domo, modo sin parar y cola)
+libre (último: Claude Code, 2026-11-11 18:05)
 
 ## Instalaciones
 

@@ -2597,3 +2597,22 @@ modalidades y de personalidad), con criterios reescritos según la política.
 Evidencia: `tests/test_frontier_orch.py` 62 passed; las 12 tareas pasan `check_task`.
 Siguiente paso: integrar la rama al acabar la tanda; `frontier-orch add frontier/orch/cola/cola-2026-11-11.json`;
 `auto --follow`.
+
+## 2026-11-11 18:05 — Claude Code (Opus 5.5) — tanda paralela 2: integración, modo sin parar y cola
+Estado: hecho
+Hecho:
+- Tanda `auto --parallel` (12:54–15:02): Codex terminó F6-DOMO-SALA (64a7299, aceptada) y F7-REPARTO (5f47f68), con
+  **commits propios desde su carril** (`{git_dir}` escribible funcionó; no hizo falta `commit_for_agent`). Claude,
+  en F7-PAQUETE, recorrió con el paquete exacto las siete instalaciones, guardó y recargó en la plaza y ganó un
+  combate de la Ruta 102; encontró la salida del Domo atascada (transición 0 de la sala 365) y la arregló a la vez
+  que Codex: conflicto en `dome_room.py` y su test al integrar, y la cuota de Claude se agotó a las 15:02.
+- Conflicto resuelto quedándome con la versión de Codex (más completa: `exitTiles` y aceptación en Azahar);
+  quitados el arreglo duplicado de Claude y su `warpTransition` de `Build.java`; los probes del paquete integrados
+  (820f90b). El borrador `reports/consola-frente.md` y `circuit.py` siguen sin commit en el carril de Claude.
+- Integrada la rama `orch-nonstop` (f06e7d3): `auto --follow`, `owner: any`, `after`, bandeja, `drain`/`stop`,
+  política de regresión en el brief. Suite: 1095 passed, 2 skipped.
+- `tasks.json`: F7-PAQUETE `in_progress` con lo que falta en las notas (y `lane_of` = claude); cola de 12 tareas
+  de `frontier/orch/cola/cola-2026-11-11.json` añadida.
+Lección: dos carriles arreglaron el mismo fallo a la vez. Cuando un agente encuentra un fallo de otra instalación que
+está en curso en el otro carril, debería anotarlo en lugar de arreglarlo (pendiente de añadir al brief si se repite).
+Siguiente paso: el usuario lanza `frontier/orch/frontier-orch auto --follow`; para parar, `frontier-orch drain`.
