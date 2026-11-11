@@ -367,7 +367,7 @@ def test_codex_may_write_the_main_git_dir_from_a_lane(lanes_repo):
     orch.cfg['agents']['codex'] = real['agents']['codex']
     task = {'id': 'T2', 'title': 'two', 'owner': 'codex', 'status': 'pending'}
     cmd, *_ = orch.command('codex', task, False, lane=orch.lane_path('codex'))
-    assert f'sandbox_workspace_write.writable_roots=["{lanes_repo.resolve() / ".git"}"]' in cmd
+    assert f'sandbox_workspace_write.writable_roots=["{lanes_repo.resolve() / ".git"}",' in ' '.join(cmd)
     assert cmd[cmd.index('-C') + 1] == str(orch.lane_path('codex'))
 
 
@@ -383,3 +383,36 @@ def test_a_kept_lane_branch_is_reused_not_reset(lanes_repo):
     assert 'lane/codex' in git(lanes_repo, 'branch')             # kept: not in main
     orch.lanes_setup()
     assert (orch.lane_path('codex') / 'unmerged.txt').exists()
+
+
+def test_lane_rebase_works_without_any_git_identity_in_the_environment(lanes_repo, monkeypatch):
+    """2026-11-11: the rebase of a lane with its own commits failed with «tell me who you are»."""
+    for var in ('GIT_AUTHOR_NAME', 'GIT_AUTHOR_EMAIL', 'GIT_COMMITTER_NAME', 'GIT_COMMITTER_EMAIL'):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv('HOME', str(lanes_repo.parent))          # no global config either
+    monkeypatch.setenv('GIT_CONFIG_NOSYSTEM', '1')
+    outcome, calls, tasks, *_ = run_parallel(
+        lanes_repo, {'claude': ['sleep3', 'lanedone'], 'codex': ['lanedone']})
+    assert outcome == 'done' and tasks['T1']['status'] == tasks['T2']['status'] == 'done'
+    files = git(lanes_repo, 'ls-files').split()
+    assert 'done-claude.txt' in files and 'done-codex.txt' in files
+
+
+def test_the_supervisor_commits_what_a_sandboxed_agent_left(lanes_repo):
+    outcome, calls, tasks, orch, log = run_parallel(lanes_repo, {'claude': ['lanedone'], 'codex': ['nocommit']})
+    assert outcome == 'done' and tasks['T2']['status'] == 'done'
+    assert 'left-codex.txt' in git(lanes_repo, 'ls-files').split()
+    body = git(lanes_repo, 'log', '--format=%B', '-n', '20')
+    assert 'codex: work left uncommitted' in body and 'Agent: Codex (commit hecho por frontier-orch' in body
+
+
+def test_codex_in_a_lane_may_write_its_worktree_gitdir(lanes_repo):
+    real = json.loads((ROOT / 'frontier/orch/config.json').read_text())
+    clock = Clock()
+    orch = fo.Orch(lanes_repo, now=clock.now, sleep=clock.sleep, out=lambda line: None)
+    orch.lanes_setup()
+    orch.cfg['agents']['codex'] = real['agents']['codex']
+    task = {'id': 'T2', 'title': 'two', 'owner': 'codex', 'status': 'pending'}
+    cmd, *_ = orch.command('codex', task, False, lane=orch.lane_path('codex'))
+    gitdir = lanes_repo.resolve() / '.git/worktrees/codex'
+    assert f'sandbox_workspace_write.writable_roots=["{lanes_repo.resolve() / ".git"}","{gitdir}"]' in cmd

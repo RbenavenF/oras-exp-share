@@ -29,8 +29,8 @@ with open(str(plan_path) + '.lock', 'w') as lock:
 assert expected == kind, f'plan expected {expected}, {kind} was run'
 
 
-def git(*args):
-    subprocess.run(['git', *args], check=True, capture_output=True)
+def git(*args):      # its own identity: the supervisor must not rely on the environment's (2026-11-11)
+    subprocess.run(['git', '-c', 'user.name=fake', '-c', 'user.email=fake@x', *args], check=True, capture_output=True)
 
 
 tasks = Path('frontier/orch/tasks.json')
@@ -46,6 +46,10 @@ elif action == 'clash':                 # both lanes rewrite the same line of th
     Path('shared.txt').write_text(f'{kind}\n')
     git('add', '-A')
     git('commit', '-q', '-m', 'clash')
+elif lane and action == 'nocommit':    # a sandbox that cannot commit: leave the work and ask for a commit
+    Path(f'left-{kind}.txt').write_text('x')
+    Path('work').mkdir(exist_ok=True)
+    Path('work/lane-task.json').write_text(json.dumps({'status': 'done', 'commit': f'{kind}: work left uncommitted'}))
 elif lane and action in ('done', 'blocked', 'lanedone'):
     Path('work').mkdir(exist_ok=True)
     Path('work/lane-task.json').write_text(json.dumps({'status': 'done' if action == 'lanedone' else action,

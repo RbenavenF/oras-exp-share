@@ -53,6 +53,7 @@ RESET = re.compile(r'(?:resets|try again at)\s+(?:(?P<mon>' + '|'.join(MONTHS) +
                    r'(?P<h>\d{1,2})(?::(?P<m>\d{2}))?\s*(?P<ap>[ap])\.?m\b', re.I)
 TURN = re.compile(r'(## Turno\n\n)(.*)\n')
 HOLDER = 'frontier-orch'
+IDENTITY = ['-c', 'user.name=rubenb114', '-c', 'user.email=rubenb114@hotmail.com']   # AGENTS.md author
 
 
 class Orch:
@@ -191,8 +192,12 @@ class Orch:
         if lane is not None:
             prompt += '\n\n' + self.cfg['lanes']['brief'].format(agent=agent, root=lane,
                                                                   port=self.cfg['lanes']['agents'][agent]['gdb_port'])
+        git_dir = self.root / '.git'
+        if lane is not None:        # a worktree keeps its index and HEAD in .git/worktrees/<name>
+            git_dir = Path(subprocess.run(['git', '-C', str(lane), 'rev-parse', '--absolute-git-dir'],
+                                          capture_output=True, text=True).stdout.strip() or git_dir)
         values = {'prompt': prompt, 'session': session or '', 'root': str(lane or self.root),
-                  'git_common': str(self.root / '.git')}
+                  'git_common': str(self.root / '.git'), 'git_dir': str(git_dir)}
         return [part.format(**values) for part in spec['resume' if resume else 'new']], session, resume
 
     def run(self, agent, task, resuming, lane=None):
@@ -407,11 +412,24 @@ class Orch:
         status = self.lane_path(agent) / 'work/lane-task.json'
         return head, hashlib.sha256(dirty.encode()).hexdigest(), status.read_bytes() if status.exists() else b''
 
+    def lane_commit_leftovers(self, agent, task, status):
+        """For an agent whose sandbox cannot commit in a worktree (Codex, 2026-11-11: index.lock on a read-only
+        .git/worktrees/codex), the supervisor commits what the run left, in the agent's name."""
+        spec = self.cfg['lanes']['agents'][agent]
+        if not spec.get('commit_for_agent') or not self.lane_git(agent, 'status', '--porcelain').stdout.strip():
+            return
+        message = (status.get('commit') or f'{task["id"]}: trabajo de la ejecución').strip()
+        self.lane_git(agent, 'add', '-A')
+        self.lane_git(agent, *IDENTITY, 'commit', '-q', '-m',
+                      f'{message}\n\nAgent: {spec["commit_for_agent"]} (commit hecho por frontier-orch en su carril)')
+        self.out(f'  committed what {agent} left in its lane: {message[:80]}')
+
     def lane_integrate(self, agent):
         """Rebase the lane onto main and fast-forward main to it. (False, why) on a conflict, which is aborted."""
         with self.lock:
             main = self.git('rev-parse', 'HEAD').strip()
-            r = self.lane_git(agent, 'rebase', '--autostash', main, check=False)
+            # a rebase rewrites commits, so it needs a committer (2026-11-11: none configured on this machine)
+            r = self.lane_git(agent, *IDENTITY, 'rebase', '--autostash', main, check=False)
             if r.returncode:
                 files = self.lane_git(agent, 'diff', '--name-only', '--diff-filter=U', check=False).stdout.split()
                 self.lane_git(agent, 'rebase', '--abort', check=False)
@@ -437,7 +455,10 @@ class Orch:
         except json.JSONDecodeError as e:
             status = {'notes': f'[frontier-orch] work/lane-task.json ilegible: {e}'}
         status_file.unlink(missing_ok=True)
+        self.lane_commit_leftovers(agent, task, status)
         ok, why = self.lane_integrate(agent)
+        if not ok and status:
+            why += f' (el agente informó: {json.dumps(status, ensure_ascii=False)[:600]})'
         if result['limited'] or result['auth']:
             self.cut_short(agent, task, result)
             if not ok:
