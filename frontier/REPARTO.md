@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-frontier-orch (orquestador automático), desde 2026-11-11 12:54
+libre (último: frontier-orch, 2026-11-11 15:02)
 
 ## Instalaciones
 
