@@ -275,7 +275,7 @@
       "title": "Diseño de las modalidades que faltan: Nivel Libre y Dobles (Torre y Fábrica)",
       "design": "reports/diseno/ (nuevo: modos.md)",
       "accept": "Solo lectura y diseño, sin laboratorio ni código del juego. reports/diseno/modos.md: cómo añadir Nivel Libre a las siete instalaciones (rango del selector de la Mansión, SetRank, niveles del rival, PB y racha por modalidad: works nuevos a pedir en REPARTO) y Dobles en la Torre y la Fábrica (tipos 0–3 del montador de combate, §1; equipo de 4; Multi queda fuera), qué reutiliza la Mansión y qué hay que medir; riesgos y estimación; y frontier/orch/propuestas/modos.json con las tareas listas para `frontier-orch add`. Tests en verde.",
-      "status": "pending",
+      "status": "in_progress",
       "notes": "",
       "evidence": ""
     },
