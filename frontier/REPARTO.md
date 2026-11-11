@@ -44,15 +44,19 @@ Decisiones del usuario (2026-11-03):
 Decisión del usuario (2026-11-10): Palacio etapa B por la vía híbrida de `reports/frontier.md` §32 (interfaz
 conservada, decisiones 3/5/6 por la IA), no por la conversión directa del cliente 0 ni por las alternativas 2 o 3.
 
-| Instalación | Dueño | Estado | Interior (por verificar) | Diseño | Dificultad v1 (según su diseño) |
+Estado contrastado el 2026-11-11 con `frontier/orch/tasks.json`, la bitácora y las secciones citadas de
+`reports/frontier.md`. «Hecha» se refiere a la etapa indicada y a su aceptación en Azahar; consola no probada.
+F7-PAQUETE sigue en curso: la prueba del paquete exacto integrado se registra aparte.
+
+| Instalación | Dueño | Estado y sección de `reports/frontier.md` | Interior verificado | Diseño | Pendiente |
 | --- | --- | --- | --- | --- | --- |
-| Fábrica | Claude Code | hecha en la sala 213 (§19–§22) | 213 (clon de 517) | PLAN §1–§5 | — |
-| Torre | Claude Code | diseño | 329 (clon de 517) | `torre.md` | baja-media, ~3 sesiones |
-| Palacio | Claude Code | etapa A hecha en la sala 340 (`frontier/palace.py`, Azahar §27); etapa B (vía híbrida, IA decide) hecha (Azahar §33; los textos del entrenador aún piden A); etapa C (naturaleza y PS eligen el grupo de movimientos) hecha (Azahar §36) | 340 (clon de 517, comprobada como §18 sin emulador y en Azahar) | `palacio.md` | A: baja-media, 1; B (IA): alta |
-| Arena | Claude Code (etapa A); Codex (etapa B, usuario 2026-11-05) | A hecha; B medidas y juicio aislado en Unicorn (§31), motor en curso | 457 (clon de 517) | `arena.md` | A: media, 1–2; B (3 turnos): alta |
-| Domo | Codex | v1 en código (`frontier/dome.py`, `asm/dome.s`), Azahar en curso | 456 (clon de 517, comprobada como §18 sin emulador) | `domo.md` | media-alta, ~4 |
-| Tubo | Codex | v1 hecha en la sala 458 (`frontier/pike.py`, `asm/pike.s`, parche de `DllBattle.cro`; Azahar §28) | 458 (clon de 517, comprobada como §18 sin emulador; 379 descartada) | `tubo.md` | media-alta, 4–6 |
-| Pirámide | Codex | v1 hecha (Claude, por el orquestador): vestíbulo 140 y pisos 141/142 (`frontier/pyramid.py`, `asm/pyramid.s`; Azahar §30) | 140 vestíbulo, 141–142 pisos (clones de 517; comprobadas como §18 sin emulador por Codex y en Azahar) | `piramide.md` | alta, 4–6 + experimento |
+| Fábrica | Claude Code | Nivel 50 Individual jugable: alquiler, intercambio, ronda, PB y racha propios, pausa y reanudación (§9–§15, §19–§22, corrección de works §25) | 213 (clon de 517) | PLAN §1–§5 | F5: Noland, símbolos, cartel de récords, Doble y Libre; rival aún generado por la Mansión |
+| Torre | Claude Code | v1 hecha; equipo propio, ruta 2, PB, pausa, reanudación, derrota y exclusión mutua (§25; F6-TORRE done) | 329 (clon de 517) | `torre.md` | Jefe y tramos por encima de racha 19 sin probar; modalidades y textos propios |
+| Palacio | Claude Code | A, B híbrida (IA decide) y C (naturaleza y PS eligen grupo de movimientos) hechas (§27, §33, §36; F6-PALACIO-A/B/C done) | 340 (clon de 517) | `palacio.md` | Textos del entrenador aún esperan A (aceptado por usuario); «No obedece» fuera de C |
+| Arena | Claude Code (A); Codex (B) | A y B hechas: límite de 3 turnos, juicio por Cuerpo y cambio prohibido (§29, §31, aceptación y cierre de regresiones; F6-ARENA-A/B done) | 457 (clon de 517) | `arena.md` | Mente, Técnica, textos del árbitro y Greta |
+| Domo | Codex | v1 hecha: torneo de 4 rondas, vista rival y 2 de 3 (§26); sala amplia, combate, pausa, guardar/cargar y salida aceptados (§37.1; F6-DOMO y F6-DOMO-SALA done) | 456 (clon visual de 365, nativas de 517; salida adaptada) | `domo.md` | Cuadro y simulación de otros participantes, Tucker, Doble/Libre y textos propios |
+| Tubo | Codex | v1 y v2 hechas: PS/estados y PP persistentes, inmunidades y salas salvajes (§28, §35 hitos 5–6; F6-TUBO/V2 done) | 458 (clon de 517; 379 descartada) | `tubo.md` | Doble, Lucy, pantalla de selección; reproducir incidencia de reanudación de §35; salvajes con presentación de entrenador |
+| Pirámide | Codex | v1 (Claude por relevo) y v2A hechas: siete pisos, cueva sin PC, vencidos no repiten combate tras recarga (§30, §34; F6-PIRAMIDE/V2A done) | 140 vestíbulo (clon de 517), 141–142 pisos (clones de 77) | `piramide.md` | Oscuridad, objetos/bolsa, PS persistentes, salvajes y Brandon; vencidos aún visibles |
 
 Avisos sobre las zonas:
 - Los diseños no coinciden en qué candidatas son seguras. El del Domo descarta 140–157, 329, 340 y 351–352 porque el

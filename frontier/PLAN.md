@@ -223,56 +223,80 @@ Plan, bitácora, `frontier/survey.py`, pausa documentada del evento de Mew.
 - **Salida**: combate jugado en Azahar; equipo de la partida idéntico antes y después
   (comparado con `save_fixture.py`).
 
-### F4 — Fábrica Nivel 50 Individual jugable (en curso; ronda completa, intercambio, derrota, pausa, reanudación y PB por ronda y racha propia probados en Azahar, `reports/frontier.md` §9–§15)
-- NPC, inscripción, elegir 3 de 6, 7 combates, cambio tras cada victoria, racha, PB,
-  guardar y continuar entre combates, derrota y abandono.
-- **Salida**: ronda completa en Azahar, más los casos: perder en el 1.º y el 7.º
-  combate, cambiar y no cambiar, apagar a mitad y continuar, equipo intacto al final.
+### F4 — Fábrica Nivel 50 Individual jugable (hecho como prototipo en Azahar)
+Inscripción, elegir 3 de 6, intercambio y «No cambiar», sorteo de ronda siguiente, PB por
+ronda, racha y récord propios, derrota, abandono, pausa y reanudación probados
+(`reports/frontier.md` §9–§15). Hay evidencia de derrota en el 1.º y el 7.º combate
+(§12–§13), ronda ganada en la isla (§20) y entrada/salida por su puerta (§22).
+La corrección de works de §25 conserva los alquileres al cambiar de zona y reanudar.
+El equipo de la partida se conserva según las comparaciones documentadas; los alquileres
+solo sustituyen al equipo de combate. Esto no acredita todas las combinaciones de apagado
+sin guardar, dificultad ni consola. El rival sigue generado por la Mansión: aún no excluye
+las especies del jugador como Esmeralda (§13).
 
-### F5 — Jefe, récords, Doble y Nivel Libre
-Jefe en los combates 21 y 42 con símbolos, cartel de récords, el resto de modalidades.
+### F5 — Jefes, récords, Doble y Nivel Libre (pendiente)
 
-### F6 — Isla del Frente: objeto, viaje, zona y Fábrica en su edificio (en curso; pase, marinero, ferris, isla 209, plaza con la Fábrica enlazada y seis maquetas, y Fábrica en la sala clonada 213 probados en Azahar, también una ronda completa entrando por la puerta, guardar en la explanada, las puertas animadas y la plaza fija con siete edificios distintos, `reports/frontier.md` §16–§24)
-- Objeto clave, su entrega, el viaje y la isla con el edificio de la Fábrica (§5.6),
-  reutilizando lo del evento de Mew (`faraway/`). Textos ES/EN.
-- Paquete Luma `dist/oras-frontier-…` encadenado con v0.5 (y Mew si se quiere).
-- Partida de prueba para Checkpoint y plan de prueba en consola.
+- Noland en los combates 21 y 42, símbolos y premio adicional de jefe; después, los
+  jefes de cada instalación (aún fuera de las versiones aceptadas).
+- Cartel de récords y presentación propia. Los works de racha/récord ya existen y se
+  actualizan; eso no completa la interfaz de récords (§15, §25–§30).
+- Doble y Nivel Libre: implementar y validar sus reglas, selección, rutas y premios.
+  La aceptación actual se limita a las modalidades descritas en REPARTO, principalmente
+  Individual Nivel 50; conservar menús retail no demuestra otras modalidades.
 
-### Después: el resto del Frente
-**Un edificio por agente** (petición del usuario, 2026-11-03). Cada instalación ya tiene su
-edificio en la plaza, en un sitio fijo (`island_build.FACILITIES`, tabla de puertas en
-`reports/frontier.md` §24). El agente de una instalación trabaja dentro de su edificio y no
-cambia la plaza. Para activarla hay que:
-1. añadir su puerta en `DOORS`;
-2. darle interior (un clon, como 213 para la Fábrica, con sus nativas vía `CLONES`);
-3. escribir su lógica.
+### F6 — Isla del Frente e instalaciones (jugables en Azahar; entrega y consola pendientes)
 
-Los edificios comparten `island_build.py`, `patch.py` y el área de la isla, que tiene una
-cota de carga medida (`LOAD_BUDGET`, `reports/frontier.md` §23). Por eso los agentes trabajan uno detrás de otro, o en
-paralelo solo para leer, y un único integrador escribe en esos ficheros (norma de
-CTRMap-F5: agentes que no pueden editar los ficheros de otros no editan a la vez). Además,
-el laboratorio de Azahar es uno solo.
+- **Hecho**: Pase del Frente, marinero tras ganar la Liga (flag 2720), destino del ferry,
+  isla 209, plaza fija con siete edificios, puertas, Fábrica en 213 y guardado/recarga
+  en la isla (`reports/frontier.md` §16–§24).
+- **Hecho por etapas**: las siete instalaciones tienen interior y flujo jugable; Torre
+  y exclusión mutua (§25), Domo v1 y sala amplia (§26, §37.1), Palacio A/B/C
+  (§27, §33, §36), Arena A/B (§29, §31), Tubo v1/v2 (§28, §35), Pirámide v1/v2A
+  (§30, §34). La tabla de REPARTO distingue lo aceptado de sus pendientes.
+- **En curso, F7-PAQUETE (Claude)**: alfa Luma reproducible `dist/oras-frontier-alpha-v0.1`,
+  Repolished + v0.5 + Frente **sin Mew** (decisión del usuario 2026-11-11), manifiesto
+  de hashes y LEEME; probar el paquete exacto integrado en Azahar por las siete
+  instalaciones y los flujos de historia/v0.5. Su estado y evidencia los mantiene el
+  orquestador en `frontier/orch/tasks.json`; no se da por entregado aquí.
+- **Dentro de F7-PAQUETE**: copia de partida para Checkpoint, con hash e instrucciones,
+  y plan `reports/consola-frente.md`. **Pendiente después**: ejecutar las pruebas en
+  consola con el usuario; nada del Frente está probado en consola ni se instala solo.
+- **Pendiente de completar**: textos propios y traducciones a otros idiomas. Hay textos
+  ES/EN del viaje, pero eso no cubre los textos de alquiler ni todas las instalaciones
+  (§11, §17 y secciones de cada instalación). No declarar soporte multilingüe completo.
 
-Reparto entre agente e integrador:
-- **El integrador** asigna a cada instalación su zona de interior antes de empezar, de las
-  «likely free» de §24, para que dos agentes no elijan la misma. También es quien toca
-  `DOORS`, `CLONES` y `patch.py`.
-- **Cada agente** verifica su zona como en §18 y escribe la lógica en un módulo propio
-  (`frontier/<instalación>.py`) con sus tests. Entrega una entrada de bitácora y lo que el
-  integrador tiene que añadir a los ficheros compartidos.
+### Después: completar el resto del Frente
+Las versiones iniciales ya están implementadas; esta lista sustituye las estimaciones
+iniciales de instalaciones aún por empezar. Corte documental: 2026-11-11, contrastado
+con `frontier/orch/tasks.json`, `frontier/BITACORA.md` y `reports/frontier.md` §25–§37.1.
+Las tareas F6 de instalaciones figuran done; sus límites no equivalen al Frente terminado.
 
-Estimación inicial, sin medir; se planifica cuando la Fábrica esté en consola:
-- **Torre Batalla**: casi la Mansión tal cual, con tu equipo. Lo más fácil.
-- **Domo Batalla**: torneo de 16 con cuadro. Combates de la Mansión, y el cuadro y el
-  orden en script. Medio.
-- **Tubo Batalla**: salas con eventos (curas, combates, estados). Script y combates
-  sueltos. Medio.
-- **Arena Batalla**: 3 turnos y juicio por mente, técnica y cuerpo. Hay que tocar el
-  motor de combate. Difícil.
-- **Palacio Batalla**: el Pokémon elige solo sus movimientos según la naturaleza.
-  Motor de combate o IA. Difícil.
-- **Pirámide Batalla**: mazmorra con encuentros salvajes, objetos y oscuridad. Zona
-  propia y mucho script. Lo más difícil.
+- **Fábrica y Torre**: cerrar F5, textos e interfaz propios; en Fábrica, revisar la
+  generación del rival respecto a los alquileres (§13); en Torre, jefe y tramos por
+  encima de racha 19 aún no probados (§25).
+- **Palacio**: automatizar si se retoma ese pulido los textos de presentación y derrota
+  del entrenador, que aún esperan A (§33; usuario aceptó esas pulsaciones el 2026-11-10).
+  «No obedece» y sus textos quedan fuera de C (§36).
+- **Arena**: añadir Mente y Técnica al juicio que hoy solo usa Cuerpo; textos del
+  árbitro y Greta (§31 y alcance de F6-ARENA-B).
+- **Domo**: cuadro y simulación de otros participantes, Tucker, modalidades Doble/Libre y textos propios (§26).
+  La sala amplia y su salida ya están aceptadas (§37.1), no son trabajo pendiente.
+- **Tubo**: Doble, Lucy y pantalla de selección; pulir las salas salvajes (hoy un combate
+  con presentación de entrenador) y reproducir la incidencia de reanudación en la misma
+  sesión, sin causa aislada (§35). PP, inmunidades y salvajes de v2 ya están hechos.
+- **Pirámide**: oscuridad, objetos/bolsa, PS persistentes entre combates, salvajes y
+  Brandon (§30, §34). Los pisos ya son cueva sin PC y los vencidos no repiten combate
+  tras recarga, aunque siguen visibles. Guardados v1 en un piso requieren salir al
+  vestíbulo antes de actualizar (§34).
+- **Común**: traducciones, cierre de F5 y regresiones con la build integrada, incluida
+  la interacción entre motores (juicio de Arena con Palacio C y Tubo v2 no acreditado
+  por los combates de KO temprano de §35–§36). Después, prueba en consola del paquete
+  exacto con el plan de F7-PAQUETE; consola **no probada**.
+
+Cada instalación conserva su edificio fijo (`island_build.FACILITIES`, §24 del informe)
+y su dueño en REPARTO. Los cambios comunes pasan por el integrador. El modo paralelo del
+orquestador usa worktrees y laboratorios separados por carril (`frontier/orch/README.md`);
+fuera de ese modo rigen el turno y el laboratorio compartido de REPARTO.
 
 ## 7. Riesgos y decisiones abiertas
 

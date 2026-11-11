@@ -2544,3 +2544,27 @@ Commits: 80068a1 (base heredada); commit de esta entrada: «Dome hall: repair re
 Decisiones: conservar 365; 364 medido también pero solo llega a y22, insuficiente para recepción y25.
   No mover el warp a altura 2: no funcionó. Cambiar solo tres flags de suelo con datos medidos de la salida 517.
 Siguiente paso: el orquestador integra el commit y ejecuta su aceptación en main; F6-DOMO-SALA done en lane-task.
+
+## 2026-11-11 13:53 — Codex — F7-REPARTO: instalaciones y plan al día
+Estado: hecho
+Hecho:
+- Actualizada solo documentación: tabla Instalaciones de REPARTO con las siete instalaciones, etapa aceptada,
+  interior real, sección del informe y pendientes. Torre v1, Arena B, Domo v1/sala amplia, Tubo v2,
+  Pirámide v2A y Palacio C ya no figuran como diseño o trabajo de motor sin terminar.
+- PLAN F4 queda como prototipo jugable aceptado en Azahar (sin extenderlo a todos los apagados ni a consola);
+  F5 pendiente distingue works de récord existentes del cartel, jefes/símbolos y Doble/Libre por completar.
+  F6 recoge isla e instalaciones hechas y F7-PAQUETE en curso (alfa sin Mew), partida, plan y prueba de consola.
+  «Después» enumera pendientes por instalación, traducciones y regresiones de motores integrados.
+Evidencia:
+- Fuentes documentales: frontier/orch/tasks.json (F6 de instalaciones done; F7-PAQUETE in_progress),
+  reports/frontier.md §9–§37.1 y últimas entradas de esta bitácora, incluida aceptación 64a7299 del Domo.
+- env -u ORCH_LANE bash -c 'source scripts/env.sh; python -m pytest -q tests': 1077 passed, 1 skipped
+  en 35.86 s (work/frontier/reparto/tests.log). git diff --check correcto.
+- work/frontier/reparto/doc-check.log: sección Turno idéntica a HEAD, tasks.json sin cambios; siete filas con
+  seis columnas y referencias del informe; pendientes exigidos presentes; cambios limitados a documentación.
+Commits: el de esta entrada, «docs(frontier): refresh facility status and remaining plan» (Agent: Codex).
+Decisiones: sustituir estimaciones iniciales por estado y pendientes comprobados; no confundir done de una etapa
+  con Frente terminado. Las pruebas de juego citadas son heredadas, no repetidas en esta tarea. Sin código,
+  builds ni laboratorio; consola no probada. Turno y tasks.json intactos; estado final en work/lane-task.json.
+Siguiente paso: el orquestador integra el commit y pasa aceptación en main. Continuar F7-PAQUETE con su dueño;
+  después, prueba en consola con el usuario y tareas pendientes de F5 y de cada instalación listadas en PLAN.
