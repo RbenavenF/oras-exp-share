@@ -160,9 +160,9 @@
       "title": "Diseño de los Cerebros del Frente (los siete jefes) y de los símbolos",
       "design": "reports/diseno/ (nuevo: cerebros.md)",
       "accept": "Solo lectura y diseño, sin laboratorio ni código del juego. reports/diseno/cerebros.md con: por instalación, su Cerebro de Esmeralda (Noland, Anabel, Tucker, Spenser, Greta, Lucy, Brandon), en qué combate o racha aparece (plata y oro) y con qué equipo, según pokeemerald (con commit fijado; lo que no se fije, como hipótesis); cómo montarlo en ORAS con lo medido (IsBoss/BattleHouse_SetRibbon de la Mansión, §1; SetTrainer; works de racha de REPARTO; texto 637), qué modelo de entrenador y clase usar, dónde guardar los símbolos (works o flags libres, a asignar en REPARTO) y qué los muestra (p. ej. el recepcionista o un cartel); qué es común a todos (infraestructura) y qué es de cada instalación; riesgos (espacio de code.bin, ~600 bytes) y estimación. Además, frontier/orch/propuestas/cerebros.json con las tareas de implementación listas para `frontier-orch add` (ids F8-CEREBROS-BASE y F8-CEREBRO-<INSTALACIÓN>, owner, after, accept concretos). Tests en verde.",
-      "status": "in_progress",
-      "notes": "",
-      "evidence": ""
+      "status": "done",
+      "notes": "Diseño y ocho propuestas completos. REPARTO y tasks.json intactos. IDs de propuestas ya existen: no encolar duplicados; aceptaciones vigentes remiten al diseño. Solo documentación, sin laboratorio ni cambios de juego. Espacio actual code.bin: 12 bytes libres, BASE debe medir/reservar ubicación.",
+      "evidence": "Commit 1a00aad (Agent: Codex). python -m pytest -q tests con entorno ORCH_LANE limpio: 1105 passed, 1 skipped, 40.14 s; work/frontier/cerebros/tests.log. design-check.txt: 36 equipos cotejados contra pokeemerald 731ad5bfd6e6f265508d0efcca0ba42f9dcf5881, ocho propuestas válidas, siete clases comprobadas, medidas de works y espacio; git diff --check correcto. Bitácora 2026-11-11 20:25. Azahar y consola no probados ni iniciados."
     },
     {
       "id": "F8-CEREBROS-BASE",
