@@ -2852,3 +2852,60 @@ Aceptación F8-CEREBROS-BASE completa. `frontier/probes/brains/README.md` explic
 Laboratorio propio parado con `azahar_lab.py reap`, sin procesos restantes; bus D-Bus privado parado y GDB
 inhabilitado en el perfil (`cleanup.log`). No probado: concesión de oro en Azahar (sí VM), PB medidos en RAM,
 dificultad sin asistencia, consola. Los otros seis Cerebros siguen desactivados para sus tareas específicas.
+
+## 40. Noland — adaptador de la Fábrica (F8-CEREBRO-FABRICA, en curso)
+
+Implementación inicial: `frontier/factory_brain.py`, contrato del diseño
+`reports/diseno/cerebros.md` §2. La Fábrica activa la API común de Cerebros en
+`overlay.maison_program`: ruta 1, combate 21/42 y repeticiones según símbolos,
+entrenadores privados 129/130 (Noland, clase 30 Científico), presentaciones y
+premios de texto 637 ya reservados en BASE. No se usa un trío fijo de Noland.
+
+Para excluir los **seis** IDs ofrecidos sin reservar más works, el draft guarda
+su semilla inicial completa de 16 bits en el work existente 16490. Antes de
+SetTrainer, `brains_check` pide el trío a través del caso existente 9772:
+`factory_swap` despacha a `factory_brain` cuando ruta=1 y pendiente=9/17;
+tras ganar, pendiente ya es 0 y ese caso sigue ofreciendo el intercambio ordinario.
+El generador reproduce los seis con las mismas reglas del draft y luego elige
+otros tres del rango de la ronda, excluyendo esos IDs, Unown, especies repetidas
+y objetos repetidos salvo NONE. Semilla y racha determinan el resultado al
+reanudar; el reloj solo participa en un draft nuevo. Los desafíos pausados con
+una versión anterior usan otro significado de 16490: terminar esos desafíos
+antes de adoptar este contrato; no se afirma compatibilidad de sus seis ofertas.
+
+`brains_cro.s` conserva los tres IDs de 16433–16435 antes del constructor retail,
+que los sobrescribe por su gancho existente. Después los restaura y construye
+la copia rival con archivo N/S codificado en bit 15, nivel 50, IV 15/31 para
+plata/oro y habilidad normal slot 0. Conserva los EV del conjunto de Mansión
+(reparto de MAKE_PARAM), convierte Return (216) en Frustration (218) en la copia
+del conjunto y fija amistad 0 con `0x3b47ec`. Medido por Capstone sobre el baseline:
+`0x3b47ec` empieza `ldr r0,[r0,#0xc]`, limita r1 a 255 y salta al escritor
+`0x168cdc`; MAKE_PARAM ya lo llama en `0x1efaf0`.
+No cambia los alquileres/IV del jugador ni el código de `patch.py`/`rental.s`.
+
+Espacio medido con `python frontier/brains.py`: DllField.cro
+**0xf0480–0xf0978, 1272 bytes**, 1672 libres antes de .rodata en 0xf1000.
+Se amplía el blob de BASE dentro del mismo relleno a cero comprobado por tests;
+no hay nuevos works, casos ni líneas. REPARTO no se modifica por orden del
+orquestador del carril; al integrar, actualizar el extremo del blob allí
+(antes 0xf08c0). La identidad de campo conserva el sustituto visual de BASE;
+la apariencia de Noland todavía no está verificada en Azahar.
+
+Evidencia inicial (2026-11-11):
+
+- `env -u ORCH_LANE python -m pytest -q tests`: **1217 passed, 1 skipped**,
+  39.40 s, `work/frontier/cerebros/factory/tests-full.log`.
+- VM y referencia Python: 20 combinaciones de reloj/ronda, reproducción de seis,
+  equipo válido y estable al repetir; umbrales plata/oro/revancha y máscara de
+  símbolos; premio +10 una sola vez. Unicorn: conservación a través de retail,
+  archivos N/S, IV independiente del 9 del jugador, movimientos y amistad.
+- `python frontier/overlay.py --out work/frontier/cerebros/factory/build`:
+  build completa correcta (`build.log`), script 517 15816 bytes, ZO 16608
+  (límite 17248), compartido 5 21798 bytes y cueva code.bin sin crecer (2544).
+
+**No probado todavía:** Noland en Azahar, victoria/guardado/recarga/derrota,
+regresión del motor (Palacio/Arena/Tubo/historia) y plaza/puerta de Fábrica por el
+cambio de overlay. Consulta y diálogo propio de derrota siguen pendientes;
+BASE solo aporta cuatro líneas por instalación, ya ocupadas. Para añadirlos
+el integrador debe reservar líneas o ampliar la API común, sin ocupar líneas
+no registradas desde el carril. Consola no probada.

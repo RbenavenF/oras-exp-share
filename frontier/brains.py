@@ -54,7 +54,7 @@ LATE_FIRST, LATE_COUNT = 70, 40   # the 15-18 bracket of 0x1e3aac (0x1e4860(work
 # (silver unit, gold unit, period after both), units counted from 1 (cerebros.md §1).
 APPEARANCES = {'factory': (21, 42, 21), 'tower': (35, 70, 35), 'palace': (21, 42, 21), 'arena': (28, 56, 28),
                'dome': (5, 10, 5), 'pike': (28, 140, 56), 'pyramid': (21, 70, 35)}
-ENABLED = ('tower',)       # facilities whose Brain is implemented (the others: F8-CEREBRO-*)
+ENABLED = ('factory', 'tower')
 NAMES = {'factory': 'Noland', 'tower': 'Anabel', 'palace': 'Spenser', 'arena': 'Greta', 'dome': 'Tucker',
          'pike': 'Lucy', 'pyramid': 'Brandon'}
 CLASSES = {'factory': 30, 'tower': 9, 'palace': 31, 'arena': 63, 'dome': 10, 'pike': 13, 'pyramid': 96}  # a/0/7/7 #21
@@ -179,6 +179,10 @@ def brain_rows():
         for variant in (SILVER, GOLD):
             if facility not in ENABLED:
                 out += bytes(ENTRY)
+                continue
+            if facility == 'factory':
+                out += struct.pack('<HBB', trainer_id(facility, variant), 15 if variant == SILVER else 31, 0)
+                out += bytes(ENTRY - 4)  # dynamic sets in WORK_RIVAL; native preserves them across CODE_START
                 continue
             iv, team = TEAMS[(facility, variant)]
             out += struct.pack('<HBB', trainer_id(facility, variant), iv, 0)
@@ -334,6 +338,14 @@ def check_routine(p):
     r.op('ADD', 0)
     r.store('variant')
     r.sysreq('WorkSet', WORK_BRAIN, 'variant')
+    r.load('route')
+    r.op('EQ_P_C_PRI', patch.ROUTE['factory'])
+    r.op('JZER', none)
+    r.load('unit')
+    r.add(-1)
+    r.store('unit')
+    r.sysreq('WorkSet', factory.WORK_STREAK, 'unit')
+    r.sysreq('GlobalCall', factory.GLOBAL_SWAP)
     r.p.label(none)
     r.op('ZERO_PRI', 0)
     r.ret()
@@ -498,9 +510,10 @@ SITES = {0x94F04: ('brain_choose', 0x3678), 0x94F18: ('brain_load', 0x3680), 0x9
 CODE = {'CODE_CHOOSER': 0x1E3AAC, 'CODE_LOAD': 0x1E54A0, 'CODE_START': 0x1E30B8, 'CODE_PICK': 0x1E4860,
         'CODE_LOAD_SET': patch.FUNCTIONS['LOAD_SET'], 'CODE_MAKE_PARAM': patch.FUNCTIONS['MAKE_PARAM'],
         'CODE_EV_SET': 0x3B4B64, 'CODE_GET_MAX_HP': patch.FUNCTIONS['GET_MAX_HP'],
-        'CODE_SET_HP': patch.FUNCTIONS['SET_HP'], 'CODE_COPY': 0x3B2444}
+        'CODE_SET_HP': patch.FUNCTIONS['SET_HP'], 'CODE_COPY': 0x3B2444, 'CODE_FRIENDSHIP': 0x3B47EC}
 # Prologue words of the code.bin functions it calls (Repolished 1.7.6 code.bin), checked by the tests.
 CODE_HEADS = {0x1E3AAC: 0xE92D41F0, 0x1E54A0: 0xE92D43F0, 0x1E30B8: 0xE92D4FF7, 0x1E4860: 0xE92D41F0,
+              0x3B47EC: 0xE590000C,
               0x3B4B64: 0xE92D47F0, 0x3B2444: 0xE92D4010, 0x1EFC18: 0xE92D4030, 0x1EF904: 0xE92D4FF0,
               0x153254: 0xE92D4070, 0x14F450: 0xE92D4070}
 
@@ -513,7 +526,7 @@ def assemble():
     """(blob linked at AT with its tables filled, {symbol: DllField.cro file offset})."""
     constants = {'WORK_ROUTE': patch.WORK_ROUTE, 'WORK_BRAIN': WORK_BRAIN, 'ROUTES': ROUTES,
                  'BOSS_STREAK': BOSS_STREAK, 'LATE_FIRST': LATE_FIRST, 'LATE_COUNT': LATE_COUNT,
-                 'ARCHIVE_NORMAL': 0xB6}
+                 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'WORK_RIVAL': patch.WORK_RIVAL[0]}
     with tempfile.TemporaryDirectory() as tmp:
         obj, elf, binary = (Path(tmp) / n for n in ('b.o', 'b.elf', 'b.bin'))
         defs = [a for k, v in constants.items() for a in ('--defsym', f'{k}={v}')]

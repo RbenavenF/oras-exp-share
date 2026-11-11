@@ -2813,3 +2813,20 @@ EXP/IsWin de historia, dificultad sin asistencia y consola. No se amplía al cir
 REPARTO/tasks.json intactos, sin push ni cambios de inputs/partida original; entrega en work/lane-task.json.
 Siguiente paso: orquestador integra el carril y pasa aceptación en main; F8-CEREBROS-BASE done. Los demás Cerebros
 permanecen desactivados a la espera de sus tareas específicas.
+
+## 2026-11-11 — Codex — F8-CEREBRO-FABRICA hito 1: generador y constructor de Noland
+Estado: en curso
+Hecho: adaptador factory_brain.py; draft guarda semilla completa en 16490 para reproducir los seis ofrecidos.
+Caso 9772 multiplexado para preparar el trío de Noland con exclusión de seis IDs y duplicados. API común en
+Fábrica; constructor dinámico N/S con IV 15/31 independiente del alquiler, Return→Frustration y amistad 0.
+Informe §40 con contrato, medidas y límites; sin nuevos works/casos/textos ni cambios de REPARTO/tasks.json.
+Evidencia: suite env -u ORCH_LANE python -m pytest -q tests: 1217 passed, 1 skipped, 39.40 s
+(work/frontier/cerebros/factory/tests-full.log); 170 tests específicos en verde. Build completa correcta:
+ZO Fábrica 16608 <= 17248; DllField blob 1272 bytes, fin 0xf0978, 1672 libres; work/frontier/cerebros/factory/build.log.
+Commits: el de esta entrada, «feat(frontier): build deterministic Noland rental teams» (Agent: Codex).
+Decisiones: reutilizar semilla/works/caso existentes evita reservas nuevas. Los desafíos pausados anteriores
+no conservan la semilla completa: terminar antes de actualizar; no se promete reproducir sus seis ofertas.
+Integrador: actualizar extremo de blob de BASE en REPARTO a 0xf0978. No probado todavía: Azahar ni consola;
+consulta/derrota propias pendientes de extensión de textos reservada por integrador.
+Siguiente paso: Azahar plata ganada y símbolo guardado/recargado, oro o derrota y regresión b;
+plaza/puerta Fábrica por overlay. Completar consulta y derrota sin ocupar líneas sin reserva; mantener in_progress.

@@ -126,8 +126,17 @@ brain_load:
     .global brain_start
 brain_start:
     push    {r4-r11, lr}
-    sub     sp, sp, #0x18                  @ [sp, #0] and [sp, #4]: MAKE_PARAM's stack arguments; [sp, #8]: set
+    sub     sp, sp, #0x24                  @ args, 16-byte set, 3 preserved Noland IDs
     mov     r4, r0
+    bl      works                         @ CODE_START's existing rival hook overwrites WORK_RIVAL
+    add     r0, r0, #(2 * (WORK_RIVAL - 0x4000))
+    ldrh    r3, [r0]
+    str     r3, [sp, #0x18]
+    ldrh    r3, [r0, #2]
+    str     r3, [sp, #0x1c]
+    ldrh    r3, [r0, #4]
+    str     r3, [sp, #0x20]
+    mov     r0, r4
     ldr     ip, =CODE_START
     blx     ip
     mov     r11, r0
@@ -139,6 +148,10 @@ brain_start:
     ldr     r1, [r4, #4]                   @ trainer of rival 0
     cmp     r0, r1
     bne     9f                             @ not the Brain's trainer: leave the party alone
+    sub     r0, r0, #129                   @ factory's private trainers 129, 130
+    cmp     r0, #1
+    mov     r10, #0
+    movls   r10, #1
     ldr     r6, [r4, #0x670]               @ setup+0x50: the rival's party
     ldrb    r0, [r6, #0x18]
     cmp     r0, #3
@@ -149,9 +162,37 @@ brain_start:
     ldr     r0, [r4, #0xb70]               @ heap
     mov     r1, #ARCHIVE_NORMAL
     ldrh    r2, [r8]
+    cmp     r10, #0
+    beq     10f
+    mov     r0, r4
+    bl      works
+    add     r0, r0, #(2 * (WORK_RIVAL - 0x4000))
+    add     r0, r0, r7, lsl #1
+    add     r3, sp, #0x18
+    ldr     r2, [r3, r7, lsl #2]
+    strh    r2, [r0]                       @ record the actual Noland rival; leave rentals/IV untouched
+    tst     r2, #0x8000
+    moveq   r1, #ARCHIVE_NORMAL
+    movne   r1, #ARCHIVE_SUPER
+    bic     r2, r2, #0xfc00
+    ldr     r0, [r4, #0xb70]
+10:
     add     r3, sp, #8
     ldr     ip, =CODE_LOAD_SET
     blx     ip
+    cmp     r10, #0
+    beq     12f
+    mov     r6, #0
+11: add     r0, sp, #10                    @ Return -> Frustration in Noland's temporary set only
+    add     r0, r0, r6, lsl #1
+    ldrh    r1, [r0]
+    cmp     r1, #216
+    moveq   r1, #218
+    strheq  r1, [r0]
+    add     r6, r6, #1
+    cmp     r6, #4
+    blt     11b
+12:
     mov     r0, #0                         @ ability slot 0
     mov     r1, #0xff                      @ as the rival builder (0x1e4e70)
     str     r0, [sp]
@@ -164,6 +205,13 @@ brain_start:
     blx     ip
     movs    r9, r0
     beq     8f
+    cmp     r10, #0
+    beq     13f
+    mov     r1, #0
+    ldr     ip, =CODE_FRIENDSHIP
+    blx     ip
+    b       4f                            @ keep the rental set's EV distribution from MAKE_PARAM
+13:
     mov     r6, #0
 2:  mov     r0, r9                         @ every EV to 0 first (lowering is never limited); outside fast mode, as 0x1ef904
     mov     r1, r6
@@ -183,7 +231,7 @@ brain_start:
     add     r6, r6, #1
     cmp     r6, #6
     blt     3b
-    ldr     r6, [r9, #0xc]                 @ core
+4:  ldr     r6, [r9, #0xc]                 @ core
     mov     r0, r6
     ldr     ip, =CODE_GET_MAX_HP
     blx     ip
@@ -204,7 +252,7 @@ brain_start:
     cmp     r7, #3
     blt     1b
 9:  mov     r0, r11
-    add     sp, sp, #0x18
+    add     sp, sp, #0x24
     pop     {r4-r11, pc}
 
     .ltorg

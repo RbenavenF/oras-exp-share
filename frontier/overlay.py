@@ -80,7 +80,7 @@ def maison_program(script):
     body.label('factory_select_retail')
     p.items[entry + 2:entry + 2] = body.items
     factory.reception(p)
-    brains.suppress_retail_boss(p)      # route 1 (the Factory): no Maison boss; route 0 unchanged
+    brains.install(p)                 # route 1 Noland; route 0 keeps the Maison flow
     return p
 
 

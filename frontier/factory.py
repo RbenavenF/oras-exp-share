@@ -46,7 +46,7 @@ import data as fd  # noqa: E402
 import battle_video  # noqa: E402
 import patch  # noqa: E402
 
-WORK_RNG = 16490                 # free saved works (frontier/ids.py): generator state between drafts,
+WORK_RNG = 16490                 # 16-bit seed before the six offers (replayed by factory_brain)
 WORK_STREAK = 16429              # streak handed from the zone script to the draft
 SHARED_SCRIPT = 5                # a/0/2/9 entry: GlobalCall 9770-9779 (patch.GLOBAL_ROW)
 SHARED_PLACEHOLDER = 9770        # its only retail case
@@ -311,7 +311,7 @@ def draft_routine(p, cells, levels, helpers):
     level_table = p.data_block('factory_levels', level_cells)
     ivs = p.data_block('factory_ivs', [fd.fixed_iv(n + 1) for n in range(len(levels))])
     rand_routine(p, state)
-    names = ['level', 'first', 'count', 'iv', 'sel', 'value',
+    names = ['level', 'first', 'count', 'iv', 'sel', 'value', 'seed',
              *(f'{f}{k}' for f in ('slot', 'cell', 'species', 'item', 'picked') for k in range(fd.DRAFT_SIZE)),
              *(f'chosen{k}' for k in range(fd.PARTY_SIZE))]
     r = Routine(p, 'factory_draft', names)
@@ -323,6 +323,8 @@ def draft_routine(p, cells, levels, helpers):
     r.sysreq('_GetRealTimeToSecond')
     r.op('PALT', 0)
     r.op('ADD', 0)
+    r.field(0, 16)                  # the complete seed must fit the saved work for replay
+    r.store('seed')
     r.op('STOR_P_PRI', state)
 
     # Level = min(streak / 7, last level); its slot range and IV.
@@ -426,10 +428,7 @@ def draft_routine(p, cells, levels, helpers):
         r.store('value')
         r.sysreq('WorkSet', work, 'value')
     r.sysreq('WorkSet', patch.WORK_IV, 'iv')
-    r.op('LOAD_P_PRI', state)
-    r.field(16, 16)
-    r.store('value')
-    r.sysreq('WorkSet', WORK_RNG, 'value')
+    r.sysreq('WorkSet', WORK_RNG, 'seed')
     r.sysreq('GlobalSetParentParam', 0, 1)
     r.op('ZERO_PRI', 0)
     r.ret()
@@ -544,6 +543,9 @@ def shared_program(shared, zone, cells, levels, extra=()):
     helpers = {name: p.transplant(zone, address, f'z{name}_') for name, address in HELPERS.items()}
     draft_routine(p, cells, levels, helpers)
     swap_routine(p, helpers)
+    import factory_brain
+    factory_brain.routine(p)
+    factory_brain.swap_dispatch(p)
     for _, _, builder in extra:
         builder(p, helpers)
     return p

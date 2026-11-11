@@ -41,7 +41,7 @@ def test_design_table_values():
     assert reps == [35, 70, 105, 140, 175]
     assert [u for u in range(1, 300) if brains.due('pike', u, 3)] == [28, 140, 196, 252]
     assert [u for u in range(1, 150) if brains.due('pyramid', u, 3)] == [21, 70, 105, 140]
-    assert brains.ENABLED == ('tower',)
+    assert brains.ENABLED == ('factory', 'tower')
 
 
 def test_symbols_work():
@@ -127,7 +127,7 @@ def test_trainers_and_rows():
     assert first == (229, 106, 0, 152, 100, 0, 152)          # pml order HP Atk Def SpA SpD Spe
     trainer, iv, _ = struct.unpack_from('<HBB', rows, brains.ENTRY * (k + 1))
     assert (trainer, iv) == (132, 31)
-    assert all(struct.unpack_from('<H', rows, brains.ENTRY * j)[0] == 0 for j in range(14) if j not in (k, k + 1))
+    assert all(struct.unpack_from('<H', rows, brains.ENTRY * j)[0] == 0 for j in range(14) if j not in (0, 1, k, k + 1))
 
 
 def test_texts():
@@ -169,7 +169,8 @@ def check(scripts, facility, route, streak, symbols=0):
     works = {fp.WORK_ROUTE: route, brains.WORK_SYMBOLS: symbols, brains.WORK_BRAIN: 77}
     stubs = natives({'WorkGet': lambda vm, a: works.get(a[0], 0),
                      'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
-                     'GetMyWinCount': lambda vm, a: streak})
+                     'GetMyWinCount': lambda vm, a: streak,
+                     'GlobalCall': lambda vm, a: 0})
     VM(script, stubs, {}).run(labels['brains_check'])
     return works[brains.WORK_BRAIN]
 
@@ -186,7 +187,7 @@ def test_check_marks_the_tower_brain_as_due(scripts, symbols):
 @pytest.mark.parametrize('facility', ['tower', 'palace', 'arena', 'pike'])
 def test_check_never_marks_routes_without_a_brain(scripts, facility):
     for route in range(0, 9):
-        if route == fp.ROUTE['tower']:
+        if route in [fp.ROUTE[f] for f in brains.ENABLED]:
             continue
         for streak in (19, 20, 27, 34, 41, 55, 139):
             for symbols in (0, 0x5555, 0x3FFF):
