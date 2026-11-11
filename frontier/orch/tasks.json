@@ -106,9 +106,9 @@
       "owner": "claude",
       "design": "reports/diseno/palacio.md",
       "accept": "Sobre la etapa B (reports/frontier.md §33, vía híbrida con el bit 30): tabla de grupo por movimiento (ataque, defensa, apoyo; 2 bits) generada desde el GARC de movimientos a/1/8/9 con su fuente, y tabla de porcentajes por naturaleza en dos columnas (PS por encima o por debajo del 50 %) con su fuente (pokeemerald, apuntando commit o hipótesis). En cada turno del Palacio se sortea el grupo y la IA solo puede elegir movimientos de ese grupo; si no hay ninguno usable, otro grupo. Solo con el Palacio activo; el rival sigue con su IA normal. Espacio de code.bin medido antes de escribir. Unicorn del filtro (naturalezas de los extremos, PS por encima y por debajo del 50 %, grupo vacío); en Azahar, un Pokémon de naturaleza muy marcada cuyos movimientos elegidos en varios turnos encajan con su tabla (registro con GDB), cambio de columna al bajar del 50 %, ronda sin cuelgues; regresión de la Arena y una instalación sin motor. «No obedece» y textos quedan fuera. Tests en verde.",
-      "status": "blocked",
-      "notes": "Primera tanda del modo paralelo: corre a la vez que F6-DOMO-SALA (Codex), que no toca motor ni code.bin.\n[frontier-orch] conflicto al integrar con main en e tell me who you are.\n\nRun\n\n  git config --global user.email \"you@example.com\"\n  git config --global user.name \"Your Name\"\n\nto set your account's default identity.\nOmit --global to set the identity only in this repository.\n\nfatal: unable to auto-detect email address (got 'rbenaven@ibn5100.(none)')",
-      "evidence": ""
+      "status": "done",
+      "notes": "Primera tanda paralela. Integrada a mano tras el fallo de identidad del rebase (2026-11-11 06:50).",
+      "evidence": "Commits 86abc76 (tablas de a/1/8/9 y pokeemerald en el relleno de DllBattle.cro, Unicorn), 6b6eeaf (Azahar: ronda de 7 victorias, 68 decisiones de la IA coherentes con la tabla de naturaleza, cambio de columna; regresiones Arena y Mansión), f8dfc09 (REPARTO). reports/frontier.md §36. pytest en main tras integrar: 1076 passed."
     },
     {
       "id": "F6-DOMO-SALA",
@@ -116,8 +116,8 @@
       "owner": "codex",
       "design": "reports/diseno/domo.md",
       "accept": "La zona 456 deja de verse igual que la sala de la Fábrica (domo.md §3: «decoración, más adelante»): mapa de un donante retail con aspecto de estadio o sala amplia, elegido con datos (work/frontier/island/zones.tsv, como hizo la Pirámide v2A con las Ruinas del Desierto), conservando el script y flujo del Domo (ZO ≤ 17.248), su puerta y su salida a (6,57), sin superar LOAD_BUDGET y con la máscara de nativas de 517. Sin código nativo ni cambios en code.bin, patch.py o los CRO. En Azahar: entrar por la puerta, recepcionista que habla, inscripción, un combate del torneo, pausa, guardar y cargar dentro, salida a la plaza; regresión de la Fábrica y la Torre (entran y salen). Capturas antes y después. Si ningún donante cabe, status blocked con lo medido. Tests en verde.",
-      "status": "blocked",
-      "notes": "¿Puede el orquestador dar escritura al gitdir exacto /home/rbenaven/projects/oras-exp-share/.git/worktrees/codex y recoger los cambios sin commit de este carril? git add/commit fallan con index.lock: Read-only file system (findmnt confirma ro). Implementación y tests listos; falta aceptación Azahar completa. Ejecutar after_run reap desde HOST para limpiar posibles procesos del carril de dos shells interrumpidas; el último namespace se cerró con reap. No tocar el otro carril.",
+      "status": "in_progress",
+      "notes": "Primera tanda paralela. Tu sandbox no pudo hacer commit en el worktree (gitdir de solo lectura); el orquestador hizo commit de tu trabajo (80068a1) y ahora da escritura también al gitdir del carril y, si aun así falla, hace commit por ti al acabar (pon \"commit\" en work/lane-task.json). Tu sección es §37 (había chocado con la §36 del Palacio C). Falta la aceptación en Azahar: inscripción, combate del torneo, pausa, guardar y cargar dentro, salida a (6,57), regresión de la Fábrica y la Torre, capturas.",
       "evidence": "Sin commit por sandbox. reports/frontier.md §36 y últimas entradas BITACORA; frontier/dome_room.py, island_build.py, tests/test_frontier_dome_room.py y README de sondas. work/frontier/dome/room: build-before.log/build-after.log; code.ips y script 456 idénticos, ZO15452/17248, carga305024/2724608; tests-clean-env.log 988 passed 1 skipped; before.png y after-entry2.png. Entrada por puerta probada; inscripción/combate/pausa/save-load nuevo/salida/regresión pendientes."
     }
   ]

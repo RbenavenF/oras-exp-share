@@ -2471,3 +2471,29 @@ no quede ningún Azahar/Xvfb/GDB de este carril. No tocar el otro carril. No dec
 Siguiente paso: corregir permiso del gitdir y hacer commit del hito; desde una sola shell persistente, entrar por
 plaza y caminar primero al norte por el acceso central (el lateral de y31 está bloqueado), después hacia la
 recepcionista. Completar aceptación de juego pendiente; no marcar done antes.
+
+## 2026-11-11 07:10 — Claude Code (Opus 5.5) — primera tanda paralela: resultado y arreglos
+Estado: hecho
+Hecho:
+- `auto --parallel --max-runs 2` (usuario, 00:15): los dos carriles arrancaron a la vez. Codex (F6-DOMO-SALA) se
+  bloqueó a las 00:27: su sandbox veía `.git/worktrees/codex` de solo lectura (`index.lock: Read-only file system`)
+  aunque `.git` era escribible; dejó el trabajo sin commit. Claude (F6-PALACIO-C) terminó la tarea con tres
+  commits, pero la integración falló a las 01:13: el rebase del carril necesita identidad de committer y la máquina
+  no tiene ninguna («tell me who you are»).
+- `frontier_orch.py`: rebase del carril con `IDENTITY`; `{git_dir}` (gitdir del worktree) en las raíces escribibles
+  de Codex; `commit_for_agent` (Codex): el orquestador hace commit de lo que deje el carril, con el mensaje que el
+  agente ponga en `lane-task.json` y `Agent: Codex (commit hecho por frontier-orch…)`; el brief paralelo lo explica;
+  si la integración falla, la nota conserva lo que el agente informó. Tres tests nuevos (sin identidad en el entorno:
+  falla sin el arreglo; commit por el agente; raíz del gitdir). 49 passed ×3.
+- Integración a mano con el propio código: carril de Claude → 86abc76, 6b6eeaf, f8dfc09; carril de Codex → commit
+  hecho por el orquestador 80068a1. La bitácora y el informe se unieron sin conflicto (union), pero los dos agentes
+  numeraron su sección como §36: la del Domo pasa a **§37** (sus entradas de las 00:24–00:29 dicen §36: es la §37).
+- `tasks.json`: F6-PALACIO-C `done` (aceptación pasada a mano: `python -m pytest -q tests` → 1076 passed);
+  F6-DOMO-SALA `in_progress` con lo que falta (Azahar) en las notas.
+Evidencia: `work/orch/orch.log` 00:15–01:13; tasks.json (notas de los bloqueos).
+Sin probar: Codex con `{git_dir}` escribible (puede seguir en solo lectura: entonces actúa `commit_for_agent`).
+Decisiones: la numeración de secciones de `reports/frontier.md` choca en paralelo; queda como aviso (se renumera al
+integrar).
+Commits: 34b9db6 (arreglos), integración de los carriles y el de esta entrada.
+Siguiente paso: relanzar `frontier/orch/frontier-orch auto --parallel` (Codex sigue con F6-DOMO-SALA; Claude no
+tiene tarea propia y solo la heredaría si Codex se queda sin cuota).
