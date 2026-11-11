@@ -44,9 +44,9 @@ CHECKPOINT_SAVE_SHA256 = '5ddaa992c5aea98a3da1af80c1f2486b6d2db1690da0ae8be84abf
 README = """Omega Ruby Repolished + Repartir Exp. + racha DexNav + Frente de Batalla (alfa v0.1)
 
 ESTADO
-Alfa de prueba. Todo lo del Frente está probado en Azahar (el emulador), NADA en una
-3DS real. Haz copia de tu partida antes de jugar (Checkpoint). No incluye el evento
-de Mew.
+Alfa de prueba. Las siete instalaciones tienen pruebas en Azahar (el emulador),
+con límites pendientes; NADA del Frente está probado en una 3DS real. Haz copia
+de tu partida antes de jugar (Checkpoint). No incluye el evento de Mew.
 
 BASE EXACTA (no funciona con otra)
 - Pokémon Rubí Omega europeo, versión 1.0, SIN la actualización 1.4. Si la tienes
@@ -56,7 +56,7 @@ BASE EXACTA (no funciona con otra)
 - Incluye la v0.5 de Repartir Exp. equipable y la racha de DexNav, sin cambios.
 
 INSTALACIÓN CON LUMA
-1. Apaga la consola. Copia tu partida con Checkpoint y guarda una copia de la
+1. Copia tu partida con Checkpoint. Apaga la consola y guarda una copia de la
    carpeta SD:/luma/titles/000400000011C400/ si ya tienes una (Repolished o v0.5).
 2. Borra esa carpeta y copia en su lugar la de este paquete:
    SD:/luma/titles/000400000011C400/  (dentro: code.ips y romfs/).
@@ -76,28 +76,42 @@ CÓMO LLEGAR AL FRENTE
 4. En la isla, el muelle lleva a una plaza con los siete edificios. El empleado
    del muelle te devuelve a Calagua. Se puede guardar en la isla.
 
-LAS SIETE INSTALACIONES (todas: Individual, Nivel 50, rango Normal)
+LAS SIETE INSTALACIONES (Individual; base Nivel 50 y rango Normal, salvo lo indicado)
 Solo se puede tener un desafío a medias a la vez: si dejas uno pausado, las demás
-recepciones te piden terminarlo primero. Tu equipo y tu caja no se tocan.
+recepciones te piden terminarlo primero. Los alquileres no sustituyen tu equipo
+guardado ni tu caja. Puede haber cambios normales del juego: curación, amistad,
+recuerdos o cintas; los Pokémon por debajo del nivel 50 no suben hasta él.
 - Fábrica Batalla (gimnasio del centro): eliges 3 Pokémon de alquiler de 6, rondas
-  de 7 combates y tras cada victoria puedes cambiar uno por uno del rival. PB de
-  Esmeralda. Sin Doble ni Nivel Libre, sin el jefe (Noland) ni cartel de récords.
+  de 7 combates y tras cada victoria, salvo la séptima, puedes cambiar uno por uno
+  del rival. PB de Esmeralda. Sin Doble ni Nivel Libre, sin el jefe (Noland) ni
+  cartel de récords.
 - Torre Batalla (casa de tejado plano, al norte): tu equipo, combates seguidos como
   en la Mansión Batalla, con racha y PB propios. Textos y reglas de la Mansión.
 - Palacio Batalla (casa de dos plantas, sureste): tus Pokémon eligen solos el
   movimiento según su naturaleza y sus PS. Límites: no hay «no obedece»; el rival
-  no sigue su naturaleza; los textos del entrenador todavía te piden ordenar.
+  no sigue su naturaleza; la presentación y la frase de derrota del entrenador
+  esperan que pulses A.
 - Arena Batalla (casa de paja, sur): combates de 3 turnos; si los dos siguen en
-  pie, juicio por mente, técnica y cuerpo. Textos de la Mansión.
+  pie, juicio solo por Cuerpo. Mente y Técnica aún no están implementadas.
+  Cambio prohibido mientras el Pokémon siga en pie. Textos de la Mansión.
 - Domo Batalla (casa del oeste): torneos de 4 combates; inscribes 3 y eliges 2
   antes de cada combate. Sin cuadro de torneo ni jefe.
 - Tubo Batalla (cabaña del suroeste): salas con curas, estados, entrenadores y
   Pokémon salvajes; PS, estado y PP se arrastran entre salas. El veneno grave se
-  guarda como veneno normal.
+  guarda como veneno normal. Los combates fuertes usan rango Súper y los salvajes
+  pueden estar por debajo del nivel 50; conservan la presentación de entrenador.
+  Hay una incidencia de reanudación pendiente de reproducir: un desafío volvió
+  a empezar de cero tras regresar al vestíbulo.
 - Pirámide Batalla (casa de tejado azul, este): siete pisos de cueva con
   entrenadores. Sin oscuridad, objetos ni salvajes todavía.
 Comunes: sin jefes de instalación, sin Doble/Multi ni Nivel Libre; textos en
 español (los demás idiomas, en inglés y sin revisar).
+La v0.1 aún muestra «Guardar vídeo» (salvo en el Palacio). Se ha quitado en main
+en el commit 31ba2d4; el cambio entra en la próxima versión.
+El paquete exacto se probó con combates en las siete instalaciones, guardado y
+recarga en la plaza y regreso a Calagua. No se probaron con ese paquete las rondas
+completas, el juicio de la Arena, el ferry
+de Portual ni otros idiomas (reports/frontier.md §38).
 
 NO PROBADO EN CONSOLA (solo en Azahar)
 - Nada del Frente: el código nuevo de code.ips (cueva al final del código), el

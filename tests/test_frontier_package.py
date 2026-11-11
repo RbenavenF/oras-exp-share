@@ -78,6 +78,33 @@ def test_readme_covers_base_install_pass_facilities_and_console_status():
         assert needed in text, needed
 
 
+def test_readme_describes_alpha_arena_palace_and_video_limits():
+    text = ' '.join(package.README.split())
+    arena = text.split('- Arena Batalla', 1)[1].split('- Domo Batalla', 1)[0]
+    assert 'juicio solo por Cuerpo' in arena
+    assert 'Mente y Técnica aún no están implementadas' in arena
+    assert 'Cambio prohibido mientras el Pokémon siga en pie' in arena
+    assert 'mente, técnica y cuerpo' not in arena.lower()
+    palace = text.split('- Palacio Batalla', 1)[1].split('- Arena Batalla', 1)[0]
+    assert 'la presentación y la frase de derrota del entrenador esperan que pulses A' in palace
+    assert 'te piden ordenar' not in palace
+    assert 'La v0.1 aún muestra «Guardar vídeo» (salvo en el Palacio)' in text
+    assert 'Se ha quitado en main en el commit 31ba2d4; el cambio entra en la próxima versión' in text
+
+
+def test_readme_qualifies_validation_team_changes_and_level_exceptions():
+    text = ' '.join(package.README.split())
+    assert 'Todo lo del Frente está probado' not in text
+    assert 'Tu equipo y tu caja no se tocan' not in text
+    for needed in ('con límites pendientes', 'curación, amistad, recuerdos o cintas',
+                   'por debajo del nivel 50 no suben hasta él', 'salvo la séptima',
+                   'Los combates fuertes usan rango Súper',
+                   'los salvajes pueden estar por debajo del nivel 50',
+                   'incidencia de reanudación pendiente de reproducir',
+                   'No se probaron con ese paquete las rondas completas, el juicio de la Arena'):
+        assert needed in text, needed
+
+
 def test_checkpoint_refuses_a_save_that_is_not_the_tested_one(tmp_path, monkeypatch):
     save = tmp_path / 'main'
     save.write_bytes(b'save')

@@ -2722,3 +2722,23 @@ Decisiones: la partida de Checkpoint parte de la de prueba de Mew (ya en el puer
 del Barco, porque mover al jugador escribiendo la partida lo deja sin poder andar (lo volví a ver en la Ruta 102).
 No probado: consola; victorias de ronda completas fuera de la Fábrica; juicio de la Arena; ferry de Portual con el paquete.
 Siguiente paso: el usuario instala el paquete y sigue `reports/consola-frente.md`; con sus resultados, corregir y v0.2.
+
+## 2026-11-11 21:04 — Codex — F7-LEEME: reglas y límites del paquete alfa
+Estado: hecho
+Hecho:
+- Solo README de frontier/package.py: Arena juzga solo por Cuerpo, Mente/Técnica pendientes y cambio prohibido;
+  Palacio espera A en presentación/frase de derrota, sin pedir órdenes. v0.1 aún ofrece «Guardar vídeo» salvo
+  Palacio; supresión de main 31ba2d4 anunciada para la próxima versión.
+- Contraste del resto con reports/frontier.md §24–§38: acota validación en Azahar y del paquete exacto,
+  cambios normales del equipo, niveles y rango Súper del Tubo, presentación de sus salvajes e incidencia
+  de reanudación sin aislar; intercambio de Fábrica salvo séptima victoria. Orden de copia Checkpoint corregido.
+- tests/test_frontier_package.py: dos pruebas del texto, incluidas las frases exigidas de Arena/Palacio/vídeo.
+Evidencia:
+- env -u ORCH_LANE python -m pytest -q tests (tras source scripts/env.sh): 1107 passed, 1 skipped en 35.88 s;
+  work/frontier/leeme/tests.log. git diff --check correcto.
+- work/frontier/leeme/scope-check.txt: AST de package.py idéntico a HEAD salvo README y referencias del contraste.
+Commits: el de esta entrada, «docs(frontier): correct alpha README rules and validation limits» (Agent: Codex).
+Decisiones: tarea limitada a texto, tests y trazabilidad; sin reconstruir paquete ni ejecutar Azahar según aceptación
+  y política de regresión. No probado de nuevo: juego, consola ni paquete. No se arrancó laboratorio.
+  REPARTO y tasks.json intactos; estado de entrega en work/lane-task.json, sin push ni cambios de inputs/partida.
+Siguiente paso: el orquestador integra el commit del carril y pasa aceptación en main; F7-LEEME done.
