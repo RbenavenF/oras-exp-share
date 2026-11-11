@@ -136,7 +136,7 @@
       "owner": "codex",
       "design": "frontier/REPARTO.md, frontier/PLAN.md",
       "accept": "Solo documentación, sin código ni laboratorio: la tabla «Instalaciones» de REPARTO.md refleja el estado real de cada instalación según tasks.json, la bitácora y reports/frontier.md (hoy pone, por ejemplo, «Torre: diseño», «Arena B en curso», «Domo: Azahar en curso»), con su sección del informe; el PLAN (F4–F6 y «Después») marca lo hecho y lista lo pendiente para terminar el Frente: F5 (jefes, récords, Doble, Libre), textos en otros idiomas, pendientes de cada instalación (Palacio: textos del entrenador; Arena: Mente y Técnica; Tubo: Doble y Lucy; Pirámide: oscuridad, objetos, PS) y la prueba en consola. No toques la línea «Turno». Tests en verde.",
-      "status": "pending",
+      "status": "in_progress",
       "notes": "Va después de F6-DOMO-SALA en el carril de Codex.",
       "evidence": ""
     }
