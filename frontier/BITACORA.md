@@ -2497,3 +2497,16 @@ integrar).
 Commits: 34b9db6 (arreglos), integración de los carriles y el de esta entrada.
 Siguiente paso: relanzar `frontier/orch/frontier-orch auto --parallel` (Codex sigue con F6-DOMO-SALA; Claude no
 tiene tarea propia y solo la heredaría si Codex se queda sin cuota).
+
+## 2026-11-11 07:35 — Claude Code (Opus 5.5) — tareas para la alfa instalable
+Estado: hecho (sin ejecutar el orquestador)
+Hecho: repaso de lo que falta (PLAN F5–F6, REPARTO, `reports/frontier.md`, `dist/`): no hay paquete del Frente,
+nada probado en consola, el pase exige la Liga ganada (flag 2720), y combinar con Mew está sin medir (el `code.ips`
+del Frente sustituye al anterior). Decisión del usuario: **alfa sin Mew**. `tasks.json` gana F7-PAQUETE (Claude:
+`frontier/package.py`, `dist/oras-frontier-alpha-v0.1`, prueba del paquete exacto en Azahar por las siete
+instalaciones, partida para Checkpoint, `reports/consola-frente.md`) y F7-REPARTO (Codex, tras F6-DOMO-SALA: tabla de
+REPARTO y PLAN al día, solo documentación).
+Pendiente para terminar el Frente (fuera de la alfa): F5 (jefes, récords, Doble, Libre), textos en otros idiomas,
+pendientes de cada instalación.
+Commits: el de esta entrada.
+Siguiente paso: el usuario lanza `frontier/orch/frontier-orch auto --parallel`.

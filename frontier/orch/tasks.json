@@ -119,6 +119,26 @@
       "status": "in_progress",
       "notes": "Primera tanda paralela. Tu sandbox no pudo hacer commit en el worktree (gitdir de solo lectura); el orquestador hizo commit de tu trabajo (80068a1) y ahora da escritura también al gitdir del carril y, si aun así falla, hace commit por ti al acabar (pon \"commit\" en work/lane-task.json). Tu sección es §37 (había chocado con la §36 del Palacio C). Falta la aceptación en Azahar: inscripción, combate del torneo, pausa, guardar y cargar dentro, salida a (6,57), regresión de la Fábrica y la Torre, capturas.",
       "evidence": "Sin commit por sandbox. reports/frontier.md §36 y últimas entradas BITACORA; frontier/dome_room.py, island_build.py, tests/test_frontier_dome_room.py y README de sondas. work/frontier/dome/room: build-before.log/build-after.log; code.ips y script 456 idénticos, ZO15452/17248, carga305024/2724608; tests-clean-env.log 988 passed 1 skipped; before.png y after-entry2.png. Entrada por puerta probada; inscripción/combate/pausa/save-load nuevo/salida/regresión pendientes."
+    },
+    {
+      "id": "F7-PAQUETE",
+      "title": "Alfa instalable del Frente: paquete Luma (Repolished + v0.5 + Frente, sin Mew), prueba del paquete exacto en Azahar, partida de prueba y plan de consola",
+      "owner": "claude",
+      "design": "frontier/PLAN.md (F6: paquete, partida de prueba, plan de consola)",
+      "accept": "1) Script reproducible frontier/package.py (como faraway/package.py) que construye desde main la build completa (overlay.py sobre el romfs de Repolished + v0.5, sin Mew) y crea dist/oras-frontier-alpha-v0.1/ con luma/titles/000400000011C400/{code.ips, romfs/ con DllBattle.cro, DllField.cro y .crr/static.crr actualizados}, LEEME.txt en español (base exacta: Omega Ruby EUR 1.0 sin actualización, Repolished 1.7.6; instalación con Luma; cómo conseguir el pase: Liga ganada (flag 2720) y marinero del puerto de Calagua; qué hay en cada instalación y sus límites conocidos; qué no está probado en consola) y manifest.json con SHA-256 de cada fichero; comprueba los hashes de entrada y falla con otro volcado. Nada de dist/ en git. 2) Prueba en Azahar del paquete EXACTO (copiado tal cual a la carpeta de mods del laboratorio, sin builds sueltas): partida con la Liga ganada → pase del marinero → ferry → plaza → entrar en las siete instalaciones (Fábrica, Torre, Palacio, Arena, Domo, Tubo, Pirámide) con al menos un combate o sala en cada una → guardar en la plaza, cargar y volver al puerto; un combate salvaje y uno de entrenador de la historia sin cambios; Repartir Exp. y racha DexNav de la v0.5 siguen funcionando. Capturas y tabla en reports/frontier.md. Lo que falle, se arregla o se anota con su causa. 3) Partida de prueba para Checkpoint en dist/ (derivada de la del usuario, con la Liga ganada; nunca la original) con su hash y cómo restaurarla. 4) Plan de prueba en consola (reports/consola-frente.md): orden de pruebas de menos a más riesgo (arranque, isla, cada instalación, motor: Palacio, Arena, Tubo), qué mirar, qué hacer si se cuelga, cómo volver a la v0.5. No se instala nada en la consola. Tests en verde.",
+      "status": "pending",
+      "notes": "Decisión del usuario 2026-11-11: alfa sin Mew. Corre en paralelo con F6-DOMO-SALA (Codex): si la sala del Domo no está integrada al construir, el paquete se hace con lo que haya en main y se anota.",
+      "evidence": ""
+    },
+    {
+      "id": "F7-REPARTO",
+      "title": "Poner al día la tabla de instalaciones de REPARTO.md y el estado del PLAN",
+      "owner": "codex",
+      "design": "frontier/REPARTO.md, frontier/PLAN.md",
+      "accept": "Solo documentación, sin código ni laboratorio: la tabla «Instalaciones» de REPARTO.md refleja el estado real de cada instalación según tasks.json, la bitácora y reports/frontier.md (hoy pone, por ejemplo, «Torre: diseño», «Arena B en curso», «Domo: Azahar en curso»), con su sección del informe; el PLAN (F4–F6 y «Después») marca lo hecho y lista lo pendiente para terminar el Frente: F5 (jefes, récords, Doble, Libre), textos en otros idiomas, pendientes de cada instalación (Palacio: textos del entrenador; Arena: Mente y Técnica; Tubo: Doble y Lucy; Pirámide: oscuridad, objetos, PS) y la prueba en consola. No toques la línea «Turno». Tests en verde.",
+      "status": "pending",
+      "notes": "Va después de F6-DOMO-SALA en el carril de Codex.",
+      "evidence": ""
     }
   ]
 }
