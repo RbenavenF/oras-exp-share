@@ -21,8 +21,9 @@ reports/frontier.md §1):
   (last value repeated) after the 7th; the Maison's brackets otherwise.
 The Factory's reception refuses as well while the Tower's ACTIVE is not 0 (factory.reception_routine).
 
-Frontier Brains (frontier/brains.install): Anabel at battles 35/70 (brains.APPEARANCES), symbols, and no Maison
-boss on any Frontier route. Known deviations (design §1, §6): the Maison's texts («Mansión Batalla»); its party
+Frontier Brains (frontier/brains.install): Anabel at battles 35/70 and every 35 after both symbols
+(brains.APPEARANCES), symbols, no Maison boss on any Frontier route, and «Symbols» in the reception menu (value
+brains.MENU_SYMBOLS) to consult Anabel's. Known deviations (design §1, §6): the Maison's texts («Mansión Batalla»); its party
 rules (level capped to 50 instead of refused, its banned list); no Doubles or Open Level.
 """
 import sys
@@ -199,8 +200,11 @@ def facility_program(retail, facility):
 
 
 def tower_program(retail):
-    """Zone 517's retail script with the Tower (module docstring)."""
-    return facility_program(retail, FACILITY)
+    """Zone 517's retail script with the Tower (module docstring) and «Symbols» in its reception menu (Anabel's
+    symbol, brains.symbols_option; text 619 line factory.LINE_SYMBOLS, as the Factory)."""
+    p = facility_program(retail, FACILITY)
+    brains.symbols_option(p, FACILITY, factory.LINE_SYMBOLS)
+    return p
 
 
 def zone_script(retail):

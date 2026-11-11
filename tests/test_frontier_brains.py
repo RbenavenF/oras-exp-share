@@ -290,7 +290,8 @@ def test_factory_symbols_menu_entry(scripts):
     assert ins[k + 4].address + ins[k + 4].args[0] == labels['brains_symbols']
     assert ins[k + 5].op == OP['CONST_S'] and ins[k + 5].args == [factory.RECEPTION_AGAIN, 1]
     assert ins[k + 6].op == OP['JUMP'] and ins[k + 6].address + ins[k + 6].args[0] == labels[factory.RECEPTION_NEXT]
-    assert 'brains_symbols' not in scripts['tower'][1]       # other receptions connect theirs in their own tasks
+    for other in ('palace', 'arena', 'pike', 'dome'):         # other receptions connect theirs in their own tasks
+        assert 'brains_symbols' not in scripts[other][1]
 
 
 @pytest.mark.parametrize('facility', ['tower', 'palace', 'arena', 'pike', 'dome', 'factory'])
