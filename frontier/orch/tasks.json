@@ -199,7 +199,7 @@
       "title": "Cerebro de la Torre",
       "design": "reports/diseno/cerebros.md",
       "accept": "El Cerebro de la Torre según reports/diseno/cerebros.md (si frontier/orch/propuestas/cerebros.json trae criterios más concretos para esta instalación, mandan esos): aparece en la racha de plata y en la de oro, con su equipo y textos, usando la infraestructura de F8-CEREBROS-BASE; símbolo guardado al ganar; derrota limpia. Tests de su script (plata, oro, derrota). Azahar, con partida editada a la racha justa: el combate de plata ganado con su símbolo y uno de oro o una derrota, solo en esta instalación (política de regresión, caso a; caso b si tocaste el motor). Tests en verde.",
-      "status": "pending",
+      "status": "in_progress",
       "notes": "",
       "evidence": ""
     },
