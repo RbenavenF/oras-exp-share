@@ -275,9 +275,9 @@
       "title": "Diseño de las modalidades que faltan: Nivel Libre y Dobles (Torre y Fábrica)",
       "design": "reports/diseno/ (nuevo: modos.md)",
       "accept": "Solo lectura y diseño, sin laboratorio ni código del juego. reports/diseno/modos.md: cómo añadir Nivel Libre a las siete instalaciones (rango del selector de la Mansión, SetRank, niveles del rival, PB y racha por modalidad: works nuevos a pedir en REPARTO) y Dobles en la Torre y la Fábrica (tipos 0–3 del montador de combate, §1; equipo de 4; Multi queda fuera), qué reutiliza la Mansión y qué hay que medir; riesgos y estimación; y frontier/orch/propuestas/modos.json con las tareas listas para `frontier-orch add`. Tests en verde.",
-      "status": "in_progress",
-      "notes": "",
-      "evidence": ""
+      "status": "done",
+      "notes": "F9-MODOS-DISENO completo: diseño Libre siete instalaciones y Dobles Torre/Fábrica; seis propuestas nuevas listas para add, sin encolar. Solo documentación/JSON, sin laboratorio ni código del juego; REPARTO y tasks.json intactos.",
+      "evidence": "3b74a13 docs(frontier): design open level and doubles implementation tasks; reports/diseno/modos.md; frontier/orch/propuestas/modos.json; BITACORA 2026-11-11 20:32. Suite: 1105 passed, 1 skipped in 39.97s (work/frontier/modos/tests.log); check_task seis IDs nuevos y dependencias válidas (design-check.txt); maison_map y desensamblados estáticos en work/frontier/modos; git diff --check OK."
     },
     {
       "id": "F10-PERSONALIDAD-DISENO",
