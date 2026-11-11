@@ -56,6 +56,7 @@ from pawn import OP, Op, Program  # noqa: E402
 import data as fd  # noqa: E402
 import factory  # noqa: E402
 import battle_video  # noqa: E402
+import brains  # noqa: E402
 import patch  # noqa: E402
 
 FACILITY = 'dome'
@@ -542,6 +543,7 @@ def dome_program(retail):
     battle_points(p)
     reception_routine(p)
     before_battle_routine(p)
+    brains.suppress_retail_boss(p)   # no Maison boss on the Dome's route (Tucker: F8-CEREBRO-DOMO)
     return battle_video.suppress(p)
 
 

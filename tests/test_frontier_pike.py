@@ -13,6 +13,7 @@ import dome  # noqa: E402
 import factory  # noqa: E402
 import overlay  # noqa: E402
 import patch as fp  # noqa: E402
+import brains  # noqa: E402
 import pike  # noqa: E402
 import tower  # noqa: E402
 from formats import garc_entries, zo_build  # noqa: E402
@@ -390,6 +391,8 @@ def test_wild_sets_are_emeralds_and_written_to_empty_entries():
         raw = data[offset:offset + length]
         if fp.PIKE_WILD_FIRST <= k < fp.PIKE_WILD_FIRST + 6:
             assert raw == pike.wild_sets()[k - fp.PIKE_WILD_FIRST]
+        elif k in brains.sets():                     # the Frontier Brains' sets follow (tests/test_frontier_brains.py)
+            assert raw == brains.sets()[k] and maison['maisonpkN'][k] == bytes(16)
         else:
             assert raw == maison['maisonpkN'][k]
 
@@ -739,7 +742,8 @@ def test_field_bridge_changes_only_guarded_instructions_and_updates_crr(battle_m
     changed = battle_module[fp.FIELD_CRO]
     assert len(original) == len(changed)
     assert changed[:0x80] == b''.join(cro_hashes(changed))
-    assert all(i < 0x80 or fp.PIKE_PARAM_SITE <= i < fp.PIKE_PARAM_SITE+16
+    brain_ranges = [(w['offset'], w['offset'] + len(w['after']) // 2) for w in brains.cro_writes()]
+    assert all(i < 0x80 or fp.PIKE_PARAM_SITE <= i < fp.PIKE_PARAM_SITE+16 or any(a <= i < b for a, b in brain_ranges)
                for i, (a, b) in enumerate(zip(original, changed)) if a != b)
     assert not any(fp.PIKE_PARAM_SITE <= t < fp.PIKE_PARAM_SITE+16 for t, _, _ in Cro(original).relocs)
     imports = CRO(fp.MOD_ROMFS / fp.FIELD_CRO).static_imports(CRO(overlay.ROMFS / 'static.crs'))

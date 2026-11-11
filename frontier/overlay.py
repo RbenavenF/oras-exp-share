@@ -38,6 +38,7 @@ from pawn import OP, Op, Program, Script  # noqa: E402
 import build_patch  # noqa: E402
 import data as fd  # noqa: E402
 import arena  # noqa: E402
+import brains  # noqa: E402
 import dome  # noqa: E402
 import factory  # noqa: E402
 import island  # noqa: E402
@@ -79,6 +80,7 @@ def maison_program(script):
     body.label('factory_select_retail')
     p.items[entry + 2:entry + 2] = body.items
     factory.reception(p)
+    brains.suppress_retail_boss(p)      # route 1 (the Factory): no Maison boss; route 0 unchanged
     return p
 
 
@@ -139,6 +141,9 @@ def texts(romfs, sets, table):
         if len(lines) != pyramid.LINE_BASE:
             raise ValueError(f'text {patch.TEXT_FACTORY}: {len(lines)} lines, the Pyramid expects {pyramid.LINE_BASE}')
         lines += pyramid.lines(lang)
+        if len(lines) != brains.line_base():
+            raise ValueError(f'text {patch.TEXT_FACTORY}: {len(lines)} lines, the Brains expect {brains.line_base()}')
+        lines += brains.lines(lang)
         words = [text_to_words(line) for line in lines]
         out[path] = rebuild_garc(data, {}, append=[build_text(words, [0] * len(words))])
         game = factory.GAMETEXT[lang]
@@ -149,6 +154,8 @@ def texts(romfs, sets, table):
             before = text_lines(g[offset:offset + length])[0][island.ITEM_PASS]
             changes.append({'entry': entry, 'line': island.ITEM_PASS, 'before': words_to_text(before),
                             'after': island.ITEM[code][key]})
+        changes += [{'entry': brains.TEXT_TRAINER_NAMES, 'line': brains.TRAINER_FIRST + k, 'append': True,
+                     'after': name} for k, name in enumerate(brains.trainer_names())]
         out[game] = build_patch.guarded_texts(g, {'path': game, 'texts': changes})
     return out
 
@@ -174,7 +181,7 @@ def shared(romfs, zone_script, cells, levels):
     if retail.build(pad=False) != raw:
         raise ValueError('shared script 5 does not round-trip')
     program = factory.shared_program(retail, zone_script, cells, levels, dome.shared_cases(levels) + pike.shared_cases()
-                                     + pyramid.shared_cases())
+                                     + pyramid.shared_cases() + brains.shared_cases())
     script = program.build_script(f'L{retail.main:x}').build(pad=False)
     ferry = shared_script(data, island.FERRY_SCRIPT)
     ferry_new = island.ferry_program(ferry).build_script(f'L{ferry.main:x}').build(pad=False)
@@ -221,17 +228,35 @@ MAISON_SETS = fd.ARCHIVES['maisonpkN'][0]
 
 
 def maison_sets(romfs=ROMFS):
-    """maisonpkN with the Battle Pike's wild sets (pike.WILD_SETS) in its empty entries from patch.PIKE_WILD_FIRST."""
+    """maisonpkN with the Battle Pike's wild sets (pike.WILD_SETS) in its empty entries from patch.PIKE_WILD_FIRST and
+    the Frontier Brains' sets after them (brains.sets())."""
     data = source(romfs, MAISON_SETS)
     if hashlib.sha256(data).hexdigest() != fd.ARCHIVES['maisonpkN'][1]:
         raise ValueError(f'{MAISON_SETS} differs from Repolished 1.7.6')
     entries = garc_entries(data)
-    wild = pike.wild_sets()
-    for k in range(len(wild)):
-        _, _, offset, length = entries[patch.PIKE_WILD_FIRST + k]
+    sets = {patch.PIKE_WILD_FIRST + k: raw for k, raw in enumerate(pike.wild_sets())}
+    if set(sets) & set(brains.sets()):
+        raise ValueError('the Pike and the Brains share maisonpkN entries')
+    sets.update(brains.sets())
+    for index in sets:
+        _, _, offset, length = entries[index]
         if data[offset:offset + length] != bytes(fd.SET_SIZE):
-            raise ValueError(f'{MAISON_SETS} entry {patch.PIKE_WILD_FIRST + k} is not an empty set')
-    return rebuild_garc(data, {(patch.PIKE_WILD_FIRST + k, 0): raw for k, raw in enumerate(wild)})
+            raise ValueError(f'{MAISON_SETS} entry {index} is not an empty set')
+    return rebuild_garc(data, {(index, 0): raw for index, raw in sets.items()})
+
+
+MAISON_TRAINERS = fd.ARCHIVES['maisontrN'][0]
+
+
+def maison_trainers(romfs=ROMFS):
+    """maisontrN with the Brains' trainers appended (brains.trainers(), from its 129 retail entries)."""
+    data = source(romfs, MAISON_TRAINERS)
+    if hashlib.sha256(data).hexdigest() != fd.ARCHIVES['maisontrN'][1]:
+        raise ValueError(f'{MAISON_TRAINERS} differs from Repolished 1.7.6')
+    new = brains.trainers()
+    if sorted(new) != list(range(len(garc_entries(data)), len(garc_entries(data)) + len(new))):
+        raise ValueError(f'{MAISON_TRAINERS}: the Brains must follow its last entry')
+    return rebuild_garc(data, {}, append=[new[i] for i in sorted(new)])
 
 
 def build(romfs=ROMFS):
@@ -248,6 +273,7 @@ def build(romfs=ROMFS):
     out[SHARED], script5 = shared(romfs, retail, cells, levels)
     out.update(texts(romfs, sets, table))
     out[MAISON_SETS] = maison_sets(romfs)
+    out[MAISON_TRAINERS] = maison_trainers(romfs)
     return out, (files[2], script5)
 
 

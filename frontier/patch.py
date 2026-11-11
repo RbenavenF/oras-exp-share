@@ -290,7 +290,8 @@ PIKE_PARAM_BEFORE = bytes.fromhex('0800a0e134c9feeb060050e11501009a')
 
 
 def battle_cro(romfs=MOD_ROMFS):
-    """v0.5 + Pike copy-back + Arena and Palace bridges, guarded together, with updated CRO/CRR hashes.
+    """v0.5 + Pike copy-back + Arena and Palace bridges, guarded together, with updated CRO/CRR hashes; DllField.cro
+    with the Pike's bridge and the Frontier Brains (frontier/brains.py, frontier/asm/brains_cro.s).
 
     Additional facility bridges can extend the write list before the single rehash.
     Arena acts only with its setup bit; the unmarked path replays retail instructions.
@@ -314,7 +315,9 @@ def battle_cro(romfs=MOD_ROMFS):
     field_write = dict(offset=PIKE_PARAM_SITE, before=PIKE_PARAM_BEFORE.hex(),
                        after=struct.pack('<4I', 0xE59FC004, 0xE12FFF3C, 0xEA000000,
                                          symbols['pike_param']).hex())
-    field_changed = guarded_writes(field, dict(path=FIELD_CRO, sha256=FIELD_CRO_SHA256, writes=[field_write]))
+    import brains                       # DllField natives SetTrainer/StartBattle -> the Frontier Brains (brains.py)
+    field_changed = guarded_writes(field, dict(path=FIELD_CRO, sha256=FIELD_CRO_SHA256,
+                                               writes=[field_write, *brains.cro_writes()]))
     field_changed = rehash_cro(field, field_changed)
     crr = update_crr(crr, field, field_changed)
     return {BATTLE_CRO: changed, FIELD_CRO: field_changed, CRR: crr}

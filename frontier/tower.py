@@ -21,9 +21,9 @@ reports/frontier.md §1):
   (last value repeated) after the 7th; the Maison's brackets otherwise.
 The Factory's reception refuses as well while the Tower's ACTIVE is not 0 (factory.reception_routine).
 
-Known deviations (design §1, §6): the Maison's texts («Mansión Batalla»); its party rules (level capped to 50
-instead of refused, its banned list); the Maison's boss can appear on the Tower streak (measured below,
-BOSS_STREAKS); no Anabel, Doubles or Open Level.
+Frontier Brains (frontier/brains.install): Anabel at battles 35/70 (brains.APPEARANCES), symbols, and no Maison
+boss on any Frontier route. Known deviations (design §1, §6): the Maison's texts («Mansión Batalla»); its party
+rules (level capped to 50 instead of refused, its banned list); no Doubles or Open Level.
 """
 import sys
 from pathlib import Path
@@ -34,6 +34,7 @@ from pawn import OP, Op, Program  # noqa: E402
 import data as fd  # noqa: E402
 import factory  # noqa: E402
 import battle_video  # noqa: E402
+import brains  # noqa: E402
 import patch  # noqa: E402
 
 FACILITY = 'tower'
@@ -193,6 +194,7 @@ def facility_program(retail, facility):
     p.items[at + 1:at + 1] = _ops(p, lambda b: b.sysreq('WorkSet', active, 0))
     battle_points(p, facility)
     reception_routine(p, facility)
+    brains.install(p)             # Frontier Brains (frontier/brains.py) and no Maison boss on the route
     return battle_video.suppress(p)
 
 

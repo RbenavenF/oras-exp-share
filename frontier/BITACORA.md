@@ -2742,3 +2742,26 @@ Decisiones: tarea limitada a texto, tests y trazabilidad; sin reconstruir paquet
   y política de regresión. No probado de nuevo: juego, consola ni paquete. No se arrancó laboratorio.
   REPARTO y tasks.json intactos; estado de entrega en work/lane-task.json, sin push ni cambios de inputs/partida.
 Siguiente paso: el orquestador integra el commit del carril y pasa aceptación en main; F7-LEEME done.
+## 2026-11-11 22:40 — Claude Code (Opus 5.5) — F8-CEREBROS-BASE hito 1: infraestructura común y Anabel (sin Azahar)
+Estado: en curso
+Hecho:
+- `frontier/brains.py`: umbrales de aparición de las siete (pokeemerald 731ad5bf, cerebros.md §1), referencia `due`,
+  símbolos (16729, 2 bits por ruta), rutinas Pawn `brains_check` (antes de elegir rival, 0x2b98), `brains_intro`
+  (presentación 0x4338, línea propia en vez del mensaje del entrenador de la Mansión), `brains_won` (antes de IsBoss:
+  símbolo, +10 PB por 0x30, línea, 16730 = 0) y limpieza de 16730 en derrota/limpieza; `suppress_retail_boss` (0x451c
+  devuelve 0 con ruta ≠ 0) en la Mansión/Fábrica, la Torre, Palacio, Arena, Tubo y Domo. Activo solo la Torre (ENABLED).
+- Nativo `frontier/asm/brains_cro.s` en el relleno de DllField.cro 0xf0480–0xf08c0 (1088 bytes; DexNav usa 0xf0400–
+  0xf046c; quedan 1856), desde las nativas SetTrainer/StartBattle (bl de 0x94f04, 0x94f18, 0x95044): elector → Cerebro
+  (maisontrN 129–142, clase/nombre propios) o, en rutas del Frente con racha ≥ 19 Normal, tramo 70–109 en vez del jefe
+  de la Mansión (19) o del entrenador 0 (> 19); carga → work+1 = 0 (sin IsBoss/cinta) en rutas del Frente; tras montar
+  el combate, rehace los tres del rival en orden con MAKE_PARAM (IV fijo, habilidad 0) y EV exactos (0x3b4b64 a 0 y
+  luego cada valor), PS al máximo y copia sobre el miembro (0x3b2444). Medidas estáticas: §39 de reports/frontier.md
+  (pendiente de escribir con la prueba en Azahar).
+- Datos: Anabel plata/oro (anexo §7) en maisonpkN 229–234, trainers 131/132 (clase 9), nombres en gametext 154
+  (8 idiomas), 28 líneas del texto 637 (1072–1099), caso 9778 del script 5. Reservas en REPARTO.
+Evidencia: `tests/test_frontier_brains.py` 75 passed (reglas S-1/S/S+1 y 0/1/2 símbolos, VM de las rutinas en las
+  seis instalaciones con script 517, rutas 0–8, Unicorn del blob con funciones de code.bin simuladas); suite completa
+  `env -u ORCH_LANE python -m pytest -q tests`: 1180 passed, 1 skipped.
+No probado: nada en Azahar todavía (identidad, nombre, modelo, EV reales, texto, guardado del símbolo).
+Siguiente paso: build completa, partida con racha 34 en la Torre, jefe en Azahar (victoria con símbolo y derrota) y
+  regresión caso b (Palacio, Arena, Tubo y un combate de historia) porque se toca DllField.cro.

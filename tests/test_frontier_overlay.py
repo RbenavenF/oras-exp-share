@@ -82,10 +82,14 @@ def test_texts_append_the_option_the_refusal_and_the_factory_entry(built):
         assert lines[pike.LINE_BASE:pike.LINE_END] == pike.lines(lang)      # the Pike's, after the Dome's
         import pyramid
         assert pyramid.LINE_BASE == pike.LINE_END
-        assert lines[pyramid.LINE_BASE:] == pyramid.lines(lang)             # the Pyramid's, after the Pike's
+        assert lines[pyramid.LINE_BASE:pyramid.LINE_END] == pyramid.lines(lang)   # the Pyramid's, after the Pike's
+        import brains
+        assert brains.line_base() == pyramid.LINE_END
+        assert lines[pyramid.LINE_END:] == brains.lines(lang)              # the Brains', after the Pyramid's
 
 
 def test_game_texts_rename_only_the_pass(built):
+    import brains
     import factory
     import island
     from formats import text_lines, words_to_text
@@ -98,6 +102,10 @@ def test_game_texts_rename_only_the_pass(built):
             old, new = text_lines(before[x[2]:x[2] + x[3]])[0], text_lines(after[y[2]:y[2] + y[3]])[0]
             diff = [k for k, (u, v) in enumerate(zip(old, new)) if u != v]
             key = next((k for k, entry in island.GAMETEXT_ITEM.items() if entry == x[0]), None)
+            if x[0] == brains.TEXT_TRAINER_NAMES:          # the Brains' trainer names appended (brains.trainers())
+                assert len(old) == brains.TRAINER_FIRST and diff == []
+                assert [words_to_text(w) for w in new[len(old):]] == brains.trainer_names()
+                continue
             assert len(old) == len(new) and diff == ([] if key is None else [island.ITEM_PASS])
             if key:
                 assert words_to_text(new[island.ITEM_PASS]) == island.ITEM[factory.LANG[lang]][key]
