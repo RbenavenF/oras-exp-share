@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-libre (último: Claude Code, 2026-11-11 07:10)
+Claude Code, 2026-11-11 07:30 (tareas de la alfa)
 
 ## Instalaciones
 
