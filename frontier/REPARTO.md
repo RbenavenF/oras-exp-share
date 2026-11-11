@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-libre (último: frontier-orch, 2026-11-11 01:13)
+Claude Code, 2026-11-11 06:50 (arreglos de la integración paralela)
 
 ## Instalaciones
 
