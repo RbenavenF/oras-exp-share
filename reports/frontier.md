@@ -2909,3 +2909,44 @@ cambio de overlay. Consulta y diálogo propio de derrota siguen pendientes;
 BASE solo aporta cuatro líneas por instalación, ya ocupadas. Para añadirlos
 el integrador debe reservar líneas o ampliar la API común, sin ocupar líneas
 no registradas desde el carril. Consola no probada.
+
+### 40.1. Textos propios, consulta y Azahar (2026-11-12, Claude)
+
+Textos añadidos por esta tarea (commit 10fb540), sin renumerar los de BASE: segundo bloque del texto 637 desde
+`line_base() + 28` (**líneas 1100–1127**, 4 por ruta: `lost`, `symbol_none`, `symbol_silver`, `symbol_gold`,
+`brains.MORE_KEYS`). `brains_lost` sustituye al `WorkSet(16730, 0)` del camino de derrota (0x2210) en todos los
+clones de 517: si el Cerebro de la ruta actual estaba pendiente dice su línea **una vez** antes de que se guarde la
+derrota y pone 16730 = 0; sin Cerebro no hace nada más que la limpieza. Consulta: `brains.symbols_option` añade
+«Símbolos» (texto 619 **línea 190**, valor **5**) antes de «No quiero nada» en la recepción; `brains_symbols` lee
+16729 de la ruta (2 se lee como oro) y la recepcionista dice «Aún no tienes / Tienes … de plata / de oro»;
+vuelve al menú como las opciones de información. Solo conectada en la Fábrica; las otras tareas la conectan con
+una llamada. ZO 213: **16804** ≤ 17248. Reservas registradas en REPARTO (líneas, valor, extremo 0xf0978).
+
+Azahar, carril claude (puerto 24690), v0.5 + build del carril. Partidas de `factory_fixture.py` desde
+`work/frontier/lab/f6td_factory_paused1.sav` (bc3c35e7…): racha 20 `fixture20.sav` (fa94a95d…) y racha 41 con
+plata `fixture41.sav` (7ee309db…). Sonda `lab_probe.py --directory work/frontier/cerebros/factory`, asistencia
+solo en copias de combate. Evidencia en `work/frontier/cerebros/factory/` (no en Git).
+
+| Prueba | Build | Resultado medido | Evidencia |
+| --- | --- | --- | --- |
+| Plata, racha 20 | 4f1976a | «Soy Noland, Cerebro del Frente de la Fábrica Batalla», modelo de científico; «¡El Científico Noland te desafía!»; entrenador 129; PK6 Octillery/Grumpig/Persian, IV 15, amistad 0, conjunto/EV = generador (`check_team.py --factory-fixture`, rc 0); victoria raw 1; rival registrado 16433–16435 = 191/202/207 | `shots/silver-*.png`, `silver-team.json`, `run1/`, `run2/gdb.log` |
+| Guardado y recarga | 4f1976a | ronda nueva sin intercambio tras el 21; combate 22 ganado e intercambio ordinario; Pausar → `silver-paused23.sav` (bf1a641c…): símbolos **1**, PB **0 → 14** (10 + 4 de ronda), racha/récord 22, equipo intacto (hash 2d97e5df…). Recarga: reanuda en el 23 con entrenador 101, 16729 = 1, 16730 = 0 | `run2/`, `run3/gdb.log`, `shots/reload-battle23.png` |
+| Oro, racha 41: equipo y derrota | 4f1976a | «Has vuelto a llegar hasta mí…», entrenador 130, Nidoking/Politoed/Walrein IV 31 (`gold-team.json`, rc 0); derrota raw 0 → ruta/racha/activo/pendiente 0, símbolo plata conservado, PB 0, equipo intacto (`gold-after-loss.sav` 1f815c63…) | `run3/`, `shots/gold/`, `shots/loss/` |
+| Consulta | 10fb540 | «Símbolos» en el menú; «Aún no tienes…» (símbolos 0), «…de plata» (1), «…de oro» (3); vuelve al menú | `shots/v2/menu.png`, `consult-none/silver/gold.png` |
+| Oro ganado | 10fb540 | victoria raw 1; «¡Has obtenido el Símbolo Conocimiento de oro! Recibes 10 PB más.»; ronda nueva sin intercambio; Pausar → `gold-won-paused43.sav` (191ea5bc…): símbolos **3**, PB **0 → 15** (10 + 5), racha/récord 42 | `shots/v2/gw*.png`, `run4/gdb.log` |
+| Derrota de plata | 10fb540 | «¡Buen combate! Pero aún te queda mucho por aprender. Te espero de nuevo en la Fábrica Batalla.» una vez; después ruta/racha/activo/pendiente 0, símbolos 0, PB 0 (`silver-after-loss.sav` 464abd9f…) | `shots/v2/lost-*.png`, `run5/gdb.log` |
+
+La línea de plata ganada no se capturó (se pasó con A en la primera sesión); su premio sí: PB +10 y símbolo
+en el guardado. Regresión con la build 10fb540 (DllField 3122308f…, DllBattle 3ea58b39…, code.ips f64e527c…),
+caso **b** (DllField y la ruta común de derrota) y **c** (overlay.py), en `regression/`:
+
+| Prueba | Resultado |
+| --- | --- |
+| Palacio (`pa_paused7.sav`, 012e718b…) | marca 0x40000000, entrenador 30, derrota raw 0, ruta/racha/activo 0, sin línea ni símbolo (`palace-gdb.log`, `palace-end.png`) |
+| Arena (`ar_paused9.sav`, 093ed149…) | marca 0x80000000, entrenador 49, derrota raw 0, limpieza a 0, sin línea ni símbolo (`arena-gdb.log`, `arena-end.png`) |
+| Tubo (`pk_cx_lastroom_fixture.sav`, 1477e9ee…) | ruta 6, sala 14, el segundo entra con PS 90 conservados; victoria raw 1; racha 13 → 14, activo 1, «¿Qué puerta eliges?» (`pike-gdb.log`, `pike-end.png`) |
+| Historia (`work/frontier/pkg/saves/s0_reserve.sav`, 9966ec53…) | Wurmple salvaje Nv. 3 contra Torchic Nv. 12, sin asistencia, derrotado y regreso al campo (`story-*.png`); works no medidos (la sonda no pasa por ese camino) |
+| Plaza | desde la recepción de 213 salida a la plaza y reentrada (`plaza-exit.png`, `plaza-reenter.png`) |
+
+**No probado:** consola; oro en Azahar con la build 4f1976a (sí con 10fb540); revancha 63 (VM); PB medidos en
+RAM durante el combate (solo en el guardado); dificultad real sin asistencia; inglés en el juego.

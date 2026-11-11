@@ -40,3 +40,11 @@ queda sin ventana en Qt/D-Bus, un bus de sesión privado permitió arrancar (`db
 En la configuración del perfil, `use_gdbstub=true` necesita también `use_gdbstub\default=false`. Borrar solo el
 framebuffer del laboratorio **después de reap y antes del nuevo Xvfb** evita capturas de un inode anterior.
 Terminar siempre con `python scripts/azahar_lab.py reap` en el conductor que posee el laboratorio.
+
+## Fábrica (Noland, F8-CEREBRO-FABRICA)
+
+`factory_fixture.py SOURCE --sha256 H --streak 20|41 --output work/...sav` crea la copia (fuente pausada en 213).
+`lab-start.sh` (variables `BUILD`, `FIXTURE`, `PROBE`) instala v0.5 + build y arranca con GDB y la sonda;
+`k.sh` pulsa teclas (a=A s=B g/t/f/h abajo/arriba/izquierda/derecha); `snap.py NOMBRE` copia el guardado del
+laboratorio y resume ruta, racha, símbolos, PB (0x4230) y hash del equipo. `check_team.py DIR --variant
+silver|gold --factory-fixture FIXTURE.json` compara los PK6 con el generador. Resultados: `reports/frontier.md` §40.1.

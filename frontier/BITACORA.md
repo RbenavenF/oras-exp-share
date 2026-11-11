@@ -2830,3 +2830,33 @@ Integrador: actualizar extremo de blob de BASE en REPARTO a 0xf0978. No probado 
 consulta/derrota propias pendientes de extensión de textos reservada por integrador.
 Siguiente paso: Azahar plata ganada y símbolo guardado/recargado, oro o derrota y regresión b;
 plaza/puerta Fábrica por overlay. Completar consulta y derrota sin ocupar líneas sin reserva; mantener in_progress.
+
+## 2026-11-12 00:01 — Claude Code (Opus 5.5) — F8-CEREBRO-FABRICA hito 2: textos propios, Azahar y regresión
+Estado: hecho
+Hecho:
+- Relevo: Codex se cortó tras 4f1976a (fixture, check_team, tests); árbol limpio salvo tres ayudas de laboratorio sin
+  seguimiento de mi sesión de BASE (`k.sh`, `lab-start.sh`, `probe.gdb`), que se completan y se añaden. Nada a medias.
+- Criterios de `propuestas/cerebros.json` (mandan): faltaban textos de derrota y consulta. `brains.py`: segundo
+  bloque del texto 637 (líneas 1100–1127, 4 por ruta), `brains_lost` en el camino de derrota (línea una vez y
+  16730 = 0), `brains_symbols` + `symbols_option` («Símbolos», texto 619 línea 190, valor 5), conectado solo en
+  la Fábrica. Reservas y extremo del blob (0xf0978) anotados en REPARTO (el turno no se toca).
+- Azahar completo de Noland (plata, guardado/recarga, oro con equipo, oro ganado, derrotas, consulta) y regresión
+  b+c: tablas en `reports/frontier.md` §40.1. README de la sonda ampliado; `snap.py` nuevo.
+Evidencia:
+- `env -u ORCH_LANE python -m pytest -q tests`: 1224 passed, 1 skipped (`work/frontier/cerebros/factory/tests-final.log`).
+  Nuevos: derrota dice la línea una vez (Torre/Fábrica), consulta 0/1/2/3, menú y despacho; actualizados los de
+  menú, textos 619 y derrota de la Fábrica.
+- Plata (racha 20): entrenador 129, PK6 = generador (IV 15, amistad 0), victoria, `silver-paused23.sav` símbolos 1,
+  PB 0→14; recarga a combate 23 con 16729 = 1. Oro (racha 41): entrenador 130, IV 31; derrota limpia (plata
+  conservada); victoria con línea de oro, `gold-won-paused43.sav` símbolos 3, PB 0→15; cierre de ronda sin cambio.
+  Derrota con la línea nueva y limpieza total. Hashes y capturas en §40.1 y `work/frontier/cerebros/factory/`.
+- Regresión: Palacio (0x40000000, derrota), Arena (0x80000000, derrota), Tubo (sala 14 ganada, racha 13→14),
+  historia (Wurmple salvaje), plaza salida/entrada. Laboratorio parado (reap, `use_gdbstub=false`).
+Commits: 10fb540 (textos, consulta, ayudas), el de esta entrada (informe, REPARTO, bitácora).
+Decisiones: bloque nuevo tras 1099 en vez de cambiar el paso de 4 líneas por ruta (no renumera BASE/Anabel); consulta
+  como opción del menú de recepción del diseño §3, no NPC; línea de derrota dicha por el script tras el combate
+  (el Cerebro no está en pantalla). Plata ganada/guardado/recarga y oro-derrota con la build 4f1976a; el resto con
+  10fb540 (solo añade script/textos). Regresión b y c según la política, sin circuito completo.
+No probado: consola; captura de la línea de plata ganada (PB y símbolo sí); revancha 63 en Azahar (VM sí); inglés.
+Siguiente paso: el orquestador integra el carril y pasa la suite; F8-CEREBRO-FABRICA hecho. Las demás instalaciones
+  conectan «Símbolos» con `brains.symbols_option` en sus tareas.
