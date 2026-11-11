@@ -203,7 +203,7 @@ def test_reception_entries(game):
     add = s32(gf_hash('ListMenuAdd'))
     menu = [ins[i - 1].args[0] for i, x in enumerate(ins) if labels['L14f4'] <= x.address < labels['L1634']
             and x.op == OP['SYSREQ_N'] and names[x.args[0]] == add]
-    assert menu == [53, 54, 74, factory.LINE_OPTION, 55]
+    assert menu == [53, 54, 74, factory.LINE_OPTION, factory.LINE_SYMBOLS, 55]   # «Symbols»: brains.symbols_option
     work_set = s32(gf_hash('WorkSet'))
     clears = [x.address for i, x in enumerate(ins) if x.op == OP['SYSREQ_N'] and names[x.args[0]] == work_set
               and ins[i - 1].args == [fp.WORK_IV] and ins[i - 2].args == [0]]

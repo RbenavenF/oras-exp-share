@@ -198,10 +198,16 @@ ENTRY = 4 + 3 * 8
 # --- text 637 -----------------------------------------------------------------------------------------------------
 
 KEYS = ('intro_silver', 'intro_gold', 'won_silver', 'won_gold')
+# Second block, after the 4 * ROUTES lines of KEYS (added by F8-CEREBRO-FABRICA, so the lines above keep their numbers):
+# the Brain's line when it wins (the player lost) and the receptionist's answer to «Symbols» by the route's symbols.
+MORE_KEYS = ('lost', 'symbol_none', 'symbol_silver', 'symbol_gold')
+MORE = len(KEYS) * ROUTES     # first line of MORE_KEYS from line_base()
+LINE_SYMBOLS_OPTION = {'es': 'Símbolos', 'en': 'Symbols'}   # reception menu entry (text 619, factory.LINE_SYMBOLS)
+MENU_SYMBOLS = 5              # its menu value (retail 0-3, the Factory's 4)
 
 
 def lines(lang):
-    """Text 637 lines of the Brains, from LINE_BASE: KEYS per route 1..7."""
+    """Text 637 lines of the Brains, from LINE_BASE: KEYS per route 1..7, then MORE_KEYS per route 1..7."""
     code = factory.LANG[lang]
     out = []
     for route in range(1, ROUTES + 1):
@@ -217,6 +223,19 @@ def lines(lang):
                     f"You made it to me again.\nI'm {name}. This time I'll battle\nwith everything I have!",
                     f'You obtained the silver\n{symbol} Symbol! You get {fd.BRAIN_BONUS} more BP.',
                     f'You obtained the gold\n{symbol} Symbol! You get {fd.BRAIN_BONUS} more BP.']
+    for route in range(1, ROUTES + 1):
+        f = patch.STREAK_ROUTES[route][0]
+        name, symbol, place = NAMES[f], SYMBOL[code][f], FACILITY[code][f]
+        if code == 'es':
+            out += [f'¡Buen combate! Pero aún te queda\nmucho por aprender. Te espero\nde nuevo en {place}.',
+                    f'Aún no tienes el Símbolo {symbol}\nde {place}.',
+                    f'Tienes el Símbolo {symbol} de plata\nde {place}.',
+                    f'Tienes el Símbolo {symbol} de oro\nde {place}.']
+        else:
+            out += [f'A good battle! But you still have\nmuch to learn. I will be waiting\nfor you at {place}.',
+                    f"You don't have the {symbol} Symbol\nof {place} yet.",
+                    f'You have the silver {symbol} Symbol\nof {place}.',
+                    f'You have the gold {symbol} Symbol\nof {place}.']
     return out
 
 
@@ -431,7 +450,84 @@ def intro_routine(p):
     r.ret()
 
 
-BOSS_CHECK = 'L451c'          # (rank, wins + 1) -> 1 at the Maison's boss battle (20 Normal, 50 Super)
+def lost_routine(p):
+    """brains_lost(): on the lost-battle path, the Brain's line when it was due on the current route; WORK_BRAIN = 0."""
+    r = factory.Routine(p, 'brains_lost', ['b', 'route', 'm'])
+    done = r.new_label('done')
+    r.sysreq('WorkGet', WORK_BRAIN)
+    r.store('b')
+    r.op('JZER', done)
+    r.sysreq('WorkGet', patch.WORK_ROUTE)
+    r.store('route')
+    r.load('b')
+    r.const_alt(7)
+    r.op('AND', 0)
+    r.load_alt('route')
+    r.op('JNEQ', done)
+    r.load('route')                          # MORE + 4 * (route - 1) + 0
+    r.op('SMUL_P_C', 4)
+    r.add(MORE - 4)
+    r.store('m')
+    r.sysreq('WorkSet', WORK_MSG, 'm')
+    r.sysreq('GlobalCall', GLOBAL_SAY)
+    r.p.label(done)
+    r.sysreq('WorkSet', WORK_BRAIN, 0)
+    r.op('ZERO_PRI', 0)
+    r.ret()
+
+
+def symbols_routine(p, facility):
+    """brains_symbols(): the receptionist says which of `facility`'s symbols the player has (2 read as 3)."""
+    route = route_of(facility)
+    r = factory.Routine(p, 'brains_symbols', ['s'])
+    one = r.new_label('one')
+    r.sysreq('WorkGet', WORK_SYMBOLS)
+    if route > 1:
+        r.op('SHR_P_C_PRI', 2 * (route - 1))
+    r.const_alt(3)
+    r.op('AND', 0)
+    r.store('s')
+    r.op('SHR_P_C_PRI', 1)
+    r.op('JZER', one)
+    r.const(2)                               # 2 or 3: gold
+    r.store('s')
+    r.p.label(one)
+    r.load('s')
+    r.add(MORE + 4 * (route - 1) + 1)
+    r.store('s')
+    r.sysreq('WorkSet', WORK_MSG, 's')
+    r.sysreq('GlobalCall', GLOBAL_SAY)
+    r.op('ZERO_PRI', 0)
+    r.ret()
+
+
+def symbols_option(p, facility, line):
+    """«Symbols» in a zone 517 clone's reception menu (text 619 line `line`, value MENU_SYMBOLS), before the last
+    entry («Nothing»); choosing it says brains_symbols and goes back to the menu, as the information options."""
+    start, native = factory._index(p, 'L14f4'), p.native('ListMenuAdd')
+    adds = [i for i in range(start, factory._index(p, factory.RECEPTION_RESULT)) if isinstance(p.items[i], Op)
+            and p.items[i].op == OP['SYSREQ_N'] and p.items[i].args[0] == native]
+    last = adds[-1]
+    first = last
+    while not (isinstance(p.items[first - 1], Op) and p.items[first - 1].op == OP['SYSREQ_N']):
+        first -= 1                           # back to the last entry's first push
+    p.items[first:first] = _ops(p, lambda b: b.sysreq('ListMenuAdd', line, MENU_SYMBOLS, 0))
+    at = factory._index(p, factory.RECEPTION_RESULT)
+
+    def dispatch(b):
+        b.emit('LOAD_P_S_PRI', -12)
+        b.emit('EQ_P_C_PRI', MENU_SYMBOLS)
+        b.emit('JZER', 'brains_symbols_not_chosen')
+        b.call('brains_symbols')
+        b.emit('CONST_S', factory.RECEPTION_AGAIN, 1)
+        b.emit('JUMP', factory.RECEPTION_NEXT)
+        b.label('brains_symbols_not_chosen')
+    p.items[at + 1:at + 1] = _ops(p, dispatch)
+    symbols_routine(p, facility)
+    return p
+
+
+BOSS_CHECK = 'L451c'         # (rank, wins + 1) -> 1 at the Maison's boss battle (20 Normal, 50 Super)
 CHOOSE = 'L2b98'              # chooses (SetTrainer through 0x132c) and places the rival
 PRESENT = 'L4338'             # presentation: walk-in and the trainer's start message
 START_MSG = 'BattleInst_GetBattleStartMsgId'
@@ -488,16 +584,18 @@ def install(p):
     p.items[calls[0]:calls[0]] = _ops(p, lambda b: b.call('brains_won'))
     # Lost battle (before anything is saved) and cleanup: just after the facility's own «challenge over» WorkSet.
     work_set = p.native('WorkSet')
-    for label in (factory.LOST, factory.CLEANUP):
+    for label, ops in ((factory.LOST, lambda b: b.call('brains_lost')),
+                       (factory.CLEANUP, lambda b: b.sysreq('WorkSet', WORK_BRAIN, 0))):
         at = factory._index(p, label)
         first = next(i for i in range(at, len(p.items)) if isinstance(p.items[i], Op)
                      and p.items[i].op == OP['SYSREQ_N'])
         if p.items[first].args[0] != work_set:
             raise ValueError(f'{label}: the facility\'s WorkSet is not its first native')
-        p.items[first + 1:first + 1] = _ops(p, lambda b: b.sysreq('WorkSet', WORK_BRAIN, 0))
+        p.items[first + 1:first + 1] = _ops(p, ops)
     check_routine(p)
     won_routine(p)
     intro_routine(p)
+    lost_routine(p)
     return p
 
 

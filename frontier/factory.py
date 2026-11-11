@@ -65,6 +65,7 @@ LINE_S = LINE_N + NORMAL_LINES
 # Text 619 line after LINE_OPTION: the refusal every facility reception shows while another facility has a
 # challenge in progress (patch.ACTIVE_WORK; frontier/REPARTO.md). Zone 517's clones keep text 619.
 LINE_BUSY = TEXT_LINES + 1
+LINE_SYMBOLS = TEXT_LINES + 2     # «Symbols» (brains.LINE_SYMBOLS_OPTION) in the Factory's reception menu
 BUSY = {'es': 'Tienes un desafío a medias en otra instalación.\nTermínalo antes de empezar otro.',
         'en': 'You have a challenge in progress at another facility.\nPlease finish it there first.'}
 MENU_FACTORY = 4                 # value of the new reception menu entry

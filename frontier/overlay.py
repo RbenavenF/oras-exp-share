@@ -81,6 +81,7 @@ def maison_program(script):
     p.items[entry + 2:entry + 2] = body.items
     factory.reception(p)
     brains.install(p)                 # route 1 Noland; route 0 keeps the Maison flow
+    brains.symbols_option(p, 'factory', factory.LINE_SYMBOLS)   # «Symbols»: Noland's symbol
     return p
 
 
@@ -125,7 +126,9 @@ def texts(romfs, sets, table):
         spec = {'path': path, 'texts': [{'entry': factory.TEXT_ZONE, 'line': factory.TEXT_LINES, 'append': True,
                                          'after': factory.OPTION[code]},
                                         {'entry': factory.TEXT_ZONE, 'line': factory.LINE_BUSY, 'append': True,
-                                         'after': factory.BUSY[code]}]}
+                                         'after': factory.BUSY[code]},
+                                        {'entry': factory.TEXT_ZONE, 'line': factory.LINE_SYMBOLS, 'append': True,
+                                         'after': brains.LINE_SYMBOLS_OPTION[code]}]}
         spec['texts'] += [{'entry': island.TEXT_HARBOR, 'line': line, 'append': True, 'after': text}
                           for line, text in zip(sailor, island.SAILOR[code])]
         spec['texts'] += [{'entry': island.FERRY_TEXT, 'line': island.FERRY_TEXT_LINES + k, 'append': True,

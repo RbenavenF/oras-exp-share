@@ -133,8 +133,14 @@ def test_trainers_and_rows():
 def test_texts():
     for lang in factory.STORYTEXT:
         lines = brains.lines(lang)
-        assert len(lines) == len(brains.KEYS) * brains.ROUTES
+        assert len(lines) == (len(brains.KEYS) + len(brains.MORE_KEYS)) * brains.ROUTES
+        assert all(len(row) <= 44 for line in lines for row in line.split('\n')) and all(line.count('\n') <= 2
+                                                                                        for line in lines)
     es = brains.lines(7)
+    assert brains.MORE == 4 * brains.ROUTES
+    more = brains.MORE                                       # route 1, the Factory
+    assert 'Fábrica' in es[more] and 'Aún no' in es[more + 1] and 'Conocimiento' in es[more + 1]
+    assert 'plata' in es[more + 2] and 'oro' in es[more + 3] and 'Habilidad' in es[more + 4 + 3]
     assert 'Anabel' in es[4 * 1] and 'Habilidad' in es[4 * 1 + 2] and 'plata' in es[4 * 1 + 2]
     assert 'oro' in es[4 * 1 + 3] and '10 PB' in es[4 * 1 + 3]
 
@@ -237,6 +243,56 @@ def test_intro(scripts):
         assert (result, log) == ((1, [(brains.GLOBAL_SAY, said)]) if said is not None else (0, []))
 
 
+@pytest.mark.parametrize('facility', ['tower', 'factory'])
+def test_lost_says_the_brains_line_once(scripts, facility):
+    script, labels = scripts[facility]
+    for brain, route, said in ((1 + 8, 1, brains.MORE), (1 + 16, 1, brains.MORE), (2 + 16, 2, brains.MORE + 4),
+                               (0, 1, None), (2 + 8, 1, None), (1 + 8, 0, None)):
+        works = {fp.WORK_ROUTE: route, brains.WORK_BRAIN: brain, brains.WORK_SYMBOLS: 0x15}
+        log = []
+        stubs = natives({'WorkGet': lambda vm, a: works.get(a[0], 0),
+                         'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
+                         'GlobalCall': lambda vm, a: log.append((a[0], works[brains.WORK_MSG]))})
+        VM(script, stubs, {}).run(labels['brains_lost'])
+        assert log == ([(brains.GLOBAL_SAY, said)] if said is not None else [])
+        assert works[brains.WORK_BRAIN] == 0 and works[brains.WORK_SYMBOLS] == 0x15   # no symbol, no prize
+
+
+def test_factory_symbols_consult(scripts):
+    script, labels = scripts['factory']
+    route = fp.ROUTE['factory']
+    for word, k in ((0, 1), (1, 2), (3, 3), (2, 3), (0x3FFC, 1), (0x3FFD, 2), (0x5557, 3)):
+        works = {brains.WORK_SYMBOLS: word}
+        log = []
+        stubs = natives({'WorkGet': lambda vm, a: works.get(a[0], 0),
+                         'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
+                         'GlobalCall': lambda vm, a: log.append((a[0], works[brains.WORK_MSG]))})
+        VM(script, stubs, {}).run(labels['brains_symbols'])
+        assert log == [(brains.GLOBAL_SAY, brains.MORE + 4 * (route - 1) + k)], word
+        assert works[brains.WORK_SYMBOLS] == word
+
+
+def test_factory_symbols_menu_entry(scripts):
+    script, labels = scripts['factory']
+    ins = decode(script.code)
+    names = {i: h for i, (_, h) in enumerate(script.natives)}
+    add = s32(gf_hash('ListMenuAdd'))
+    entries = [(ins[j - 1].args[0], ins[j - 2].args[0]) for j, x in enumerate(ins)
+               if x.op == OP['SYSREQ_N'] and names[x.args[0]] == add and labels['L14f4'] < x.address
+               < labels[factory.RECEPTION_RESULT]]
+    assert entries == [(53, 0), (54, 1), (74, 2), (factory.LINE_OPTION, factory.MENU_FACTORY),
+                       (factory.LINE_SYMBOLS, brains.MENU_SYMBOLS), (55, 3)]
+    # value 5 calls brains_symbols and goes back to the menu, ahead of every other value
+    k = next(j for j, x in enumerate(ins) if x.address == labels[factory.RECEPTION_RESULT])
+    assert [ins[k + j].op for j in (0, 1, 2, 4)] == [OP['LOAD_P_S_PRI'], OP['EQ_P_C_PRI'], OP['JZER'],
+                                                 OP['CALL']]
+    assert ins[k + 2].args[0] and ins[k + 1].args == [brains.MENU_SYMBOLS]
+    assert ins[k + 4].address + ins[k + 4].args[0] == labels['brains_symbols']
+    assert ins[k + 5].op == OP['CONST_S'] and ins[k + 5].args == [factory.RECEPTION_AGAIN, 1]
+    assert ins[k + 6].op == OP['JUMP'] and ins[k + 6].address + ins[k + 6].args[0] == labels[factory.RECEPTION_NEXT]
+    assert 'brains_symbols' not in scripts['tower'][1]       # other receptions connect theirs in their own tasks
+
+
 @pytest.mark.parametrize('facility', ['tower', 'palace', 'arena', 'pike', 'dome', 'factory'])
 def test_maison_boss_check_is_off_on_frontier_routes(scripts, facility):
     script, labels = scripts[facility]
@@ -263,11 +319,12 @@ def test_install_points(scripts):
                and names[x.args[0]] == s32(gf_hash(brains.START_MSG)))
     assert ins[msg - 2].op == OP['JNZ'] and ins[msg - 3].op == OP['CALL']
     assert ins[msg - 3].address + ins[msg - 3].args[0] == labels['brains_intro']
-    # WORK_BRAIN = 0 on the lost path and in the cleanup
+    # brains_lost (its line, WORK_BRAIN = 0) on the lost path; WORK_BRAIN = 0 in the cleanup
     work_set = s32(gf_hash('WorkSet'))
     clears = [x.address for j, x in enumerate(ins) if x.op == OP['SYSREQ_N'] and names[x.args[0]] == work_set
               and ins[j - 1].args == [brains.WORK_BRAIN] and ins[j - 2].args == [0]]
-    assert any(labels[factory.LOST] < a < labels[factory.LOST] + 0x30 for a in clears)
+    lost = [x.address for x in ins if x.op == OP['CALL'] and x.address + x.args[0] == labels['brains_lost']]
+    assert len(lost) == 1 and labels[factory.LOST] < lost[0] < labels[factory.LOST] + 0x30
     assert any(labels[factory.CLEANUP] < a < labels[factory.CLEANUP] + 0x40 for a in clears)
 
 

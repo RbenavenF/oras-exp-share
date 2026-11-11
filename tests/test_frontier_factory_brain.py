@@ -117,7 +117,10 @@ def test_factory_loss_clears_pending_before_retail_streak_cleanup(scripts, varia
         raise Stop
 
     stubs = {h: lambda vm, a: pytest.fail(f'Unexpected loss native {h}') for _, h in script.natives}
+    said = []
     stubs.update(base.natives({'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
+                               'WorkGet': lambda vm, a: works.get(a[0], 0),
+                               'GlobalCall': lambda vm, a: said.append((a[0], works[brains.WORK_MSG])),
                                'GetMyWinCount': lambda vm, a: works[patch.WORK_FSTREAK],
                                'ClearWinCount': clear}))
     with pytest.raises(Stop):
@@ -125,3 +128,4 @@ def test_factory_loss_clears_pending_before_retail_streak_cleanup(scripts, varia
                            labels['L3fdc']: lambda vm, a: 0,
                            labels['L30']: lambda vm, a: pytest.fail('No BP on a loss')}).run(labels[factory.LOST])
     assert reached == ['ClearWinCount']
+    assert said == [(brains.GLOBAL_SAY, brains.MORE)]       # Noland's line, once, before the loss is saved
