@@ -2568,3 +2568,32 @@ Decisiones: sustituir estimaciones iniciales por estado y pendientes comprobados
   builds ni laboratorio; consola no probada. Turno y tasks.json intactos; estado final en work/lane-task.json.
 Siguiente paso: el orquestador integra el commit y pasa aceptación en main. Continuar F7-PAQUETE con su dueño;
   después, prueba en consola con el usuario y tareas pendientes de F5 y de cada instalación listadas en PLAN.
+## 2026-11-11 14:00 — Claude Code (Opus 5.5) — frontier-orch sin parar (rama orch-nonstop)
+Estado: en curso (rama `orch-nonstop` en un worktree aparte; la tanda paralela tiene el turno en main)
+Hecho: a petición del usuario («que no se quede parado; poder pararlo al acabar la tarea para un checkpoint»):
+- `auto --follow`: modo paralelo sin fin; un carril ocioso espera tareas (bandeja `work/orch/inbox`, cada
+  `poll_minutes`) o el fin de una cuota; los bloqueos no paran al resto; con un carril ocupado, el otro mira la
+  bandeja cada `busy_poll_seconds`.
+- Cola: `owner: "any"` (primer carril libre), `after` (dependencias), la tarea en curso sigue en su carril
+  (`state.lane_of`) salvo que su agente esté sin cuota.
+- Control mientras corre: `add FILE.json` (validado con `check_task`; el supervisor lo integra con commit),
+  `drain` (terminar las tareas en curso y salir), `stop` (terminar las ejecuciones en curso y salir), `resume`.
+- README del orquestador; `status` con banderas, bandeja y dependencias.
+Evidencia: en el worktree, `tests/test_frontier_orch.py` 62 passed ×3 (13 nuevos: any, after, bandeja con
+`--follow`, bloqueo que no para, fichero rechazado, drain, stop, check_task, CLI); suite completa 1087 passed,
+2 skipped.
+Sin probar: con agentes reales; una noche entera.
+Siguiente paso: cuando la tanda actual suelte el turno, integrar, encolar las tareas siguientes y lanzar
+`auto --follow`.
+
+## 2026-11-11 14:10 — Claude Code (Opus 5.5) — política de regresión y cola (rama orch-nonstop)
+Estado: en curso (rama sin integrar)
+Hecho: a petición del usuario («no necesitamos tanto tiempo de emulador»), política de regresión en el `brief` de
+`config.json` y en el README del orquestador: la suite siempre (y al integrar); en Azahar solo lo que el cambio
+puede romper (una instalación; motor → Palacio, Arena, Tubo y un combate normal; isla → plaza y puertas); el
+recorrido completo solo en un paquete para la consola. Cola de 12 tareas lista para `frontier-orch add` en
+`frontier/orch/cola/cola-2026-11-11.json` (F7-VIDEO, diseño y base de los Cerebros, siete Cerebros, diseño de
+modalidades y de personalidad), con criterios reescritos según la política.
+Evidencia: `tests/test_frontier_orch.py` 62 passed; las 12 tareas pasan `check_task`.
+Siguiente paso: integrar la rama al acabar la tanda; `frontier-orch add frontier/orch/cola/cola-2026-11-11.json`;
+`auto --follow`.

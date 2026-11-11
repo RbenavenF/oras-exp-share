@@ -7,6 +7,9 @@
     frontier/orch/frontier-orch release   give the turn back (after a crash of the supervisor itself)
     frontier/orch/frontier-orch auto --parallel   one lane per agent, both at once (see «Parallel lanes» below)
     frontier/orch/frontier-orch lanes setup|remove   create or delete the lanes' git worktrees
+    frontier/orch/frontier-orch auto --follow     non-stop parallel: idle lanes wait for work instead of exiting
+    frontier/orch/frontier-orch add FILE.json     queue tasks while it runs (inbox)
+    frontier/orch/frontier-orch drain|stop|resume finish the tasks (drain) or runs (stop) in hand and exit
 
 The supervisor, not the agents, decides who works: a task's owner when available, else the other agent. An agent
 that hits a usage limit is cooled down and the other one inherits the task, told to inspect the uncommitted state
@@ -67,7 +70,7 @@ class Orch:
         self.work.mkdir(parents=True, exist_ok=True)
         self.out = out or self.say
         self.state = json.loads(self.state_path.read_text()) if self.state_path.exists() else {}
-        for key in ('sessions', 'cooldown', 'no_progress', 'handoff', 'needs_login'):
+        for key in ('sessions', 'cooldown', 'no_progress', 'handoff', 'needs_login', 'lane_of'):
             self.state.setdefault(key, {})
         self.state.setdefault('runs', 0)
         self.lock = threading.RLock()       # parallel lanes: state, tasks.json and the main checkout's git
@@ -395,16 +398,73 @@ class Orch:
                     self.out(f'{branch} has commits that are not in main; branch kept')
             self.out(f'lane {agent} removed')
 
-    def lane_task(self, agent, claimed):
-        """The agent's own open task (in progress first), else one of an agent that is out of quota."""
-        tasks = [t for t in self.tasks() if t['id'] not in claimed]
+    @staticmethod
+    def ready(task, tasks):
+        """A task's `after` (ids) are all done."""
+        done = {t['id'] for t in tasks if t['status'] == 'done'}
+        return all(dep in done for dep in task.get('after', []))
+
+    def lane_task(self, agent, claimed, draining=False):
+        """What a lane takes next: its open tasks (in progress first; owner == agent or 'any'), else one of an agent
+        that is out of quota. Only tasks whose `after` are done. Draining: only the task this lane is already on."""
+        everything = self.tasks()
+        tasks = [t for t in everything if t['id'] not in claimed and self.ready(t, everything)]
+        lane_of = self.state['lane_of']
+        if draining:
+            return next((t for t in tasks if t['status'] == 'in_progress' and lane_of.get(t['id']) == agent), None)
         for mine in (True, False):
             for wanted in ('in_progress', 'pending'):
                 for t in tasks:
-                    if t['status'] == wanted and (t['owner'] == agent) == mine and (
-                            mine or not self.available(t['owner'])):
+                    if t['status'] != wanted:
+                        continue
+                    other = lane_of.get(t['id'])
+                    if (wanted == 'in_progress' and other not in (None, agent) and other in self.cfg['agents']
+                            and self.available(other)):
+                        continue        # someone else's work in progress, and that agent can go on with it
+                    own = t['owner'] in (agent, 'any')
+                    if (mine and own) or (not mine and not own and not self.available(t['owner'])):
                         return t
         return None
+
+    # ---- control while running: inbox, drain, stop ---------------------------------------------------------
+    def flag(self, name):
+        return self.work / name
+
+    def ingest_inbox(self):
+        """Tasks dropped in work/orch/inbox/*.json (by `frontier-orch add`) join tasks.json, committed by the
+        supervisor, which holds the turn: the way to queue work while it runs."""
+        inbox = self.work / 'inbox'
+        files = sorted(inbox.glob('*.json')) if inbox.exists() else []
+        if not files:
+            return 0
+        with self.lock:
+            data = json.loads(self.tasks_path.read_text())
+            known, added = {t['id'] for t in data['tasks']}, []
+            for f in files:
+                try:
+                    payload = json.loads(f.read_text())
+                    new = payload.get('tasks', [payload]) if isinstance(payload, dict) else payload
+                    for t in new:
+                        problem = check_task(t, known)
+                        if problem:
+                            raise ValueError(f'{t.get("id")}: {problem}')
+                        t.setdefault('status', 'pending')
+                        for key in ('notes', 'evidence'):
+                            t.setdefault(key, '')
+                        data['tasks'].append(t)
+                        known.add(t['id'])
+                        added.append(t['id'])
+                    dest = inbox / 'done'
+                except (ValueError, json.JSONDecodeError, AttributeError, TypeError) as e:
+                    self.out(f'  inbox: {f.name} refused: {e}')
+                    dest = inbox / 'refused'
+                dest.mkdir(exist_ok=True)
+                f.rename(dest / f.name)
+            if added:
+                self.tasks_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n')
+                self.commit(f'frontier-orch: queue {", ".join(added)} (inbox)', 'frontier/orch/tasks.json')
+                self.out(f'  queued from the inbox: {", ".join(added)}')
+            return len(added)
 
     def lane_snapshot(self, agent):
         head = self.lane_git(agent, 'rev-parse', 'HEAD').stdout.strip()
@@ -504,21 +564,28 @@ class Orch:
                         'frontier/orch/tasks.json')
         self.save_state()
 
-    def auto_parallel(self, max_runs=None):
-        """Both lanes at once until nothing open is left that someone can take. 'done', 'stop' or 'max'."""
-        max_runs = max_runs or self.cfg['max_runs']
+    def auto_parallel(self, max_runs=None, follow=False):
+        """Both lanes at once. Without `follow`: until nothing open is left that someone can take ('done', 'stop' or
+        'max'). With `follow` (non-stop): idle lanes wait for new tasks (inbox) or the end of a cooldown instead of
+        exiting; a blocked task never stops the rest. Either way, `frontier-orch drain` (finish the tasks in hand,
+        take no new ones) and `frontier-orch stop` (finish the runs in hand) end it cleanly."""
+        max_runs = max_runs or (float('inf') if follow else self.cfg['max_runs'])
+        poll = self.cfg['lanes'].get('poll_minutes', 10) * 60
         for agent in list(self.state['needs_login']):
             self.state['cooldown'].pop(agent, None)
         self.state['needs_login'] = {}
         self.take_turn()
+        idle_said = None
         try:
             self.lanes_setup()
             finished, busy, runs = queue.Queue(), {}, 0
             while True:
+                self.ingest_inbox()
+                stopping, draining = self.flag('stop').exists(), self.flag('drain').exists()
                 for agent in self.cfg['lanes']['agents']:
-                    if runs + len(busy) >= max_runs or agent in busy or not self.available(agent):
+                    if stopping or runs + len(busy) >= max_runs or agent in busy or not self.available(agent):
                         continue
-                    task = self.lane_task(agent, set(busy.values()))
+                    task = self.lane_task(agent, set(busy.values()), draining)
                     if task is None:
                         continue
                     resuming = task['status'] == 'in_progress'
@@ -535,34 +602,71 @@ class Orch:
                         continue
                     before = self.lane_snapshot(agent)
                     busy[agent] = task['id']
+                    self.state['lane_of'][task['id']] = agent
+                    idle_said = None
                     threading.Thread(target=lambda a=agent, t=task, r=resuming, b=before:
                                      finished.put((a, t, b, self.lane_run(a, t, r))), daemon=True).start()
-                if not busy:
-                    open_ = [t for t in self.tasks() if t['status'] in ('in_progress', 'pending')]
-                    blocked = any(t['status'] == 'blocked' for t in self.tasks())
-                    if not open_:
-                        self.out('stopped: needs the user' if blocked else 'all tasks done')
-                        return 'stop' if blocked else 'done'
-                    if runs >= max_runs:
-                        self.out(f'stopped after {max_runs} agent runs (max_runs)')
-                        return 'max'
-                    timed = [w for a, w in self.state['cooldown'].items()
-                             if a not in self.state['needs_login'] and w > self.now()]
-                    if not timed:
-                        self.out('stopped: no lane can take the open tasks ('
-                                 + ', '.join(t['id'] for t in open_) + ')')
-                        return 'stop'
-                    wake = min(timed)
-                    self.out(f'  no lane can start; waiting until {time.ctime(wake)}')
-                    self.sleep(max(60, wake - self.now()))
+                if busy:
+                    try:        # wake now and then to take new tasks (inbox) for an idle lane
+                        agent, task, before, result = finished.get(timeout=self.cfg['lanes'].get('busy_poll_seconds', 60))
+                    except queue.Empty:
+                        continue
+                    busy.pop(agent)
+                    runs += 1
+                    self.lane_finish(agent, task, before, result)
                     continue
-                agent, task, before, result = finished.get()
-                busy.pop(agent)
-                runs += 1
-                self.lane_finish(agent, task, before, result)
+                # nobody is working
+                for name in ('stop', 'drain'):
+                    if self.flag(name).exists():
+                        self.flag(name).unlink()
+                        self.out(f'stopped: {name} requested')
+                        return 'stop'
+                open_ = [t for t in self.tasks() if t['status'] in ('in_progress', 'pending')]
+                blocked = [t['id'] for t in self.tasks() if t['status'] == 'blocked']
+                if runs >= max_runs:
+                    self.out(f'stopped after {runs} agent runs (max_runs)')
+                    return 'max'
+                logged_out = [a for a in self.cfg['lanes']['agents'] if a in self.state['needs_login']]
+                if len(logged_out) == len(self.cfg['lanes']['agents']):
+                    self.out('stopped: ' + ', '.join(logged_out) + ' need a login')
+                    return 'stop'
+                if not follow and not open_:
+                    self.out(('stopped: needs the user (' + ', '.join(blocked) + ')') if blocked else 'all tasks done')
+                    return 'stop' if blocked else 'done'
+                timed = [w for a, w in self.state['cooldown'].items()
+                         if a not in self.state['needs_login'] and w > self.now()]
+                if not follow and not timed:
+                    self.out('stopped: no lane can take the open tasks (' + ', '.join(t['id'] for t in open_) + ')')
+                    return 'stop'
+                wake = min(timed + [self.now() + poll]) if follow else min(timed)
+                why = (('waiting for a cooldown' if timed and min(timed) <= wake else 'idle: nothing to take')
+                       + (f'; open: {", ".join(t["id"] for t in open_)}' if open_ else '')
+                       + (f'; blocked for you: {", ".join(blocked)}' if blocked else ''))
+                if why != idle_said:        # once per idle stretch, not every poll
+                    self.out(f'  {why}; next look at {time.ctime(wake)} (add tasks: frontier-orch add FILE.json)')
+                    idle_said = why
+                self.save_state()
+                self.sleep(max(60, wake - self.now()))
         finally:
             self.save_state()
             self.release_turn()
+
+def check_task(task, known=()):
+    """Why a task would be refused, or ''."""
+    if not isinstance(task, dict):
+        return 'not an object'
+    for key in ('id', 'title', 'owner', 'accept'):
+        if not task.get(key):
+            return f'missing {key}'
+    if task['id'] in known:
+        return 'id already in tasks.json'
+    if task['owner'] not in ('claude', 'codex', 'any'):
+        return 'owner must be claude, codex or any'
+    if task.get('status', 'pending') not in ('pending', 'in_progress', 'done', 'blocked'):
+        return 'bad status'
+    if not isinstance(task.get('after', []), list):
+        return 'after must be a list of task ids'
+    return ''
 
 
 def reset_time(message, now):
@@ -622,13 +726,42 @@ def parse(kind, stdout, stderr, code):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('action', choices=['auto', 'once', 'status', 'release', 'lanes'])
-    ap.add_argument('what', nargs='?', choices=['setup', 'remove'], help='for lanes')
+    ap.add_argument('action', choices=['auto', 'once', 'status', 'release', 'lanes', 'add', 'drain', 'stop', 'resume'])
+    ap.add_argument('what', nargs='?', help='lanes: setup or remove; add: a JSON file with a task or {"tasks": [...]}')
     ap.add_argument('--root', default=Path(__file__).resolve().parents[2])
     ap.add_argument('--max-runs', type=int)
     ap.add_argument('--parallel', action='store_true', help='auto: one lane per agent at once (config lanes)')
+    ap.add_argument('--follow', action='store_true',
+                    help='auto --parallel: non-stop; idle lanes wait for new tasks instead of exiting')
     args = ap.parse_args()
     orch = Orch(args.root)
+    if args.action in ('add', 'drain', 'stop', 'resume'):      # talk to a running supervisor (no lock)
+        if args.action == 'add':
+            if not args.what:
+                ap.error('add needs a JSON file')
+            payload = json.loads(Path(args.what).read_text())
+            tasks = payload.get('tasks', [payload]) if isinstance(payload, dict) else payload
+            known = {t['id'] for t in orch.tasks()}
+            for t in tasks:
+                problem = check_task(t, known)
+                if problem:
+                    raise SystemExit(f'refused: {t.get("id") if isinstance(t, dict) else t}: {problem}')
+                known.add(t['id'])
+            inbox = orch.work / 'inbox'
+            inbox.mkdir(exist_ok=True)
+            dest = inbox / f'{time.strftime("%Y%m%d-%H%M%S")}-{Path(args.what).stem}.json'
+            dest.write_text(json.dumps({'tasks': tasks}, indent=2, ensure_ascii=False) + '\n')
+            print(f'queued {", ".join(t["id"] for t in tasks)} ({dest}); a running supervisor takes them in '
+                  'within a minute, else the next auto does')
+        elif args.action == 'resume':
+            for name in ('drain', 'stop'):
+                orch.flag(name).unlink(missing_ok=True)
+            print('drain/stop cancelled')
+        else:
+            orch.flag(args.action).write_text(time.ctime() + '\n')
+            print({'drain': 'drain requested: lanes finish the tasks they are on, take no new ones, then it exits',
+                   'stop': 'stop requested: lanes finish the run in hand, then it exits'}[args.action])
+        return
     if args.action != 'status':     # status only reads, so it works while auto runs
         lock = open(orch.work / 'orch.lock', 'w')
         try:
@@ -637,7 +770,9 @@ def main():
             raise SystemExit('another frontier-orch is running')
     if args.action == 'status':
         for t in orch.tasks():
-            print(f'{t["id"]:14} {t["status"]:11} owner {t["owner"]:6} {t["title"]}')
+            after = [d for d in t.get('after', []) if t['status'] == 'pending']
+            print(f'{t["id"]:14} {t["status"]:11} owner {t["owner"]:6} {t["title"]}'
+                  + (f'  (after {", ".join(after)})' if after else ''))
         for agent in orch.cfg['agents']:
             left = orch.state['cooldown'].get(agent, 0) - orch.now()
             print(f'{agent}: ' + ('needs a login' if agent in orch.state['needs_login'] else
@@ -646,6 +781,12 @@ def main():
         if logs:
             print(f'last run log (tail -f to follow it): {logs[-1]}')
         print(f'turn: {orch.turn()}; runs so far: {orch.state["runs"]}')
+        for name in ('drain', 'stop'):
+            if orch.flag(name).exists():
+                print(f'{name} requested ({orch.flag(name).read_text().strip()})')
+        waiting = sorted((orch.work / 'inbox').glob('*.json')) if (orch.work / 'inbox').exists() else []
+        if waiting:
+            print(f'inbox: {len(waiting)} file(s) waiting')
         for agent in (orch.cfg.get('lanes') or {}).get('agents', {}):
             path = orch.lane_path(agent)
             if (path / '.git').exists():
@@ -664,8 +805,8 @@ def main():
         finally:
             orch.save_state()
             orch.release_turn()
-    elif args.parallel:
-        sys.exit(0 if orch.auto_parallel(args.max_runs) == 'done' else 1)
+    elif args.parallel or args.follow:
+        sys.exit(0 if orch.auto_parallel(args.max_runs, follow=args.follow) == 'done' else 1)
     else:
         sys.exit(0 if orch.auto(args.max_runs) == 'done' else 1)
 
