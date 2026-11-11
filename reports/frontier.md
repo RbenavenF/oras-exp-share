@@ -2495,3 +2495,47 @@ extremas Grosera 88 % y Amable 90 %) en las dos columnas y los bordes de cada um
 Forcejeo. `env -u ORCH_LANE python -m pytest -q tests` → **1066 passed, 1 skipped**
 (`work/frontier/palace/c/tests-c1.log`; con `ORCH_LANE` puesto, 9 tests del orquestador fallan por el entorno del
 carril, no por este cambio).
+
+### Azahar (2026-11-11, laboratorio del carril, puerto 24690)
+
+Build `python frontier/overlay.py --out work/frontier/palace/c-build` (`c/c-build.log`): code.ips f64e527c…,
+DllBattle.cro 3ea58b39…, gancho de code.bin 2544 bytes (sin cambios). Partida `c/c2-gentle.sav` (64e336fd…) =
+`work/frontier/lab/pa_strong.sav` con Metagross **Amable** (alta: 18 % ataque, 70 % defensa, 12 % apoyo; baja:
+90/5/5) y Puño Meteoro (ataque), Defensa Férrea (defensa), Onda Trueno (apoyo), Terremoto (ataque)
+(`frontier/probes/palace/c2_fixture.py`). Sonda pasiva `frontier/probes/palace/lab-c2-probe.gdb`; base de
+DllBattle medida **0x6f3000** (lr − 0x73260 en `palace_ai_flags`).
+
+- **El código del relleno de la CRO se ejecuta**: `palace_moves` (CRO+0xd7630) entra y sale en cada decisión de los
+  dos clientes desde el primer combate (en Azahar; en consola no probado).
+- **Ronda completa del Palacio** (puerta (31,69) → 340 → Combatir → Individual → Metagross/Blaziken/Garchomp →
+  guardado): **7 combates ganados** (`ISWIN raw=1` ×7), `START a8=40000000 palace=1`, menú posterior «Combatir
+  número 8» con Continuar/Pausar (`c/t-after7.png`). Sin cuelgues ni pantallas negras. Registro
+  `c/gdb-palace-round.log`. 48 pulsaciones, todas fuera de decisiones: 27 de menú, 14 de presentación y 7 de
+  frase final del entrenador (`c/presses.log`).
+- **Movimientos elegidos frente a la tabla**: `python frontier/probes/palace/c2_check_log.py
+  work/frontier/palace/c/gdb-palace-round.log` → **68 decisiones del cliente 0, 0 discrepancias**: el grupo sorteado
+  es el de Esmeralda para su naturaleza, pct y columna, y el movimiento elegido estaba entre los que quedaron y era
+  del grupo (13 veces el grupo no tenía ninguno usable: se quedaron los otros y la IA eligió uno de ellos). Amable,
+  48 sorteos en columna alta: 3 ataque, 40 defensa, 5 apoyo (Defensa Férrea mientras era usable; Onda Trueno con
+  pct 88–89); 15 en columna baja: 14 ataque, 1 defensa. Blaziken y Garchomp (Alegre, solo ataques) sacaron apoyo
+  o defensa y se quedaron todos sus movimientos.
+- **Cambio de columna**: combate 1, Metagross de 84/156 (alta, pct 7 → ataque) a **75/156** (75 ≤ 78: baja, pct 38
+  → ataque, que en alta habría sido defensa); combate 3, 28/156 con pct 88 → ataque (umbral 90 de la columna baja).
+  Combate 2 con fixture de RAM `pa['hp_pct']=45`: entra con 70/156, pct 84 → ataque.
+- Cuando Defensa Férrea dejó de figurar como usable en 0xe044 (defensa ya subida; no se midió la causa) y salió
+  defensa, quedaron Puño Meteoro, Onda Trueno y Terremoto y la IA eligió Puño Meteoro: «otro grupo».
+- **El rival** (cliente 1, tipo 1) pasa por `palace_moves` sin filtro en todos los combates (`NOFILTER`).
+
+**Regresiones** (misma build y sonda):
+- **Mansión** (instalación sin motor; se entró por error en la 517 con la misma partida): `START a8=0 palace=0`,
+  solo el cliente 1 con objeto IA, menú de movimientos manual con los del fixture (`c/r-maison-moves.png`), dos
+  decisiones del rival sin filtro; `c/gdb-maison.log`. No se terminó el combate.
+- **Arena** (`c/r-arena-in.sav` = `work/frontier/lab/ar_saved_457.sav`; al cargar, el desafío se invalidó como en
+  retail y se inscribió de nuevo): `START a8=80000000 palace=0 arena=1`, ningún objeto IA para el cliente 0,
+  decisiones manuales (A = Luchar → primer movimiento), rival sin filtro, victoria `ISWIN raw=1` y «combate número
+  2» (`c/ra-after.png`); `c/gdb-arena.log`. El juicio de la Arena no se dio (KO antes del tercer turno).
+- Laboratorio parado al final (sin procesos del carril, sin `session.json`, `use_gdbstub=false`).
+
+**No probado**: consola (ldr:ro y permisos de la región de código de la CRO), el juicio de la Arena con este
+parche, Doble/Multi, la Fábrica/Torre/Tubo/Pirámide/Domo con esta build. «No obedece» y textos, fuera.
+Suite: `env -u ORCH_LANE python -m pytest -q tests` → 1066 passed, 1 skipped (`c/tests-c2.log`).

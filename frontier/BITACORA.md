@@ -2403,3 +2403,20 @@ Siguiente paso: build `python frontier/overlay.py --out work/frontier/palace/c-b
 con partida del Palacio delante de la puerta (`work/frontier/lab/` o las de §33), sonda GDB en CRO+0xd7630/0xd46c
 y en el resultado IA+0x278 (0xd61c); Pokémon de naturaleza marcada, varios turnos, PS < 50 % con fixture;
 regresión Arena y una instalación sin motor.
+
+## 2026-11-11 01:20 — Claude Code (Opus 5.5) — F6-PALACIO-C cerrada: aceptación en Azahar
+Estado: hecho
+Hecho: build c-build y laboratorio del carril (24690). Metagross Amable (fixture c2-gentle.sav): ronda de 7
+victorias sin cuelgues; 68 decisiones del cliente 0 registradas por GDB, todas del grupo sorteado según la tabla
+de Esmeralda (c2_check_log.py: 0 discrepancias; 13 con grupo vacío → otros grupos). Cambio de columna con daño
+real (75/156 → baja) y con fixture de RAM (45 %). Rival sin filtro. Regresiones: Arena (bit 31, manual, victoria)
+y Mansión (manual, sin marca). El código en el relleno de DllBattle.cro se ejecuta en Azahar.
+Evidencia: reports/frontier.md §36 (Azahar); work/frontier/palace/c/: gdb-palace-round.log, gdb-arena.log,
+gdb-maison.log, presses.log, t-after7.png, ra-after.png, r-maison-moves.png, tests-c2.log (1066 passed, 1 skipped
+con `env -u ORCH_LANE`). Sondas en frontier/probes/palace/ (lab-c2-*, c2_fixture.py, c2_check_log.py).
+Commits: 6393218 y el de esta entrada.
+Decisiones: grupo vacío → la IA elige entre todos los usables (de otros grupos); columna baja instantánea (sin la
+fijación de Esmeralda ni la excepción de dormido).
+No probado: consola; juicio de la Arena con este parche; Fábrica/Torre/Tubo/Pirámide/Domo con esta build.
+Siguiente paso: frontier-orch integra lane/claude y pasa la aceptación. Pendientes del Palacio fuera de C: «no
+obedece», textos del entrenador (§33), rival por naturaleza, Doble. Laboratorio parado.

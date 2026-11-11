@@ -26,3 +26,16 @@ Laboratorio de la aceptación B (2026-11-10, `reports/frontier.md` §33), copiad
   `pa['low']=N` pone a 1 PS las N siguientes entradas propias (fixture de RAM, solo laboratorio).
 - `lab-drive.sh`: pulsa A solo fuera del combate o en los textos del entrenador (comandos 1/12) y registra el motivo.
 - `lab-manual_battle.sh`, `lab-until_battle.sh`, `lab-enter.sh`, `lab-regress-start.sh`, `lab-k.sh`: control manual.
+
+Etapa C (2026-11-11, `reports/frontier.md` §36), con rutas relativas a la raíz del carril o checkout:
+- `c2_fixture.py SRC DST NATURALEZA m1,m2,m3,m4`: copia de una partida con el primer Pokémon del equipo con esa
+  naturaleza y esos movimientos (PP base); usado: `pa_strong.sav` → `c2-gentle.sav` (Amable, 309/334/86/89).
+- `lab-c2-start.sh` (`FIXTURE=…`, `BUILD=…`): instala v0.5 + build y arranca con el stub del puerto del carril.
+- `lab-c2-probe.gdb`: sonda pasiva; aprende la base de DllBattle en `palace_ai_flags` (lr − 0x73260) y registra
+  `PALACE FILTER` (naturaleza, pct, PS, columna, grupo, huecos usables que quedan), `PALACE MOVE` (movimiento final
+  de cada cliente, 0xd78c), `NOFILTER` (otros clientes), `ISWIN`. `pa['hp_pct']=P`: la siguiente entrada propia con
+  P % de PS (fixture de RAM). Direcciones de code.bin de la build de §36: recalcular con `patch.assemble()` si cambia.
+- `lab-c2-drive.sh` (`RESULTS=N` o `UNTIL=patrón`): A solo fuera del combate y en los textos del entrenador.
+- `c2_check_log.py LOG`: comprueba cada `FILTER` contra la tabla de Esmeralda y que el movimiento elegido después
+  sea de los que quedaron y del grupo sorteado (o de otro grupo si el sorteado no tenía ninguno usable).
+- `lab-c2-k.sh`: pulsaciones y captura.
