@@ -160,7 +160,7 @@
       "title": "Diseño de los Cerebros del Frente (los siete jefes) y de los símbolos",
       "design": "reports/diseno/ (nuevo: cerebros.md)",
       "accept": "Solo lectura y diseño, sin laboratorio ni código del juego. reports/diseno/cerebros.md con: por instalación, su Cerebro de Esmeralda (Noland, Anabel, Tucker, Spenser, Greta, Lucy, Brandon), en qué combate o racha aparece (plata y oro) y con qué equipo, según pokeemerald (con commit fijado; lo que no se fije, como hipótesis); cómo montarlo en ORAS con lo medido (IsBoss/BattleHouse_SetRibbon de la Mansión, §1; SetTrainer; works de racha de REPARTO; texto 637), qué modelo de entrenador y clase usar, dónde guardar los símbolos (works o flags libres, a asignar en REPARTO) y qué los muestra (p. ej. el recepcionista o un cartel); qué es común a todos (infraestructura) y qué es de cada instalación; riesgos (espacio de code.bin, ~600 bytes) y estimación. Además, frontier/orch/propuestas/cerebros.json con las tareas de implementación listas para `frontier-orch add` (ids F8-CEREBROS-BASE y F8-CEREBRO-<INSTALACIÓN>, owner, after, accept concretos). Tests en verde.",
-      "status": "pending",
+      "status": "in_progress",
       "notes": "",
       "evidence": ""
     },
