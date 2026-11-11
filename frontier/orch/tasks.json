@@ -173,7 +173,7 @@
       "title": "Cerebros: infraestructura común (aparición en la racha, combate de jefe, símbolos)",
       "design": "reports/diseno/cerebros.md",
       "accept": "Lo común del diseño cerebros.md: works/flags de símbolos asignados en REPARTO; el combate de jefe aparece en la racha que marca el diseño en una instalación de prueba (la Torre), con su entrenador, presentación y equipo; al ganarlo se guarda el símbolo de plata u oro; al perderlo, la racha se limpia como siempre. Si propuestas/cerebros.json trae otro reparto, se sigue el diseño y se anota. Tests de VM/Unicorn de lo nuevo, incluido que sin racha de jefe todo sigue igual en las siete instalaciones. Azahar: jefe de la Torre con partida editada en la racha justa, victoria con símbolo y una derrota; si tocaste motor o code.bin, la regresión del caso b de la política y nada más. Tests en verde.",
-      "status": "pending",
+      "status": "in_progress",
       "notes": "",
       "evidence": ""
     },
