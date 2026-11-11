@@ -2703,3 +2703,70 @@ Laboratorio detenido mediante `scripts/azahar_lab.py reap` desde su shell conduc
 
 Reconstrucción independiente `repro-exit-tiles`: **27 archivos idénticos byte a byte** frente a la build
 aceptada (`build-repro-exit-tiles.log`, `repro-check.txt`). Generación y py_compile de la sonda correctos.
+
+## 38. F7-PAQUETE: alfa instalable v0.1 y prueba del paquete exacto (2026-11-11, Claude)
+
+**Paquete** (`frontier/package.py`, tests `tests/test_frontier_package.py`): comprueba el ROM y los ficheros de
+Repolished de `reports/source-lock.json` (tamaño y SHA-256; falla con otro volcado), el `code.bin` limpio y el de
+Repolished (`patch.HASHES`) y el paquete v0.5 contra su manifiesto; rechaza un árbol con cambios sin commit; ejecuta
+`frontier/overlay.py --romfs <romfs de v0.5>` con la isla completa (sin overlay de desarrollo: ni warp de la Ruta 102
+ni puerto de Mew) y monta `dist/oras-frontier-alpha-v0.1/` = ficheros de v0.5 + los 26 de romfs de la build y su `code.ips` encima (`code.ips`,
+`DllBattle.cro`, `DllField.cro`, `.crr/static.crr`, `a/0/1/3`…), `LEEME.txt`, `manifest.json` (SHA-256 de cada
+fichero, commit, hashes de entrada) y un ZIP comprobado. `package.py checkpoint SAVE` copia la partida de prueba
+solo si su SHA-256 es el probado. Nada de `dist/` va a git.
+
+**Prueba en Azahar del paquete exacto**: `frontier/probes/package/boot.sh` copia la carpeta
+`luma/titles/000400000011C400` del paquete tal cual a los mods del laboratorio y comprueba que coincide con el
+manifiesto (37 ficheros) antes de arrancar. Sonda GDB pasiva (`probes/package/probe.py`: solo breakpoints que
+imprimen; sin escribir memoria): `FRONT START` (StartBattle 0x1e33dc, con la ruta 16438 y los works de cada
+instalación) y `FRONT RESULT` (IsWin). Conductor `probes/package/circuit.py`, combates con `battle.py` (A, cambio tras
+debilitado, segundo movimiento cada 8 pulsaciones). Capturas en `work/frontier/pkg/shots/`, registro
+`work/frontier/pkg/circuit.log` y `circuit-run3*.out`. Equipo de la partida del usuario (Nv. 6–12, la Mansión no
+sube niveles): las derrotas son lo esperado.
+
+Partida de partida: `work/frontier/pkg/saves/p0_harbor_ticket.sav` (a49684bd…) = la de prueba de Mew
+(`dist/oras-mew-checkpoint-test-v0.1`, e97f3674…, derivada de la del usuario, flags 2720 y 2729) + Ticket del Barco
+(736). Guardada por el juego con el paquete en el puerto → `checkpoint_harbor.sav` (**5ddaa992…**), la de Checkpoint.
+
+| Paso | Paquete 92c11f6 (14:11–15:00) | Paquete fec40b9 = main (20:03–21:10) |
+| --- | --- | --- |
+| Marinero → «Ruben ha obtenido un Pase del Frente» | sí (`c_sailor_pass.png`) | sí (`c3_s3_*.png`) |
+| Ferry: menú con «Isla del Frente» → muelle (53,34) | sí (`c_ferry_menu.png`) | sí |
+| Plaza (37,60) | sí | sí |
+| Fábrica (ruta 1) | 2 victorias, derrota en el 3.º (racha 16437 = 2) | 4 victorias (con intercambio y «Continuar»), derrota en el 5.º |
+| Torre (ruta 2) | combate, derrota | combate, derrota |
+| Arena (ruta 4) | combate, derrota | combate, derrota |
+| Palacio (ruta 3) | combate, derrota | combate, derrota |
+| Tubo (ruta 6) | sala superada (16477 = 3 al combatir), derrota | sala superada (16477 = 2), derrota |
+| Domo (ruta 5) | inscripción, rival, elección de 2, combate, derrota; salida (6,57) | igual; salida a la plaza (6,57) |
+| Pirámide (ruta 7) | vestíbulo → piso 141 (12,16), entrenador, derrota → vestíbulo → plaza | igual |
+| Guardar en la plaza (209, (32,58)), recargar | sí: `c_saved_plaza.sav` aa3b80cc… | sí: `c3_saved_plaza.sav` a51f8d94…, 6 Pokémon |
+| Empleado del muelle → Ciudad Calagua | sí (`c_back_port.png`) | sí (`c3_back_port.png`) |
+
+Cada combate de la tabla tiene su `FRONT START` con la ruta de la instalación y su `FRONT RESULT`; tras cada derrota la
+recepción limpia el work activo (16442, 16462, 16466, 16474, 16478 y 16482 a 0 al empezar la siguiente).
+
+**Fallo encontrado y su causa**: con el primer paquete (3da42aa) el jugador quedaba **encerrado en la sala del Domo**
+(456): en (15–17,31) el sur no sacaba. El warp heredado de 365 tiene el byte 5 (transición) a 0 —solo 11 warps del
+juego lo usan— y el de 517 a 2. Con una copia diagnóstica del paquete con ese byte a 2 se salió a (6,57)
+(`p1_dome_in456.sav`, 4508c4ad…). Codex encontró y arregló lo mismo en paralelo (64a7299: tipo del warp 0→2 y tres
+casillas de salida del FIELD_DATA, §37); mi arreglo equivalente se descartó al integrar. El paquete de `main` (fec40b9)
+sale bien del Domo (tabla).
+
+**Historia sin cambios y v0.5** (mismo paquete fec40b9):
+- Entrenador: copia de la del usuario con la fixture de reserva de v0.5 (`s0_reserve.sav`, 9966ec53…) + flag 1748 a 0
+  y posición (160,146) (`s1_story.sav`, aeacbea8…): «¡El Cazabichos Ricky te desafía!», Wurmple Nv. 4, victoria y
+  «Ruben ha ganado 64 ₽» (`r_tr_*.png`; con el paquete 92c11f6). Después el jugador **no podía andar** (gira pero no
+  avanza): efecto de la posición escrita en la partida (trampa conocida, §4 del plan), no del paquete.
+- Salvaje: `s0_reserve.sav` sin mover (Ruta 102, hierba), Poochyena Nv. 2, Ascuas, victoria; guardado del juego
+  `r_after_wild.sav` (d86b7b28…). EXP: participante 1105→**1133**, portador de Repartir Exp. (216) en reserva
+  1105→**1119** (la mitad) con EV (+1 Ata, +1 Vel), reserva sin objeto 1105→**1105**. Como la v0.5.
+- DexNav: Poochyena → «Nivel / Racha **5/0**» (`r_dexnav1.png`).
+
+**Paquete final**: tras el commit de esta entrada se reconstruye; los 37 ficheros de `luma/` deben ser idénticos a los
+probados (`work/frontier/pkg/tested-manifest-fec40b9.json`; solo cambian `LEEME.txt` y el commit del manifiesto).
+
+**Sin probar**: consola (plan en `reports/consola-frente.md`); victoria completa de una ronda en Torre, Arena,
+Palacio, Tubo, Domo y Pirámide (equipo débil); juicio de 3 turnos de la Arena; ferry de Portual con este paquete;
+otros idiomas. Trampa del conductor: el marinero deambula; `circuit.py` no comprueba que el diálogo se abra (en una
+pasada se habló a destiempo y acabó en el Resort): repetir el paso a mano mirando la captura.

@@ -38,7 +38,8 @@ BUILD_FILES = {'a/0/1/3', 'a/0/1/4', 'a/0/2/9', 'a/0/3/9', 'a/0/4/0', 'a/1/3/7',
                *(f'a/0/8/{k}' for k in range(7))}
 CHECKPOINT = 'oras-frontier-checkpoint-test-v0.1'
 CHECKPOINT_FOLDER = 'FrenteTest-puerto-Calagua'
-CHECKPOINT_SAVE_SHA256 = None   # set once the lab save is made and tested (reports/frontier.md §38)
+# work/frontier/pkg/saves/checkpoint_harbor.sav: saved by the game with the package at the Lilycove harbor (§38)
+CHECKPOINT_SAVE_SHA256 = '5ddaa992c5aea98a3da1af80c1f2486b6d2db1690da0ae8be84abf2397edeffa'
 
 README = """Omega Ruby Repolished + Repartir Exp. + racha DexNav + Frente de Batalla (alfa v0.1)
 
@@ -89,8 +90,7 @@ recepciones te piden terminarlo primero. Tu equipo y tu caja no se tocan.
 - Arena Batalla (casa de paja, sur): combates de 3 turnos; si los dos siguen en
   pie, juicio por mente, técnica y cuerpo. Textos de la Mansión.
 - Domo Batalla (casa del oeste): torneos de 4 combates; inscribes 3 y eliges 2
-  antes de cada combate. Sin cuadro de torneo ni jefe. Sala nueva sin terminar de
-  probar (ver abajo).
+  antes de cada combate. Sin cuadro de torneo ni jefe.
 - Tubo Batalla (cabaña del suroeste): salas con curas, estados, entrenadores y
   Pokémon salvajes; PS, estado y PP se arrastran entre salas. El veneno grave se
   guarda como veneno normal.

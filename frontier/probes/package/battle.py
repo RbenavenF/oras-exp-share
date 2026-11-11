@@ -58,6 +58,8 @@ def main():
                                           if a.pattern in l][-1])
             return
         key('a')
+        if i % 8 == 7:
+            tap(680, 535)                     # second move (the first may have no PP left); else «Fight»
         if i % 3 == 2 and detail_page():
             key('a', 2.5)                     # Switch, if this one can fight
             tries = 0

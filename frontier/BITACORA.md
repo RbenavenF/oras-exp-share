@@ -2703,3 +2703,22 @@ Decisiones: solo diseño/documentación/JSON; juego, Azahar y consola de modalid
   estado final en work/lane-task.json. No se arrancó laboratorio ni se tocaron inputs o partida original.
 Siguiente paso: el orquestador integra y pasa su aceptación; encolar propuestas con frontier-orch add tras cotejar
   IDs. F9-MODOS-BASE comienza cuando F8-BASE termine: medir selector/accesores/espacio y registrar reservas.
+## 2026-11-11 21:20 — Claude Code (Opus 5.5) — F7-PAQUETE: alfa v0.1, paquete exacto en Azahar, Checkpoint y plan de consola
+Estado: hecho (falta solo la consola, que es del usuario)
+Hecho: `frontier/package.py` (5063a35, e254373) construye desde el commit `dist/oras-frontier-alpha-v0.1` (v0.5 + build
+completa del Frente, sin Mew; comprueba ROM, Repolished, code.bin y v0.5; manifiesto y ZIP) y, con `checkpoint`,
+`dist/oras-frontier-checkpoint-test-v0.1` (partida 5ddaa992…, guardada por el juego con el paquete en el puerto de
+Calagua). LEEME del Domo al día. Prueba del paquete exacto en Azahar por el circuito completo dos veces (paquete
+92c11f6 y el de main fec40b9): marinero, ferry, plaza, las siete instalaciones con combate (Tubo: sala y combate),
+guardar en la plaza, recargar, vuelta a Calagua; entrenador y salvaje de la Ruta 102; Repartir Exp. (reserva +50 %,
+EV) y DexNav (5/0) como la v0.5. `reports/frontier.md` §38 (tabla), `reports/consola-frente.md` (plan).
+Fallo encontrado: encierro en la sala del Domo (byte de transición del warp de 365 = 0); diagnosticado y comprobado el
+arreglo; Codex lo arregló igual en 64a7299 y el mío se descartó al integrar.
+Evidencia: `work/frontier/pkg/` (circuit.log, circuit-run3*.out, shots/, saves/ con hashes en §38,
+tested-manifest-fec40b9.json); `env -u ORCH_LANE python -m pytest -q tests` (ver commit). Laboratorio parado (reap,
+use_gdbstub=false).
+Commits: 5063a35, e254373, 820f90b y el de esta entrada.
+Decisiones: la partida de Checkpoint parte de la de prueba de Mew (ya en el puerto y derivada de la del usuario) + Ticket
+del Barco, porque mover al jugador escribiendo la partida lo deja sin poder andar (lo volví a ver en la Ruta 102).
+No probado: consola; victorias de ronda completas fuera de la Fábrica; juicio de la Arena; ferry de Portual con el paquete.
+Siguiente paso: el usuario instala el paquete y sigue `reports/consola-frente.md`; con sus resultados, corregir y v0.2.
