@@ -2420,3 +2420,9 @@ fijación de Esmeralda ni la excepción de dormido).
 No probado: consola; juicio de la Arena con este parche; Fábrica/Torre/Tubo/Pirámide/Domo con esta build.
 Siguiente paso: frontier-orch integra lane/claude y pasa la aceptación. Pendientes del Palacio fuera de C: «no
 obedece», textos del entrenador (§33), rival por naturaleza, Doble. Laboratorio parado.
+
+## 2026-11-11 01:15 — Claude Code (Opus 5.5) — F6-PALACIO-C: REPARTO y corrección de horas
+Estado: hecho
+Hecho: fila del Palacio en REPARTO: etapa C hecha (§36). Corrección: las dos entradas anteriores de F6-PALACIO-C
+llevan horas estimadas (01:30 y 01:20); las reales son anteriores a las 01:13 (`date`), en el orden en que figuran.
+Commits: el de esta entrada. Siguiente paso: el de la entrada anterior.
