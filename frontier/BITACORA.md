@@ -2568,3 +2568,20 @@ Decisiones: sustituir estimaciones iniciales por estado y pendientes comprobados
   builds ni laboratorio; consola no probada. Turno y tasks.json intactos; estado final en work/lane-task.json.
 Siguiente paso: el orquestador integra el commit y pasa aceptación en main. Continuar F7-PAQUETE con su dueño;
   después, prueba en consola con el usuario y tareas pendientes de F5 y de cada instalación listadas en PLAN.
+## 2026-11-11 14:00 — Claude Code (Opus 5.5) — frontier-orch sin parar (rama orch-nonstop)
+Estado: en curso (rama `orch-nonstop` en un worktree aparte; la tanda paralela tiene el turno en main)
+Hecho: a petición del usuario («que no se quede parado; poder pararlo al acabar la tarea para un checkpoint»):
+- `auto --follow`: modo paralelo sin fin; un carril ocioso espera tareas (bandeja `work/orch/inbox`, cada
+  `poll_minutes`) o el fin de una cuota; los bloqueos no paran al resto; con un carril ocupado, el otro mira la
+  bandeja cada `busy_poll_seconds`.
+- Cola: `owner: "any"` (primer carril libre), `after` (dependencias), la tarea en curso sigue en su carril
+  (`state.lane_of`) salvo que su agente esté sin cuota.
+- Control mientras corre: `add FILE.json` (validado con `check_task`; el supervisor lo integra con commit),
+  `drain` (terminar las tareas en curso y salir), `stop` (terminar las ejecuciones en curso y salir), `resume`.
+- README del orquestador; `status` con banderas, bandeja y dependencias.
+Evidencia: en el worktree, `tests/test_frontier_orch.py` 62 passed ×3 (13 nuevos: any, after, bandeja con
+`--follow`, bloqueo que no para, fichero rechazado, drain, stop, check_task, CLI); suite completa 1087 passed,
+2 skipped.
+Sin probar: con agentes reales; una noche entera.
+Siguiente paso: cuando la tanda actual suelte el turno, integrar, encolar las tareas siguientes y lanzar
+`auto --follow`.

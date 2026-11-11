@@ -416,3 +416,143 @@ def test_codex_in_a_lane_may_write_its_worktree_gitdir(lanes_repo):
     cmd, *_ = orch.command('codex', task, False, lane=orch.lane_path('codex'))
     gitdir = lanes_repo.resolve() / '.git/worktrees/codex'
     assert f'sandbox_workspace_write.writable_roots=["{lanes_repo.resolve() / ".git"}","{gitdir}"]' in cmd
+
+
+# ---- non-stop: owner any, dependencies, inbox, follow, drain, stop -----------------------------------------------
+def set_tasks(repo, tasks):
+    full = [dict({'status': 'pending', 'notes': '', 'evidence': '', 'accept': 'x', 'title': t['id']}, **t)
+            for t in tasks]
+    (repo / 'frontier/orch/tasks.json').write_text(json.dumps({'tasks': full}))
+    git(repo, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qam', 'tasks')
+
+
+def run_follow(repo, plan, on_idle):
+    """auto_parallel(follow=True); on_idle(n, orch) is called at each idle sleep and may add tasks or flags."""
+    Path(__import__('os').environ['FAKE_PLAN']).write_text(json.dumps(plan))
+    clock, log, sleeps = Clock(), [], []
+    orch = fo.Orch(repo, now=clock.now, sleep=lambda s: (sleeps.append(s), on_idle(len(sleeps), orch),
+                                                         clock.sleep(s)), out=log.append)
+    outcome = orch.auto_parallel(follow=True)
+    calls = [json.loads(line) for line in Path(__import__('os').environ['FAKE_CALLS']).read_text().splitlines()]
+    tasks = {t['id']: t for t in json.loads((repo / 'frontier/orch/tasks.json').read_text())['tasks']}
+    return outcome, calls, tasks, orch, log
+
+
+def stop_after(n):
+    def on_idle(k, orch):
+        if k >= n:
+            orch.flag('stop').write_text('test')
+    return on_idle
+
+
+def test_an_any_task_goes_to_whichever_lane_is_free(lanes_repo):
+    set_tasks(lanes_repo, [{'id': 'T1', 'owner': 'claude'}, {'id': 'T2', 'owner': 'codex'},
+                           {'id': 'T3', 'owner': 'any'}])
+    outcome, calls, tasks, *_ = run_parallel(
+        lanes_repo, {'claude': ['lanedone', 'lanedone'], 'codex': ['sleep15', 'lanedone']})
+    assert outcome == 'done' and all(t['status'] == 'done' for t in tasks.values())
+    assert [c[0] for c in calls].count('claude') == 2         # T1 and then T3, while Codex was still on T2
+
+
+def test_a_task_waits_for_its_after(lanes_repo):
+    set_tasks(lanes_repo, [{'id': 'T1', 'owner': 'claude'}, {'id': 'T3', 'owner': 'codex', 'after': ['T1']}])
+    outcome, calls, tasks, orch, log = run_parallel(lanes_repo, {'claude': ['sleep5', 'lanedone'],
+                                                                 'codex': ['lanedone']})
+    assert outcome == 'done' and tasks['T3']['status'] == 'done'
+    t1_done = next(i for i, line in enumerate(log) if 'T1 done and accepted' in line)
+    t3_start = next(i for i, line in enumerate(log) if 'starts T3' in line)
+    assert t3_start > t1_done
+
+
+def test_follow_waits_idle_and_takes_tasks_added_through_the_inbox(lanes_repo):
+    set_tasks(lanes_repo, [{'id': 'T1', 'owner': 'claude'}])
+
+    def on_idle(k, orch):
+        if k == 1:      # idle after T1: queue T9 as `frontier-orch add` would
+            (orch.work / 'inbox').mkdir(exist_ok=True)
+            (orch.work / 'inbox/new.json').write_text(json.dumps(
+                {'tasks': [{'id': 'T9', 'title': 'nine', 'owner': 'any', 'accept': 'x'}]}))
+        if k >= 2:
+            orch.flag('stop').write_text('test')
+    outcome, calls, tasks, orch, log = run_follow(lanes_repo, {'claude': ['lanedone', 'lanedone'],
+                                                               'codex': ['lanedone']}, on_idle)
+    assert outcome == 'stop' and tasks['T1']['status'] == 'done' and tasks['T9']['status'] == 'done'
+    assert any('queued from the inbox: T9' in line for line in log)
+    assert 'queue T9 (inbox)' in git(lanes_repo, 'log', '--format=%s')
+    assert not orch.flag('stop').exists()       # consumed
+    assert fo.TURN.search((lanes_repo / 'frontier/REPARTO.md').read_text()).group(2).startswith('libre')
+
+
+def test_follow_does_not_stop_for_a_blocked_task(lanes_repo):
+    set_tasks(lanes_repo, [{'id': 'T1', 'owner': 'claude'}, {'id': 'T2', 'owner': 'claude'},
+                           {'id': 'T3', 'owner': 'codex'}])
+    outcome, calls, tasks, orch, log = run_follow(
+        lanes_repo, {'claude': ['blocked', 'lanedone'], 'codex': ['lanedone']}, stop_after(1))
+    assert tasks['T1']['status'] == 'blocked' and tasks['T2']['status'] == 'done' and tasks['T3']['status'] == 'done'
+    assert any('blocked for you: T1' in line for line in log)
+
+
+def test_a_bad_inbox_file_is_refused_and_does_not_stop_anything(lanes_repo):
+    set_tasks(lanes_repo, [{'id': 'T1', 'owner': 'claude'}])
+    inbox = lanes_repo / 'work/orch/inbox'
+    inbox.mkdir(parents=True)
+    (inbox / 'bad.json').write_text(json.dumps({'id': 'T1', 'title': 'dup', 'owner': 'claude', 'accept': 'x'}))
+    outcome, calls, tasks, orch, log = run_parallel(lanes_repo, {'claude': ['lanedone'], 'codex': []})
+    assert outcome == 'done' and (inbox / 'refused/bad.json').exists()
+    assert any('refused' in line and 'already' in line for line in log)
+
+
+def test_drain_finishes_the_task_in_hand_and_takes_no_new_one(lanes_repo):
+    set_tasks(lanes_repo, [{'id': 'T1', 'owner': 'claude', 'status': 'in_progress'},
+                           {'id': 'T2', 'owner': 'claude'}, {'id': 'T3', 'owner': 'codex'}])
+    clock = Clock()
+    orch = fo.Orch(lanes_repo, now=clock.now, sleep=clock.sleep, out=lambda line: None)
+    orch.state['lane_of'] = {'T1': 'claude'}
+    orch.save_state()
+    orch.flag('drain').write_text('test')
+    outcome, calls, tasks, orch, log = run_parallel(lanes_repo, {'claude': ['commit', 'lanedone'], 'codex': []})
+    assert outcome == 'stop' and tasks['T1']['status'] == 'done'
+    assert tasks['T2']['status'] == tasks['T3']['status'] == 'pending' and len(calls) == 2
+    assert any('drain requested' in line for line in log) and not orch.flag('drain').exists()
+
+
+def test_stop_ends_after_the_runs_in_hand(lanes_repo, monkeypatch):
+    set_tasks(lanes_repo, [{'id': 'T1', 'owner': 'claude'}, {'id': 'T2', 'owner': 'claude'}])
+    monkeypatch.setenv('FAKE_STOP_FLAG', str(lanes_repo / 'work/orch/stop'))
+    Path(__import__('os').environ['FAKE_PLAN']).write_text(json.dumps({'claude': ['stopflag', 'lanedone'],
+                                                                       'codex': []}))
+    clock, log = Clock(), []
+    orch = fo.Orch(lanes_repo, now=clock.now, sleep=clock.sleep, out=log.append)
+    outcome = orch.auto_parallel()
+    tasks = {t['id']: t for t in json.loads((lanes_repo / 'frontier/orch/tasks.json').read_text())['tasks']}
+    assert outcome == 'stop' and tasks['T2']['status'] == 'pending'
+    assert any('stop requested' in line for line in log)
+
+
+@pytest.mark.parametrize('task, problem', [
+    ({'id': 'X', 'title': 't', 'owner': 'gemini', 'accept': 'a'}, 'owner'),
+    ({'id': 'X', 'title': 't', 'owner': 'any'}, 'missing accept'),
+    ({'id': 'T1', 'title': 't', 'owner': 'any', 'accept': 'a'}, 'already'),
+    ({'id': 'X', 'title': 't', 'owner': 'any', 'accept': 'a', 'after': 'T1'}, 'after'),
+    ({'id': 'X', 'title': 't', 'owner': 'any', 'accept': 'a', 'after': ['T1']}, ''),
+])
+def test_check_task(task, problem):
+    got = fo.check_task(task, {'T1'})
+    assert (problem in got) if problem else got == ''
+
+
+def test_add_drain_stop_and_resume_from_the_command_line(lanes_repo, tmp_path):
+    script = ROOT / 'frontier/orch/frontier_orch.py'
+    task = tmp_path / 'more.json'
+    task.write_text(json.dumps({'tasks': [{'id': 'T7', 'title': 's', 'owner': 'any', 'accept': 'a'}]}))
+    cli = lambda *a: subprocess.run([sys.executable, str(script), *a, '--root', str(lanes_repo)],
+                                    capture_output=True, text=True)
+    assert 'queued T7' in cli('add', str(task)).stdout
+    assert len(list((lanes_repo / 'work/orch/inbox').glob('*.json'))) == 1
+    bad = tmp_path / 'bad.json'
+    bad.write_text(json.dumps({'id': 'T1', 'title': 's', 'owner': 'any', 'accept': 'a'}))
+    assert 'already' in cli('add', str(bad)).stderr
+    cli('drain')
+    assert (lanes_repo / 'work/orch/drain').exists() and 'drain requested' in cli('status').stdout
+    cli('resume')
+    assert not (lanes_repo / 'work/orch/drain').exists()

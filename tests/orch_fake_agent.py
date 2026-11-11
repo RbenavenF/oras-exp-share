@@ -34,6 +34,9 @@ def git(*args):      # its own identity: the supervisor must not rely on the env
 
 
 tasks = Path('frontier/orch/tasks.json')
+if action == 'stopflag':                # the user runs `frontier-orch stop` while this agent works
+    Path(os.environ['FAKE_STOP_FLAG']).write_text('x')
+    action = 'commit'
 if action.startswith('sleep'):          # sleepN: take N tenths of a second (to overlap with the other lane)
     time.sleep(int(action[5:] or 3) / 10)
     action = 'commit'

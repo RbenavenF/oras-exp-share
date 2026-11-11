@@ -109,6 +109,27 @@ tareas que no compartan motor; una regresión en Azahar con lo integrado sigue s
 Prueba de los dos laboratorios a la vez: `frontier/orch/lab_smoke.sh` (arranca uno por carril, conecta GDB a cada
 puerto, lee un registro de cada uno y comprueba que `reap` de uno no mata al otro).
 
+### Sin parar (`auto --follow`, 2026-11-11)
+
+`frontier/orch/frontier-orch auto --follow` es el modo paralelo sin fin: un carril sin nada que hacer espera (mira
+cada `poll_minutes`, 10) en vez de salir; una tarea bloqueada no para a los demás; una cuota agotada se espera. Sale
+solo con `drain`, `stop` o si los dos agentes se quedan sin login.
+
+Cola y orden:
+- `owner: "any"`: la coge el primer carril libre. Úsalo para que Claude no se quede parado si Codex tarda.
+- `after: ["ID", …]`: la tarea no empieza hasta que esas estén `done`.
+- Una tarea en curso la sigue el carril que la empezó; otro solo la hereda si ese agente se queda sin cuota.
+
+Mientras corre (el supervisor tiene el turno; nadie más escribe en `main`):
+- `frontier/orch/frontier-orch add tareas.json`: una tarea o `{"tasks": [...]}`; se valida al momento y el
+  supervisor la mete en `tasks.json` (con commit) en menos de un minuto. Un fichero inválido va a
+  `work/orch/inbox/refused/` y lo dice el registro.
+- `frontier/orch/frontier-orch drain`: cada carril termina la tarea que lleva (las ejecuciones que hagan falta), no
+  coge otra y el supervisor sale y suelta el turno. Para hacer un checkpoint, revisar o cambiar el orquestador.
+- `frontier/orch/frontier-orch stop`: más rápido; termina la ejecución en curso de cada carril y sale.
+- `frontier/orch/frontier-orch resume`: cancela un `drain`/`stop` pedido que aún no se ha cumplido.
+- `status` muestra `drain`/`stop` pendientes, la bandeja de entrada y, por tarea pendiente, de qué depende.
+
 ### Migración y marcha atrás
 
 Lo nuevo es opcional: `auto` sin `--parallel` funciona como antes. Cambios fuera del orquestador, compatibles:
