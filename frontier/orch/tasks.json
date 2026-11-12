@@ -294,7 +294,7 @@
       "title": "Diseño de la personalidad de cada edificio (interior, letrero, exterior)",
       "design": "reports/diseno/ (nuevo: personalidad.md)",
       "accept": "Solo lectura y diseño. Prioridad del usuario: lo último. Solo recursos de ORAS (Emerald 3DS de ZallaxDev solo como referencia visual, sin copiar: CC BY-NC-SA). reports/diseno/personalidad.md: por instalación, un interior propio (donante retail medido en work/frontier/island/zones.tsv, como la Pirámide v2A y el Domo), un letrero con su nombre en la puerta y un retoque o cambio del exterior que quepa en LOAD_BUDGET (§23) manteniendo la puerta; medidas de tamaño; y frontier/orch/propuestas/personalidad.json con las tareas. Tests en verde.",
-      "status": "pending",
+      "status": "in_progress",
       "notes": "",
       "evidence": ""
     },
