@@ -251,9 +251,9 @@
       "title": "Cerebro del Tubo",
       "design": "reports/diseno/cerebros.md",
       "accept": "El Cerebro del Tubo según reports/diseno/cerebros.md (si frontier/orch/propuestas/cerebros.json trae criterios más concretos para esta instalación, mandan esos): aparece en la racha de plata y en la de oro, con su equipo y textos, usando la infraestructura de F8-CEREBROS-BASE; símbolo guardado al ganar; derrota limpia. Tests de su script (plata, oro, derrota). Azahar, con partida editada a la racha justa: el combate de plata ganado con su símbolo y uno de oro o una derrota, solo en esta instalación (política de regresión, caso a; caso b si tocaste el motor). Tests en verde.",
-      "status": "in_progress",
-      "notes": "",
-      "evidence": ""
+      "status": "done",
+      "notes": "Codex's Shuckle EV blocker resolved by the agent without engine changes: silver Shuckle set to 252,0,0,0,106,152 (ORAS 510 cap, which the game already enforced); Emerald row kept in design with a note; reversible (reports/frontier.md §46). Open question for the user: accept 510 or require 610 (that would be an engine change, case b). Leftover check_team.py autostash conflict resolved to HEAD; stash entry 08dcdee 'autostash' left in shared stack (obsolete content).",
+      "evidence": "Commit 82282f8. Suite 1330 passed, 1 skipped (work/frontier/cerebros/pike/tests-m3.log). Azahar 24690, case a (Pike only): silver S27 trainer139, check_team rc0, win raw1, S28 symbol1024 pending0, pause save PB 4->15, party/boxes identical, reload + Símbolos shows silver; gold S139 trainer140, check_team --variant gold rc0, v2 HP/status retained, loss raw0 -> route/S/active/pending 0, symbol1024, record139, PB unchanged. Lab reaped."
     },
     {
       "id": "F8-CEREBRO-PIRAMIDE",
