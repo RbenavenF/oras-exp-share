@@ -25,3 +25,24 @@ Si el sandbox aísla PID por llamada, todas las órdenes que hacen `halt` y la l
 se ejecutan desde el conductor que inició GDB. Las capturas/lecturas de archivos pueden
 hacerse desde otro proceso. No interrumpir el conductor con Ctrl-C: termina también
 sus procesos de laboratorio. No tocar procesos de otro carril.
+
+## Llegar a recepción sin editar RAM
+
+Primera llegada: avanzar los diálogos hasta el campo. Muelle 212 → plaza 210
+(pasar por 37,15); tras los diálogos, 210 (56,92) y subir a 211 (56,86).
+En 211 ir a (58,77) y subir: vestíbulo 516. Rodear por las escaleras de x10:
+(14,16) → (10,16) → (10,7) → (14,7) → (14,4), subir a sala 517.
+Desde (19,31): (19,28) → (18,28) → (18,25). Recepción de combates en (23,25);
+la de (17,25) solo muestra registros. Guardar desde el menú del juego en copia local.
+
+Copia local de esta sesión: `work/frontier/console-maison/reception.sav`, SHA256
+`98089a843e04b8f9f2c13e7209390a94b92d0bcc0e9f5f98436dbe20e8365bd3`.
+Derivada del Checkpoint publicado únicamente mediante ferry, diálogos, caminata y
+Guardar; equipo sin modificar. Sala517 (17.5,25.5), works16438/16489/16685=0.
+No añadir esta partida ni capturas de recursos del juego a Git.
+
+El cargador sustituye los marcadores de breakpoint del CRO, incluso los de tipo
+hardware en Azahar. `trace.gdb` arma el punto CRO después de cargar DllBattle,
+desde el asignador estable de code.bin; lo desactiva al volver al campo. Vacía la
+caché de registros de GDB en cada callback, antes de medir. Un error de la sonda
+se distingue expresamente de `MAISON EMPTY` y no demuestra un fallo del juego.
