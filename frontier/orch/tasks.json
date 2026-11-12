@@ -212,9 +212,9 @@
       "title": "Cerebro del Palacio",
       "design": "reports/diseno/cerebros.md",
       "accept": "El Cerebro del Palacio según reports/diseno/cerebros.md (si frontier/orch/propuestas/cerebros.json trae criterios más concretos para esta instalación, mandan esos): aparece en la racha de plata y en la de oro, con su equipo y textos, usando la infraestructura de F8-CEREBROS-BASE; símbolo guardado al ganar; derrota limpia. Tests de su script (plata, oro, derrota). Azahar, con partida editada a la racha justa: el combate de plata ganado con su símbolo y uno de oro o una derrota, solo en esta instalación (política de regresión, caso a; caso b si tocaste el motor). Tests en verde.",
-      "status": "in_progress",
-      "notes": "",
-      "evidence": ""
+      "status": "done",
+      "notes": "Relevo limpio de 0a79d21; aceptación Palacio completa. Informe §42 y bitácora añadidos. Solo instalación Palacio (política a); laboratorio propio parado y GDB off. REPARTO/tasks.json intactos, sin push.",
+      "evidence": "0a79d21 implementación Claude; a487a3f aceptación Codex. Suite 1259 passed, 1 skipped (work/frontier/cerebros/palace/tests-acceptance.log). Azahar 24691: plata S20 ganada, símbolo 16 guardado/recargado, PB 4→19 y equipo/cajas intactos; oro S41 con trío exacto y derrota limpia (ruta/racha/activo/pendiente=0, plata16, récord41). PK6 plata/oro validados antes de asistencia. cleanup.log: remaining []. reports/frontier.md §42."
     },
     {
       "id": "F8-CEREBRO-ARENA",
