@@ -3115,3 +3115,34 @@ asm, patch.py, isla ni construcción común. REPARTO/tasks.json intactos según 
 No probado: consola, oro ganado y revanchas en Azahar (sí en VM), inglés en juego, dificultad sin asistencia.
 Siguiente paso: el orquestador integra lane/claude y pasa la aceptación en main; F8-CEREBRO-TUBO terminado
 (done en work/lane-task.json). Pregunta abierta para el usuario: ¿aceptar 510 EV para Shuckle o pedir los 610?
+
+## 2026-11-12 — Claude Code (Opus 5.5) — F8-CEREBRO-PIRAMIDE hito 1: Brandon en la cima (VM)
+Estado: en curso
+Hecho: Brandon habilitado en `brains.py` (ENABLED, seis sets exactos de cerebros.md §7, IV16/31, clase96, nombre
+propio; especies/movimientos/objetos/naturaleza Afable añadidos y cotejados con gametext ES por test). `check_routine`
+admite la racha de un work y un desfase (`streak_work`, `offset`), por defecto igual que antes. `pyramid.py`:
+la escalera del piso 7 cuenta el piso (racha y récord) y luego llama `brains_check` con unidad = pisos contados
+(21/70/105…); si toca, guarda la variante en WORK_SUMMIT (16731, ya reservado en REPARTO para esto) antes del
+combate, y el combate de Brandon es el de los pisos con WORK_BRAIN = 7 + 8·variante (brains_cro.s pone entrenador y
+equipo). Victoria: `brains_won` (símbolo, +10 PB una vez, línea) y después PB del desafío y vuelta al vestíbulo;
+derrota: `brains_lost`, línea de derrota, fin de desafío (racha0, récord y símbolos intactos). Con WORK_SUMMIT
+pendiente (recarga) la escalera va directa a Brandon sin volver a contar el piso; los entrenadores del piso 7
+siguen vencidos (BEATEN se pone a 0 solo al cerrar). Retirada en recepción limpia también WORK_SUMMIT. Consulta:
+la otra recepcionista del vestíbulo (evento 3, NPC 2 de 517, modelo 62) dice los símbolos de la Pirámide.
+Para caber en el ZO del piso (antes 17692 > 17248) los tres entrenadores comparten `pyramid_trainer(bit)` y una
+rutina `pyramid_battle(brain)`; sus entradas `pyramid_trainer<k>` y su comportamiento no cambian.
+Evidencia: source scripts/env.sh; env -u ORCH_LANE python -m pytest -q tests: 1365 passed, 1 skipped, 42.72 s
+(work/frontier/cerebros/pyramid/tests-m1.log); git diff --check limpio. Nuevo tests/test_frontier_brain_pyramid.py
+(35 casos VM): umbrales hasta piso 210 con 0/1/2/3 símbolos, pisos 1–6 sin jefe, no-jefe igual que antes, victoria
+plata/oro/revanchas con símbolo y bonus una vez y racha sin piso extra, derrota, récord contado antes, pendiente tras
+recarga (ni salto ni doble cuenta), pendiente escrito antes de StartBattle, entrenadores sin Cerebro, retirada,
+consulta, equipos/IV/EV exactos. Build: python frontier/overlay.py --out work/frontier/cerebros/pyramid/build
+correcta (build.log); ZO 140/141/142 = 16140/16956/16956 (<=17248, medido sobre romfs/a/0/1/3);
+brains_cro.s sin cambios de código (0xf0480–0xf09f4), solo las dos filas de datos de Brandon en brain_table.
+Commits: el de esta entrada, «feat(frontier): add Brandon at the Pyramid summit».
+Decisiones: sin líneas de texto nuevas (intro/victoria/derrota/consulta ya existían por ruta en el bloque de
+Cerebros) para no desplazar 1072–1133; sin zona nueva: la cima es la escalera del piso 7. Política caso a (solo
+Pirámide): no se tocan motor, asm, patch.py, isla ni construcción común; la tabla brain_table es dato (precedente Lucy).
+No probado: nada en Azahar todavía.
+Siguiente paso: Azahar 24690 con copia de partida en piso 7, racha 20, BEATEN=7: plata ganada con símbolo,
+guardar/cargar; oro (racha 69) o derrota; comprobar que piso/PB no se duplican y equipo real intacto.

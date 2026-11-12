@@ -6,7 +6,7 @@ the facility the Brain comes at its silver unit, with silver only at its gold un
 (silver team) and at the gold unit and every `period` after it (gold team). `due` is the reference; the zone script
 runs the same rule (`check_routine`) before each rival is chosen, from the facility streak, so a resumed challenge
 recomputes it. Facilities whose unit is not a battle (Dome, Pike, Pyramid) get their own adapter; BASE enables the
-Tower initially; the adapters also enable Noland, Spenser, Greta, Tucker and Lucy (ENABLED).
+Tower initially; the adapters also enable Noland, Spenser, Greta, Tucker, Lucy and Brandon (ENABLED).
 
 Symbols: saved work WORK_SYMBOLS, two bits per route r at 2*(r-1): 0 none, 1 silver, 3 silver and gold (2 is
 invalid and read as 3). Never cleared by a loss, a retirement or another challenge.
@@ -56,7 +56,7 @@ LATE_FIRST, LATE_COUNT = 70, 40   # the 15-18 bracket of 0x1e3aac (0x1e4860(work
 # (silver unit, gold unit, period after both), units counted from 1 (cerebros.md §1).
 APPEARANCES = {'factory': (21, 42, 21), 'tower': (35, 70, 35), 'palace': (21, 42, 21), 'arena': (28, 56, 28),
                'dome': (5, 10, 5), 'pike': (28, 140, 56), 'pyramid': (21, 70, 35)}
-ENABLED = ('factory', 'tower', 'palace', 'arena', 'dome', 'pike')
+ENABLED = ('factory', 'tower', 'palace', 'arena', 'dome', 'pike', 'pyramid')
 NAMES = {'factory': 'Noland', 'tower': 'Anabel', 'palace': 'Spenser', 'arena': 'Greta', 'dome': 'Tucker',
          'pike': 'Lucy', 'pyramid': 'Brandon'}
 CLASSES = {'factory': 30, 'tower': 9, 'palace': 31, 'arena': 63, 'dome': 10, 'pike': 13, 'pyramid': 96}  # a/0/7/7 #21
@@ -77,7 +77,8 @@ FACILITY = {'es': {'factory': 'la Fábrica Batalla', 'tower': 'la Torre Batalla'
 SPECIES = {'ALAKAZAM': 65, 'ENTEI': 244, 'SNORLAX': 143, 'RAIKOU': 243, 'LATIOS': 381,
            'CROBAT': 169, 'SLAKING': 289, 'LAPRAS': 131, 'ARCANINE': 59, 'SUICUNE': 245,
            'HERACROSS': 214, 'UMBREON': 197, 'SHEDINJA': 292, 'GENGAR': 94, 'BRELOOM': 286,
-           'SWAMPERT': 260, 'SALAMENCE': 373, 'CHARIZARD': 6, 'METAGROSS': 376, 'LATIAS': 380, 'SEVIPER': 336, 'SHUCKLE': 213, 'MILOTIC': 350, 'STEELIX': 208, 'GYARADOS': 130}
+           'SWAMPERT': 260, 'SALAMENCE': 373, 'CHARIZARD': 6, 'METAGROSS': 376, 'LATIAS': 380, 'SEVIPER': 336, 'SHUCKLE': 213, 'MILOTIC': 350, 'STEELIX': 208, 'GYARADOS': 130,
+           'REGIROCK': 377, 'REGICE': 378, 'REGISTEEL': 379, 'ARTICUNO': 144, 'ZAPDOS': 145, 'MOLTRES': 146}
 MOVES = {'THUNDER_PUNCH': 9, 'FIRE_PUNCH': 7, 'ICE_PUNCH': 8, 'DISABLE': 50, 'FIRE_BLAST': 126, 'CALM_MIND': 347,
          'RETURN': 216, 'ROAR': 46, 'BODY_SLAM': 34, 'BELLY_DRUM': 187, 'YAWN': 281, 'SHADOW_BALL': 247,
          'THUNDERBOLT': 85, 'REFLECT': 115, 'REST': 156, 'PSYCHIC': 94, 'RECOVER': 105, 'DRAGON_CLAW': 337,
@@ -88,11 +89,26 @@ MOVES = {'THUNDER_PUNCH': 9, 'FIRE_PUNCH': 7, 'ICE_PUNCH': 8, 'DISABLE': 50, 'FI
          'MEGAHORN': 224, 'ROCK_TOMB': 317, 'ENDURE': 203, 'REVERSAL': 179, 'FAINT_ATTACK': 185,
          'AERIAL_ACE': 332, 'DOUBLE_EDGE': 38, 'HYPNOSIS': 95, 'DREAM_EATER': 138, 'DESTINY_BOND': 194,
          'SPORE': 147, 'FOCUS_PUNCH': 264, 'GIGA_DRAIN': 202, 'HEADBUTT': 29, 'COUNTER': 68, 'ROCK_SLIDE': 157, 'MIRROR_COAT': 243, 'METEOR_MASH': 309, 'CRUNCH': 242, 'POISON_FANG': 305, 'SANDSTORM': 201,
-         'SLUDGE_BOMB': 188, 'EXPLOSION': 153, 'SCREECH': 103, 'DRAGON_DANCE': 349}
+         'SLUDGE_BOMB': 188, 'EXPLOSION': 153, 'SCREECH': 103, 'DRAGON_DANCE': 349,
+         'SUPERPOWER': 276, 'ANCIENT_POWER': 246, 'METAL_CLAW': 232, 'IRON_DEFENSE': 334, 'AMNESIA': 133,
+         'THUNDER': 87, 'WATER_PULSE': 352, 'DETECT': 197, 'DRILL_PECK': 65, 'LIGHT_SCREEN': 113, 'SAFEGUARD': 219}
 ITEMS = {'BRIGHT_POWDER': 213, 'LUM_BERRY': 157, 'QUICK_CLAW': 217, 'CHESTO_BERRY': 150,
          'SCOPE_LENS': 232, 'WHITE_HERB': 214, 'KINGS_ROCK': 221, 'SALAC_BERRY': 203, 'LEFTOVERS': 234, 'FOCUS_BAND': 230}
-NATURES = {'HARDY': 0, 'LONELY': 1, 'ADAMANT': 3, 'HASTY': 11, 'MODEST': 15, 'QUIET': 17, 'JOLLY': 13, 'CALM': 20, 'BRAVE': 2, 'BOLD': 5}
+NATURES = {'HARDY': 0, 'LONELY': 1, 'ADAMANT': 3, 'HASTY': 11, 'MODEST': 15, 'QUIET': 17, 'JOLLY': 13, 'CALM': 20, 'BRAVE': 2, 'BOLD': 5,
+           'MILD': 16}
 TEAMS = {
+    # Pyramid / Brandon (F8-CEREBRO-PIRAMIDE), cerebros.md §7.
+    ('pyramid', SILVER): (16, [
+        ('REGIROCK', 'QUICK_CLAW', 'ADAMANT', (152, 152, 0, 0, 106, 100),
+         ('EXPLOSION', 'SUPERPOWER', 'EARTHQUAKE', 'ANCIENT_POWER')),
+        ('REGISTEEL', 'LEFTOVERS', 'ADAMANT', (152, 152, 0, 0, 6, 200),
+         ('EARTHQUAKE', 'METAL_CLAW', 'TOXIC', 'IRON_DEFENSE')),
+        ('REGICE', 'CHESTO_BERRY', 'MODEST', (106, 0, 152, 0, 100, 152), ('ICE_BEAM', 'AMNESIA', 'THUNDER', 'REST'))]),
+    ('pyramid', GOLD): (31, [
+        ('ARTICUNO', 'SCOPE_LENS', 'MILD', (6, 0, 252, 252, 0, 0), ('BLIZZARD', 'WATER_PULSE', 'AERIAL_ACE', 'REFLECT')),
+        ('ZAPDOS', 'LUM_BERRY', 'MILD', (6, 0, 252, 252, 0, 0), ('THUNDER', 'DETECT', 'DRILL_PECK', 'LIGHT_SCREEN')),
+        ('MOLTRES', 'BRIGHT_POWDER', 'MILD', (6, 0, 252, 252, 0, 0),
+         ('FIRE_BLAST', 'HYPER_BEAM', 'AERIAL_ACE', 'SAFEGUARD'))]),
     # Pike / Lucy (F8-CEREBRO-TUBO), cerebros.md §7.
     ('pike', SILVER): (16, [
         ('SEVIPER', 'QUICK_CLAW', 'BRAVE', (252, 0, 252, 0, 6, 0),
@@ -342,8 +358,9 @@ def _pow4(p):
     return p.data_labels['brains_pow4']
 
 
-def check_routine(p):
-    """brains_check(): WORK_BRAIN for the coming battle (module docstring); 0 when none."""
+def check_routine(p, streak_work=None, offset=1):
+    """brains_check(): WORK_BRAIN for the coming battle (module docstring); 0 when none. The unit is the facility's
+    streak (GetMyWinCount, or saved work `streak_work`) + `offset`: the Pyramid calls it after counting the floor."""
     r = factory.Routine(p, 'brains_check', ['route', 'unit', 'sym', 'silver', 'gold', 'variant'])
     rows = p.data_block('brains_rows', [x for route in range(1, ROUTES + 1) for x in (
         APPEARANCES[patch.STREAK_ROUTES[route][0]] if patch.STREAK_ROUTES[route][0] in ENABLED else (0, 0, 1))])
@@ -363,8 +380,12 @@ def check_routine(p):
         r.store(name)
     r.load('silver')
     r.op('JZER', none)                      # not enabled
-    r.sysreq('GetMyWinCount', 0, 0)         # the facility's streak (WORK_ROUTE set)
-    r.add(1)
+    if streak_work is None:
+        r.sysreq('GetMyWinCount', 0, 0)     # the facility's streak (WORK_ROUTE set)
+    else:
+        r.sysreq('WorkGet', streak_work)
+    if offset:
+        r.add(offset)
     r.store('unit')
     ordinary = r.new_label('battle_unit')
     r.load('route')

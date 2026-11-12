@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Battle Pyramid v2A (reports/diseno/piramide.md): seven fixed cave floors of trainers;
-no darkness, wild Pokémon, items, persistent HP or Brandon.
+no darkness, wild Pokémon, items or persistent HP. Brandon (F8-CEREBRO-PIRAMIDE) at the summit.
 
 Interiors (frontier/REPARTO.md), all with the Battle Maison native groups:
 - LOBBY (140): the plaza's Pyramid door (32,57) leads here and its exit (warp 0) back to (32,58). The right-hand
@@ -29,6 +29,15 @@ climbs; after floor FLOORS_PER_CHALLENGE, data.FRONTIER_BP['pyramid'][challenge 
 streak goes on, as Emerald) and back to the lobby. Every battle is the Maison's: the party copied at level 50,
 healed, no bag, no experience; the rival from the Maison's trainers by the Pyramid's streak (route 7).
 
+Brandon (reports/diseno/cerebros.md §5): when floor 7's attendant counts the floor, brains_check (unit = the
+streak just counted: floors 21 / 70 / 105...) decides; a Brain due is kept in saved WORK_SUMMIT before anything else,
+so the attendant of floor 7 goes straight to Brandon on the next talk (after a reload too) without counting the
+floor again; the trainers of that floor stay beaten. The battle is the floors' (own work, SetTrainer(0)) with
+WORK_BRAIN = ROUTE + 8 * variant, so brains_cro.s supplies Brandon and his exact team; brains_intro/won/lost say his
+lines; a win gives the symbol and BRAIN_BONUS BP once (brains_won) and then the challenge's BP and the way back; a
+loss ends the challenge (streak 0, record and symbols kept). The lobby's other receptionist (SYMBOLS_EVENT) says the
+Pyramid's symbols.
+
 Texts: text 637 lines from LINE_BASE (after the Pike's), said by shared script 5 case GLOBAL_SAY (`pyramid_say`;
 the zone passes the line in WORK_MSG, bit 8 = yes/no question answered in GlobalGetChildParam(0), and a number in
 WORK_ARG). Known deviations (design §1, §6): the trainers remain visible after
@@ -46,6 +55,7 @@ from pawn import OP, Op, Program, Script  # noqa: E402
 import data as fd  # noqa: E402
 import factory  # noqa: E402
 import battle_video  # noqa: E402
+import brains  # noqa: E402
 import patch  # noqa: E402
 import pike  # noqa: E402
 import tower  # noqa: E402
@@ -67,6 +77,8 @@ FLOORS_PER_CHALLENGE = fd.STAGES_PER_ROUND   # FRONTIER_STAGES_PER_CHALLENGE
 TRAINERS = 3
 STAIRS_EVENT = 2 + TRAINERS
 RECEPTION_EVENT = 2
+SYMBOLS_EVENT = 3                 # the lobby's other receptionist (zone 517 NPC 2, model 62): «Symbols»
+WORK_SUMMIT = brains.WORK_PYRAMID # Brandon pending at the summit: its variant (1 silver, 2 gold), 0 = none
 GLOBAL_SAY = 9777
 ASK = 0x100
 YES, NO = 0, 1
@@ -221,11 +233,13 @@ def goto_floor_routine(p):
 
 
 def end_challenge(r):
-    """The challenge is over (lost or retired): ACTIVE = 0, WORK_ROUTE = 0, streak 0, BEATEN = 0."""
+    """The challenge is over (lost or retired): ACTIVE = 0, WORK_ROUTE = 0, streak 0, BEATEN = 0, no Brandon
+    pending (the symbols and the record stay)."""
     r.sysreq('WorkSet', ACTIVE, 0)
     r.sysreq('WorkSet', patch.WORK_ROUTE, 0)
     r.sysreq('WorkSet', STREAK, 0)
     r.sysreq('WorkSet', WORK_BEATEN, 0)
+    r.sysreq('WorkSet', WORK_SUMMIT, 0)
 
 
 def reception_routine(p):
@@ -309,24 +323,14 @@ def reception_routine(p):
     r.ret()
 
 
-def trainer_routine(p, k):
-    """pyramid_trainer<k>(): trainer k of the current floor (module docstring)."""
-    t = f'pyramid_trainer{k}'
-    r = factory.Routine(p, t, ['win', 'beaten'])
-    end = f'{t}_end'
-    r.call(TALK_START, -1)
-    r.sysreq('WorkGet', ACTIVE)
-    r.op('JZER', end)                            # no challenge (should not happen: the floors are reached by it)
-    r.sysreq('WorkGet', WORK_BEATEN)
-    r.store('beaten')
-    r.const_alt(1 << k)
-    r.op('AND', 0)
-    r.op('JZER', f'{t}_fight')
-    _say(r, 'beaten')
-    r.op('JUMP', end)
-    r.p.label(f'{t}_fight')
-    _say(r, 'trainer')
+def battle_routine(p):
+    """pyramid_battle(brain) -> IsWin: a floor battle (module docstring) with WORK_BRAIN = brain (0: an ordinary
+    trainer; ROUTE + 8 * variant: Brandon, from brains_cro.s)."""
+    r = factory.Routine(p, 'pyramid_battle', ['brain', 'win'])
+    r.op('LOAD_P_S_PRI', 12)
+    r.store('brain')
     r.sysreq('WorkSet', patch.WORK_ROUTE, ROUTE)   # a save made on a floor holds it too; set again
+    r.sysreq('WorkSet', brains.WORK_BRAIN, 'brain')
     r.sysreq('BattleInstWorkCreate')
     r.sysreq('SetRank', 0)
     r.sysreq('SetTrainer', 0)
@@ -338,9 +342,33 @@ def trainer_routine(p, k):
     r.store('win')
     r.sysreq('BattleInstWorkDelete')
     r.load('win')
+    r.ret()
+
+
+def trainer_routine(p):
+    """pyramid_trainer(bit): the floor's trainer of BEATEN bit `bit` (module docstring); pyramid_trainer<k>() are
+    the events' entries."""
+    t = 'pyramid_trainer'
+    r = factory.Routine(p, t, ['bit', 'beaten'])
+    end = f'{t}_end'
+    r.op('LOAD_P_S_PRI', 12)
+    r.store('bit')
+    r.call(TALK_START, -1)
+    r.sysreq('WorkGet', ACTIVE)
+    r.op('JZER', end)                            # no challenge (should not happen: the floors are reached by it)
+    r.sysreq('WorkGet', WORK_BEATEN)
+    r.store('beaten')
+    r.load_alt('bit')
+    r.op('AND', 0)
+    r.op('JZER', f'{t}_fight')
+    _say(r, 'beaten')
+    r.op('JUMP', end)
+    r.p.label(f'{t}_fight')
+    _say(r, 'trainer')
+    r.call('pyramid_battle', 0)
     r.op('JZER', f'{t}_lost')
     r.load('beaten')
-    r.const_alt(1 << k)
+    r.load_alt('bit')
     r.op('OR', 0)
     r.store('beaten')
     r.sysreq('WorkSet', WORK_BEATEN, 'beaten')
@@ -349,6 +377,16 @@ def trainer_routine(p, k):
     r.op('ZERO_PRI', 0)
     r.ret()
     r.p.label(f'{t}_lost')
+    lost_and_leave(r)
+    for k in range(TRAINERS):
+        e = factory.Routine(p, f'pyramid_trainer{k}', [])
+        e.call(t, 1 << k)
+        e.op('ZERO_PRI', 0)
+        e.ret()
+
+
+def lost_and_leave(r):
+    """A lost battle: the line, end_challenge, back to the lobby."""
     _say(r, 'lost')
     end_challenge(r)
     r.call(TALK_END)
@@ -360,11 +398,14 @@ def trainer_routine(p, k):
 def stairs_routine(p):
     """pyramid_stairs(): the floor's attendant (module docstring)."""
     t, end = 'pyramid_stairs', 'pyramid_stairs_end'
-    r = factory.Routine(p, t, ['floor', 'streak', 'bp'])
+    r = factory.Routine(p, t, ['floor', 'streak', 'bp', 'variant'])
     r.call(TALK_START, -1)
     r.sysreq('WorkGet', ACTIVE)
     r.store('floor')
     r.op('JZER', end)
+    r.sysreq('WorkGet', WORK_SUMMIT)
+    r.store('variant')
+    r.op('JNZ', f'{t}_summit')                   # floor already counted: Brandon is waiting
     _say(r, 'floor', 'floor')
     r.sysreq('WorkGet', WORK_BEATEN)
     r.op('EQ_P_C_PRI', (1 << TRAINERS) - 1)
@@ -381,10 +422,10 @@ def stairs_routine(p):
     r.op('JSGEQ', f'{t}_record')                 # record >= streak
     r.sysreq('WorkSet', RECORD, 'streak')
     r.p.label(f'{t}_record')
-    r.sysreq('WorkSet', WORK_BEATEN, 0)
     r.load('floor')
     r.const_alt(FLOORS_PER_CHALLENGE)
     r.op('JSGEQ', f'{t}_top')                    # floor >= 7
+    r.sysreq('WorkSet', WORK_BEATEN, 0)
     r.load('floor')
     r.add(1)
     r.store('floor')
@@ -395,7 +436,32 @@ def stairs_routine(p):
     r.op('ZERO_PRI', 0)
     r.ret()
 
-    r.p.label(f'{t}_top')                        # BP of challenge streak / 7 (1-based), last value repeated
+    r.p.label(f'{t}_top')                        # the floor is counted: Brandon at the summit when due
+    r.sysreq('WorkSet', patch.WORK_ROUTE, ROUTE)
+    r.call('brains_check')                       # unit = the streak just counted
+    r.sysreq('WorkGet', brains.WORK_BRAIN)
+    r.op('SHR_P_C_PRI', 3)
+    r.store('variant')
+    r.op('JZER', f'{t}_close')
+    r.sysreq('WorkSet', WORK_SUMMIT, 'variant')  # pending, saved with the streak: no skipping, no second count
+
+    r.p.label(f'{t}_summit')
+    r.sysreq('WorkSet', patch.WORK_ROUTE, ROUTE)
+    r.load('variant')
+    r.op('SMUL_P_C', 8)
+    r.add(ROUTE)
+    r.store('bp')
+    r.sysreq('WorkSet', brains.WORK_BRAIN, 'bp')
+    r.call('brains_intro')
+    r.call('pyramid_battle', 'bp')               # brains_cro.s: Brandon's trainer and exact team
+    r.op('JZER', f'{t}_brain_lost')
+    r.call('brains_won')                         # symbol, BRAIN_BONUS BP, line; WORK_BRAIN = 0
+    r.sysreq('WorkSet', WORK_SUMMIT, 0)
+    r.sysreq('WorkGet', STREAK)
+    r.store('streak')
+
+    r.p.label(f'{t}_close')                      # BP of challenge streak / 7 (1-based), last value repeated
+    r.sysreq('WorkSet', WORK_BEATEN, 0)
     table = p.data_block('pyramid_bp', list(PYRAMID_BP))
     r.load('streak')
     r.op('MOVE_ALT', 0)
@@ -416,7 +482,21 @@ def stairs_routine(p):
     _change_map(r, *LOBBY_RETURN)
     r.op('ZERO_PRI', 0)
     r.ret()
+    r.p.label(f'{t}_brain_lost')
+    r.call('brains_lost')                        # Brandon's line; WORK_BRAIN = 0
+    lost_and_leave(r)
     r.p.label(end)
+    r.call(TALK_END)
+    r.op('ZERO_PRI', 0)
+    r.ret()
+
+
+def symbols_talk_routine(p):
+    """pyramid_symbols(): the lobby's other receptionist says the Pyramid's symbols (any time, also with another
+    facility's challenge paused)."""
+    r = factory.Routine(p, 'pyramid_symbols', [])
+    r.call(TALK_START, -1)
+    r.call('brains_symbols')
     r.call(TALK_END)
     r.op('ZERO_PRI', 0)
     r.ret()
@@ -425,8 +505,10 @@ def stairs_routine(p):
 def lobby_program(retail):
     """Zone 517's retail script as the Pyramid's lobby."""
     p = Program.from_script(retail)
-    dispatch(p, {RECEPTION_EVENT: 'pyramid_reception'})
+    dispatch(p, {RECEPTION_EVENT: 'pyramid_reception', SYMBOLS_EVENT: 'pyramid_symbols'})
     reception_routine(p)
+    symbols_talk_routine(p)
+    brains.symbols_routine(p, FACILITY)
     goto_floor_routine(p)
     return battle_video.suppress(p)
 
@@ -435,10 +517,14 @@ def floor_program(retail):
     """Zone 517's retail script as a Pyramid floor."""
     p = Program.from_script(retail)
     dispatch(p, {**{2 + k: f'pyramid_trainer{k}' for k in range(TRAINERS)}, STAIRS_EVENT: 'pyramid_stairs'})
-    for k in range(TRAINERS):
-        trainer_routine(p, k)
+    trainer_routine(p)
+    battle_routine(p)
     stairs_routine(p)
     goto_floor_routine(p)
+    brains.check_routine(p, STREAK, 0)
+    brains.intro_routine(p)
+    brains.won_routine(p)
+    brains.lost_routine(p)
     return battle_video.suppress(p)
 
 
