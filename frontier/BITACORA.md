@@ -3209,3 +3209,27 @@ No probado: nada en Azahar ni en consola; colisiones de los donantes (el suelo n
 de 358/165, música/cámara del donante, trasplante de la rutina de letrero, memoria de NPC anfitriones.
 Siguiente paso: el orquestador integra lane/claude; las tareas de personalidad.json se encolan con
 `frontier-orch add frontier/orch/propuestas/personalidad.json` cuando el usuario lo decida (prioridad: lo último).
+
+## 2026-11-12 06:12 — Codex — F7-CONSOLA-MANSION hito 1: relevo y sonda pasiva
+Estado: en curso
+Hecho: revisados AGENTS/PLAN/REPARTO/diseño, status/diff y último commit 1831f8f.
+Árbol limpio al relevo: no había cambio parcial que completar o deshacer; sin stash ni reset.
+Añadidos frontier/probes/maison/{dump.py,trace.gdb,README.md}; informes consola-frente.md y
+frontier.md §48. El parser confirma el data abort y compara la ventana del dump con ambas
+CRO publicadas. La sonda mide selección, equipo final y cliente, deteniendo antes de un vacío;
+no escribe RAM. Instalado paquete exacto alfa en laboratorio 24691, con partida Checkpoint publicada;
+ferry a Resort Batalla y secuencia de primera llegada en curso (todavía sin combate).
+Evidencia: work/frontier/console-maison/dump.json: dump SHA256d58509de…8d29787, 652 bytes,
+PC0x76638c, r0=0, FAR0xc; 96 bytes de código idénticos a alfa y v0.5. No prueba causa heredada.
+boot2.log verifica manifest de los 37 ficheros y hash de partida5ddaa992…7edeffa.
+Suite: env -u ORCH_LANE python -m pytest -q tests: 1365 passed, 1 skipped,48.75s
+(tests-clean-env.log). Primera ejecución con ORCH_LANE heredado:9 fallos de tests del orquestador,
+1356 passed,1 skipped (tests.log); conocido del entorno, no del juego. git diff --check limpio.
+Commits: el de esta entrada, «test(frontier): add passive Maison crash diagnostics».
+Decisiones: no alterar motor sin reproducir; no reconstruir alfa para compararla con consola.
+Primer arranque del laboratorio interrumpido al cancelar una caminata bloqueada por marinero;
+reap y segundo arranque en conductor persistente. REPARTO/tasks.json intactos, sin push.
+No probado: cinco modalidades, control v0.5 en juego, causa del equipo vacío, regresión caso b.
+Siguiente paso: acabar primera llegada al Resort, llegar a Mansión original por 210→211→516→517,
+guardar copia local antes de recepción, ejecutar cinco modalidades con trace.gdb y comparar v0.5
+si falla. Puerto solo24691. Laboratorio todavía activo durante este hito, se parará al cerrar sesión.

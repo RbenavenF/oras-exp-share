@@ -3318,3 +3318,19 @@ construcción común; `brain_table` solo gana las dos filas de datos de Brandon,
 
 La asistencia (`pv_mode`) solo cambió PS/movimientos de las copias de combate. No probado: consola, oro
 ganado y revanchas en Azahar (sí en VM), inglés en juego, dificultad sin asistencia, aspecto de Esmeralda.
+
+## 48. F7-CONSOLA-MANSION: diagnóstico del aborto de consola (2026-11-12, Codex)
+
+En curso. El informe de la primera prueba real está en `reports/consola-frente.md`
+(incidencia añadida al final). `frontier/probes/maison/dump.py` compara el volcado
+sin copiarlo al repositorio: los 96 bytes hasta PC0x76638c coinciden en alfa y v0.5;
+la instrucción retail de CRO+0x7338c desreferencia r0=0, FAR0xc. No implica que la
+causa sea heredada: un equipo vacío puede venir de un gancho anterior.
+
+La sonda pasiva `frontier/probes/maison/trace.gdb` mide selección, equipo construido
+y clientes, y detiene antes del acceso nulo si la cuenta es cero. Usa base CRO
+0x6f3000, validando la instrucción del constructor antes de leer el cliente.
+En el carril Codex, `boot.sh` verificó los 37 ficheros instalados frente al manifest
+de la alfa exacta y arrancó la partida publicada (SHA2565ddaa992…7edeffa).
+Evidencia local: `work/frontier/console-maison/{dump.json,boot2.log}`.
+No se ha modificado el motor ni reconstruido/sustituido la distribución.

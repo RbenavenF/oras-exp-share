@@ -98,3 +98,24 @@ jugar un combate, terminar (perder vale) y salir por la puerta a la plaza.
 ## Qué devolver
 
 Una tabla con los pasos 0–5 (hecho / falla), fotos de los fallos y, si hay, el volcado de `SD:/luma/dumps/arm11/`.
+
+## Incidencia de consola: Mansión original (2026-11-11; investigación 2026-11-12)
+
+El usuario sí ha probado la alfa en consola: la Mansión Batalla original se cuelga;
+con su partida normal los combates de historia funcionan. Esto corrige el alcance
+histórico de «nada en 3DS» del encabezado. La modalidad/selección exactas del cuelgue
+no están documentadas. No se ha determinado todavía si la causa es del Frente.
+
+Volcado de solo lectura `dumps/crash_dump_00000000.dmp`, SHA256
+`d58509dec10ac67381e34c41f96fa300f912c73e5d4ff6b6da6b8d8688d29787`:
+`frontier/probes/maison/dump.py` verifica sus 652 bytes, ARM11/data abort, PC
+0x76638c, r0=0, FAR=0xc, LR=0x12bad8. Con base CRO 0x6f3000 corresponde a
+0x7338c (`ldrh r0,[r0,#0xc]`). Los **96 bytes completos** de la ventana de código
+del volcado coinciden tanto con DllBattle de la alfa como con v0.5. El constructor
+retail llega a r0=0 cuando el equipo de cliente tiene cuenta cero; el dump no contiene
+el heap para consultar el objeto directamente. Esta coincidencia no demuestra que
+v0.5 también falle: falta ejecutar el caso con ella.
+
+Sondas y protocolo: `frontier/probes/maison/README.md`. Investigación en curso;
+no distribuir un supuesto arreglo ni declarar las cinco modalidades verificadas
+hasta tener las trazas de los combates. No se ha cambiado el motor.
