@@ -46,3 +46,13 @@ hardware en Azahar. `trace.gdb` arma el punto CRO después de cargar DllBattle,
 desde el asignador estable de code.bin; lo desactiva al volver al campo. Vacía la
 caché de registros de GDB en cada callback, antes de medir. Un error de la sonda
 se distingue expresamente de `MAISON EMPTY` y no demuestra un fallo del juego.
+
+## Pila y montón (Claude, 2026-11-12)
+
+* `stack.gdb`: en el constructor de cliente (CRO 0x7336c, cliente 0) imprime `STACKWORDS`, los 0x198 bytes
+  desde sp, lo mismo que guarda Luma. Se arma en StartBattle (0x1e33dc) → asignador 0x12bad4 y se desarma
+  solo (si se deja 0x12bad4 activo, el emulador va a 0 FPS: no es un cuelgue del juego).
+* `stackdiff.py DUMP.dmp LOG`: compara la pila del volcado con la del laboratorio y traduce el puntero del
+  cliente a Pokémon en el combate: 0x488 por Pokémon de ambos bandos (dos objetos de 0x244; contenedor
+  0x81fb588), 3+3 → 0x820d9ac, 2+2 → 0x820d09c, 4+4 → 0x820e2bc, 6+6 → 0x820f4dc.
+* `gdbctl.sh start` vacía `work/faraway/gdb/out.log`: copiar el registro antes de reiniciar el laboratorio.

@@ -119,3 +119,20 @@ v0.5 también falle: falta ejecutar el caso con ella.
 Sondas y protocolo: `frontier/probes/maison/README.md`. Investigación en curso;
 no distribuir un supuesto arreglo ni declarar las cinco modalidades verificadas
 hasta tener las trazas de los combates. No se ha cambiado el motor.
+
+### Resultado de la investigación (Claude, 2026-11-12)
+
+- En Azahar, con el paquete alfa exacto, la Mansión original **no se cuelga** en ninguna de las cinco modalidades
+  (Individual, Doble, Triple, Rotatorio, Múltiple), ni con «Fábrica Batalla» de su recepcionista, ni con la partida
+  `domo-cuelgue` del usuario llevada a la Mansión (`reports/frontier.md` §48.1).
+- El volcado no encaja con la Mansión: su pila coincide con la de un combate del **Domo** y su montón dice que había
+  2 Pokémon en el combate (rival 2, jugador 0). Solo el Domo pone 2 rivales.
+- Con la partida `domo-cuelgue` el Domo tampoco se cuelga en Azahar.
+
+**Preguntas al usuario** (para reproducirlo):
+1. ¿En qué edificio salió la pantalla de Luma: la Mansión del Resort Batalla o la casa del oeste de la isla
+   (Domo, sala de piedra)?
+2. ¿La partida `domo-cuelgue/main` es la que cargaste justo antes de ese cuelgue? Si no, la copia de Checkpoint
+   anterior al cuelgue.
+3. Los pasos desde Continuar: a quién hablaste, opciones elegidas (Combatir, qué tres inscribiste y qué dos
+   elegiste como luchadores; si pulsaste B en algún menú), y si antes, en la misma sesión, jugaste otra instalación.

@@ -3334,3 +3334,38 @@ En el carril Codex, `boot.sh` verificó los 37 ficheros instalados frente al man
 de la alfa exacta y arrancó la partida publicada (SHA2565ddaa992…7edeffa).
 Evidencia local: `work/frontier/console-maison/{dump.json,boot2.log}`.
 No se ha modificado el motor ni reconstruido/sustituido la distribución.
+
+### 48.1 Medidas en Azahar y huella del volcado (Claude, 2026-11-12)
+
+Relevo de Codex (cortado por cuota con el árbol limpio; sus registros de Individual y Doble, en su carril
+`work/frontier/console-maison/`, ya mostraban combates sin cuelgue). Laboratorio 24690, paquete alfa exacto
+(`boot.sh`: 37 ficheros = manifest), partida `reception.sav` (98089a84…, la de Codex) y `trace.gdb`:
+
+| Caso | Equipo construido | Cliente 0 (cuenta) | Resultado |
+| --- | --- | --- | --- |
+| Individual / Doble (Codex) | 3 / 4 | — / 0x820e2bc (4) | sin cuelgue |
+| Triple | 6 | 0x820f4dc (6) | sin cuelgue (`triple.log`) |
+| Rotatorio | 4 | 0x820e2bc (4) | sin cuelgue (`rotation.log`) |
+| Múltiple (sin enlace, compañero Aura) | 2 | 0x82118dc (2); cliente 2 IA (2) | sin cuelgue (`multi.log`) |
+| «Fábrica Batalla» en la recepcionista de 517 | 3 alquileres, ruta 1 | 0x820d9ac (3) | sin cuelgue (transcrito) |
+| Partida del usuario `dumps/domo-cuelgue/main` (120cde02…) llevada a 517, Individual | 3 (0,3,5) | 0x820d9ac (3) | ruta 0 tras la recepción; sin cuelgue (transcrito) |
+| Misma partida en el Domo (456), ruta 5 | 2 | 0x820d09c (2) | sin cuelgue (`user-dome.log`); se perdió el combate |
+
+La partida del usuario es la de Checkpoint con Poochyena Nv. 98, Cascoon y Shroomish Nv. 99 y la Caja de Combate
+vacía; guardada en el Domo al inscribirse (16438 = 5, Domo activo 16474 = 1, racha 0, TEAM 0,3,5).
+
+Huella (`frontier/probes/maison/stackdiff.py`, `stack.gdb`): la pila de consola (0x198 bytes) es **idéntica palabra
+a palabra** a la del constructor del cliente 0 en un combate del Domo en Azahar, salvo +0x24 (el cliente). Llamada
+desde el montaje Individual (LR CRO+0x166c0). El montón es determinista (BattleMain 0x81fb500, contenedor 0x81fb588
+iguales): cada Pokémon de cualquiera de los dos bandos aparta 0x488 antes del cliente 0. El cliente de consola
+0x820c78c corresponde a **2 Pokémon en el combate**: jugador 0 y rival 2. Un rival de 2 en Individual solo lo da
+`dome_count` con WORK_ROUTE = 5 (Domo); Tubo salvaje da 1. Conclusión medida: el volcado es un combate con la ruta
+del Domo y el equipo del jugador vacío, no un combate de la Mansión original (allí la recepción pone la ruta a 0 al
+crear el work, medido). Los dos volcados del usuario son idénticos byte a byte (00:21 y 01:16 del reloj de la consola).
+
+Con ruta 5 el equipo del jugador solo puede quedar vacío si (a) el montador toma la rama Caja de Combate
+(work+0x2c ≠ 0: no pasa por `rental_hook`/`dome_party` y la cuenta work+0x48 no se escribe) o (b) los dos huecos
+DOME_FIGHT apuntan a Pokémon vacíos (AddMember 0x3b645c descarta especie 0, 0x4d2e7c). BattleInstWorkCreate
+(0x1e5910) pone a 0 +0x2c..+0x4c, y el Domo no llama a la app de selección, así que ninguna de las dos se ha visto en
+Azahar. Estado: **no reproducido**; falta saber los pasos exactos de la consola. No se ha cambiado el motor.
+No probado: v0.5 (no aplica: sin cuelgue que comparar), consola.

@@ -3233,3 +3233,32 @@ No probado: cinco modalidades, control v0.5 en juego, causa del equipo vacío, r
 Siguiente paso: acabar primera llegada al Resort, llegar a Mansión original por 210→211→516→517,
 guardar copia local antes de recepción, ejecutar cinco modalidades con trace.gdb y comparar v0.5
 si falla. Puerto solo24691. Laboratorio todavía activo durante este hito, se parará al cerrar sesión.
+
+## 2026-11-12 — Claude Code (Opus 5.5) — F7-CONSOLA-MANSION hito 2: cinco modalidades y huella del volcado
+Estado: bloqueado (pregunta al usuario)
+Relevo: Codex se cortó por cuota; `git status` limpio, sus dos commits (fadfdff sonda pasiva, ebf6919 ajustes de
+trace.gdb) completos; nada que deshacer. Sus registros de Individual y Doble (su carril) no tenían cuelgue.
+Hecho (laboratorio 24690, paquete alfa exacto vía boot.sh, partida reception.sav 98089a84… copiada del carril codex):
+- Triple, Rotatorio y Múltiple (sin enlace) en la Mansión original: equipo y cliente 0 con su cuenta, sin cuelgue;
+  «Fábrica Batalla» desde la recepcionista de 517: alquileres 3, sin cuelgue.
+- Partida del usuario dumps/domo-cuelgue/main (copia, 120cde02…; Checkpoint con Nv. 98/99, Domo inscrito, ruta 5):
+  en el Domo, combate con 2+2 sin cuelgue; llevada a 517 (save_event --place), la recepción pone la ruta a 0 y el
+  Individual va bien.
+- Huella: la pila del volcado es idéntica a la del cliente 0 de un combate del Domo salvo el puntero del cliente;
+  montón determinista, 0x488 por Pokémon de ambos bandos → el volcado tenía 2 Pokémon: jugador 0 y rival 2, que solo
+  da dome_count (ruta 5). No es un combate de la Mansión original. Detalle en reports/frontier.md §48.1.
+- Sondas nuevas: frontier/probes/maison/stack.gdb y stackdiff.py (README).
+Evidencia: work/frontier/console-maison/ del carril claude: triple.log, rotation.log, multi.log, user-dome.log,
+transcribed.txt (Fábrica en 517, partida del usuario en 517 y contenedor: su out.log se sobrescribió al reiniciar el
+laboratorio; transcrito de la salida de la sesión), stack-dome.log (transcrito: igual al volcado salvo +0x24),
+stackdiff.txt (1 diferencia; 2.0 Pokémon). Suite: env -u ORCH_LANE python -m pytest -q tests: 1365 passed,
+1 skipped, 42.47 s (tests.log); git diff --check limpio. Laboratorio parado (gdbctl stop + reap).
+Commits: el de esta entrada, «test(frontier): fingerprint the console crash as a Dome battle».
+Decisiones: no tocar el motor sin reproducir (un arreglo especulativo exige la regresión b completa); v0.5 no se
+probó porque no hay cuelgue que separar; política de regresión: nada de motor tocado, nada más que probar.
+No probado: consola; rama Caja de Combate con ruta del Domo; huecos DOME_FIGHT vacíos; rondas 2–4 del Domo con la
+partida del usuario (Codex las aceptó con su fixture).
+Siguiente paso: respuesta del usuario a las preguntas de reports/consola-frente.md (edificio, partida y pasos
+exactos). Con ella, reproducir en Azahar con trace.gdb (MAISON EMPTY se detiene antes del acceso nulo) y medir quién
+deja el equipo vacío. Propuesta de blindaje si no se reproduce (decisión del usuario, motor → regresión b): con
+WORK_ROUTE ≠ 0 ignorar la Caja de Combate en 0x1e3d3c y, en dome_party, no usar huecos vacíos.
