@@ -342,6 +342,10 @@ Cada fila conserva el orden del equipo. Especificación de datos, no un parche.
 | Oro | STEELIX | BRIGHT_POWDER | BRAVE | 31 | 252,0,0,0,6,252 | EARTHQUAKE, ROCK_SLIDE, EXPLOSION, SCREECH |
 | Oro | GYARADOS | CHESTO_BERRY | ADAMANT | 31 | 252,6,0,0,0,252 | DRAGON_DANCE, RETURN, ROAR, REST |
 
+Nota de implementación (2026-11-12, `reports/frontier.md` §46): el Shuckle de plata suma 610 EV en
+Esmeralda; ORAS limita el total a 510 (`0x3b4b64`) y el parche usa 252,0,0,0,106,152. La fila se
+conserva como dato de origen.
+
 ### Pirámide — Brandon
 
 | Símbolo | Especie | Objeto | Naturaleza | IV | EV (PS/At/Def/Vel/AtE/DefE) | Movimientos |

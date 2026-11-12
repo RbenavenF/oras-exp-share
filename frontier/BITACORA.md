@@ -3083,3 +3083,35 @@ No probado: oro/derrota de jefe en Azahar (sí VM), consola, aspecto exacto Esme
 para retomar después de la decisión. Laboratorio parado desde el conductor privado con reap; sin push.
 Siguiente paso: resolver criterio EV en diseño, actualizar tabla/test correspondiente si procede, reconstruir,
 repetir comprobación real del equipo plata y completar oro o derrota Azahar, suite y cierre done.
+
+## 2026-11-12 — Claude — F8-CEREBRO-TUBO hito 3: EV de Shuckle resuelto y aceptación Lucy completa
+Estado: hecho
+Hecho: relevo tras corte de cuota de Codex. Al empezar, `frontier/probes/brains/check_team.py` estaba en
+conflicto (UU) por un autostash del orquestador: la versión stash solo admitía tower/palace; la de HEAD
+(3581e42, tower…pike) la supera, así que se dejó la de HEAD y el árbol quedó limpio. La entrada de stash
+`08dcdee… autostash` sigue en la pila compartida, con contenido obsoleto; no se ha borrado.
+Bloqueo del hito 2 (Shuckle 610 EV frente al límite 510 de ORAS) resuelto por criterio del agente, sin
+tocar el motor: tabla de `brains.py` a 252,0,0,0,106,152, que es lo que ya construía el juego; nota en el
+anexo de cerebros.md §7; nuevo test que impide sets de Cerebro por encima de 252/510. Detalle y vuelta
+atrás en reports/frontier.md §46. Aceptación en Azahar 24690 (caso a, solo Tubo): plata ganada con
+símbolo, pausa/guardado, recarga y consulta; oro en S139 con equipo exacto y derrota limpia.
+Evidencia (work/frontier/cerebros/pike/ del carril claude):
+- Suite: env -u ORCH_LANE python -m pytest -q tests: 1330 passed, 1 skipped, 42.31 s (tests-m3.log);
+  git diff --check limpio. Build overlay correcta (build.log).
+- Plata: trainer139, S27, pendiente14; check_team.py silver-team --facility pike rc0 (check-silver.log),
+  Shuckle 252,0,0,0,106,152. Victoria raw1, texto de símbolo +10 PB; RAM S28, activo1, símbolo1024,
+  pendiente0 (silver.gdb.log, silver-after.txt). Pausa: silver-paused.sav 937bb8b2…, S/récord28,
+  PB 4→15, equipo bruto y cajas idénticos (saved-silver.json). Recarga + «Símbolos»: «Tienes el Símbolo
+  Suerte de plata» (silver-reloaded-symbol.png).
+- Oro: s139.sav (6d3dc6d8…) desde la pausa de plata; trainer140, pendiente22; check_team --variant gold
+  rc0 (check-gold.log); PS/estado v2 restaurados y visibles en combate (gold-retained-party.png).
+  Derrota raw0: RAM ruta/S/activo/pendiente 0, símbolo1024 (gold-after.txt); gold-loss.sav: récord139,
+  PB 15→15, equipo/cajas idénticos; ruta6 en archivo, 0 en RAM, igual que el Domo (gold-loss-save.json).
+- Laboratorio parado con reap desde la sesión que lo arrancó; bus D-Bus privado cerrado; sin session.json.
+Commits: el de esta entrada, «fix(frontier): cap Lucy's Shuckle EVs to ORAS 510 and finish Pike Brain acceptance».
+Decisiones: EV a 510 en lugar de excepción de motor (reversible; si el usuario quiere los 610 hay que
+cambiar el escritor de EV, que es motor, y hacer la regresión del caso b). Caso a: no se tocaron motor,
+asm, patch.py, isla ni construcción común. REPARTO/tasks.json intactos según el brief del carril.
+No probado: consola, oro ganado y revanchas en Azahar (sí en VM), inglés en juego, dificultad sin asistencia.
+Siguiente paso: el orquestador integra lane/claude y pasa la aceptación en main; F8-CEREBRO-TUBO terminado
+(done en work/lane-task.json). Pregunta abierta para el usuario: ¿aceptar 510 EV para Shuckle o pedir los 610?

@@ -97,7 +97,9 @@ TEAMS = {
     ('pike', SILVER): (16, [
         ('SEVIPER', 'QUICK_CLAW', 'BRAVE', (252, 0, 252, 0, 6, 0),
          ('SWAGGER', 'CRUNCH', 'POISON_FANG', 'GIGA_DRAIN')),
-        ('SHUCKLE', 'CHESTO_BERRY', 'BOLD', (252, 0, 0, 0, 106, 252), ('TOXIC', 'SANDSTORM', 'PROTECT', 'REST')),
+        # Emerald gives Shuckle 252,0,0,0,106,252 (610 EV); ORAS's EV setter 0x3b4b64 caps the total at 510, so the
+        # last stat (SpD) is 152 in game. Table follows the game (reports/frontier.md §46, BITACORA 2026-11-12).
+        ('SHUCKLE', 'CHESTO_BERRY', 'BOLD', (252, 0, 0, 0, 106, 152), ('TOXIC', 'SANDSTORM', 'PROTECT', 'REST')),
         ('MILOTIC', 'LEFTOVERS', 'MODEST', (152, 0, 100, 0, 152, 106), ('ICE_BEAM', 'MIRROR_COAT', 'SURF', 'RECOVER'))]),
     ('pike', GOLD): (31, [
         ('SEVIPER', 'FOCUS_BAND', 'BOLD', (252, 0, 0, 0, 252, 6),

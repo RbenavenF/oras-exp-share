@@ -3246,3 +3246,35 @@ solo del guardado posterior. Suite hito2:1329 passed,1 skipped,48.27s (`tests-m2
 **Pendiente/no probado:** combate oro o derrota de jefe en Azahar (sí VM), consola y fidelidad completa
 EV de Shuckle. `s139-silver.sav`/`gold-fixture.json` están preparados para retomar oro desde139 con
 plata1024 y estado v2 controlado; no se han ejecutado. Laboratorio del carril cerrado al terminar.
+
+## 46. Cerebro del Tubo — Lucy: EV de Shuckle y aceptación completa (F8-CEREBRO-TUBO)
+
+**Decisión EV (tomada por el agente, reversible; revisable por el usuario).** El Shuckle de plata de Esmeralda
+lleva EV 252,0,0,0,106,252 (610). ORAS no admite más de 510: el escritor nativo `0x3b4b64` que usa el
+constructor de Cerebros (`frontier/asm/brains_cro.s`) recorta el último valor, y el PK6 real del hito 2 (§45) ya
+salía 252,0,0,0,106,**152**. Se ha alineado la tabla con lo que construye el juego (`frontier/brains.py`,
+DefE 152, total 510) en lugar de ampliar el motor para admitir 610, que exigiría tocar infraestructura común
+y regresión caso b para unos 12 puntos de Def. Esp. a nivel 50. El anexo de diseño conserva la fila de
+Esmeralda con una nota. Nuevo test `test_brain_evs_are_legal_in_oras`: ningún set de Cerebro supera 252
+por estadística ni 510 en total. Si el usuario prefiere los 610, hay que cambiar el escritor de EV
+(motor, caso b) y revertir esta fila.
+
+Cambio solo de datos privados de Lucy (no de instrucciones, works, isla ni construcción común):
+política de regresión caso a, solo Tubo. Build `python frontier/overlay.py --out work/frontier/cerebros/pike/build`
+(`build.log`). Artefactos en `work/frontier/cerebros/pike/` del carril claude (no distribuir).
+
+| Prueba | Resultado y fuente |
+| --- | --- |
+| Suite | `env -u ORCH_LANE python -m pytest -q tests`: 1330 passed, 1 skipped, 42.31 s (`tests-m3.log`); `git diff --check` limpio |
+| Fixture plata | `s27-paused.sav` (copia de la del hito 2, SHA256 0c49b972…; S/récord27, activo1, PS60/70/80, estado0/0/1, PP5, PIKE_WILD217) |
+| Plata Azahar | trainer139, flag0, S27, pendiente14 (`silver.gdb.log`); intro «Soy Lucy, Cerebro del Frente de el Tubo Batalla.» y «¡La Bruja Lucy te desafía!». Equipo exportado antes de asistencia: `check_team.py silver-team --facility pike` **rc0** (`check-silver.log`), Shuckle 252,0,0,0,106,152, IV16. Victoria asistida raw1; «¡Has obtenido el Símbolo Suerte de plata! Recibes 10 PB más.» (`silver-symbol.png`); RAM tras textos S28, activo1, símbolo1024, pendiente0 (`silver-after.txt`) |
+| Pausa y guardado | «Pausar» en el menú del combate29 directamente tras Lucy: `silver-paused.sav` SHA256 937bb8b2…, 58 bloques válidos, S/récord28, activo1, ruta6, símbolo1024, pendiente0, PB 4→15 (+10 jefe, +1 ronda), equipo bruto y cajas idénticos a la fixture (`saved-silver.json`) |
+| Recarga | Reinicio con `silver-paused.sav`, recepción → «Símbolos»: «Tienes el Símbolo Suerte de plata de el Tubo Batalla.» (`silver-reloaded-symbol.png`) |
+| Fixture oro | `s139.sav` desde `silver-paused.sav` con `faraway/save_event.py`: S/récord139, PS60/70/80, estado0/0/1, PP5, PIKE_WILD217; SHA256 6d3dc6d8… (`gold-fixture-mine.json`) |
+| Oro Azahar | recepción «racha… 139»; «Has vuelto a llegar hasta mí. Soy Lucy…» (`gold-intro.png`); trainer140, pendiente22. Equipo oro exportado antes de asistencia: `check_team.py gold-team --facility pike --variant gold` **rc0** (`check-gold.log`). Hooks pasivos restauran PS60/70/80 y estado0/0/1 antes del combate; en combate Beldum 70/156 y Poochyena 80/184 paralizado (`gold-retained-party.png`) |
+| Derrota oro | Asistencia en modo derrota (solo PS de copias propias); raw0. RAM tras volver a recepción: ruta0, S0, activo0, pendiente0, símbolo1024 (`gold-after.txt`). Auto-guardado `gold-loss.sav` (SHA256 9a9dc707…, 58 bloques): S0, activo0, récord139, símbolo1024, pendiente0, PIKE_WILD0, PS v2 a 0, PB 15→15 (sin premio), equipo/cajas idénticos (`gold-loss-save.json`). Como en el Domo (§44), el archivo conserva ruta6 escrita antes del retorno retail, que en RAM ya es 0 |
+| Laboratorio | puerto 24690; `reap` desde la misma sesión; sin `session.json` ni procesos del carril; bus D-Bus privado cerrado (`cleanup.log`) |
+
+La asistencia solo cambió PS/movimientos de copias de combate; no tocó resultados, works, símbolos ni PB.
+No probado: consola, oro ganado en Azahar (sí en VM), revanchas en Azahar (sí en VM), inglés en juego,
+dificultad real sin asistencia, aspecto exacto de Esmeralda (sustitución de clase/modelo de §45).

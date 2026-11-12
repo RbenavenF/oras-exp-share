@@ -74,7 +74,7 @@ def test_result_symbols_bonus_and_no_duplicate_room_or_prize(zone, variant, stre
 def test_lucy_exact_teams_and_identity():
     expected = {
         1: (16, [(336,217,2,(252,0,252,0,6,0),(207,242,305,202)),
-                 (213,150,5,(252,0,0,0,106,252),(92,201,182,156)),
+                 (213,150,5,(252,0,0,0,106,152),(92,201,182,156)),
                  (350,234,15,(152,0,100,0,152,106),(58,243,57,105))]),
         2: (31, [(336,230,5,(252,0,0,0,252,6),(207,242,188,202)),
                  (208,213,2,(252,0,0,0,6,252),(89,157,153,103)),
@@ -94,6 +94,14 @@ def test_lucy_exact_teams_and_identity():
             assert struct.unpack_from('<H6B', rows, at+4+8*k) == (idx,hp,atk,df,spa,spd,spe)
     assert brains.trainer_names()[10:12] == ['Lucy','Lucy']
     assert brains.APPEARANCES['pike'] == (28,140,56) and 'pike' in brains.ENABLED
+
+
+def test_brain_evs_are_legal_in_oras():
+    """ORAS's EV setter (0x3b4b64) caps each stat at 252 and the total at 510; a table above that would be silently
+    clamped by the game (Lucy's Emerald Shuckle had 610), so every Brain set must already be within the limit."""
+    for key, (_, team) in brains.TEAMS.items():
+        for species, _, _, ev, _ in team:
+            assert max(ev) <= 252 and sum(ev) <= 510, (key, species, ev)
 
 
 def test_reception_symbols_is_available(zone):

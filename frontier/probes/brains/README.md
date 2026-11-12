@@ -129,7 +129,7 @@ La comparación `brains.assemble()` con y sin las filas de Arena está en
 `native-data-only.json`: instrucciones y símbolos idénticos, solo cambian las dos filas
 Greta de `brain_table` (datos privados); no se modifica el motor de Arena ni otro gancho.
 
-## Tubo (Lucy, F8-CEREBRO-TUBO; aceptación pendiente de EV)
+## Tubo (Lucy, F8-CEREBRO-TUBO)
 
 Informe `reports/frontier.md` §45; artefactos `work/frontier/cerebros/pike/`.
 Usar una partida realmente pausada: fuente `work/frontier/lab/pa_paused7.sav`, SHA256
@@ -146,8 +146,9 @@ Conservar `rival-0*.pk6` en `silver-team` y ejecutar:
 python frontier/probes/brains/check_team.py work/frontier/cerebros/pike/silver-team --facility pike
 ```
 
-Actualmente falla: Shuckle diseñado suma610 EV, el escritor ORAS limita510 y deja DefE152 frente a252.
-No dar la tarea por terminada ni eliminar el assert. Resolver la contradicción de diseño descrita en §45.
+Desde §46 la tabla usa Shuckle DefE152 (total510, límite de ORAS) y pasa con rc0; oro igual con `--variant gold`.
+`lab_probe.py` genera `pv_mode='normal'`: poner `win`/`loss` (en el fichero o con `python pv_mode=...` en GDB
+detenido) antes de que salgan los Pokémon. En recepción: Combatir → Combate Individual → Participar → Sí.
 El resultado raw1 se imprime antes del premio; avanzar y medir state(pv_save): S28, símbolo1024, pendiente0.
 Para guardar, elegir «Pausar» en el menú de siguiente combate; evitar pulsaciones A en lote tras la victoria,
 porque aceptan continuar y entran en las puertas de la siguiente ronda. Oro parte de S139 conservando plata.
