@@ -3278,3 +3278,43 @@ política de regresión caso a, solo Tubo. Build `python frontier/overlay.py --o
 La asistencia solo cambió PS/movimientos de copias de combate; no tocó resultados, works, símbolos ni PB.
 No probado: consola, oro ganado en Azahar (sí en VM), revanchas en Azahar (sí en VM), inglés en juego,
 dificultad real sin asistencia, aspecto exacto de Esmeralda (sustitución de clase/modelo de §45).
+
+## 47. Cerebro de la Pirámide — Brandon (F8-CEREBRO-PIRAMIDE, 2026-11-12)
+
+Diseño: `reports/diseno/cerebros.md` §1, §5, §7. Código: `frontier/pyramid.py` (escalera, cima, consulta),
+`frontier/brains.py` (sets, ENABLED, `check_routine(p, streak_work, offset)`). Tests:
+`tests/test_frontier_brain_pyramid.py` (VM) y `tests/test_frontier_brains.py` (ids cotejados con gametext ES).
+
+Flujo: el encargado del piso 7, con los tres entrenadores vencidos, cuenta el piso (racha y récord) y llama
+`brains_check` con unidad = pisos contados. Si toca Brandon (21; con plata 70; con ambos 21 y 70, 105, 140…),
+guarda la variante en el work 16731 (`WORK_SUMMIT`, reservado en REPARTO para la cima) y combate allí mismo:
+el combate es el de los pisos (trabajo propio, `SetTrainer(0)`) con `WORK_BRAIN` = 7 + 8·variante, y
+`brains_cro.s` pone el entrenador 141/142 (clase 96 Montañero, nombre Brandon) y su equipo exacto. Ganar:
+`brains_won` (símbolo, +10 PB, línea), después los PB del desafío y vuelta al vestíbulo; el combate no suma piso.
+Perder: línea de derrota, fin del desafío (racha 0), récord y símbolos intactos. Con 16731 ≠ 0 (recarga) el
+encargado va directo a Brandon sin volver a contar; los entrenadores del piso 7 siguen vencidos hasta cerrar.
+Retirarse en recepción también limpia 16731. Consulta: la segunda recepcionista del vestíbulo (evento 3, NPC 2 de
+517, casilla 17,24). Sin líneas de texto nuevas (las de Cerebros por ruta) ni zona nueva. Sustitución visual: en
+campo Brandon es el encargado (modelo 62); en combate, la clase 96.
+
+Espacio: el piso pasaba a ZO 17692 > 17248; los tres entrenadores comparten `pyramid_trainer(bit)` y una
+`pyramid_battle(brain)` con la cima. ZO 140/141/142 = 16140/16956/16956 (`romfs/a/0/1/3` de la build).
+
+Aceptación en Azahar (puerto 24690, política caso a: solo la Pirámide; no cambian motor, asm, patch.py, isla ni
+construcción común; `brain_table` solo gana las dos filas de datos de Brandon, como Lucy). Evidencia en
+`work/frontier/cerebros/pyramid/` del carril claude:
+
+| Prueba | Resultado | Fuente |
+| --- | --- | --- |
+| Fixture plata | copia de `work/frontier/lab/py_c_lobby_saved2.sav` (8b5a8b76…): S/récord 20, piso 7, vencidos 7, ruta 7, otros activos 0 | `fixture.json`, `s20-floor7.sav` |
+| Plata | intro de Brandon; entrenador 141, S=21 ya contado, WORK_BRAIN 15; equipo Regirock/Registeel/Regice IV16 y EV exactos (`check_team.py --facility pyramid` rc0); victoria raw1 | `silver.gdb.log` (transcrito de consola), `talk1.png`, `check-silver.log` |
+| Premio | «Símbolo Bravura de plata… 10 PB más», luego «Recibes 6 PB» (desafío 3); guardado: S/récord 21, activo/ruta/pendiente 0, símbolos 4096, PB 5→21, equipo y cajas idénticos | `after-win1.png`, `won-bp.png`, `silver-saved.json` (silver-saved.sav 110c8e5519e0327c…) |
+| Recarga y consulta | reinicio desde ese guardado; recepcionista 2: «Tienes el Símbolo Bravura de plata» | `symbols-talk.png` |
+| Pendiente guardado (oro) | copia del guardado de plata con S/récord 70, piso 7, vencidos 7, 16731=2: entrenador del piso «Ya hemos combatido»; encargado directo a «Has vuelto a llegar hasta mí» sin «Piso 7 de 7» | `gold-fixture.json`, `gold-trainer-beaten.png`, `gold-intro.png` |
+| Oro | entrenador 142, S=70 (sin piso extra), Articuno/Zapdos/Moltres IV31 y EV exactos (rc0) | `gold.gdb.log`, `check-gold.log` |
+| Derrota | raw0; línea de Brandon y «Has perdido…»; vestíbulo; guardado: S/activo/ruta/pendiente 0, récord 70, símbolos 4096, PB 21 | `gold-loss-save.json` (gold-loss.sav 1b703d142ed4e64a…) |
+| Equipo real | plata idéntico; tras oro difieren solo amistad (+2, 0xCA/0xA2) y checksum de los cinco no huevo, también los que no combatieron: pasos al caminar, no el combate | comparación con `save_fixture.decode_pk` (bitácora) |
+| Laboratorio | parado con `gdbctl.sh stop` y `reap`; sin `session.json`; use_gdbstub=false | `cleanup.log` |
+
+La asistencia (`pv_mode`) solo cambió PS/movimientos de las copias de combate. No probado: consola, oro
+ganado y revanchas en Azahar (sí en VM), inglés en juego, dificultad sin asistencia, aspecto de Esmeralda.

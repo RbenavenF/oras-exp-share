@@ -155,3 +155,12 @@ porque aceptan continuar y entran en las puertas de la siguiente ronda. Oro part
 Para medir retención: hooks pasivos de SET_HP0x14f450 y SET_SICK0x14f814 restringidos a LR en
 pike_build..pike_iswin, y pike_pp+32 (ver símbolos de la build), además de PP/PS en arena_enter.
 No interpretar como estado el offset0x34 de la sonda local: no está validado.
+
+## Pirámide (Brandon, F8-CEREBRO-PIRAMIDE)
+
+Informe `reports/frontier.md` §47; artefactos en `work/frontier/cerebros/pyramid/`. Fixture: copia de una partida
+en el vestíbulo con desafío, editada con `faraway.save_event.edit` a S/récord 20 (o 69), activo 16482=7,
+vencidos 16686=7, ruta 7 y los demás activos a 0; hablar con la recepcionista (reanudar) lleva al piso 7 (zona 141,
+llegada 12,16). Caminar con `frontier/probes/pyramid/walk_to.py` 10 16 → 10 7 → 12 7, mirar arriba y hablar con
+el encargado. Para el pendiente guardado, 16731 = variante y la racha ya contada (21/70).
+`check_team.py DIR --facility pyramid [--variant gold]`. La recepcionista de símbolos está en la casilla 17,24.

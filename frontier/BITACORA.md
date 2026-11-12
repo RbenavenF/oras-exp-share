@@ -3146,3 +3146,32 @@ Pirámide): no se tocan motor, asm, patch.py, isla ni construcción común; la t
 No probado: nada en Azahar todavía.
 Siguiente paso: Azahar 24690 con copia de partida en piso 7, racha 20, BEATEN=7: plata ganada con símbolo,
 guardar/cargar; oro (racha 69) o derrota; comprobar que piso/PB no se duplican y equipo real intacto.
+
+## 2026-11-12 — Claude Code (Opus 5.5) — F8-CEREBRO-PIRAMIDE hito 2: aceptación de Brandon en Azahar
+Estado: hecho
+Hecho: aceptación en Azahar 24690 (caso a, solo Pirámide) de la build del hito 1 (b675a23), sin cambios de código
+del juego después. `check_team.py` admite `--facility pyramid`; README de sondas e informe `reports/frontier.md` §47.
+Evidencia (work/frontier/cerebros/pyramid/ del carril claude; detalle y hashes en §47):
+- Plata: copia de work/frontier/lab/py_c_lobby_saved2.sav (8b5a8b76…) a S/récord20, piso7, vencidos7 (fixture.json).
+  Reanudar → piso 7 → encargado: intro «Soy Brandon…»; entrenador141, S=21 ya contado, WORK_BRAIN15; equipo exacto
+  (check-silver.log rc0); victoria raw1 (silver.gdb.log, transcrito de consola). «Símbolo Bravura de plata… 10 PB»
+  y «Recibes 6 PB». Guardado del juego: S/récord21, activo/ruta/pendiente0, símbolos4096, PB5→21 (+10+6, una vez),
+  equipo y cajas idénticos (silver-saved.json). Reinicio desde él: la recepcionista 2 dice «Tienes el Símbolo
+  Bravura de plata» (symbols-talk.png).
+- Pendiente guardado + oro + derrota: copia del guardado de plata con S/récord70, piso7, vencidos7, 16731=2
+  (gold-fixture.json). Entrenador del piso 7: «Ya hemos combatido»; encargado: directo a la intro de oro sin
+  «Piso 7 de 7»; entrenador142, S=70 (no cuenta otro piso), equipo de oro exacto (check-gold.log rc0); derrota raw0
+  (gold.gdb.log), línea de Brandon y «Has perdido…», vestíbulo. Guardado: S/activo/ruta/pendiente0, récord70,
+  símbolos4096, PB21 sin cambio (gold-loss-save.json). Equipo: solo amistad +2 y checksum en los cinco no huevo,
+  incluidos los que no combatieron (selección 4,5,3; el 5 no cambia): pasos al caminar, no el combate.
+- Suite: env -u ORCH_LANE python -m pytest -q tests: 1365 passed, 1 skipped, 42.42 s (tests-m2.log); diff --check limpio.
+- Laboratorio parado (gdbctl stop + reap, sin session.json, use_gdbstub=false; cleanup.log).
+Commits: b675a23 hito 1; el de esta entrada, «test(frontier): accept Brandon at the Pyramid summit in Azahar».
+Decisiones: política caso a; regresión de otras instalaciones no aplica (no se tocó motor ni construcción común).
+El pendiente guardado se probó con partida editada: en juego no hay punto de guardado entre contar el piso y el
+combate, así que es la red de seguridad para un guardado o reinicio en ese intervalo. Para el integrador: 16731
+pasa de «reservado» a usado por la Pirámide (WORK_SUMMIT); la recepcionista del evento 3 del vestíbulo 140 es
+ahora la consulta de símbolos; no hay líneas, works ni casos nuevos.
+No probado: consola, oro ganado y revanchas en Azahar (sí en VM), inglés en juego, dificultad sin asistencia.
+Siguiente paso: el orquestador integra lane/claude y pasa la aceptación en main; F8-CEREBRO-PIRAMIDE terminado
+(done en work/lane-task.json). Sin push.
