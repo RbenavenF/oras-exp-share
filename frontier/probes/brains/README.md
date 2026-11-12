@@ -73,3 +73,28 @@ Para conservar el símbolo: tras ganar, «Pausar» en el menú de siguiente comb
 recargarla y usar «Símbolos» en la recepción. Comparar equipo (0x14200, 0x61c bytes) y cajas
 (bloque 56 del guardado ORAS: 0x33000, 0x34ad0 bytes) con la fixture; `scripts/save_fixture.blocks`
 valida sus checksums. Tras perder, comprobar racha/activo/ruta/pendiente=0, plata=16 y récord conservado.
+
+## Arena (Greta, F8-CEREBRO-ARENA)
+
+Informe `reports/frontier.md` §43; artefactos en `work/frontier/cerebros/arena/`.
+Fuente de la fixture: `work/frontier/lab/ar_paused9.sav`, SHA256
+`093ed149abb9054559480270eba79e36c5457e4fd3e940e6b7940a86cd4cc239`, zona 457,
+activo 16466=1. Crear copia con `save_event.edit`, works
+`{16438:0,16465:27,16467:27,16729:0,16730:0}` para plata. Oro desde el guardado de
+plata ganado, racha/récord 55 y pendiente 0, conservando el símbolo (16729=64).
+Nunca sobrescribir la fuente. Construcción y arranque igual que Palacio, con rutas de Arena.
+`check_team.py DIR --facility arena [--variant gold]` valida los tres PK6 previos a asistencia.
+
+Para ejercitar el juicio en el combate de Greta, generar `frontier/lab_arena_probe.py --mode win`
+en `work/` y adaptar esa copia: al final de `ar_enter`, antes del print, añadir
+`if ar_mode != 'normal': ar_harmless(mon)`; en `ar_end` aplicar `ar_harmless` a ambos
+`mons[0]` y `mons[1]`. Cargar tras la sonda de Cerebros, manteniendo `pv_mode='normal'`.
+Así ambos usan Salpicadura y el juicio recibe PS completos para el jugador y 1 para
+el rival al tercer turno (Shedinja conserva 1/1 y empata). No altera script, resultado,
+works, premios ni equipo guardado. La prohibición de cambiar se comprueba con el menú
+Pokémon y otro participante. Para derrota, reiniciar con la misma sonda adaptada y `ar_mode='loss'` (invierte los PS al tercer turno),
+conservando `pv_mode='normal'`.
+
+La comparación `brains.assemble()` con y sin las filas de Arena está en
+`native-data-only.json`: instrucciones y símbolos idénticos, solo cambian las dos filas
+Greta de `brain_table` (datos privados); no se modifica el motor de Arena ni otro gancho.

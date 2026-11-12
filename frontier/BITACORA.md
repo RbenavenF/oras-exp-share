@@ -2925,3 +2925,38 @@ Decisiones: solo datos y script mediante API BASE; no cambia lógica nativa, ASM
 No probado todavía: Greta en Azahar, guardado/carga del símbolo y derrota; consola.
 Siguiente paso: laboratorio de este carril 24691 ya arrancado con s27.sav y sonda judge-win.gdb;
 completar plata ganada, guardar/cargar y oro/derrota; medir juicio a tres turnos y cambio prohibido.
+
+## 2026-11-12 — Codex — F8-CEREBRO-ARENA hito 2: aceptación de Greta
+Estado: hecho
+Hecho: completada aceptación en Azahar del carril 24691; informe reports/frontier.md §43 y reproducción
+frontier/probes/brains/README.md. Corregidos comentarios/alias copiados de Palacio en el test de Greta.
+Evidencia:
+- Suite final env -u ORCH_LANE python -m pytest -q tests: 1281 passed, 1 skipped, 47.63 s
+  (work/frontier/cerebros/arena/tests-final.log); primera suite tests-full.log también verde.
+  Una ejecución intermedia tras renombrar un alias de fixture dio NameError; corregido y repetida entera.
+- Overlay completa correcta, ZO Arena 16724 <= 17248 (build.log/build-manifest.json).
+  Comparación brains.assemble con/sin Arena: instrucciones y símbolos idénticos, solo dos filas Greta
+  de brain_table 0xf0898–0xf08cf (native-data-only.json). No cambia lógica de motor ni construcción común.
+- Plata desde S27: entrenador135, pendiente12, bit31; Heracross/Umbreon/Shedinja exactos antes de asistencia
+  (silver-team.json, check_team.py --facility arena rc0). Intro Greta y premio propio capturados.
+  Menú prohíbe cambio; juicios Cuerpo edades [3,3], [6,3], [9,3], raw1.
+- Pausa guarda S/récord28, activo1, símbolo64, pendiente0, PB2→14 (10 Cerebro + 2 ronda);
+  s28-silver.sav SHA256 2a31f499…, checksums válidos, equipo/cajas intactos. Recarga exacta y consulta plata
+  comprobadas en consult-silver.png. Fuente ar_paused9.sav SHA256 093ed149… sin cambios.
+- Oro desde S55: intro propia, entrenador136, pendiente20, bit31; Umbreon/Gengar/Breloom exactos
+  (gold-team.json, check_team.py --facility arena --variant gold rc0). Tres juicios eliminan al jugador;
+  raw0, texto derrota, ruta/racha/activo/pendiente0; récord55 y plata64 conservados (gold-loss-gdb.log).
+  Guardado real posterior gold-loss-saved.sav SHA256 a52ee68b…, PB14, mismos works, checksums válidos;
+  equipo/cajas idénticos byte a byte a fuente (gold-loss-saved.json).
+- Lab cerrado con reap desde conductor propietario: own_processes=[] (cleanup.log), GDB off y D-Bus
+  privado cerrado. git diff --check limpio.
+Commits: 5347064 «feat(frontier): add Greta teams and Arena symbols reception»; el de esta entrada,
+«test(frontier): verify Greta symbols and scoped Arena acceptance» (Agent: Codex).
+Decisiones: política caso a, solo Arena; cambios de datos y script mediante BASE, sin nuevas reservas.
+Asistencia solo PS/movimientos de copias de combate: Salpicadura ambos, PS ganadores/perdedores al tercer
+turno para ejercitar juicio real; nunca se escribe resultado, works ni premios. Sustitución visual ORAS:
+Luchadora63 rubia con traje azul, sin modelo Greta propio. Mente/Técnica siguen fuera según diseño.
+No probado: consola, inglés en juego, dificultad sin asistencia, victoria oro/revanchas en Azahar (VM sí).
+No capturada pantalla inicial de nombre/clase en combate; sí tablas de nombre real, entrenador y equipo,
+y ambas introducciones de campo. REPARTO/tasks.json intactos, sin push; estado done en work/lane-task.json.
+Siguiente paso: el orquestador integra lane/codex y pasa su aceptación; F8-CEREBRO-ARENA terminado.

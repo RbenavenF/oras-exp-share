@@ -1,4 +1,4 @@
-"""Greta, the Battle Arena's Frontier Brain (F8-CEREBRO-ARENA; reports/diseno/cerebros.md): his fixed teams,
+"""Greta, the Battle Arena's Frontier Brain (F8-CEREBRO-ARENA; reports/diseno/cerebros.md): her fixed teams,
 the Arena zone script's Brain routines (frontier/brains.py) run in scripts/pawn_vm.py over whole challenges (silver,
 gold, rematches, losses) and its reception's «Symbols» consult. Checks the generated logic, not the game (Azahar:
 reports/frontier.md §43)."""
@@ -29,9 +29,9 @@ def natives(table):
 def arena():
     if not overlay.ZONES.exists():
         pytest.skip('Local baseline required')
-    import arena as pal
+    import arena as ar
     _, retail = overlay.maison_retail(overlay.ZONES.read_bytes())
-    program = pal.arena_program(retail)
+    program = ar.arena_program(retail)
     return program.build_script(f'L{retail.main:x}'), program.layout()
 
 
@@ -177,7 +177,7 @@ def test_texts_cover_every_moment():
 
 
 def test_greta_sets_are_the_annex():
-    """cerebros.md §7 (pokeemerald 731ad5bf sFrontierBrainsMons, BATTLE_PALACE), ORAS ids checked against the Spanish
+    """cerebros.md §7 (pokeemerald 731ad5bf sFrontierBrainsMons, BATTLE_ARENA), ORAS ids checked against the Spanish
     game text by test_frontier_brains.test_ids_match_the_game_text."""
     import struct
     sets = brains.sets()
@@ -207,8 +207,8 @@ def test_greta_sets_are_the_annex():
 
 
 def test_greta_is_enabled_on_the_arena_route():
-    import arena as pal
-    assert brains.route_of('arena') == pal.ROUTE == 4 and brains.APPEARANCES['arena'] == (28, 56, 28)
+    import arena as ar
+    assert brains.route_of('arena') == ar.ROUTE == 4 and brains.APPEARANCES['arena'] == (28, 56, 28)
     assert 'arena' in brains.ENABLED and brains.CLASSES['arena'] == 63
 
 

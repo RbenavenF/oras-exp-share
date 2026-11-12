@@ -3048,3 +3048,62 @@ Límites: no probado en consola ni inglés en juego; victoria de oro/revanchas s
 no capturada la línea de premio de plata (sí símbolo y PB guardados); tras derrota la limpieza se mide en RAM,
 no se hizo un nuevo guardado. Textos comunes conservan la contracción incorrecta «de el Palacio» y textos de
 Mansión de la recepción; no se extiende esta tarea a esa revisión editorial ni a un modelo de anciano.
+
+## 43. F8-CEREBRO-ARENA — Greta (2026-11-12)
+
+Greta usa la infraestructura de Cerebros BASE en la ruta 4, zona 457: combate 28 sin símbolo,
+56 con plata, y múltiplos de 28 tras obtener ambos. `frontier/brains.py` habilita Arena y añade
+los seis sets exactos de `reports/diseno/cerebros.md` §7 (241–246, entrenadores 135/136).
+Plata IV20: Heracross/Umbreon/Shedinja; oro IV31: Umbreon/Gengar/Breloom. Objetos, naturalezas,
+movimientos y EV individuales se aplican con el constructor BASE. La recepción incorpora «Símbolos».
+No requiere nuevas reservas ni modificar REPARTO. Nombre Greta y clase 63 (Luchadora) en combate;
+sustitución visual: mujer rubia con traje de artes marciales azul de ORAS, sin modelo propio de Greta.
+
+El motor B de Arena se conserva: bit31, cambio prohibido, juicio por Cuerpo a tres turnos;
+Mente/Técnica siguen fuera. La construcción genera los mismos símbolos e instrucciones nativas
+con Arena habilitada o deshabilitada: solo difieren las dos filas privadas Greta de `brain_table`
+(0xf0898–0xf08cf; `native-data-only.json`). No cambia ASM, patch.py, lógica CRO ni construcción
+común. Regresión del usuario caso a: únicamente Arena en Azahar.
+
+Artefactos locales en `work/frontier/cerebros/arena/` (sin subir partidas ni binarios):
+
+| Comprobación | Resultado medido | Fuente |
+| --- | --- | --- |
+| Script | 22 tests propios: umbrales vecinos, plata/oro/revanchas, pérdida, pausa, consulta, equipos y no duplicar premio | `tests/test_frontier_brain_arena.py` |
+| Construcción | overlay completa correcta, ZO Arena 16724 ≤ 17248 | `build.log`, `build-manifest.json` |
+| Fixture plata | fuente pausada `work/frontier/lab/ar_paused9.sav`, SHA256 093ed149…; copia S=27, récord 27, símbolo/pendiente 0 | `fixture.json`, `s27.sav`; reproducción en `frontier/probes/brains/README.md` |
+| Greta plata | intro propia, entrenador 135, pendiente 12, flag 0x80000000; Heracross/Umbreon/Shedinja exactos antes de asistencia | `greta-intro.png`, `silver-team.json`; `check_team.py …/silver-team --facility arena` rc 0 |
+| Reglas Arena | menú impide cambiar a otro participante; juicios a edades [3,3], [6,3], [9,3]; último empate elimina ambos, aún quedan reservas del jugador | `switch-attempt.png`, `silver-gdb.log` |
+| Victoria y premio | raw=1; línea «¡Has obtenido el Símbolo Agallas de plata! Recibes 10 PB más.»; S=28, símbolo64, pendiente0 | `silver-result.png`, `silver-gdb.log` |
+| Guardado | pausa guarda S/récord28, activo1, ruta4, símbolo64, pendiente0, PB2→14 (10 Cerebro + 2 ronda); checksums válidos y hashes equipo/cajas idénticos a inscripción | `enrolled.json`, `s28-silver.json`; SHA256 guardado 2a31f499… |
+| Recarga | reinicio desde ese guardado sin editar; consulta «Tienes el Símbolo Agallas de plata de la Arena Batalla.» | `consult-silver.png`, `reload-gdb.log` |
+
+Asistencia explícita de laboratorio: sonda de Cerebros exporta los PK6 **antes** de modificar copias de
+combate; `judge-win.gdb`, derivada de `frontier/lab_arena_probe.py`, pone Salpicadura a ambos y conserva
+PS iniciales hasta el tercer turno; entonces deja rival a 1 PS y jugador completo. Shedinja queda 1/1
+(empate). No se escriben resultado, works, símbolos, premios ni equipo guardado. Para la derrota se usa
+la misma sonda con modo `loss`, que invierte los PS al tercer turno. Reproducción en README de sondas.
+
+Oro desde `s55-silver.sav`, copia del guardado plata con S/récord55 y pendiente/ruta0:
+intro «Soy Greta. ¡Esta vez combatiré con todas mis fuerzas!» (`gold-intro.png`), entrenador136,
+pendiente20 y flag0x80000000 (`gold-loss-gdb.log`). `check_team.py …/gold-team --facility arena --variant gold`
+termina con rc0 (`gold-team.json`). Se ejecutan tres juicios, edades [3,3], [3,6], [3,9]; todos eliminan
+al jugador con 1 PS frente a Umbreon 202/202. Resultado raw0, texto de derrota propio (`gold-loss.png`),
+regreso a recepción (`gold-return.png`) y lectura posterior GDB: ruta/racha/activo/pendiente0,
+récord55, símbolo64. No se otorga símbolo oro ni bonus al perder.
+
+Suite final `source scripts/env.sh; env -u ORCH_LANE python -m pytest -q tests`: **1281 passed,
+1 skipped, 47.63 s** (`tests-final.log`; primera suite verde en `tests-full.log`). Se aísla ORCH_LANE
+por los tests del supervisor descritos en §39. Una ejecución intermedia falló por un alias local de
+la fixture de tests al corregir comentarios copiados de Palacio; corregido y repetida la suite completa.
+
+No probado: consola, inglés en juego, dificultad sin asistencia, victoria oro y revanchas en Azahar
+(sí VM). No capturada la presentación de nombre/clase en la pantalla inicial del combate; sí datos de
+entrenador/nombre generados y las introducciones de campo. El juicio sigue limitado a Cuerpo según diseño.
+
+Guardado real tras derrota mediante menú X→Guardar: `gold-loss-saved.sav` SHA256 a52ee68b…,
+works de limpieza idénticos a RAM, PB14 conservados. `scripts.save_fixture.blocks` valida los checksums
+de fuente, plata y derrota; equipo y cajas de la derrota son idénticos byte a byte a la fuente original
+(sha de sus regiones en `gold-loss-saved.json`). La fuente sigue con SHA256 093ed149….
+Laboratorio 24691 parado con `azahar_lab.py reap` desde su conductor persistente:
+`cleanup.log` registra `own_processes=[]`, GDB deshabilitado y bus D-Bus privado cerrado.
