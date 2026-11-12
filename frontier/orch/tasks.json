@@ -264,9 +264,9 @@
       "title": "Cerebro de la Pirámide",
       "design": "reports/diseno/cerebros.md",
       "accept": "El Cerebro de la Pirámide según reports/diseno/cerebros.md (si frontier/orch/propuestas/cerebros.json trae criterios más concretos para esta instalación, mandan esos): aparece en la racha de plata y en la de oro, con su equipo y textos, usando la infraestructura de F8-CEREBROS-BASE; símbolo guardado al ganar; derrota limpia. Tests de su script (plata, oro, derrota). Azahar, con partida editada a la racha justa: el combate de plata ganado con su símbolo y uno de oro o una derrota, solo en esta instalación (política de regresión, caso a; caso b si tocaste el motor). Tests en verde.",
-      "status": "in_progress",
-      "notes": "",
-      "evidence": ""
+      "status": "done",
+      "notes": "Brandon (Pirámide) implementado y aceptado en Azahar (caso a). Para el integrador: work 16731 pasa de reservado a usado (WORK_SUMMIT); evento 3 del vestíbulo 140 = consulta de símbolos; sin líneas/works/casos nuevos.",
+      "evidence": "b675a23 feat(frontier): add Brandon at the Pyramid summit; 5cc47e0 test(frontier): accept Brandon at the Pyramid summit in Azahar. Suite 1365 passed, 1 skipped (work/frontier/cerebros/pyramid/tests-m2.log). Azahar 24690: plata ganada con símbolo 4096 y PB +10+6 una vez, guardado/recarga/consulta; pendiente guardado → oro (trainer 142, S=70 sin piso extra, equipo exacto) y derrota limpia (récord y símbolo conservados). reports/frontier.md §47."
     },
     {
       "id": "F9-MODOS-DISENO",
