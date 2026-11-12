@@ -2990,3 +2990,61 @@ Desviaciones conocidas: la línea de victoria de una revancha de plata con oro y
 Símbolo Habilidad de plata!» aunque el oro se conserva (VM); textos de la Mansión en la recepción (§F6).
 **No probado:** consola; revanchas 105/140 en Azahar (VM sí); consulta «Aún no…» en Azahar (VM sí; la línea
 de la Fábrica equivalente sí se vio en §40.1); dificultad real sin asistencia; inglés en el juego.
+
+## 42. Spenser — Cerebro del Palacio (F8-CEREBRO-PALACIO)
+
+Implementación heredada `0a79d21` (Claude), aceptación completada por Codex el 2026-11-12. Relevo:
+`git status --short` y `git diff` vacíos; el último commit contenía código/tests, sin entrada de bitácora ni
+aceptación. Se conserva el cambio y se completa aquí; no hubo cambios parciales que deshacer.
+
+`brains.ENABLED` incorpora `palace`, con sus seis conjuntos del anexo de `reports/diseno/cerebros.md` §7.
+Entrenadores privados **133/134**, conjuntos **235–240**, IV **16/31**, EV/movimientos/naturaleza/objeto exactos.
+`palace_program` conecta `brains.symbols_option` al menú de la zona 340. API común: plata en S=20, oro en
+S=41; con ambos símbolos, 21/42/63…; +10 PB una vez al ganar, símbolo en 16729 bits 4–5, limpieza de pendiente
+16730 al resolver el combate. Sin reservas nuevas ni cambios de motor/isla/REPARTO/tasks.json.
+La presentación usa **Médium (clase 31)**: joven psíquico masculino de ORAS en campo y combate, sustituto
+explícito del anciano Spenser; no se incorpora un modelo de Esmeralda. Nombre real de combate verificado:
+«¡El Médium Spenser te desafía!» (`gold-name.png`). Se mantienen Palacio B/C y su filtro por naturaleza para
+el jugador; la IA rival sigue siendo la habitual del juego, no se declara IA rival por naturaleza.
+
+Tests del commit heredado: `tests/test_frontier_brain_palace.py` ejecuta el script generado en VM, cubriendo
+umbrales/racha 0–104, plata/oro/repeticiones, derrota sin premio, símbolos ajenos, pausa/reanudación y menú/consulta
+0/1/2/3; comprueba las tablas completas de equipos/EV/IV y textos ES/EN. La suite común cubre persistencia y no
+duplicación de premios. `check_team.py --facility palace` añade cotejo de PK6 reales antes de asistencia, sin
+cambiar su opción por defecto Torre ni el modo Fábrica.
+
+Evidencia local: `work/frontier/cerebros/palace/` (no en Git). Build completa:
+`python frontier/overlay.py --out work/frontier/cerebros/palace/build`, `build.log`; zona 340 ZO **16724** bytes
+(<17248), script **15932**; `build-manifest.json`. SHA256 de motor:
+
+- code.ips: `f64e527c6348571ca8c83780ecd23152dd144bfe108abad7e286b9cdef19c4ce`.
+- DllField.cro: `a0b1803991ae5f9362f7834213d333481747c26c67adc63c60c256ba93aca99a`.
+- DllBattle.cro: `3ea58b3999e5c1335a95d67778a3d1abc920c3b7eb8f884f557d9af440017bfe`.
+
+Azahar del carril **24691**, v0.5 + overlay anterior. Política de regresión **caso a**: solo Palacio;
+no se cambia la construcción común ni la isla aunque se genere la overlay completa. Asistencia declarada:
+`pv_mode='win'/'loss'` solo debilita copias de combate (PS 1 y Salpicadura), nunca resultados, works ni premios.
+Las órdenes de combate permanecen automáticas; las teclas avanzan textos y selección previa.
+
+| Prueba | Resultado medido | Fuente |
+| --- | --- | --- |
+| Fixture plata | copia de `work/frontier/lab/pa_paused7.sav` (012e718b…) pausada en zona 340; 16462=1, racha/récord editados a 20, símbolos/pendiente 0; salida `p20.sav` SHA256 73569503… | `fixture.json`, README de la sonda |
+| Plata | intro propia; entrenador **133**, racha 20, pendiente **11**, flags **0x40000000**; Crobat/Slaking/Lapras exactos, checksum PK6 y todos los campos fijos validados antes de asistencia | `pre-battle.png`, `silver-win-gdb.log`, `silver-team.json`; `check_team.py …/silver-team --facility palace` rc 0 |
+| Victoria | `raw=1`; después símbolo **16**, pendiente **0**, racha **21**; ronda concede 5 PB | `silver-win-gdb.log`, `silver-result.png`, `next.png` |
+| Pausa/guardado | `p21-silver.sav` SHA256 **d9307afd67c3a8d739363bd790b118e0a4d3229c19089081d4acf6679bfbd325**: racha/récord 21, activo 1, símbolo 16, pendiente 0; PB **4→19** = 10 del Cerebro + 5 de ronda | `p21-silver.json`, `initial.json` |
+| Equipo y cajas | bytes idénticos antes/después de victoria/guardado: equipo 0x14200–0x1481c SHA256 12355b31…; cajas, bloque 56 (0x33000, 0x34ad0 bytes), SHA256 4b00b99e…; checksums de guardados válidos | `snapshot.py`, `initial.json`, `p21-silver.json`; `scripts/save_fixture.blocks` |
+| Recarga | reinicio desde ese archivo; menú «Símbolos» muestra «Tienes el Símbolo Ánimo de plata de el Palacio Batalla.» | `consult-menu.png`, `consult-silver.png`, `reload-gdb.log` |
+| Oro | copia de la plata guardada, racha/récord 41, pendiente/ruta 0; `p41-silver.sav` SHA256 0ea8c51c…; intro oro, nombre real; entrenador **134**, pendiente **19**, flag **0x40000000**; Arcanine/Slaking/Suicune exactos IV 31 | `gold-fixture.json`, `gold-intro.png`, `gold-name.png`, `gold-team.json`; `check_team.py …/gold-team --facility palace --variant gold` rc 0 |
+| Derrota oro | `raw=0`, texto de derrota propio; después ruta/racha/activo/pendiente **0**, símbolo **16** conservado, récord **41**; regreso normal a recepción | `retry-result.png`, `retry-field.png`, `gold-loss-gdb.log` |
+| Cierre | `azahar_lab.py reap` desde el conductor que arrancó el lab; `own_processes()` vacío, GDB deshabilitado | `cleanup.log` |
+
+La primera toma de estado final por GDB se atascó; se repitió oro/derrota con el mismo fixture/build en un
+conductor interactivo, que registró la limpieza y ejecutó reap. No fue necesario cambiar el juego.
+Suite completa: `source scripts/env.sh; env -u ORCH_LANE python -m pytest -q tests`: **1259 passed, 1 skipped**
+(`tests-final.log`, 42.83 s; repetición final en `tests-acceptance.log`). La primera ejecución con ORCH_LANE
+heredado dio los nueve fallos de tests del supervisor ya descritos en §39; sin esa variable, todos pasan.
+
+Límites: no probado en consola ni inglés en juego; victoria de oro/revanchas solo en VM, no Azahar;
+no capturada la línea de premio de plata (sí símbolo y PB guardados); tras derrota la limpieza se mide en RAM,
+no se hizo un nuevo guardado. Textos comunes conservan la contracción incorrecta «de el Palacio» y textos de
+Mansión de la recepción; no se extiende esta tarea a esa revisión editorial ni a un modelo de anciano.

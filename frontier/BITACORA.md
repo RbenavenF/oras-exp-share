@@ -2883,3 +2883,31 @@ Decisiones: política de regresión caso a (solo script de zona de la Torre): si
 No probado: consola; revanchas 105/140 y consulta «Aún no…» en Azahar (VM sí); dificultad sin asistencia.
   La línea de victoria de una revancha de plata con oro dice «Has obtenido… de plata» (conserva el oro).
 Siguiente paso: el orquestador integra el carril y pasa la suite; F8-CEREBRO-TORRE hecho.
+
+## 2026-11-12 — Codex — F8-CEREBRO-PALACIO: relevo y aceptación de Spenser
+Estado: hecho
+Hecho: revisados status/diff/último commit: árbol limpio en 0a79d21 de Claude, con Spenser implementado y tests,
+pero sin bitácora ni Azahar. Conservada la implementación y completada su aceptación. check_team.py admite
+--facility palace, README de reproducción e informe reports/frontier.md §42 con fuentes y límites.
+Evidencia:
+- Suite env -u ORCH_LANE python -m pytest -q tests: 1259 passed, 1 skipped (tests-final.log, 42.83 s;
+  repetición tras ayudas/documentación en tests-acceptance.log). Con ORCH_LANE heredado hubo nueve fallos
+  de tests del supervisor conocidos en BASE; se aísla esa variable, no se cambia código del supervisor.
+- Build completa correcta, zona 340 ZO 16724 <= 17248; hashes en work/frontier/cerebros/palace/build-manifest.json.
+- Azahar 24691: plata desde S=20, entrenador 133 y Crobat/Slaking/Lapras exactos antes de asistencia;
+  victoria raw=1, símbolo 16, racha/récord 21, pendiente 0; pausa guarda p21-silver.sav (d9307afd…), PB 4→19
+  (10 jefe + 5 ronda). Equipo/cajas idénticos a fixture, checksums válidos. Recarga y consulta plata comprobadas.
+- Oro desde S=41, entrenador 134, Arcanine/Slaking/Suicune IV/EV/objeto/naturaleza/movimientos exactos;
+  «El Médium Spenser te desafía»; derrota raw=0 y texto propio, ruta/racha/activo/pendiente a 0,
+  plata 16 y récord 41 conservados. En ambos combates, flags 0x40000000 y órdenes del jugador automáticas.
+- Primer intento de toma final GDB atascado; repetida oro/derrota con mismo fixture/build en conductor interactivo;
+  gold-loss-gdb.log recoge limpieza. Laboratorio parado con reap desde su conductor, own_processes=[] y GDB off.
+Commits: 0a79d21 (Claude: implementación/equipos/menú/tests); el de esta entrada,
+«test(frontier): verify Spenser symbols and scoped Palace acceptance» (Agent: Codex).
+Decisiones: política caso a, solo Palacio; no cambios de motor/isla/construcción común ni reservas nuevas.
+Asistencia explícita solo en copias de combate; no se alteran resultados, works ni premios. Sustitución visual:
+joven Médium masculino ORAS (clase 31) en campo/combate, no anciano; IA rival por naturaleza no implementada.
+No probado: consola, inglés en juego, oro ganado/revanchas en Azahar (VM sí); línea de premio plata no capturada,
+sí símbolo/PB persistidos; no nuevo guardado tras derrota (limpieza RAM sí). Contracción común «de el» pendiente.
+REPARTO/tasks.json intactos, sin push; estado done en work/lane-task.json.
+Siguiente paso: el orquestador integra lane/codex y pasa su aceptación; F8-CEREBRO-PALACIO terminado.

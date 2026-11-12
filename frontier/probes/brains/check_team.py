@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Check pre-assistance PK6 exports from lab_probe against the designed Tower or seeded Factory team.
+"""Check pre-assistance PK6 exports against the designed Tower/Palace or seeded Factory team.
 
-Usage: check_team.py DIRECTORY [--variant silver|gold]. Commercial data stays in work/.
+Usage: check_team.py DIRECTORY [--variant silver|gold] [--facility tower|palace]. Commercial data stays in work/.
 """
 import argparse
 import json
@@ -17,8 +17,8 @@ import factory_brain
 from save_fixture import decode_pk, u16, u32
 
 
-def inspect(directory, variant):
-    iv, team = brains.TEAMS['tower', variant]
+def inspect(directory, variant, facility='tower'):
+    iv, team = brains.TEAMS[facility, variant]
     rows = []
     for k, (species, item, nature, evs, moves) in enumerate(team, 1):
         path = directory / f'rival-{k:02d}.pk6'
@@ -66,7 +66,8 @@ if __name__ == '__main__':
     p.add_argument('directory', type=Path)
     p.add_argument('--variant', choices=['silver', 'gold'], default='silver')
     p.add_argument('--factory-fixture', type=Path)
+    p.add_argument('--facility', choices=['tower', 'palace'], default='tower')
     a = p.parse_args()
     variant = {'silver': brains.SILVER, 'gold': brains.GOLD}[a.variant]
-    rows = inspect_factory(a.directory, a.factory_fixture, variant) if a.factory_fixture else inspect(a.directory, variant)
+    rows = inspect_factory(a.directory, a.factory_fixture, variant) if a.factory_fixture else inspect(a.directory, variant, a.facility)
     print(json.dumps(rows, indent=2))
