@@ -154,16 +154,46 @@ brain_start:
     movls   r10, #1
     ldr     r6, [r4, #0x670]               @ setup+0x50: the rival's party
     ldrb    r0, [r6, #0x18]
+    ldrh    r1, [r5]
+    sub     r1, r1, #137                   @ Tucker's private silver/gold trainers
+    cmp     r1, #1
+    bhi     14f
+    mov     r10, #2                       @ Dome: two members, selected from the preview trio
+    cmp     r0, #2
+    bne     9f
+    mov     r0, r4
+    bl      works
+    add     r0, r0, #(2 * (DOME_FORCED - 0x4000) & 0xff00)
+    add     r0, r0, #(2 * (DOME_FORCED - 0x4000) & 0xff)
+    ldrh    r1, [r0]
+    ldrh    r2, [r0, #2]
+    cmp     r1, r2
+    beq     9f                             @ malformed selection: never index outside the row
+    ldrh    r3, [r5, #4]
+    sub     r1, r1, r3
+    sub     r2, r2, r3
+    cmp     r1, #2
+    cmpls   r2, #2
+    bhi     9f
+    str     r1, [sp, #0x18]                @ keep trio indices across CODE_* calls
+    str     r2, [sp, #0x1c]
+    b       15f
+14:
     cmp     r0, #3
     bne     9f
+15:
     mov     r7, #0                         @ member
 1:  add     r8, r5, #4
-    add     r8, r8, r7, lsl #3             @ member's (u16 set, u8 ev[6])
+    mov     r0, r7
+    cmp     r10, #2
+    addeq   r1, sp, #0x18
+    ldreq   r0, [r1, r7, lsl #2]
+    add     r8, r8, r0, lsl #3             @ selected member's (u16 set, u8 ev[6])
     ldr     r0, [r4, #0xb70]               @ heap
     mov     r1, #ARCHIVE_NORMAL
     ldrh    r2, [r8]
-    cmp     r10, #0
-    beq     10f
+    cmp     r10, #1
+    bne     10f
     mov     r0, r4
     bl      works
     add     r0, r0, #(2 * (WORK_RIVAL - 0x4000))
@@ -180,8 +210,8 @@ brain_start:
     add     r3, sp, #8
     ldr     ip, =CODE_LOAD_SET
     blx     ip
-    cmp     r10, #0
-    beq     12f
+    cmp     r10, #1
+    bne     12f
     mov     r6, #0
 11: add     r0, sp, #10                    @ Return -> Frustration in Noland's temporary set only
     add     r0, r0, r6, lsl #1
@@ -205,8 +235,8 @@ brain_start:
     blx     ip
     movs    r9, r0
     beq     8f
-    cmp     r10, #0
-    beq     13f
+    cmp     r10, #1
+    bne     13f
     mov     r1, #0
     ldr     ip, =CODE_FRIENDSHIP
     blx     ip
@@ -249,7 +279,10 @@ brain_start:
     mov     r0, r9
     blx     r1                             @ free the temporary (as 0x1e35d0)
 8:  add     r7, r7, #1
-    cmp     r7, #3
+    mov     r0, #3
+    cmp     r10, #2
+    moveq   r0, #2
+    cmp     r7, r0
     blt     1b
 9:  mov     r0, r11
     add     sp, sp, #0x24

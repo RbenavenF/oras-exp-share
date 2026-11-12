@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check pre-assistance PK6 exports against the designed Tower/Palace or seeded Factory team.
 
-Usage: check_team.py DIRECTORY [--variant silver|gold] [--facility tower|palace|arena]. Commercial data stays in work/.
+Usage: check_team.py DIRECTORY [--variant silver|gold] [--facility tower|palace|arena|dome]. Commercial data stays in work/.
 """
 import argparse
 import json
@@ -20,6 +20,11 @@ from save_fixture import decode_pk, u16, u32
 def inspect(directory, variant, facility='tower'):
     iv, team = brains.TEAMS[facility, variant]
     rows = []
+    if facility == 'dome':
+        species_order = [u16(decode_pk((directory / f'rival-{k:02d}.pk6').read_bytes()), 8) for k in (1, 2)]
+        assert len(set(species_order)) == 2
+        by_species = {brains.SPECIES[row[0]]: row for row in team}
+        team = [by_species[species] for species in species_order]
     for k, (species, item, nature, evs, moves) in enumerate(team, 1):
         path = directory / f'rival-{k:02d}.pk6'
         pk = decode_pk(path.read_bytes())
@@ -66,7 +71,7 @@ if __name__ == '__main__':
     p.add_argument('directory', type=Path)
     p.add_argument('--variant', choices=['silver', 'gold'], default='silver')
     p.add_argument('--factory-fixture', type=Path)
-    p.add_argument('--facility', choices=['tower', 'palace', 'arena'], default='tower')
+    p.add_argument('--facility', choices=['tower', 'palace', 'arena', 'dome'], default='tower')
     a = p.parse_args()
     variant = {'silver': brains.SILVER, 'gold': brains.GOLD}[a.variant]
     rows = inspect_factory(a.directory, a.factory_fixture, variant) if a.factory_fixture else inspect(a.directory, variant, a.facility)

@@ -42,10 +42,10 @@ the Factory's in text 637 (LINE_BASE):
 - GLOBAL_WON `dome_won`: the champion's line.
 
 Known deviations (design §1, §6): the Maison's texts and receptionist; no bracket, no simulated 14 others, no
-ranking, no rival style, no Tucker, no Doubles or Open Level; the streak counts battles (tournaments = streak / 4);
+ranking, no rival style, no Doubles or Open Level; the streak counts battles (tournaments = streak / 4);
 the entry has no banned species list and does not cap levels (the builder scales those above 50 to 50, 0x1e3ddc);
-the rival's two are random, not chosen against the player's team; the rival's IVs are the Maison's by streak; the
-Maison's boss can appear on the Dome streak (its sets are replaced by the forced ones).
+the rival's two are random, not chosen against the player's team; ordinary rival IVs are the Maison's by streak. Tucker replaces the finals of tournaments 5/10 (S19/39),
+with exact IV/EV teams through brains.py; the native Maison boss is suppressed on route 5.
 """
 import sys
 from pathlib import Path
@@ -112,6 +112,23 @@ LINE_FIRST, LINE_SECOND = LINE_BASE + 10, LINE_BASE + 11
 LINE_NICK = tuple(LINE_BASE + 12 + k for k in range(ENTRIES))   # «[VAR 0102 k]»: nickname in word buffer k
 LINE_WON = LINE_BASE + 15
 NICK_VAR = 0x0102                # nickname tag (story text: «[VAR 0102 0] y [VAR 0102 1] están estupendamente»)
+
+
+def brain_preview_base():
+    # Six lines appended after the common Brain text blocks; no existing line moves.
+    return brains.line_base() + (len(brains.KEYS) + len(brains.MORE_KEYS)) * brains.ROUTES
+
+
+def brain_preview_lines(lang):
+    from formats import garc_entries, text_lines, words_to_text
+    # The mod falls back to English for non-Spanish languages, like its other text.
+    names = fd.names(fd.GAME, 98)
+    language = 7 if factory.LANG[lang] == 'es' else 2
+    blob = (Path(fd.GAME) / factory.GAMETEXT[language]).read_bytes()
+    _, _, at, size = garc_entries(blob)[114]
+    items = [words_to_text(w) for w in text_lines(blob[at:at + size])[0]]
+    return [f'{names[brains.SPECIES[species]]} ({items[brains.ITEMS[item]]})'
+            for v in (brains.SILVER, brains.GOLD) for species, item, *_ in brains.TEAMS[FACILITY, v][1]]
 
 
 def lines(lang):
@@ -225,7 +242,26 @@ def round_routine(p, helpers, levels):
         r.cell(level_table)
         r.store(name)
 
-    # The rival's three: species and items all different.
+    ordinary, prepared = r.new_label('ordinary'), r.new_label('prepared')
+    r.sysreq('WorkGet', brains.WORK_BRAIN)
+    r.store('value')
+    r.op('EQ_P_C_PRI', ROUTE + 8 * brains.SILVER)
+    silver = r.new_label('silver')
+    r.op('JNZ', silver)
+    r.load('value')
+    r.op('EQ_P_C_PRI', ROUTE + 8 * brains.GOLD)
+    r.op('JZER', ordinary)
+    for v, label in ((brains.GOLD, None), (brains.SILVER, silver)):
+        if label:
+            r.p.label(label)
+        for k in range(ENTRIES):
+            value = brains.set_index(FACILITY, v, k)
+            r.set(f'cell{k}', value)
+            r.set(f'slot{k}', brain_preview_base() + 3 * (v - 1) + k)
+            r.sysreq('WorkSet', RIVAL[k], value)
+        r.op('JUMP', prepared)
+    r.p.label(ordinary)
+    # The ordinary rival's three: species and items all different.
     for k in range(ENTRIES):
         again = r.new_label(f'draw{k}')
         r.p.label(again)
@@ -261,6 +297,7 @@ def round_routine(p, helpers, levels):
         r.store(f'cell{k}')             # from here on: the work value
         r.sysreq('WorkSet', RIVAL[k], 'value')
 
+    r.p.label(prepared)
     # Round name (streak % 4).
     r.load('streak')
     r.op('MOVE_ALT', 0)
@@ -288,7 +325,19 @@ def round_routine(p, helpers, levels):
     for k in range(ENTRIES):
         r.p.push(0)
         r.p.push(k)
+        # A Brain's slot is already its private preview line; ordinary slots use the rental table.
+        r.sysreq('WorkGet', brains.WORK_BRAIN)
+        r.op('EQ_P_C_PRI', ROUTE + 8 * brains.SILVER)
+        fixed, ready = r.new_label('fixed'), r.new_label('line')
+        r.op('JNZ', fixed)
+        r.sysreq('WorkGet', brains.WORK_BRAIN)
+        r.op('EQ_P_C_PRI', ROUTE + 8 * brains.GOLD)
+        r.op('JNZ', fixed)
         r.line_of_slot(f'slot{k}', levels[3][0])
+        r.op('JUMP', ready)
+        r.p.label(fixed)
+        r.load(f'slot{k}')
+        r.p.label(ready)
         r.op('PUSH_PRI', 0)
         r.p.emit('SYSREQ_N', 'ListMenuAdd', 12)
     r.call(helpers['menu_run'])          # any answer goes on
@@ -402,6 +451,7 @@ def reception_routine(p):
     r.sysreq('WorkSet', factory.WORK_SELECT_X, 0)
     r.call(factory.CHALLENGE, 0, 0, 0)
     r.store('declined')
+    r.call('dome_clear')
     r.sysreq('GetMyWinCount', 0, 0)             # the Dome streak (route still set)
     r.op('MOVE_ALT', 0)
     r.op('ZERO_PRI', 0)
@@ -543,7 +593,17 @@ def dome_program(retail):
     battle_points(p)
     reception_routine(p)
     before_battle_routine(p)
-    brains.suppress_retail_boss(p)   # no Maison boss on the Dome's route (Tucker: F8-CEREBRO-DOMO)
+    brains.install(p)
+    # Clear temporary selection before loss/cleanup can be saved, and on reception return (pause/retire).
+    for label in (factory.LOST, factory.CLEANUP):
+        at = brains._after(p, label, 'WorkSet')
+        p.items[at:at] = _ops(p, lambda b: b.call('dome_clear'))
+    clear = factory.Routine(p, 'dome_clear', [])
+    for work in (*RIVAL, *patch.DOME_FORCED, *patch.DOME_FIGHT):
+        clear.sysreq('WorkSet', work, 0)
+    clear.op('ZERO_PRI', 0)
+    clear.ret()
+    brains.symbols_option(p, FACILITY, factory.LINE_SYMBOLS)
     return battle_video.suppress(p)
 
 

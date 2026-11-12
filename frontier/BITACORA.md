@@ -2960,3 +2960,27 @@ No probado: consola, inglés en juego, dificultad sin asistencia, victoria oro/r
 No capturada pantalla inicial de nombre/clase en combate; sí tablas de nombre real, entrenador y equipo,
 y ambas introducciones de campo. REPARTO/tasks.json intactos, sin push; estado done en work/lane-task.json.
 Siguiente paso: el orquestador integra lane/codex y pasa su aceptación; F8-CEREBRO-ARENA terminado.
+
+## 2026-11-12 — Codex — F8-CEREBRO-DOMO hito 1: Tucker, final y dos de tres
+Estado: en curso
+Hecho: Tucker habilitado en brains.py con los seis sets exactos del diseño §7, clase 10 y nombre propio;
+dome_program usa install/consulta BASE. Elegibilidad convierte combates a torneos solo en final (S%4=3),
+plata S19 y oro S39; preview del trío privado antes de elegir dos; pareja rival aleatoria declarada.
+Constructor brains_cro.s admite dos miembros de Tucker, conserva orden DOME_FORCED y aplica IV/EV exactos
+de cada set seleccionado; rechaza índices fuera del trío/repetidos. Limpieza de selección temporal al perder,
+retirarse/pausar o limpiar desafío. Sonda/check_team admiten dos miembros Domo.
+Evidencia: env -u ORCH_LANE python -m pytest -q tests: 1312 passed, 1 skipped, 44.24 s
+(work/frontier/cerebros/dome/tests-m1.log). 31 tests nuevos VM/Unicorn, incluidas las seis parejas ordenadas
+por variante, finales, revanchas, pérdida, pausa y no duplicar premio. Overlay completa correcta (build.log),
+medidas nativas/ZO en static.json; git diff --check limpio. Intentos iniciales con errores de conexión de API,
+importación y decodificación de texto corregidos antes de la suite verde.
+Commits: el de esta entrada, «feat(frontier): implement Tucker finals and exact two-member teams» (Agent: Codex).
+Decisiones: política caso b porque cambia brains_cro.s; pendiente Azahar Domo y un combate Palacio/Arena/Tubo/historia.
+Sin nuevos works/casos/sets: usa reservas BASE/Domo. Para preview hacen falta seis líneas privadas: añadidas
+por composición al final de brains.lines (1128–1133 en esta build), sin desplazar líneas existentes. Registro
+para integrador aquí porque el brief de carril prohíbe editar REPARTO: trasladar esta ampliación de textos
+y nuevo final nativo a su tabla al integrar. REPARTO/tasks.json intactos.
+No probado todavía: aceptación Tucker en Azahar, regresión del motor y consola.
+Siguiente paso: lab del carril 24691 arrancado en conductor work/frontier/cerebros/dome/driver.py (sesión PTY),
+fixture s19.sav desde work/frontier/dome/room/paused-456.sav (SHA256 ec03f883…); completar plata, guardado/carga,
+oro/derrota y regresiones; al acabar reap desde el conductor y cerrar su D-Bus privado.

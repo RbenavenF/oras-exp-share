@@ -55,7 +55,7 @@ LATE_FIRST, LATE_COUNT = 70, 40   # the 15-18 bracket of 0x1e3aac (0x1e4860(work
 # (silver unit, gold unit, period after both), units counted from 1 (cerebros.md §1).
 APPEARANCES = {'factory': (21, 42, 21), 'tower': (35, 70, 35), 'palace': (21, 42, 21), 'arena': (28, 56, 28),
                'dome': (5, 10, 5), 'pike': (28, 140, 56), 'pyramid': (21, 70, 35)}
-ENABLED = ('factory', 'tower', 'palace', 'arena')
+ENABLED = ('factory', 'tower', 'palace', 'arena', 'dome')
 NAMES = {'factory': 'Noland', 'tower': 'Anabel', 'palace': 'Spenser', 'arena': 'Greta', 'dome': 'Tucker',
          'pike': 'Lucy', 'pyramid': 'Brandon'}
 CLASSES = {'factory': 30, 'tower': 9, 'palace': 31, 'arena': 63, 'dome': 10, 'pike': 13, 'pyramid': 96}  # a/0/7/7 #21
@@ -75,7 +75,8 @@ FACILITY = {'es': {'factory': 'la Fábrica Batalla', 'tower': 'la Torre Batalla'
 # EV in the source order HP, Atk, Def, Spe, SpA, SpD (also the Maison set's EV bit order, 0x1efb94).
 SPECIES = {'ALAKAZAM': 65, 'ENTEI': 244, 'SNORLAX': 143, 'RAIKOU': 243, 'LATIOS': 381,
            'CROBAT': 169, 'SLAKING': 289, 'LAPRAS': 131, 'ARCANINE': 59, 'SUICUNE': 245,
-           'HERACROSS': 214, 'UMBREON': 197, 'SHEDINJA': 292, 'GENGAR': 94, 'BRELOOM': 286}
+           'HERACROSS': 214, 'UMBREON': 197, 'SHEDINJA': 292, 'GENGAR': 94, 'BRELOOM': 286,
+           'SWAMPERT': 260, 'SALAMENCE': 373, 'CHARIZARD': 6, 'METAGROSS': 376, 'LATIAS': 380}
 MOVES = {'THUNDER_PUNCH': 9, 'FIRE_PUNCH': 7, 'ICE_PUNCH': 8, 'DISABLE': 50, 'FIRE_BLAST': 126, 'CALM_MIND': 347,
          'RETURN': 216, 'ROAR': 46, 'BODY_SLAM': 34, 'BELLY_DRUM': 187, 'YAWN': 281, 'SHADOW_BALL': 247,
          'THUNDERBOLT': 85, 'REFLECT': 115, 'REST': 156, 'PSYCHIC': 94, 'RECOVER': 105, 'DRAGON_CLAW': 337,
@@ -85,11 +86,21 @@ MOVES = {'THUNDER_PUNCH': 9, 'FIRE_PUNCH': 7, 'ICE_PUNCH': 8, 'DISABLE': 50, 'FI
          'EXTREME_SPEED': 245, 'HYPER_BEAM': 63, 'BLIZZARD': 59, 'SURF': 57, 'BITE': 44,
          'MEGAHORN': 224, 'ROCK_TOMB': 317, 'ENDURE': 203, 'REVERSAL': 179, 'FAINT_ATTACK': 185,
          'AERIAL_ACE': 332, 'DOUBLE_EDGE': 38, 'HYPNOSIS': 95, 'DREAM_EATER': 138, 'DESTINY_BOND': 194,
-         'SPORE': 147, 'FOCUS_PUNCH': 264, 'GIGA_DRAIN': 202, 'HEADBUTT': 29}
+         'SPORE': 147, 'FOCUS_PUNCH': 264, 'GIGA_DRAIN': 202, 'HEADBUTT': 29, 'COUNTER': 68, 'ROCK_SLIDE': 157, 'MIRROR_COAT': 243, 'METEOR_MASH': 309}
 ITEMS = {'BRIGHT_POWDER': 213, 'LUM_BERRY': 157, 'QUICK_CLAW': 217, 'CHESTO_BERRY': 150,
-         'SCOPE_LENS': 232, 'WHITE_HERB': 214, 'KINGS_ROCK': 221, 'SALAC_BERRY': 203, 'LEFTOVERS': 234}
-NATURES = {'HARDY': 0, 'LONELY': 1, 'ADAMANT': 3, 'HASTY': 11, 'MODEST': 15, 'QUIET': 17, 'JOLLY': 13, 'CALM': 20}
+         'SCOPE_LENS': 232, 'WHITE_HERB': 214, 'KINGS_ROCK': 221, 'SALAC_BERRY': 203, 'LEFTOVERS': 234, 'FOCUS_BAND': 230}
+NATURES = {'HARDY': 0, 'LONELY': 1, 'ADAMANT': 3, 'HASTY': 11, 'MODEST': 15, 'QUIET': 17, 'JOLLY': 13, 'CALM': 20, 'BRAVE': 2}
 TEAMS = {
+    ('dome', SILVER): (20, [
+        ('SWAMPERT', 'FOCUS_BAND', 'BRAVE', (152, 152, 106, 0, 100, 0), ('SURF', 'EARTHQUAKE', 'ICE_BEAM', 'COUNTER')),
+        ('SALAMENCE', 'LUM_BERRY', 'ADAMANT', (152, 152, 106, 100, 0, 0),
+         ('EARTHQUAKE', 'BRICK_BREAK', 'DRAGON_CLAW', 'AERIAL_ACE')),
+        ('CHARIZARD', 'WHITE_HERB', 'QUIET', (100, 152, 106, 152, 0, 0),
+         ('OVERHEAT', 'ROCK_SLIDE', 'AERIAL_ACE', 'EARTHQUAKE'))]),
+    ('dome', GOLD): (31, [
+        ('SWAMPERT', 'LEFTOVERS', 'BRAVE', (252, 252, 6, 0, 0, 0), ('SURF', 'EARTHQUAKE', 'ICE_BEAM', 'MIRROR_COAT')),
+        ('METAGROSS', 'QUICK_CLAW', 'BRAVE', (252, 252, 6, 0, 0, 0), ('PSYCHIC', 'METEOR_MASH', 'EARTHQUAKE', 'PROTECT')),
+        ('LATIAS', 'CHESTO_BERRY', 'MODEST', (252, 0, 252, 6, 0, 0), ('THUNDERBOLT', 'PSYCHIC', 'CALM_MIND', 'REST'))]),
     ('tower', SILVER): (24, [
         ('ALAKAZAM', 'BRIGHT_POWDER', 'MODEST', (106, 0, 152, 152, 100, 0),
          ('THUNDER_PUNCH', 'FIRE_PUNCH', 'ICE_PUNCH', 'DISABLE')),
@@ -271,7 +282,8 @@ def lines(lang):
                     f"You don't have the {symbol} Symbol\nof {place} yet.",
                     f'You have the silver {symbol} Symbol\nof {place}.',
                     f'You have the gold {symbol} Symbol\nof {place}.']
-    return out
+    import dome
+    return out + dome.brain_preview_lines(lang)
 
 
 def line_base():
@@ -338,6 +350,19 @@ def check_routine(p):
     r.sysreq('GetMyWinCount', 0, 0)         # the facility's streak (WORK_ROUTE set)
     r.add(1)
     r.store('unit')
+    ordinary = r.new_label('battle_unit')
+    r.load('route')
+    r.op('EQ_P_C_PRI', patch.ROUTE['dome'])
+    r.op('JZER', ordinary)
+    # Dome appearance units are tournaments: only their fourth battle is eligible.
+    r.load('unit')
+    r.op('MOVE_ALT', 0)
+    r.const(4)
+    r.op('SDIV_ALT', 0)
+    r.store('unit')
+    r.op('MOVE_PRI', 0)                  # remainder
+    r.op('JNZ', none)
+    r.p.label(ordinary)
     pow4 = _pow4(p)
     r.sysreq('WorkGet', WORK_SYMBOLS)
     r.op('MOVE_ALT', 0)
@@ -660,7 +685,8 @@ def assemble():
     """(blob linked at AT with its tables filled, {symbol: DllField.cro file offset})."""
     constants = {'WORK_ROUTE': patch.WORK_ROUTE, 'WORK_BRAIN': WORK_BRAIN, 'ROUTES': ROUTES,
                  'BOSS_STREAK': BOSS_STREAK, 'LATE_FIRST': LATE_FIRST, 'LATE_COUNT': LATE_COUNT,
-                 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'WORK_RIVAL': patch.WORK_RIVAL[0]}
+                 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'WORK_RIVAL': patch.WORK_RIVAL[0],
+                 'DOME_FORCED': patch.DOME_FORCED[0]}
     with tempfile.TemporaryDirectory() as tmp:
         obj, elf, binary = (Path(tmp) / n for n in ('b.o', 'b.elf', 'b.bin'))
         defs = [a for k, v in constants.items() for a in ('--defsym', f'{k}={v}')]

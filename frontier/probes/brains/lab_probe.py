@@ -15,6 +15,7 @@ def script(directory='work/frontier/cerebros/base'):
     s = shared['script']().replace('PYRAMID', 'BRAINS')
     s = s.replace('16438,16441,16442,16443,16481,16482,16483,16686',
                   '16438,16437,16489,16485,16486,16487,16490,16433,16434,16435,16441,16442,16443,16461,16462,16465,16466,16473,16474,16477,16478,16481,16482,16729,16730')
+    s = s.replace('client=mon-0xd98', 'client=mon-(0x910 if pv_save and state(pv_save).get(16438)==5 else 0xd98)')
     s = s.replace("state=%s mode=%s'%(rd(w+0x6c8),state(save),pv_mode)",
                   "trainer=%u state=%s mode=%s'%(rd(w+0x6c8),rd(w+4),state(save),pv_mode)")
     s += '''python
