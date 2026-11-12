@@ -3175,3 +3175,37 @@ ahora la consulta de símbolos; no hay líneas, works ni casos nuevos.
 No probado: consola, oro ganado y revanchas en Azahar (sí en VM), inglés en juego, dificultad sin asistencia.
 Siguiente paso: el orquestador integra lane/claude y pasa la aceptación en main; F8-CEREBRO-PIRAMIDE terminado
 (done en work/lane-task.json). Sin push.
+
+## 2026-11-12 — Claude Code (Opus 5.5) — F10-PERSONALIDAD-DISENO: interior, letrero y exterior de cada edificio
+Estado: hecho
+Hecho: diseño reports/diseno/personalidad.md y propuestas frontier/orch/propuestas/personalidad.json (diez tareas,
+sin encolar). Solo lectura y medidas estáticas con CTRMap-F5 (sin Azahar ni código del juego); solo recursos de ORAS,
+Emerald 3DS de ZallaxDev no consultado. Sondas reproducibles nuevas en frontier/probes/personalidad/ (survey.sh,
+floor_fit.py, plaza_variants.sh, SignCheck.java, README).
+- Interiores: mapa de suelo de las 536 zonas cruzado con zones.tsv; 175 cubren las casillas de la coreografía de 517
+  (x19–23 y12–25 + recepción). Elegidos: Torre se queda en 517 (única dueña), Fábrica 139 Nueva Malvalona, Palacio
+  358 sala del Campeón, Arena 289 Escuela de Entrenadores, Tubo 88 Monte Pírico, vestíbulo de Pirámide 165 (cueva),
+  Domo 365 ya hecho; alternativas medidas 286, 337, 273, 132. Cargas 333.184–1.160.192 (517: 2.320.512).
+- Letreros: siete Sign post del catálogo → plaza 2.708.224 (< LOAD_BUDGET 2.724.608). Ninguna zona del Frente ni 212
+  tiene rutina de letrero (SignCheck); ZO de la isla 11.288/17.248 para trasplantarla.
+- Exterior: con postes, solo caben vallas de hierro (Arena 2.716.288; Arena+Torre 2.724.480, margen 128). Cambios de
+  edificio (Lavacalda 2.728.704, casa-bloque 2.732.160, tejas doradas 2.795.776) necesitan medir una cota mayor;
+  árboles/arbustos del área 8 cuestan ~146 KB. Anfitrión NPC por puerta como retoque fuera del presupuesto (memoria
+  no medida). Build común: Build.java no tiene clearProps (necesario para 139/289).
+Evidencia (work/frontier/personalidad/ del carril claude, fuera de git):
+- floors/floorN.txt (536), floor_fit.txt, floor_fit_chosen.txt, entities.txt, budgets.txt (survey.sh, rc0, survey.log).
+- plaza_variants.txt: control 2.665.344 = java.log de work/frontier/package/build-island (reproduce la build).
+  Base: copia de work/frontier/plaza-exp/base-game del checkout principal (solo lectura).
+- signcheck.txt (209/212/213/329/340/456/457/458/140/517 false; 16 y 14 true), zo.txt (ZO de 209 y salas).
+- work/frontier/island/zones.tsv copiado del principal, SHA256 2d9d6036…645a idéntico.
+- check_tasks.txt: frontier_orch.check_task '' en las diez y dependencias conocidas.
+- Suite: source scripts/env.sh; env -u ORCH_LANE python -m pytest -q tests: 1365 passed, 1 skipped, 42.40 s
+  (tests.log); git diff --check limpio.
+Commits: el de esta entrada, «docs(frontier): design each facility's own interior, sign and exterior».
+Decisiones: Torre conserva 517 (coste cero; heredera de la Torre en ORAS); poste de letrero por ser el más barato;
+vallas de la Torre solo con el sí del usuario (128 bytes de margen); subir LOAD_BUDGET (F10-COTA-CARGA) queda como
+decisión del usuario porque Azahar no asegura consola. REPARTO y tasks.json intactos (modo carril).
+No probado: nada en Azahar ni en consola; colisiones de los donantes (el suelo no ve barreras), salidas de llegada
+de 358/165, música/cámara del donante, trasplante de la rutina de letrero, memoria de NPC anfitriones.
+Siguiente paso: el orquestador integra lane/claude; las tareas de personalidad.json se encolan con
+`frontier-orch add frontier/orch/propuestas/personalidad.json` cuando el usuario lo decida (prioridad: lo último).

@@ -1,0 +1,114 @@
+{
+  "tasks": [
+    {
+      "id": "F10-SALAS-BASE",
+      "owner": "any",
+      "after": ["F10-PERSONALIDAD-DISENO"],
+      "title": "Salas propias: módulo genérico, clearProps y el Domo pasado a él sin cambiar bytes",
+      "design": "reports/diseno/personalidad.md §1.3–§1.4",
+      "accept": "Suite completa python -m pytest -q tests en verde, bitácora con fuentes y commits. Ficheros comunes (island_build.py, faraway/java/): los hace quien integra. No tocar inputs ni partida original. Crear frontier/rooms.py con la tabla zona→donante, NPC (casillas de 517), salida (warp, tipo, tuples con guardas de bytes originales como §37.1), warps sobrantes redirigidos a la puerta propia y check_room genérico (ZO <=17248, entidades esperadas, salida a su puerta, texto 619, script intacto). Añadir clearProps al plan de faraway/java/faraway/Build.java con test. Pasar el Domo (456←365) a rooms.py: el ZO y el área de 456 de la build deben quedar idénticos byte a byte a los de antes (hash en la bitácora); dome_room.py queda como datos o se retira con sus tests portados. Tests de rechazo: tamaño, salida retail, props/disparadores no limpiados, NPC fuera de suelo medido. Regresión del usuario: caso (c) solo si cambian bytes de la isla o de alguna sala (no debería); si el ZO de 456 es idéntico, basta entrar y salir del Domo en Azahar. No declarar Azahar sin ejecutarlo.",
+      "status": "pending",
+      "notes": "Propuesta nueva (F10-PERSONALIDAD-DISENO). Prioridad del usuario: lo último. Prerrequisito de las cinco salas.",
+      "evidence": ""
+    },
+    {
+      "id": "F10-SALA-FABRICA",
+      "owner": "claude",
+      "after": ["F10-SALAS-BASE"],
+      "title": "Fábrica en sala propia: Nueva Malvalona (139)",
+      "design": "reports/diseno/personalidad.md §1.2–§1.3",
+      "accept": "Suite completa en verde, bitácora con fuentes y commits. Donante 139 en rooms.py para la zona 213: clearNpcs, clearTriggers (19–21,33), clearProps (3), salida (19–21,38) trans 2 a la puerta de la Fábrica, NPC que direcciona el script de la Fábrica (listarlos sobre el desensamblado) en sus casillas de 517; script, texto 619 y nativas de 517 sin cambios. Medir Probe tuples del núcleo x19–23 y12–25 y de la recepción; si hay barreras, alternativa 286 (Devon) medida en §1.2. Carga de 213 <= LOAD_BUDGET (1.160.192 medida estática). Azahar (política caso c+a): entrar y salir por la puerta de la Fábrica, inscripción, un combate, pausa, guardar/cargar dentro de la sala y salir; anotar música/cámara del donante. Partidas guardadas en la sala vieja: documentar salir a la plaza antes de actualizar. Sin consola.",
+      "status": "pending",
+      "notes": "Propuesta nueva. Dueño según REPARTO (Fábrica: Claude).",
+      "evidence": ""
+    },
+    {
+      "id": "F10-SALA-PALACIO",
+      "owner": "claude",
+      "after": ["F10-SALAS-BASE"],
+      "title": "Palacio en sala propia: sala del Campeón (358)",
+      "design": "reports/diseno/personalidad.md §1.2–§1.3",
+      "accept": "Suite completa en verde, bitácora con fuentes y commits. Donante 358 para la zona 340: NPC del script del Palacio en sus casillas de 517 a la altura del estrado (z≈90, medir), warp norte (19–21,6, a la Sala de la Fama retail) redirigido a la puerta del Palacio o inaccesible, salida sur (20,34) adaptada como §37.1 (tipo de warp y tuples en el FIELD_DATA propio, con guardas) hasta que se salga andando. Medir tuples del núcleo. Si la salida no se resuelve, alternativa 273 (Museo Oceánico, salida andando) y anotarlo. Azahar caso c+a: puerta, inscripción, un combate con el motor del Palacio (bit 30), pausa, guardar/cargar y salir. Sin consola.",
+      "status": "pending",
+      "notes": "Propuesta nueva. Riesgo: salida de llegada al pie de la escalera, como 365.",
+      "evidence": ""
+    },
+    {
+      "id": "F10-SALA-ARENA",
+      "owner": "any",
+      "after": ["F10-SALAS-BASE"],
+      "title": "Arena en sala propia: Escuela de Entrenadores (289)",
+      "design": "reports/diseno/personalidad.md §1.2–§1.3",
+      "accept": "Suite completa en verde, bitácora con fuentes y commits. Donante 289 para la zona 457: clearNpcs (7), clearProps (2), salida (18–20,32) trans 2 a la puerta de la Arena, NPC del script de la Arena en sus casillas de 517. El mapa de suelo no ve muros (plano 40×40): medir tuples del núcleo y de la recepción antes de construir; si hay barreras, elegir otra de floor_fit.txt y documentarlo. Azahar caso c+a: puerta, inscripción, un combate con juicio (bit 31) si se alcanza el tercer turno, pausa, guardar/cargar y salir. Sin consola.",
+      "status": "pending",
+      "notes": "Propuesta nueva. Arena con dos dueños en REPARTO (A Claude, B Codex): any.",
+      "evidence": ""
+    },
+    {
+      "id": "F10-SALA-TUBO",
+      "owner": "codex",
+      "after": ["F10-SALAS-BASE"],
+      "title": "Tubo en sala propia: interior del Monte Pírico (88)",
+      "design": "reports/diseno/personalidad.md §1.2–§1.3",
+      "accept": "Suite completa en verde, bitácora con fuentes y commits. Donante 88 para la zona 458: clearNpcs (9), warps 0 y 1 (a 87 y 89) redirigidos a la puerta del Tubo, salida warp 2 (19–21,32) trans 2, NPC del script del Tubo en sus casillas de 517. Tuples del núcleo. Azahar caso c+a: puerta, inscripción, una sala con combate, PS/estado persistentes visibles, pausa, guardar/cargar y salir. Sin consola.",
+      "status": "pending",
+      "notes": "Propuesta nueva. Dueño según REPARTO (Tubo: Codex). La más barata de las cinco.",
+      "evidence": ""
+    },
+    {
+      "id": "F10-SALA-PIRAMIDE",
+      "owner": "codex",
+      "after": ["F10-SALAS-BASE"],
+      "title": "Vestíbulo de la Pirámide en sala propia: cueva de Scorched Slab (165)",
+      "design": "reports/diseno/personalidad.md §1.2–§1.3",
+      "accept": "Suite completa en verde, bitácora con fuentes y commits. Donante 165 para la zona 140 (los pisos 141–142 siguen en 77): clearNpcs, clearTriggers (3, const 16621), salida warp 1 (29,31) adaptada como §37.1 hasta salir andando, warp 0 (7,28) redirigido a la misma puerta, NPC del vestíbulo (incluida la consulta de símbolos, evento 3) en sus casillas de 517; LOBBY_RETURN (23,25) en suelo comprobado por tuples. Si la salida no se resuelve, alternativa 132 y anotarlo. Azahar caso c+a: puerta, inscripción, subir al piso 1 y volver al vestíbulo, guardar/cargar en el vestíbulo y salir. Partidas guardadas en el vestíbulo viejo: salir a la plaza antes de actualizar. Sin consola.",
+      "status": "pending",
+      "notes": "Propuesta nueva. Dueño según REPARTO (Pirámide: Codex).",
+      "evidence": ""
+    },
+    {
+      "id": "F10-LETREROS",
+      "owner": "any",
+      "after": ["F10-PERSONALIDAD-DISENO"],
+      "title": "Un letrero con su nombre delante de cada puerta de la plaza",
+      "design": "reports/diseno/personalidad.md §2",
+      "accept": "Suite completa en verde, bitácora con fuentes y commits. Ficheros comunes: quien integra. Siete Sign post del catálogo en las casillas de §2 (o equivalentes que no bloqueen la puerta ni el frente); presupuesto de la build <= LOAD_BUDGET (medido 2.708.224 en variante). Rutina de letrero trasplantada a la isla 209 (SignWrapperInjector desde el host de FrontierPlaza) y verificada en island_build con findSignWrapper; siete registros interactivos con sus casos; ZO de 209 <= 17248 (hoy 11.288). Textos propios ES/EN (§2) y las otras seis lenguas con EN o declaradas pendientes; líneas reservadas en REPARTO antes de usarlas. Tests: rutina y siete registros presentes, rechazo si falta alguno, presupuesto sobre la cota rechazado. Azahar caso c: la isla carga, leer los siete letreros en ES, entrar y salir por las siete puertas. Sin consola.",
+      "status": "pending",
+      "notes": "Propuesta nueva. Independiente de las salas.",
+      "evidence": ""
+    },
+    {
+      "id": "F10-EXTERIOR-FASE1",
+      "owner": "any",
+      "after": ["F10-LETREROS"],
+      "title": "Exterior fase 1: vallas de la Arena y anfitrión en cada puerta",
+      "design": "reports/diseno/personalidad.md §3.2",
+      "accept": "Suite completa en verde, bitácora con fuentes y commits. Ficheros comunes: quien integra. Dos Iron fence (4-tile run) a los lados de la Arena (x15 y x25, y25–28; variante medida 2.716.288 con los postes). Las de la Torre solo con el sí del usuario (margen 128 bytes). Siete NPC anfitriones junto a las puertas, sin bloquear puerta ni frente, con una frase propia ES/EN (líneas reservadas en REPARTO) y modelos registrados con regdonor; ZO de 209 <= 17248. Medir y anotar la memoria que no recoge el presupuesto: la isla carga en Azahar sin cuelgue con los ocho NPC. Azahar caso c: plaza, hablar con los siete anfitriones, entrar y salir por las siete puertas. Sin consola.",
+      "status": "pending",
+      "notes": "Propuesta nueva. El coste de memoria de los NPC no está medido.",
+      "evidence": ""
+    },
+    {
+      "id": "F10-COTA-CARGA",
+      "owner": "any",
+      "after": ["F10-EXTERIOR-FASE1"],
+      "title": "Medir una cota de carga de la isla mayor que 2.724.608",
+      "design": "reports/diseno/personalidad.md §3.3; reports/frontier.md §23",
+      "accept": "Bitácora con fuentes y commits; suite en verde si cambia código o tests. Bisección en Azahar, sin empaquetar, con las variantes medidas de plaza_variants.sh (2.728.704, 2.732.160, 2.795.776, 2.872.064; 2.986.112 ya se colgó): por cada una, la isla carga, se entra y sale por las siete puertas y se recarga una partida guardada en la plaza. Registrar la mayor que carga y la menor que cuelga. LOAD_BUDGET solo se sube con decisión del usuario, porque una cota de Azahar no asegura la consola; si el usuario no decide, dejar status blocked con la pregunta. Sin consola.",
+      "status": "pending",
+      "notes": "Propuesta nueva. Necesita decisión del usuario para cambiar LOAD_BUDGET.",
+      "evidence": ""
+    },
+    {
+      "id": "F10-EXTERIOR-FASE2",
+      "owner": "any",
+      "after": ["F10-COTA-CARGA"],
+      "title": "Exterior fase 2: Pirámide, Torre y Palacio con edificio propio",
+      "design": "reports/diseno/personalidad.md §3.3",
+      "accept": "Suite completa en verde, bitácora con fuentes y commits. Solo si F10-COTA-CARGA subió LOAD_BUDGET con el sí del usuario. island_build.FACILITIES: Pirámide → Lavaridge house (31,13), Torre → Rustboro apartment house (17,1), Palacio → Mossdeep gold-shingle house (28,25), en el orden que quepa; cada puerta en su casilla de hoy (test que compare puertas antes y después). Presupuesto de la build <= nueva cota. Azahar caso c: la isla carga, se ven los edificios (captura), el tejado de la Pirámide ya no es azul (o se anota que sigue), y se entra y sale por las siete puertas. Sin consola.",
+      "status": "pending",
+      "notes": "Propuesta nueva. Depende de una decisión del usuario.",
+      "evidence": ""
+    }
+  ]
+}
