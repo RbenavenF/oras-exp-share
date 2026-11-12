@@ -128,3 +128,29 @@ conservando `pv_mode='normal'`.
 La comparación `brains.assemble()` con y sin las filas de Arena está en
 `native-data-only.json`: instrucciones y símbolos idénticos, solo cambian las dos filas
 Greta de `brain_table` (datos privados); no se modifica el motor de Arena ni otro gancho.
+
+## Tubo (Lucy, F8-CEREBRO-TUBO; aceptación pendiente de EV)
+
+Informe `reports/frontier.md` §45; artefactos `work/frontier/cerebros/pike/`.
+Usar una partida realmente pausada: fuente `work/frontier/lab/pa_paused7.sav`, SHA256
+`012e718ba50c3dbab606987958a3351aec79840025e385e25d73ed3c98e48c7c`.
+Con `faraway.save_event.edit`, limpiar los siete `patch.ACTIVE_WORK`, poner activo16478=1,
+S16477/récord16479=27, ruta16438=0, símbolos16729/pendiente16730=0 y posición(458,22,2,24).
+PS16661..16663=60,70,80; estados16669..16671=0,0,1; seis works PP16721..16723/16725..16727=0x0505.
+Se puede dejar PIKE_WILD16675=217 para verificar que Lucy lo limpia. Validar checksums; escribir copia en work/.
+`lab_probe.py --directory work/frontier/cerebros/pike`, `lab-start.sh` con BUILD/FIXTURE/PROBE; usar puerto del carril.
+Elegir tres participantes. La sonda en modo win exporta los tres rivales antes de debilitarlos.
+Conservar `rival-0*.pk6` en `silver-team` y ejecutar:
+
+```sh
+python frontier/probes/brains/check_team.py work/frontier/cerebros/pike/silver-team --facility pike
+```
+
+Actualmente falla: Shuckle diseñado suma610 EV, el escritor ORAS limita510 y deja DefE152 frente a252.
+No dar la tarea por terminada ni eliminar el assert. Resolver la contradicción de diseño descrita en §45.
+El resultado raw1 se imprime antes del premio; avanzar y medir state(pv_save): S28, símbolo1024, pendiente0.
+Para guardar, elegir «Pausar» en el menú de siguiente combate; evitar pulsaciones A en lote tras la victoria,
+porque aceptan continuar y entran en las puertas de la siguiente ronda. Oro parte de S139 conservando plata.
+Para medir retención: hooks pasivos de SET_HP0x14f450 y SET_SICK0x14f814 restringidos a LR en
+pike_build..pike_iswin, y pike_pp+32 (ver símbolos de la build), además de PP/PS en arena_enter.
+No interpretar como estado el offset0x34 de la sonda local: no está validado.

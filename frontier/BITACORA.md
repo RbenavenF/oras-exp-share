@@ -3052,3 +3052,34 @@ Siguiente paso: laboratorio del carril24691 arrancado desde conductor work/front
 fixture s27.sav copia de work/frontier/lab/pk_saved_458.sav, SHA256252526e8… (fixture.json), con PS60/70/80,
 PP5 por movimiento y parálisis en tercero. Completar plata ganada/símbolo guardado/cargado y oro o derrota;
 parar lab y bus privado desde el conductor al terminar.
+
+## 2026-11-12 — Codex — F8-CEREBRO-TUBO hito 2: plata persistente y bloqueo EV de Shuckle
+Estado: en curso (bloqueado por contradicción de diseño; estado blocked en work/lane-task.json)
+Hecho: aceptación parcial Lucy en Azahar24691, plata ganada con asistencia solo a copias de combate,
+medición de PS/PP/estado v2, premio y avance único, guardado real y consulta del símbolo después de reiniciar.
+Informe reports/frontier.md §45 y reproducción frontier/probes/brains/README.md. No se relaja el verificador.
+Evidencia: work/frontier/cerebros/pike/silver.gdb.log: trainer139,flag0,S27,pendiente14,raw1;
+medición posterior S28,activo1,símbolo1024,pendiente0. SET_HP0x14f450 y SET_SICK0x14f814 desde
+pike_build restauran PS60/70/80,estado0/0/1; pike_pp+32 confirma PP5 de los12 movimientos antes del combate.
+Tres PK6 rivales exportados antes de asistencia: team-silver-measured.json y silver-team/. Seviper/Milotic
+coinciden; check_team.py --facility pike falla en Shuckle (check-silver.log): tabla pide610 EV y constructor
+ORAS0x3b4b64 limita510, quedando252,0,0,0,106,152 frente a252,0,0,0,106,252. Ya lo advierte asm/brains.s.
+Corrección al hito1: «seis sets exactos» solo se verificó en tablas/VM; NO exactitud de Shuckle en ejecución.
+La fuente pk_saved_458.sav estaba interrumpida, retail limpiaba ACTIVE/S; se sustituyó por una copia
+realmente pausada pa_paused7.sav, SHA256012e718ba50c3dbab606987958a3351aec79840025e385e25d73ed3c98e48c7c,
+limpiando otros activos y editando solo copia (fixture.json/s27-paused.sav). Fuentes intactas.
+Guardado: se había pulsado continuar tras plata; Pausar después de otra sala vacía/combate normal conserva
+plata1024 y PB15 (partía4, +10 jefe +1 ronda),S/récord30,activo1,pendiente0. saved-silver.json verifica
+checksums y equipo/cajas idénticos. silver-paused.sav SHA256d47e48af…; reinicio y captura
+silver-reloaded-symbol.png muestra Suerte de plata. No se deduce avance de Lucy del S30: está medido en S28.
+Suite hito2: source scripts/env.sh; env -u ORCH_LANE python -m pytest -q tests:1329 passed,1 skipped,
+48.27s (tests-m2.log); git diff --check. Política regresión caso a, solo Tubo; ningún cambio de motor.
+Commits: 95a8aaa hito1; el de esta entrada «docs(frontier): record Lucy silver acceptance and EV design blocker».
+Decisiones: mantener los valores solicitados en la tabla; no alterar diseño ni motor sin resolver610vs510.
+Pregunta concreta: ¿corregir Shuckle plata a DefE152 (total510), o exigir610 mediante excepción del motor?
+La segunda opción amplía alcance y obliga caso b. No se marca done con el assert de equipo fallando.
+No probado: oro/derrota de jefe en Azahar (sí VM), consola, aspecto exacto Esmeralda. s139-silver.sav y
+ gold-fixture.json preparados desde plata guardada, S/récord139,símbolo1024,PS60/70/80,PP5,estado0/0/1,
+para retomar después de la decisión. Laboratorio parado desde el conductor privado con reap; sin push.
+Siguiente paso: resolver criterio EV en diseño, actualizar tabla/test correspondiente si procede, reconstruir,
+repetir comprobación real del equipo plata y completar oro o derrota Azahar, suite y cierre done.

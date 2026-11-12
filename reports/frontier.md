@@ -3194,3 +3194,55 @@ Lab24691 cerrado con `python scripts/azahar_lab.py reap` desde su conductor prop
 registra `own_processes=[]`, sesión ausente, GDB deshabilitado y bus D-Bus privado cerrado.
 El conductor también termina. No se han tocado REPARTO/tasks.json ni hecho push.
 No probado: consola, inglés en juego, concesión oro y revanchas en Azahar (VM sí), dificultad sin asistencia.
+
+## 45. Cerebro del Tubo — Lucy (F8-CEREBRO-TUBO, aceptación parcial)
+
+`95a8aaa` habilita Lucy y sus dos tríos privados en `brains.py`; `pike_rooms_loop` consulta
+`brains_check` antes del sorteo de cada sala. S=27/139 produce plata/oro; después de ambos símbolos
+se aplican las revanchas BASE (salas28,140,196,252…). El jefe pone PIKE_WILD=0, rango Normal,
+tres rivales y conserva PS/PP/estado v2. Solo AddWinCount cuenta la sala ganada. Recepción añade
+«Símbolos». Clase13 Bruja y modelo ORAS de pelo oscuro sustituyen el aspecto de Esmeralda.
+Se conserva la desviación de v2: no se reproduce la curación parcial exacta previa a Lucy.
+
+### Comprobaciones y límite encontrado
+
+Artefactos locales en `work/frontier/cerebros/pike/` (no distribuir PK6, partidas ni build):
+
+| Prueba | Resultado y fuente |
+| --- | --- |
+| Suite hito1 | 1329 passed, 1 skipped,44.90s; `tests-m1.log` |
+| Script | 17 tests específicos `tests/test_frontier_brain_pike.py`: umbrales vecinos, símbolos, revanchas, pausa, premio único, derrota, estado v2, llegada desde sala no bélica y consulta |
+| Build | `build.log`, `static.json`: ZO17112<=17248; bloque1396 bytes hasta0xf09f4. Comparación con Lucy deshabilitada: mismas instrucciones/símbolos, solo dos filas privadas cambian |
+| Fixture válida | `s27-paused.sav`, copia editada de `work/frontier/lab/pa_paused7.sav`, SHA256 fuente012e718ba50c3dbab606987958a3351aec79840025e385e25d73ed3c98e48c7c; `fixture.json` |
+| Plata en Azahar | trainer139, flag0, pendiente14, S27; victoria asistida raw1; después S28,activo1,símbolo1024,pendiente0. `silver.gdb.log` |
+| Estado arrastrado | Hooks pasivos SET_HP0x14f450/SET_SICK0x14f814 llamados por pike_build restauran PS60/70/80 y estados0/0/1; pike_pp+32 registra cuatro PP5 por miembro. Entrada del primero confirma PS60/PP5. `retention.gdb`, `silver.gdb.log` |
+| Equipo rival real | Tres PK6 exportados antes de asistencia, `silver-team/`, `team-silver-measured.json`; Seviper y Milotic coinciden íntegramente. Shuckle difiere en un EV; `check-silver.log` falla deliberadamente y no se ha relajado el verificador |
+
+**Bloqueo de aceptación:** el anexo §7 exige para Shuckle plata EV252,0,0,0,106,252
+(total610). El escritor nativo0x3b4b64 utilizado por BASE limita a510, como documenta
+`frontier/asm/brains.s`: la copia real queda252,0,0,0,106,152. Se conservan los610 solicitados
+en la tabla del parche; no se ha alterado silenciosamente el diseño ni declarado equipo exacto en ejecución.
+Hace falta decidir si corregir el anexo a152 de Defensa Especial (total510), o exigir una excepción de motor
+que admita610. La segunda opción cambia la infraestructura común y requiere regresión de motor caso b.
+La suite de script comprueba la tabla solicitada y por sí sola no detecta este límite de ejecución.
+
+La asistencia solo modifica PS/movimientos de copias de combate (enemigos1PS/Splash); no escribe resultados,
+works, símbolos ni PB. No prueba dificultad. `PIKE RETAIN status` lee una dirección no validada para estados;
+la evidencia de parálisis es el argumento1 de SET_SICK, no ese campo de la sonda.
+La primera fixture `pk_saved_458.sav` no estaba pausada correctamente: al cargar, retail detectó interrupción
+y reinició ACTIVE/racha; no usarla para esta prueba. La fuente pausada de Palacio mantiene los demás
+activos a0 y permite entrar al Tubo con S27. No se han tocado inputs ni la partida fuente.
+Política de regresión caso a: solo Tubo, sin cambios de motor/isla/construcción común.
+
+Persistencia comprobada: se aceptó continuar después de Lucy antes de seleccionar Pausar, por lo que
+el guardado real se hizo en S30 tras una sala vacía y un combate normal adicional (asistido raw1).
+`silver-paused.sav` SHA256d47e48af5a3a189f24385842c88884129bbb28421fc5ba48d96400fcac28c38d:
+símbolo1024,pendiente0,S/récord30,activo1; PB4→15 (+10 jefe y +1 segunda ronda).
+`saved-silver.json` valida checksums, equipo0x14200..0x1481c y cajas0x33000..0x67ad0 idénticos a la
+fixture inicial. Reinicio real con este archivo y consulta «Símbolos»: «Tienes el Símbolo Suerte de plata»
+(`silver-reloaded-symbol.png`). El avance único de Lucy se midió previamente en RAM a S28, no se infiere
+solo del guardado posterior. Suite hito2:1329 passed,1 skipped,48.27s (`tests-m2.log`).
+
+**Pendiente/no probado:** combate oro o derrota de jefe en Azahar (sí VM), consola y fidelidad completa
+EV de Shuckle. `s139-silver.sav`/`gold-fixture.json` están preparados para retomar oro desde139 con
+plata1024 y estado v2 controlado; no se han ejecutado. Laboratorio del carril cerrado al terminar.

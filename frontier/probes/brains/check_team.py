@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Check pre-assistance PK6 exports against the designed Tower/Palace or seeded Factory team.
+"""Check pre-assistance PK6 exports against the designed Brain or seeded Factory team.
 
-Usage: check_team.py DIRECTORY [--variant silver|gold] [--facility tower|palace|arena|dome]. Commercial data stays in work/.
+Usage: check_team.py DIRECTORY [--variant silver|gold] [--facility tower|palace|arena|dome|pike]. Commercial data stays in work/.
 """
 import argparse
 import json
