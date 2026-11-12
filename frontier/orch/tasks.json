@@ -225,9 +225,9 @@
       "title": "Cerebro de la Arena",
       "design": "reports/diseno/cerebros.md",
       "accept": "El Cerebro de la Arena según reports/diseno/cerebros.md (si frontier/orch/propuestas/cerebros.json trae criterios más concretos para esta instalación, mandan esos): aparece en la racha de plata y en la de oro, con su equipo y textos, usando la infraestructura de F8-CEREBROS-BASE; símbolo guardado al ganar; derrota limpia. Tests de su script (plata, oro, derrota). Azahar, con partida editada a la racha justa: el combate de plata ganado con su símbolo y uno de oro o una derrota, solo en esta instalación (política de regresión, caso a; caso b si tocaste el motor). Tests en verde.",
-      "status": "in_progress",
-      "notes": "",
-      "evidence": ""
+      "status": "done",
+      "notes": "F8-CEREBRO-ARENA completado. Greta plata/oro, consulta y símbolo persistido; derrota limpia. Laboratorio del carril parado. REPARTO y tasks.json intactos. Sin push.",
+      "evidence": "Commits 5347064 (implementación y 22 tests) y 5acc286 (aceptación/bitácora/informe §43). Suite final: 1281 passed, 1 skipped, 47.63s; work/frontier/cerebros/arena/tests-final.log. Build correcta. Azahar 24691: plata S27 ganada, símbolo64/PB14 guardados y recargados; oro S55 equipo exacto y derrota raw0 con limpieza, plata/récord55 conservados, guardado final PB14; equipo/cajas idénticos a fuente, checksums válidos. Reglas: bit31, cambio prohibido y juicio3turnos. Artefactos work/frontier/cerebros/arena/. cleanup.log own_processes=[]; GDB off. Motor sin cambio de instrucciones, solo datos privados de Greta; política caso a, solo Arena."
     },
     {
       "id": "F8-CEREBRO-DOMO",
