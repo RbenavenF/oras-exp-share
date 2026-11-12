@@ -13,7 +13,8 @@ The streak counts rooms (own streak and record by route 6); BP as Emerald
 after each 14th room (data.FRONTIER_BP['pike']); the Maison's continue / rest / retire menu after each battle; a loss
 ends the challenge. Wild rooms (v2): one battle against Seviper, Milotic or the streak's third Pokémon of Emerald's
 sLvl50_Mons, at level 46/45, with the Maison's battle rules (no Bag, capture or experience; patch.PIKE_WILD,
-frontier/asm/pike.s). Out: double battles, Lucy, the selection screen of Emerald.
+frontier/asm/pike.s). Lucy replaces the final room at 28/140 (then 196,252… with both symbols); her battle keeps v2 HP/status/PP.
+Out: double battles, the selection screen and exact pre-Lucy healing of Emerald.
 
 Zone script: zone 517's **retail** script run as the Tower (tower.facility_program(retail, 'pike'): reception with
 the mutual exclusion, mode and party screens, route, pause, loss, BP every tower.STAGES['pike'] = 14), plus:
@@ -42,6 +43,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / 'scripts'), str(ROOT / 'frontier')]
 from pawn import OP, Op, Program  # noqa: E402
+import brains  # noqa: E402
 import data as fd  # noqa: E402
 import dome  # noqa: E402
 import factory  # noqa: E402
@@ -528,6 +530,16 @@ def rooms_routine(p):
         for pair in patch.PIKE_PP:
             r.sysreq('WorkSet', pair[k], patch.PIKE_FULL)
     r.p.label('pike_rooms_loop')
+    # Check every room, including after non-battle rooms. Lucy consumes this one room through
+    # the ordinary win path, never a second scripted increment. Preserve all v2 party works.
+    r.call('brains_check')
+    r.sysreq('WorkGet', brains.WORK_BRAIN)
+    ordinary = r.new_label('ordinary')
+    r.op('JZER', ordinary)
+    r.sysreq('WorkSet', patch.PIKE_WILD, 0)
+    r.sysreq('SetRank', 0)
+    r.op('JUMP', end)
+    r.p.label(ordinary)
     r.sysreq('GlobalCall', GLOBAL_ROOM)
     r.sysreq('GlobalGetChildParam', 0)
     r.store('result')
@@ -578,6 +590,7 @@ BATTLE_LOOP = 'L1e1c'
 def pike_program(retail):
     """Zone 517's retail script with the Pike (module docstring)."""
     p = tower.facility_program(retail, FACILITY)
+    brains.symbols_option(p, FACILITY, factory.LINE_SYMBOLS)
     start = factory._index(p, BATTLE_LOOP)
     clear = next(i for i in range(start, len(p.items)) if isinstance(p.items[i], Op)
                  and p.items[i].op == OP['SYSREQ_N'])

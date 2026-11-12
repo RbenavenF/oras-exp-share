@@ -6,7 +6,7 @@ the facility the Brain comes at its silver unit, with silver only at its gold un
 (silver team) and at the gold unit and every `period` after it (gold team). `due` is the reference; the zone script
 runs the same rule (`check_routine`) before each rival is chosen, from the facility streak, so a resumed challenge
 recomputes it. Facilities whose unit is not a battle (Dome, Pike, Pyramid) get their own adapter; BASE enables the
-Tower initially; the adapters also enable Noland, Spenser, Greta and Tucker (ENABLED).
+Tower initially; the adapters also enable Noland, Spenser, Greta, Tucker and Lucy (ENABLED).
 
 Symbols: saved work WORK_SYMBOLS, two bits per route r at 2*(r-1): 0 none, 1 silver, 3 silver and gold (2 is
 invalid and read as 3). Never cleared by a loss, a retirement or another challenge.
@@ -56,7 +56,7 @@ LATE_FIRST, LATE_COUNT = 70, 40   # the 15-18 bracket of 0x1e3aac (0x1e4860(work
 # (silver unit, gold unit, period after both), units counted from 1 (cerebros.md §1).
 APPEARANCES = {'factory': (21, 42, 21), 'tower': (35, 70, 35), 'palace': (21, 42, 21), 'arena': (28, 56, 28),
                'dome': (5, 10, 5), 'pike': (28, 140, 56), 'pyramid': (21, 70, 35)}
-ENABLED = ('factory', 'tower', 'palace', 'arena', 'dome')
+ENABLED = ('factory', 'tower', 'palace', 'arena', 'dome', 'pike')
 NAMES = {'factory': 'Noland', 'tower': 'Anabel', 'palace': 'Spenser', 'arena': 'Greta', 'dome': 'Tucker',
          'pike': 'Lucy', 'pyramid': 'Brandon'}
 CLASSES = {'factory': 30, 'tower': 9, 'palace': 31, 'arena': 63, 'dome': 10, 'pike': 13, 'pyramid': 96}  # a/0/7/7 #21
@@ -77,7 +77,7 @@ FACILITY = {'es': {'factory': 'la Fábrica Batalla', 'tower': 'la Torre Batalla'
 SPECIES = {'ALAKAZAM': 65, 'ENTEI': 244, 'SNORLAX': 143, 'RAIKOU': 243, 'LATIOS': 381,
            'CROBAT': 169, 'SLAKING': 289, 'LAPRAS': 131, 'ARCANINE': 59, 'SUICUNE': 245,
            'HERACROSS': 214, 'UMBREON': 197, 'SHEDINJA': 292, 'GENGAR': 94, 'BRELOOM': 286,
-           'SWAMPERT': 260, 'SALAMENCE': 373, 'CHARIZARD': 6, 'METAGROSS': 376, 'LATIAS': 380}
+           'SWAMPERT': 260, 'SALAMENCE': 373, 'CHARIZARD': 6, 'METAGROSS': 376, 'LATIAS': 380, 'SEVIPER': 336, 'SHUCKLE': 213, 'MILOTIC': 350, 'STEELIX': 208, 'GYARADOS': 130}
 MOVES = {'THUNDER_PUNCH': 9, 'FIRE_PUNCH': 7, 'ICE_PUNCH': 8, 'DISABLE': 50, 'FIRE_BLAST': 126, 'CALM_MIND': 347,
          'RETURN': 216, 'ROAR': 46, 'BODY_SLAM': 34, 'BELLY_DRUM': 187, 'YAWN': 281, 'SHADOW_BALL': 247,
          'THUNDERBOLT': 85, 'REFLECT': 115, 'REST': 156, 'PSYCHIC': 94, 'RECOVER': 105, 'DRAGON_CLAW': 337,
@@ -87,11 +87,24 @@ MOVES = {'THUNDER_PUNCH': 9, 'FIRE_PUNCH': 7, 'ICE_PUNCH': 8, 'DISABLE': 50, 'FI
          'EXTREME_SPEED': 245, 'HYPER_BEAM': 63, 'BLIZZARD': 59, 'SURF': 57, 'BITE': 44,
          'MEGAHORN': 224, 'ROCK_TOMB': 317, 'ENDURE': 203, 'REVERSAL': 179, 'FAINT_ATTACK': 185,
          'AERIAL_ACE': 332, 'DOUBLE_EDGE': 38, 'HYPNOSIS': 95, 'DREAM_EATER': 138, 'DESTINY_BOND': 194,
-         'SPORE': 147, 'FOCUS_PUNCH': 264, 'GIGA_DRAIN': 202, 'HEADBUTT': 29, 'COUNTER': 68, 'ROCK_SLIDE': 157, 'MIRROR_COAT': 243, 'METEOR_MASH': 309}
+         'SPORE': 147, 'FOCUS_PUNCH': 264, 'GIGA_DRAIN': 202, 'HEADBUTT': 29, 'COUNTER': 68, 'ROCK_SLIDE': 157, 'MIRROR_COAT': 243, 'METEOR_MASH': 309, 'CRUNCH': 242, 'POISON_FANG': 305, 'SANDSTORM': 201,
+         'SLUDGE_BOMB': 188, 'EXPLOSION': 153, 'SCREECH': 103, 'DRAGON_DANCE': 349}
 ITEMS = {'BRIGHT_POWDER': 213, 'LUM_BERRY': 157, 'QUICK_CLAW': 217, 'CHESTO_BERRY': 150,
          'SCOPE_LENS': 232, 'WHITE_HERB': 214, 'KINGS_ROCK': 221, 'SALAC_BERRY': 203, 'LEFTOVERS': 234, 'FOCUS_BAND': 230}
-NATURES = {'HARDY': 0, 'LONELY': 1, 'ADAMANT': 3, 'HASTY': 11, 'MODEST': 15, 'QUIET': 17, 'JOLLY': 13, 'CALM': 20, 'BRAVE': 2}
+NATURES = {'HARDY': 0, 'LONELY': 1, 'ADAMANT': 3, 'HASTY': 11, 'MODEST': 15, 'QUIET': 17, 'JOLLY': 13, 'CALM': 20, 'BRAVE': 2, 'BOLD': 5}
 TEAMS = {
+    # Pike / Lucy (F8-CEREBRO-TUBO), cerebros.md §7.
+    ('pike', SILVER): (16, [
+        ('SEVIPER', 'QUICK_CLAW', 'BRAVE', (252, 0, 252, 0, 6, 0),
+         ('SWAGGER', 'CRUNCH', 'POISON_FANG', 'GIGA_DRAIN')),
+        ('SHUCKLE', 'CHESTO_BERRY', 'BOLD', (252, 0, 0, 0, 106, 252), ('TOXIC', 'SANDSTORM', 'PROTECT', 'REST')),
+        ('MILOTIC', 'LEFTOVERS', 'MODEST', (152, 0, 100, 0, 152, 106), ('ICE_BEAM', 'MIRROR_COAT', 'SURF', 'RECOVER'))]),
+    ('pike', GOLD): (31, [
+        ('SEVIPER', 'FOCUS_BAND', 'BOLD', (252, 0, 0, 0, 252, 6),
+         ('SWAGGER', 'CRUNCH', 'SLUDGE_BOMB', 'GIGA_DRAIN')),
+        ('STEELIX', 'BRIGHT_POWDER', 'BRAVE', (252, 0, 0, 0, 6, 252),
+         ('EARTHQUAKE', 'ROCK_SLIDE', 'EXPLOSION', 'SCREECH')),
+        ('GYARADOS', 'CHESTO_BERRY', 'ADAMANT', (252, 6, 0, 0, 0, 252), ('DRAGON_DANCE', 'RETURN', 'ROAR', 'REST'))]),
     ('dome', SILVER): (20, [
         ('SWAMPERT', 'FOCUS_BAND', 'BRAVE', (152, 152, 106, 0, 100, 0), ('SURF', 'EARTHQUAKE', 'ICE_BEAM', 'COUNTER')),
         ('SALAMENCE', 'LUM_BERRY', 'ADAMANT', (152, 152, 106, 100, 0, 0),

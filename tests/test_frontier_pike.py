@@ -96,6 +96,7 @@ def rooms_run(zone, works, results):
     log, results = [], list(results)
     stubs = natives({'WorkGet': lambda vm, a: works.get(a[0], 0),
                      'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
+                     'GetMyWinCount': lambda vm, a: works.get(pike.STREAK, 0),
                      'GlobalCall': lambda vm, a: log.append(('global', a[0])),
                      'GlobalGetChildParam': lambda vm, a: results.pop(0),
                      'SetRank': lambda vm, a: log.append(('rank', a[0]))})

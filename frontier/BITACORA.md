@@ -3030,3 +3030,25 @@ No probado: consola, inglés en juego, dificultad sin asistencia Domo, concesió
 (sí VM); byte0xcc cambiado queda documentado, no se afirma identidad completa del equipo plata.
 Siguiente paso: el orquestador integra lane/codex, actualiza reservas y pasa aceptación en main;
 F8-CEREBRO-DOMO terminado, estado done en work/lane-task.json. Sin push.
+
+## 2026-11-12 — Codex — F8-CEREBRO-TUBO hito 1: Lucy y sala única
+Estado: en curso
+Hecho: Lucy habilitada en brains.py, con seis sets exactos del anexo cerebros.md §7, clase13 y nombre propio.
+El adaptador pike_rooms comprueba elegibilidad antes de cada sorteo, también después de salas sin combate;
+con Lucy limpia PIKE_WILD y fija rango Normal, conserva PS/estado/PP v2 y deja el avance a AddWinCount.
+Recepción conecta «Símbolos» BASE. Sin cambios en asm, patch.py, isla ni construcción común.
+Evidencia: source scripts/env.sh; env -u ORCH_LANE python -m pytest -q tests: 1329 passed, 1 skipped,
+44.90 s (work/frontier/cerebros/pike/tests-m1.log). VM: umbrales/plata/oro/revanchas, pausa, derrota,
+premio único, estado v2 y llegada desde sala sin combate. IDs cotejados con gametext ES; seis sets/IV/EV
+verificados. Overlay completa correcta (build.log); static.json: ZO Tubo17112 <=17248, bloque nativo1396
+bytes hasta0xf09f4; comparación con Lucy deshabilitada da instrucciones/símbolos idénticos, solo cambian
+las dos filas de datos privadas. Primeras pruebas detectaron expectativas antiguas/abreviación de nombre
+Colmillo Ven; corregidas y suite completa repetida en verde. git diff --check limpio.
+Commits: el de esta entrada, «feat(frontier): add Lucy teams and Pike room adapter» (Agent: Codex).
+Decisiones: política caso a, solo Tubo; sin nuevas reservas. Se conserva estado v2 ante Lucy, sin curación
+previa exacta de Esmeralda (fuera de alcance en diseño). REPARTO/tasks.json intactos por brief del carril.
+No probado aún: aceptación Lucy en Azahar, guardado/carga, consola.
+Siguiente paso: laboratorio del carril24691 arrancado desde conductor work/frontier/cerebros/pike/driver.py;
+fixture s27.sav copia de work/frontier/lab/pk_saved_458.sav, SHA256252526e8… (fixture.json), con PS60/70/80,
+PP5 por movimiento y parálisis en tercero. Completar plata ganada/símbolo guardado/cargado y oro o derrota;
+parar lab y bus privado desde el conductor al terminar.

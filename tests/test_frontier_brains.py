@@ -41,7 +41,7 @@ def test_design_table_values():
     assert reps == [35, 70, 105, 140, 175]
     assert [u for u in range(1, 300) if brains.due('pike', u, 3)] == [28, 140, 196, 252]
     assert [u for u in range(1, 150) if brains.due('pyramid', u, 3)] == [21, 70, 105, 140]
-    assert brains.ENABLED == ('factory', 'tower', 'palace', 'arena', 'dome')
+    assert brains.ENABLED == ('factory', 'tower', 'palace', 'arena', 'dome', 'pike')
 
 
 def test_symbols_work():
@@ -85,7 +85,8 @@ def test_ids_match_the_game_text(game_names):
                'CROBAT': 'Crobat', 'SLAKING': 'Slaking', 'LAPRAS': 'Lapras', 'ARCANINE': 'Arcanine',
                'SUICUNE': 'Suicune', 'HERACROSS': 'Heracross', 'UMBREON': 'Umbreon', 'SHEDINJA': 'Shedinja',
                'GENGAR': 'Gengar', 'BRELOOM': 'Breloom', 'SWAMPERT': 'Swampert', 'SALAMENCE': 'Salamence',
-               'CHARIZARD': 'Charizard', 'METAGROSS': 'Metagross', 'LATIAS': 'Latias'}
+               'CHARIZARD': 'Charizard', 'METAGROSS': 'Metagross', 'LATIAS': 'Latias', 'SEVIPER': 'Seviper', 'SHUCKLE': 'Shuckle', 'MILOTIC': 'Milotic',
+               'STEELIX': 'Steelix', 'GYARADOS': 'Gyarados'}
     assert {k: game_names['species'][v] for k, v in brains.SPECIES.items()} == spanish
     assert game_names['moves'][brains.MOVES['RETURN']] == 'Retribución'
     assert game_names['moves'][brains.MOVES['THUNDER_PUNCH']] == 'Puño Trueno'
@@ -97,7 +98,7 @@ def test_ids_match_the_game_text(game_names):
         'KINGS_ROCK': 'Roca del Rey', 'SALAC_BERRY': 'Baya Aslac', 'LEFTOVERS': 'Restos', 'FOCUS_BAND': 'Cinta Focus'}
     assert {k: game_names['natures'][v] for k, v in brains.NATURES.items()} == {
         'HARDY': 'fuerte', 'LONELY': 'huraña', 'ADAMANT': 'firme', 'HASTY': 'activa', 'MODEST': 'modesta',
-        'QUIET': 'mansa', 'JOLLY': 'alegre', 'CALM': 'serena', 'BRAVE': 'audaz'}
+        'QUIET': 'mansa', 'JOLLY': 'alegre', 'CALM': 'serena', 'BRAVE': 'audaz', 'BOLD': 'osada'}
     spanish_moves = {'CONFUSE_RAY': 'Rayo Confuso', 'DOUBLE_TEAM': 'Doble Equipo', 'TOXIC': 'Tóxico', 'FLY': 'Vuelo',
                      'EARTHQUAKE': 'Terremoto', 'SWAGGER': 'Contoneo', 'SHADOW_BALL': 'Bola Sombra',
                      'BRICK_BREAK': 'Demolición', 'ICE_BEAM': 'Rayo Hielo', 'HORN_DRILL': 'Perforador',
@@ -108,7 +109,9 @@ def test_ids_match_the_game_text(game_names):
                      'REVERSAL': 'Inversión', 'FAINT_ATTACK': 'Finta', 'AERIAL_ACE': 'Golpe Aéreo',
                      'DOUBLE_EDGE': 'Doble Filo', 'HYPNOSIS': 'Hipnosis', 'DREAM_EATER': 'Come Sueños',
                      'DESTINY_BOND': 'Mismo Destino', 'SPORE': 'Espora', 'FOCUS_PUNCH': 'Puño Certero',
-                     'GIGA_DRAIN': 'Gigadrenado', 'HEADBUTT': 'Golpe Cabeza'}
+                     'GIGA_DRAIN': 'Gigadrenado', 'HEADBUTT': 'Golpe Cabeza', 'CRUNCH': 'Triturar',
+                     'POISON_FANG': 'Colmillo Ven', 'SANDSTORM': 'Tormenta Arena', 'SLUDGE_BOMB': 'Bomba Lodo',
+                     'EXPLOSION': 'Explosión', 'SCREECH': 'Chirrido', 'DRAGON_DANCE': 'Danza Dragón'}
     assert {k: game_names['moves'][brains.MOVES[k]] for k in spanish_moves} == spanish_moves
     assert game_names['classes'][brains.CLASSES['palace']] == 'Médium'
     assert game_names['classes'][brains.CLASSES['tower']] == 'Entrenadora Guay'
@@ -124,7 +127,7 @@ def test_anabel_sets_are_the_annex():
     assert silver[1]['moves'] == (126, 347, 216, 46) and silver[1]['nature'] == 1
     assert gold[2]['moves'] == (174, 216, 156, 247) and gold[2]['item'] == 150 and gold[2]['nature'] == 3
     assert silver[0]['evs'] == 0b011101                      # HP, Def, Spe, SpA (source order HP Atk Def Spe SpA SpD)
-    assert sorted(sets) == list(range(229, 253))            # the Tower's, Palace's and Arena's blocks of 6 in 223-264
+    assert sorted(sets) == list(range(229, 259))            # the Tower's, Palace's and Arena's blocks of 6 in 223-264
     assert brains.SET_FIRST == fp.PIKE_WILD_FIRST + 6 == 223
 
 
@@ -146,7 +149,7 @@ def test_trainers_and_rows():
     assert first == (229, 106, 0, 152, 100, 0, 152)          # pml order HP Atk Def SpA SpD Spe
     trainer, iv, _ = struct.unpack_from('<HBB', rows, brains.ENTRY * (k + 1))
     assert (trainer, iv) == (132, 31)
-    assert all(struct.unpack_from('<H', rows, brains.ENTRY * j)[0] == 0 for j in range(14) if j not in (0, 1, k, k + 1, k + 2, k + 3, k + 4, k + 5, k + 6, k + 7))
+    assert all(struct.unpack_from('<H', rows, brains.ENTRY * j)[0] == 0 for j in range(14) if j not in (0, 1, k, k + 1, k + 2, k + 3, k + 4, k + 5, k + 6, k + 7, k + 8, k + 9))
 
 
 def test_texts():
@@ -309,8 +312,7 @@ def test_factory_symbols_menu_entry(scripts):
     assert ins[k + 4].address + ins[k + 4].args[0] == labels['brains_symbols']
     assert ins[k + 5].op == OP['CONST_S'] and ins[k + 5].args == [factory.RECEPTION_AGAIN, 1]
     assert ins[k + 6].op == OP['JUMP'] and ins[k + 6].address + ins[k + 6].args[0] == labels[factory.RECEPTION_NEXT]
-    for other in ('pike',):         # other receptions connect theirs in their own tasks
-        assert 'brains_symbols' not in scripts[other][1]
+    assert 'brains_symbols' in scripts['pike'][1]
 
 
 @pytest.mark.parametrize('facility', ['tower', 'palace', 'arena', 'pike', 'dome', 'factory'])
