@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check pre-assistance PK6 exports against the designed Tower/Palace or seeded Factory team.
 
-Usage: check_team.py DIRECTORY [--variant silver|gold] [--facility tower|palace]. Commercial data stays in work/.
+Usage: check_team.py DIRECTORY [--variant silver|gold] [--facility tower|palace|arena]. Commercial data stays in work/.
 """
 import argparse
 import json
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     p.add_argument('directory', type=Path)
     p.add_argument('--variant', choices=['silver', 'gold'], default='silver')
     p.add_argument('--factory-fixture', type=Path)
-    p.add_argument('--facility', choices=['tower', 'palace'], default='tower')
+    p.add_argument('--facility', choices=['tower', 'palace', 'arena'], default='tower')
     a = p.parse_args()
     variant = {'silver': brains.SILVER, 'gold': brains.GOLD}[a.variant]
     rows = inspect_factory(a.directory, a.factory_fixture, variant) if a.factory_fixture else inspect(a.directory, variant, a.facility)

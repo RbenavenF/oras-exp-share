@@ -2911,3 +2911,17 @@ No probado: consola, inglés en juego, oro ganado/revanchas en Azahar (VM sí); 
 sí símbolo/PB persistidos; no nuevo guardado tras derrota (limpieza RAM sí). Contracción común «de el» pendiente.
 REPARTO/tasks.json intactos, sin push; estado done en work/lane-task.json.
 Siguiente paso: el orquestador integra lane/codex y pasa su aceptación; F8-CEREBRO-PALACIO terminado.
+
+## 2026-11-12 — Codex — F8-CEREBRO-ARENA hito 1: Greta y pruebas del script
+Estado: en curso
+Hecho: Greta habilitada en brains.ENABLED, equipos plata/oro exactos del diseño §7 y conexión «Símbolos»
+en arena_program. Sin nuevas reservas: sets 241–246, entrenadores 135/136, líneas y works ya asignados.
+22 tests propios: desafíos, fronteras, revanchas, pérdida, pausa, consulta, tablas y premio no duplicado.
+check_team.py admite Arena. Corregida descripción antigua de Arena A: el motor B sigue activo.
+Evidencia: env -u ORCH_LANE python -m pytest -q tests: 1281 passed, 1 skipped, 44.54 s
+(work/frontier/cerebros/arena/tests-full.log). Build completa correcta (build.log); git diff --check limpio.
+Commits: el de esta entrada, «feat(frontier): add Greta teams and Arena symbols reception» (Agent: Codex).
+Decisiones: solo datos y script mediante API BASE; no cambia lógica nativa, ASM, patch.py ni construcción común.
+No probado todavía: Greta en Azahar, guardado/carga del símbolo y derrota; consola.
+Siguiente paso: laboratorio de este carril 24691 ya arrancado con s27.sav y sonda judge-win.gdb;
+completar plata ganada, guardar/cargar y oro/derrota; medir juicio a tres turnos y cambio prohibido.

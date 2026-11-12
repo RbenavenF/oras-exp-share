@@ -7,15 +7,20 @@ party selection 0x457c, untouched; the order chosen is the battle order), 7 batt
 by streak route 4 (patch.STREAK_ROUTES), BP of data.FRONTIER_BP['arena'] after the 7th battle of each round, pause and
 resume as the Maison, and the mutual exclusion with the other facilities (factory.busy_check, patch.ACTIVE_WORK).
 
-Stage A only: no 3-turn limit, no judgement and switching is allowed. Those need the battle engine and are stage B
-(design §1, §2). Same known deviations as the Tower and the Palace: the Maison's texts («Mansión Batalla»), its party
-rules, its boss on the streak; no Greta, Doubles or Open Level.
+Stage B: bit31 marks Arena battles, with switching forbidden and Body judgement after three turns
+(frontier/arena_engine.py); Mind and Skill remain outside this implementation.
+
+Greta (F8-CEREBRO-ARENA): battles 28/56, then every 28 after both symbols, using brains.py's private teams,
+identity, texts and persistent Guts symbols. Her battles keep the Arena rules. Reception offers «Symbols».
+Doubles and Open Level remain outside this implementation.
 """
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / 'scripts'), str(ROOT / 'frontier')]
+import brains  # noqa: E402
+import factory  # noqa: E402
 import data as fd  # noqa: E402
 import patch  # noqa: E402
 import tower  # noqa: E402
@@ -29,7 +34,9 @@ ARENA_BP = fd.FRONTIER_BP[FACILITY]
 
 def arena_program(retail):
     """Zone 517's retail script with the Arena (module docstring)."""
-    return tower.facility_program(retail, FACILITY)
+    p = tower.facility_program(retail, FACILITY)
+    brains.symbols_option(p, FACILITY, factory.LINE_SYMBOLS)
+    return p
 
 
 def zone_script(retail):

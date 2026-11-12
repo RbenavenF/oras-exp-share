@@ -6,7 +6,7 @@ the facility the Brain comes at its silver unit, with silver only at its gold un
 (silver team) and at the gold unit and every `period` after it (gold team). `due` is the reference; the zone script
 runs the same rule (`check_routine`) before each rival is chosen, from the facility streak, so a resumed challenge
 recomputes it. Facilities whose unit is not a battle (Dome, Pike, Pyramid) get their own adapter; BASE enables the
-Tower initially; the Factory adapter also enables Noland, the Palace adapter Spenser (ENABLED).
+Tower initially; the Factory adapter also enables Noland, the Palace adapter Spenser and the Arena adapter Greta (ENABLED).
 
 Symbols: saved work WORK_SYMBOLS, two bits per route r at 2*(r-1): 0 none, 1 silver, 3 silver and gold (2 is
 invalid and read as 3). Never cleared by a loss, a retirement or another challenge.
@@ -55,7 +55,7 @@ LATE_FIRST, LATE_COUNT = 70, 40   # the 15-18 bracket of 0x1e3aac (0x1e4860(work
 # (silver unit, gold unit, period after both), units counted from 1 (cerebros.md §1).
 APPEARANCES = {'factory': (21, 42, 21), 'tower': (35, 70, 35), 'palace': (21, 42, 21), 'arena': (28, 56, 28),
                'dome': (5, 10, 5), 'pike': (28, 140, 56), 'pyramid': (21, 70, 35)}
-ENABLED = ('factory', 'tower', 'palace')
+ENABLED = ('factory', 'tower', 'palace', 'arena')
 NAMES = {'factory': 'Noland', 'tower': 'Anabel', 'palace': 'Spenser', 'arena': 'Greta', 'dome': 'Tucker',
          'pike': 'Lucy', 'pyramid': 'Brandon'}
 CLASSES = {'factory': 30, 'tower': 9, 'palace': 31, 'arena': 63, 'dome': 10, 'pike': 13, 'pyramid': 96}  # a/0/7/7 #21
@@ -74,17 +74,21 @@ FACILITY = {'es': {'factory': 'la Fábrica Batalla', 'tower': 'la Torre Batalla'
 # game text by tests/test_frontier_brains.py: species (98), moves (14), items (114), natures (51).
 # EV in the source order HP, Atk, Def, Spe, SpA, SpD (also the Maison set's EV bit order, 0x1efb94).
 SPECIES = {'ALAKAZAM': 65, 'ENTEI': 244, 'SNORLAX': 143, 'RAIKOU': 243, 'LATIOS': 381,
-           'CROBAT': 169, 'SLAKING': 289, 'LAPRAS': 131, 'ARCANINE': 59, 'SUICUNE': 245}
+           'CROBAT': 169, 'SLAKING': 289, 'LAPRAS': 131, 'ARCANINE': 59, 'SUICUNE': 245,
+           'HERACROSS': 214, 'UMBREON': 197, 'SHEDINJA': 292, 'GENGAR': 94, 'BRELOOM': 286}
 MOVES = {'THUNDER_PUNCH': 9, 'FIRE_PUNCH': 7, 'ICE_PUNCH': 8, 'DISABLE': 50, 'FIRE_BLAST': 126, 'CALM_MIND': 347,
          'RETURN': 216, 'ROAR': 46, 'BODY_SLAM': 34, 'BELLY_DRUM': 187, 'YAWN': 281, 'SHADOW_BALL': 247,
          'THUNDERBOLT': 85, 'REFLECT': 115, 'REST': 156, 'PSYCHIC': 94, 'RECOVER': 105, 'DRAGON_CLAW': 337,
          'CURSE': 174,
          'CONFUSE_RAY': 109, 'DOUBLE_TEAM': 104, 'TOXIC': 92, 'FLY': 19, 'EARTHQUAKE': 89, 'SWAGGER': 207,
          'BRICK_BREAK': 280, 'ICE_BEAM': 58, 'HORN_DRILL': 32, 'PROTECT': 182, 'OVERHEAT': 315,
-         'EXTREME_SPEED': 245, 'HYPER_BEAM': 63, 'BLIZZARD': 59, 'SURF': 57, 'BITE': 44}
+         'EXTREME_SPEED': 245, 'HYPER_BEAM': 63, 'BLIZZARD': 59, 'SURF': 57, 'BITE': 44,
+         'MEGAHORN': 224, 'ROCK_TOMB': 317, 'ENDURE': 203, 'REVERSAL': 179, 'FAINT_ATTACK': 185,
+         'AERIAL_ACE': 332, 'DOUBLE_EDGE': 38, 'HYPNOSIS': 95, 'DREAM_EATER': 138, 'DESTINY_BOND': 194,
+         'SPORE': 147, 'FOCUS_PUNCH': 264, 'GIGA_DRAIN': 202, 'HEADBUTT': 29}
 ITEMS = {'BRIGHT_POWDER': 213, 'LUM_BERRY': 157, 'QUICK_CLAW': 217, 'CHESTO_BERRY': 150,
-         'SCOPE_LENS': 232, 'WHITE_HERB': 214, 'KINGS_ROCK': 221}
-NATURES = {'HARDY': 0, 'LONELY': 1, 'ADAMANT': 3, 'HASTY': 11, 'MODEST': 15, 'QUIET': 17}
+         'SCOPE_LENS': 232, 'WHITE_HERB': 214, 'KINGS_ROCK': 221, 'SALAC_BERRY': 203, 'LEFTOVERS': 234}
+NATURES = {'HARDY': 0, 'LONELY': 1, 'ADAMANT': 3, 'HASTY': 11, 'MODEST': 15, 'QUIET': 17, 'JOLLY': 13, 'CALM': 20}
 TEAMS = {
     ('tower', SILVER): (24, [
         ('ALAKAZAM', 'BRIGHT_POWDER', 'MODEST', (106, 0, 152, 152, 100, 0),
@@ -107,6 +111,21 @@ TEAMS = {
         ('ARCANINE', 'WHITE_HERB', 'HASTY', (6, 252, 252, 0, 0, 0), ('OVERHEAT', 'EXTREME_SPEED', 'ROAR', 'PROTECT')),
         ('SLAKING', 'SCOPE_LENS', 'HARDY', (6, 252, 0, 252, 0, 0), ('HYPER_BEAM', 'EARTHQUAKE', 'SHADOW_BALL', 'YAWN')),
         ('SUICUNE', 'KINGS_ROCK', 'HASTY', (252, 0, 252, 6, 0, 0), ('BLIZZARD', 'SURF', 'BITE', 'CALM_MIND'))]),
+    # Arena / Greta (F8-CEREBRO-ARENA)
+    ('arena', SILVER): (20, [
+        ('HERACROSS', 'SALAC_BERRY', 'JOLLY', (106, 152, 0, 152, 0, 100),
+         ('MEGAHORN', 'ROCK_TOMB', 'ENDURE', 'REVERSAL')),
+        ('UMBREON', 'LEFTOVERS', 'CALM', (152, 0, 100, 0, 152, 106),
+         ('BODY_SLAM', 'CONFUSE_RAY', 'PSYCHIC', 'FAINT_ATTACK')),
+        ('SHEDINJA', 'BRIGHT_POWDER', 'ADAMANT', (0, 252, 6, 252, 0, 0),
+         ('SHADOW_BALL', 'RETURN', 'CONFUSE_RAY', 'AERIAL_ACE'))]),
+    ('arena', GOLD): (31, [
+        ('UMBREON', 'CHESTO_BERRY', 'CALM', (252, 0, 0, 0, 252, 6),
+         ('DOUBLE_EDGE', 'CONFUSE_RAY', 'REST', 'PSYCHIC')),
+        ('GENGAR', 'LEFTOVERS', 'MODEST', (252, 0, 252, 0, 6, 0),
+         ('PSYCHIC', 'HYPNOSIS', 'DREAM_EATER', 'DESTINY_BOND')),
+        ('BRELOOM', 'LUM_BERRY', 'JOLLY', (6, 252, 0, 252, 0, 0),
+         ('SPORE', 'FOCUS_PUNCH', 'GIGA_DRAIN', 'HEADBUTT'))]),
 }
 # maisonpkN entries of the Brains' sets (after the Pike's 217-222) and maisontrN entries of their trainers (after
 # the 129 retail ones; gametext 154, the Normal Maison trainer names, gets one line per entry). By route and variant.
