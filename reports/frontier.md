@@ -3107,3 +3107,90 @@ de fuente, plata y derrota; equipo y cajas de la derrota son idénticos byte a b
 (sha de sus regiones en `gold-loss-saved.json`). La fuente sigue con SHA256 093ed149….
 Laboratorio 24691 parado con `azahar_lab.py reap` desde su conductor persistente:
 `cleanup.log` registra `own_processes=[]`, GDB deshabilitado y bus D-Bus privado cerrado.
+
+
+## 44. Tucker — Cerebro del Domo (F8-CEREBRO-DOMO)
+
+La ruta5 usa BASE con Tucker en las finales de los torneos5/10 (S19/39), con los umbrales y
+revanchas de `brains.due`. `brains_check` convierte S+1 a torneos únicamente si S%4=3; las otras
+rondas no convocan al Cerebro. Entrenadores137/138, clase ORAS10 («Entrenador Guay»), nombre Tucker:
+se usa el modelo masculino de esa clase, sin modelo propio de Esmeralda.
+
+`dome_round` reconoce pendiente13/21 y prepara el trío fijo de los sets247–249/250–252 antes del
+preview. Las seis líneas privadas de especie/objeto se añaden al final de los textos de Cerebros
+(1128–1133), sin desplazar líneas compartidas existentes. Volver con B conserva ese trío.
+El jugador inscribe tres, elige dos, y el rival selecciona dos distintos de sus tres al azar,
+en orden aleatorio, como el Domo anterior. Desviación ya declarada: no hay selección estratégica
+contra el jugador. El constructor nativo de Tucker exige dos miembros, valida índices distintos
+del trío debido y aplica a cada miembro el set/IV/EV exacto de su fila. No sustituye la pareja por
+los dos primeros sets. La consulta «Símbolos» usa la rutina BASE; premio10 PB una sola vez,
+símbolo persistente. Al perder/retirarse y al devolver control a recepción limpia los dos slots
+del jugador, trío y pareja rival temporales; mantiene TEAM para una pausa y los símbolos/récord.
+
+Medidas de la build completa `python frontier/overlay.py --out work/frontier/cerebros/dome/build`
+(`build.log`, `static.json`): ZO Domo16804≤17248 bytes; bloque nativo Cerebros1396 bytes,
+final0xf09f4, quedan1548 hasta0xf1000. El integrador debe actualizar esa ampliación y las seis
+líneas en REPARTO; el brief paralelo prohíbe cambiarlo en este carril. No se asignan nuevos works,
+casos GlobalCall ni sets fuera de las reservas de Tucker. Hashes `build-manifest.json`:
+
+- code.ips: `f64e527c6348571ca8c83780ecd23152dd144bfe108abad7e286b9cdef19c4ce`.
+- DllField.cro: `a9d3a03febea7c65b7e2ce3803104441f0b3de2cc03b4bf6f297a5f930bb82c0`.
+- DllBattle.cro: `3ea58b3999e5c1335a95d67778a3d1abc920c3b7eb8f884f557d9af440017bfe`.
+
+31 tests nuevos en `tests/test_frontier_brain_dome.py`: VM (plata, oro, derrota, premios no duplicados,
+revanchas, consulta, B en preview, retorno/limpieza), constructor Unicorn (las seis parejas ordenadas
+por variante, EV/IV/set exactos, rechazar pareja repetida/fuera del trío o recuento incorrecto).
+Suite completa: **1312 passed, 1 skipped, 44.52 s** en `tests-acceptance.log` (hito1:44.24 s,
+`tests-m1.log`). Se desactiva ORCH_LANE solo para los tests del supervisor (§39).
+
+### 44.1. Aceptación Azahar
+
+Artefactos locales, sin partidas/binarios comerciales en Git: `work/frontier/cerebros/dome/`.
+Fixture plata `s19.sav`, SHA2564069a630… desde `work/frontier/dome/room/paused-456.sav`
+(SHA256ec03f883… completo en `fixture.json`), editando solo la copia: S/récord19, activo1,
+ruta/símbolos/pendiente0, otras instalaciones inactivas. Recepción zona456. Todos los checksums válidos.
+
+| Caso ejecutado | Resultado medido | Evidencia local |
+|---|---|---|
+| Presentación y preview plata | Tucker, entrenador137, pendiente13; preview Swampert/Cinta Focus, Salamence/Baya Ziuela, Charizard/Hierba Blanca; solo dos miembros por lado | `tucker-intro.png`, `preview-team.png`, `battle.png`, `silver.gdb.log` |
+| Equipo plata | Swampert y Charizard, IV20; objeto/naturaleza/movimientos/EV/amistad255/nivel50 exactos; exportados antes de asistencia | `check_team.py …/dome --facility dome` rc0, `team-silver.json` |
+| Victoria | IsWin raw1, S19→20, símbolo256, pendiente0; se continuó una ronda ordinaria más (raw1, S21) antes de pausar | `silver.gdb.log`, `normal-result.png` |
+| Guardado y recarga | `silver-paused.sav` SHA256b5bfffe0…: S/récord21, activo1, símbolo256, pendiente0, PB0→13=bonus10+torneo3; reinicio y consulta real muestran plata | `silver-save.json`, `consult-silver.png` |
+| Preview oro y B | Copia del guardado plata, S/récord39, ruta/pendiente0: trío Swampert/Restos, Metagross/Garra Rápida, Latias/Baya Atania, idéntico tras volver con B | `gold-fixture.json`, `gold-trio-visible.png` |
+| Equipo oro | entrenador138, pendiente21; Latias y Metagross IV31, parámetros exactos, dos miembros | `check_team.py …/dome --facility dome --variant gold` rc0, `team-gold.json`, `gold.gdb.log` |
+| Derrota oro | IsWin raw0; recepción: ruta/racha/activo/pendiente0, récord39, plata256, siete selecciones temporales0 | `gold-reception.png`, lectura posterior en `gold.gdb.log` |
+| Guardado automático derrota | `gold-loss.sav` SHA256cda68076…: S/activo/pendiente0, récord39, plata256, PB13, parámetros de equipo iguales a fixture; ruta5 guardada antes del retorno retail a0 (RAM0 comprobado) | `gold-loss-save.json` |
+
+Asistencia de laboratorio declarada: `pv_mode=win` en plata, `loss` en oro, únicamente PS y movimientos
+(Salpicadura) de copias de combate cliente/servidor. Nunca modifica resultados, works, premios ni equipo
+guardado. `check_team.py` valida PK6 capturados antes de asistir; los PK6 de plata fueron sobrescritos
+al reiniciar oro, permanece el JSON de validación y el log de exportación. Dificultad sin asistencia
+no probada. Tras plata, cajas idénticas; los seis Pokémon decodificados son iguales salvo byte0xcc
+del sexto (1→2) y su checksum (`silver-party-diff.json`). Ese byte es la intensidad del recuerdo del
+entrenador original según [PKHeX PK6.cs](https://github.com/kwsch/PKHeX/blob/master/PKHeX.Core/PKM/PK6.cs);
+no se atribuye aquí su causa. Los datos de
+combate inspeccionados (especie, objeto, EXP, EV, nivel, PS) coinciden en los seis, sin Salpicadura ni PS1
+persistentes. La derrota conserva esos parámetros (`gold-loss-save.json`).
+
+### 44.2. Regresión del motor y cierre
+
+Política usuario caso b: un combate por motor propio y uno de historia, con la misma build anterior.
+Fuentes y SHA256 completos en `regression-sources.json`; solo se cargaron copias de laboratorio.
+
+| Instalación | Combate ejecutado | Evidencia local |
+|---|---|---|
+| Palacio | entrenador37, ruta3, S7, flag0x40000000, pendiente/símbolo0; IA automática, derrota raw0 y recepción | `palace.gdb.log`, `palace-return.png` |
+| Arena | entrenador54, ruta4, S9, flag0x80000000, pendiente/símbolo0; tres Pokémon, derrota raw0 y recepción | `arena.gdb.log`, `arena-return.png` |
+| Tubo | entrenador1, ruta6, sala sencilla a S0, flag0; equipo3 contra3, victoria raw1 y S1, pendiente/símbolo0 | `pike.gdb.log`, `pike-battle.png`, `pike-finish.png` |
+| Historia | Ruta102, Torchic contra Zigzagoon salvaje, victoria con Arañazo sin asistencia; regreso al campo y guardado manual, EXP1105→1121, ruta/símbolos/pendiente0, 58 checksums válidos | `story.gdb.log`, `story-battle.png`, `story-saved.png`, `story-save.json` |
+
+Asistencia de regresión: PS1/Salpicadura solo en copias del jugador para Palacio/Arena; del rival para
+Tubo. Tubo usa además su sonda existente para forzar una sala de combate sencillo por el reloj; no se
+escribe el resultado ni la racha. Historia usa modo normal, sin PS/movimientos alterados.
+Guardado historia `story-after.sav` SHA256bfa6bbbb7ba4dd600c281be44273735eb1f0e717cc9a12c14e735e8bfad64429.
+No se amplía a las otras instalaciones ni al recorrido de paquete: no cambian isla/construcción común.
+
+Lab24691 cerrado con `python scripts/azahar_lab.py reap` desde su conductor propietario; `cleanup.log`
+registra `own_processes=[]`, sesión ausente, GDB deshabilitado y bus D-Bus privado cerrado.
+El conductor también termina. No se han tocado REPARTO/tasks.json ni hecho push.
+No probado: consola, inglés en juego, concesión oro y revanchas en Azahar (VM sí), dificultad sin asistencia.

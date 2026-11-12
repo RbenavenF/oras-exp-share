@@ -2984,3 +2984,49 @@ No probado todavía: aceptación Tucker en Azahar, regresión del motor y consol
 Siguiente paso: lab del carril 24691 arrancado en conductor work/frontier/cerebros/dome/driver.py (sesión PTY),
 fixture s19.sav desde work/frontier/dome/room/paused-456.sav (SHA256 ec03f883…); completar plata, guardado/carga,
 oro/derrota y regresiones; al acabar reap desde el conductor y cerrar su D-Bus privado.
+
+
+## 2026-11-12 — Codex — F8-CEREBRO-DOMO hito 2: aceptación Tucker y regresión de motor
+Estado: hecho
+Hecho: completada aceptación del Domo en Azahar del carril24691 y regresión acotada de motor;
+reproducción en frontier/probes/brains/README.md e informe reports/frontier.md §44. Documentadas
+reservas, hashes, asistencia y limitaciones. Sin cambios funcionales posteriores al hito1.
+Evidencia:
+- Suite completa source scripts/env.sh; env -u ORCH_LANE python -m pytest -q tests: 1312 passed,
+  1 skipped, 44.52 s (work/frontier/cerebros/dome/tests-acceptance.log; hito1 tests-m1.log también verde).
+  ORCH_LANE desactivado solo para los tests del supervisor, según §39. git diff --check limpio.
+- Overlay completa correcta (build.log/build-manifest.json/static.json): ZO Domo16804 <=17248;
+  bloque nativo1396 bytes hasta0xf09f4, quedan1548 hasta0xf1000; textos privados1128–1133.
+- Plata S19: intro/nombre Tucker entrenador137, preview exacto; pareja Swampert/Charizard, IV20,
+  EV/objetos/naturaleza/movimientos/amistad/nivel exactos antes de asistencia (team-silver.json,
+  check_team.py --facility dome rc0). Victoria raw1, símbolo256, pendiente0, S20. Se continuó una
+  ronda ordinaria hasta S21; pausa real guarda S/récord21, activo1, símbolo256, PB0→13=10+3
+  (silver-save.json). Reinicio de ese guardado y consulta real muestran plata (consult-silver.png).
+- Oro S39 desde copia de plata: preview exacto estable tras B, entrenador138 y pendiente21;
+  Latias/Metagross IV31 exactos (team-gold.json, check_team.py --facility dome --variant gold rc0).
+  Derrota raw0; recepción RAM ruta/racha/activo/pendiente0, récord39 y plata256, selección temporal0
+  (gold.gdb.log). Auto-save gold-loss.sav conserva récord/plata/PB13 y equipo; guarda ruta5 antes de
+  retorno retail a0, que se comprobó en RAM (gold-loss-save.json).
+- Equipo real de plata: datos de combate iguales en los seis y cajas idénticas. Diferencia decodificada
+  solo byte0xcc del sexto 1→2 (recuerdo entrenador) y checksum (silver-party-diff.json), sin atribuir causa.
+  PK6 de plata sobrescritos al reiniciar oro; quedan validación JSON y log de exportación. Fuente
+  paused-456.sav conserva SHA256ec03f883…; todos los guardados inspeccionados tienen checksums válidos.
+- Regresión caso b con misma build: Palacio entrenador37/flag0x40000000, derrota raw0; Arena
+  entrenador54/flag0x80000000, derrota raw0; ambos vuelven a recepción. Tubo entrenador1, sala sencilla,
+  victoria raw1 y S0→1. Sin Cerebros accidentales (palace/arena/pike.gdb.log y capturas *-return/finish.png).
+  Historia Ruta102, Torchic vence Zigzagoon con Arañazo sin asistencia, EXP1105→1121, ruta/símbolos/
+  pendiente0 tras guardar, 58 bloques válidos (story-save.json, story-saved.png, story.gdb.log).
+  Fuentes y hashes en regression-sources.json; no se tocó ninguna fuente.
+- Laboratorio parado con reap desde conductor propietario: own_processes=[], sesión ausente,
+  GDB off, bus D-Bus privado cerrado (cleanup.log); conductor terminado.
+Commits: 411c510 «feat(frontier): implement Tucker finals and exact two-member teams»; el de esta
+entrada, «test(frontier): verify Tucker symbols and scoped engine regression» (Agent: Codex).
+Decisiones: aproximación rival aleatoria declarada, dos de tres distintos; modelo ORAS Entrenador Guay10.
+Asistencia solo PS/movimientos de copias de combate, nunca resultados/works/premios; Tubo fuerza sala
+sencilla mediante su reloj de sonda existente. Historia sin asistencia. Política caso b, sin recorrido
+completo de paquete ni plaza: no cambian isla/construcción común. REPARTO/tasks.json intactos por brief;
+el integrador debe registrar ampliación de bloque nativo hasta0xf09f4 y seis líneas1128–1133.
+No probado: consola, inglés en juego, dificultad sin asistencia Domo, concesión oro/revanchas en Azahar
+(sí VM); byte0xcc cambiado queda documentado, no se afirma identidad completa del equipo plata.
+Siguiente paso: el orquestador integra lane/codex, actualiza reservas y pasa aceptación en main;
+F8-CEREBRO-DOMO terminado, estado done en work/lane-task.json. Sin push.

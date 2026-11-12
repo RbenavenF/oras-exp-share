@@ -41,6 +41,36 @@ En la configuración del perfil, `use_gdbstub=true` necesita también `use_gdbst
 framebuffer del laboratorio **después de reap y antes del nuevo Xvfb** evita capturas de un inode anterior.
 Terminar siempre con `python scripts/azahar_lab.py reap` en el conductor que posee el laboratorio.
 
+## Domo (Tucker, F8-CEREBRO-DOMO)
+
+Informe `reports/frontier.md` §44; artefactos en `work/frontier/cerebros/dome/`.
+Fuente `work/frontier/dome/room/paused-456.sav`, SHA256
+`ec03f883df59a59703cff24a8a3da15df2d249c48eeae25a0fbdc6bb063d25d1`.
+Sobre una copia, limpiar `patch.ACTIVE_WORK`, fijar ruta0, S/récord19, activo16474=1,
+símbolos/pendiente0 con `faraway.save_event.edit`, validar checksums y escribir otra ruta de `work/`.
+Oro: partir del guardado de plata ganado, conservar símbolo256 y PB13, fijar S/récord39,
+ruta/pendiente0 y situarlo ante recepción (zona456, tile23,25; altura2).
+
+Usar `lab_probe.py --directory work/frontier/cerebros/dome`, `lab-start.sh`, `BUILD` y `FIXTURE`.
+Inscribir tres miembros mediante los menús del Domo; el preview enseña el trío de Tucker con objetos.
+En el primer menú de elección, B vuelve al mismo preview. Elegir dos del jugador y comprobar que solo
+hay dos Poké Balls por lado. La sonda usa el desplazamiento cliente de combates de dos miembros (`0x910`)
+en ruta5, frente a `0xd98` de los combates de tres. Exporta antes de asistir.
+
+```sh
+python frontier/probes/brains/check_team.py work/frontier/cerebros/dome --facility dome
+python frontier/probes/brains/check_team.py work/frontier/cerebros/dome --facility dome --variant gold
+```
+
+Conservar los PK6/JSON antes del siguiente arranque. El verificador acepta cualquier pareja distinta
+del trío de la variante y comprueba todos sus parámetros, incluidos EV/IV exactos.
+Tras plata, «Pausar» guarda símbolo256, bonus10 más3 PB del quinto torneo. Recargar y consultar «Símbolos».
+La asistencia `win`/`loss` solo acelera el combate; jamás escribir `WORK_SYMBOLS`, resultados o PB.
+La consulta IsWin imprime el estado anterior al premio/limpieza: medir de nuevo en recepción.
+La derrota conserva récord y plata, limpia racha/activo/pendiente y las siete selecciones temporales
+16649/50,16653/54/55,16657/58. El guardado automático retail se hace antes del retorno de ruta5 a0;
+comprobar ese retorno en RAM después de los diálogos (o guardar de nuevo desde el menú del jugador).
+
 ## Fábrica (Noland, F8-CEREBRO-FABRICA)
 
 `factory_fixture.py SOURCE --sha256 H --streak 20|41 --output work/...sav` crea la copia (fuente pausada en 213).
