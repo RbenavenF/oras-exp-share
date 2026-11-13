@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-libre (último: frontier-orch, 2026-11-13 21:08)
+Claude Code, desde 2026-11-13 21:40 (cola de la isla Esmeralda, autorizada por el usuario; el supervisor está parado)
 
 ## Instalaciones
 
