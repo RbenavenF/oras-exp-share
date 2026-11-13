@@ -2,7 +2,8 @@
 """Lab only (F7-PAQUETE-V02): the code.ips a console with Luma3DS effectively runs for a built package, so Azahar can
 run the EXACT package plus Luma's LayeredFS payload (frontier/luma.py). Reads PKG/luma/titles/<title>/code.ips,
 checks it against PKG/manifest.json, applies it to the clean code.bin, writes Luma's payload and branches over it,
-and writes OUT/code.ips (diff from the clean code.bin) and OUT/code.bin. Checks that the result matches the package
+and writes OUT/code.ips (diff from the clean code.bin), OUT/code.bin (with Luma) and
+OUT/package-code.bin (before Luma). Checks that the result matches the package
 manifest's console_check. Never a release.
 
   python frontier/probes/luma/package_ips.py dist/oras-frontier-alpha-v0.2 --out work/frontier/pkg02/luma
@@ -37,7 +38,8 @@ def main():
     if hashlib.sha256(ips).hexdigest() != manifest['files'][rel]:
         sys.exit(f'{rel} differs from the package manifest')
     clean = patch.CLEAN.read_bytes()
-    code = luma.overlay(apply_ips(clean, read_ips(ips)))
+    package_code = apply_ips(clean, read_ips(ips))
+    code = luma.overlay(package_code)
     lab = diff_ips(clean, code)
     if apply_ips(clean, read_ips(lab)) != code:
         sys.exit('IPS round trip failed')
@@ -47,6 +49,7 @@ def main():
     text = hashlib.sha256(code[:patch.CAVE_END - patch.BASE]).hexdigest()
     assert text == check['code_with_luma_sha256_text']
     out.mkdir(parents=True, exist_ok=True)
+    (out / 'package-code.bin').write_bytes(package_code)
     (out / 'code.bin').write_bytes(code)
     (out / 'code.ips').write_bytes(lab)
     print(f'{out}/code.ips SHA-256 {hashlib.sha256(lab).hexdigest()} (package code.ips + Luma payload at '

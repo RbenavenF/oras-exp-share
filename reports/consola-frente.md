@@ -1,20 +1,22 @@
-# Plan de prueba en consola: Frente de Batalla alfa v0.1
+# Plan de prueba en consola: Frente de Batalla alfa v0.2
 
-Paquete: `dist/oras-frontier-alpha-v0.1` (lo genera `python frontier/package.py`; hashes en su `manifest.json`).
-Partida de prueba: `dist/oras-frontier-checkpoint-test-v0.1` (su `LEEME.txt`).
-Evidencia en Azahar: `reports/frontier.md` §38. **Nada de esto se ha ejecutado aún en una 3DS.** No se instala nada
-automáticamente: lo copia el usuario.
+Paquete: `dist/oras-frontier-alpha-v0.2` (lo genera `python frontier/package.py`; hashes en su `manifest.json`).
+Partida de prueba: `dist/oras-frontier-checkpoint-test-v0.2` (su `LEEME.txt`).
+Evidencia anterior en Azahar: `reports/frontier.md` §38 y §49; la validación del paquete v0.2 se registra en §50.
+**La v0.2 no está probada en una 3DS.** La v0.1 sí se probó y se colgaba en todo combate de tipo Mansión por la
+colisión con Luma descrita al final. No se instala nada automáticamente: lo copia el usuario.
 
 ## Qué es nuevo para la consola
 
-Hasta ahora la consola solo ha ejecutado la v0.5 (Repartir Exp., DexNav) y el evento de Mew (zona nueva, scripts y
-textos). Este paquete añade, sin probar en consola:
+La v0.2 incorpora el arreglo de la cueva para Luma, los siete Cerebros con símbolos de plata/oro y la consulta
+«Símbolos» en las recepciones. El Frente ya no ofrece «Guardar vídeo»; la Mansión original conserva esa opción.
+La consola ha ejecutado v0.5, el evento de Mew y la alfa v0.1 fallida. Estas piezas de v0.2 necesitan validación:
 
 | Pieza | Dónde | Se ejecuta en | Riesgo |
 | --- | --- | --- | --- |
-| Código nuevo al final de `.text` (cueva 0x579604–0x57A000; desde F7-CUEVA-LUMA, 0x579604–0x579804 reservado a Luma y el código en 0x579804) | `code.ips` | toda instalación (alquiler, rachas, rival, Domo, Tubo, Pirámide) | **alfa v0.1: fallo medido** (Luma escribe ahí su LayeredFS; ver «Causa medida» al final) |
-| `DllBattle.cro`: copia de vuelta del equipo, puentes de Arena y Palacio, filtro del Palacio en el relleno de la región de código (0xd7630) | `romfs/DllBattle.cro` + `.crr/static.crr` | **cualquier combate** carga el CRO; el código del relleno solo corre en el Palacio | alto para el Palacio (permisos de `ldr:ro` sobre el relleno, sin medir); la carga del CRO en sí, medio |
-| `DllField.cro`: puente del Tubo (0x4e644) | `romfs/DllField.cro` + CRR | consultas de equipo del Tubo | medio |
+| Código nuevo al final de `.text` (cueva 0x579604–0x57A000; desde F7-CUEVA-LUMA, 0x579604–0x579804 reservado a Luma y el código en 0x579804) | `code.ips` | toda instalación (alquiler, rachas, rival, Domo, Tubo, Pirámide) | v0.1: colisión medida; v0.2: reserva separada, validación real de Luma pendiente |
+| `DllBattle.cro`: copia de vuelta del equipo, puentes de Arena y Palacio, Palacio C y rutinas de Arena/Palacio B en el relleno de la región de código (0xd7630–0xd7b83) | `romfs/DllBattle.cro` + `.crr/static.crr` | **cualquier combate** carga el CRO; el código del relleno corre en Palacio y Arena | alto para Palacio y Arena (permisos de `ldr:ro` sobre el relleno, sin medir); la carga del CRO en sí, medio |
+| `DllField.cro`: puente del Tubo (0x4e644) y Cerebros (0xf0480…) | `romfs/DllField.cro` + CRR | consultas de equipo del Tubo y rivales de Cerebros | medio |
 | Isla 209, plaza con siete edificios, interiores 213/329/340/456/457/458/140–142 | `romfs/a/0/1/3`, `a/0/1/4`, `a/0/3/9`, `a/0/4/0`, `a/1/3/7` | al llegar a la isla y entrar en cada edificio | medio: memoria de la consola con la plaza cargada (en Azahar no hay límite real) |
 | Scripts y textos (marinero, ferry, recepciones, texto 637) | `a/0/2/9`, `a/0/7/x`, `a/0/8/x` | puerto, ferry, recepciones | bajo: misma técnica que el evento de Mew, probada en consola |
 
@@ -38,6 +40,12 @@ Anotar en cada paso: hecho / falla, y si falla, la pantalla exacta y lo último 
 - Un combate de entrenador si tienes alguno a mano.
 - **No guardes** si algo raro pasa.
 
+### 0b. Mansión original y comprobación de Luma
+- Antes del Frente, entrar en la **Mansión Batalla original del Resort**, modalidad Individual, seleccionar tres
+  Pokémon e iniciar un combate. Terminarlo y volver a la recepción. Este caso verifica directamente el cuelgue
+  de v0.1; no basta un combate de historia.
+- Si se dispone del depurador de Luma, hacer la comparación de memoria del apartado final en ese combate.
+
 ### 1. Puerto y pase (partida de prueba)
 - Restaurar `FrenteTest-puerto-Calagua` con Checkpoint y Continuar: apareces en el puerto de Calagua.
 - Marinero de la derecha (dos casillas a la derecha del punto de partida y mirando arriba): «Oye, ¿tú no eres quien ha
@@ -55,6 +63,9 @@ Anotar en cada paso: hecho / falla, y si falla, la pantalla exacta y lo último 
 ### 3. Instalaciones sin motor de combate nuevo
 En cada una: entrar por la puerta, hablar con la recepcionista **de la derecha**, inscribirse (guarda la partida),
 jugar un combate, terminar (perder vale) y salir por la puerta a la plaza.
+En el Frente no debe aparecer «Guardar vídeo». Consultar también «Símbolos» en cada recepción: una partida nueva
+no tiene ninguno. Los encuentros de plata/oro requieren las rachas que indica el LEEME; no se declaran probados
+en consola por completar solamente este circuito.
 1. **Torre** (casa de tejado plano, al norte): tu equipo. Prueba la cueva de `code.bin` (racha por ruta).
 2. **Fábrica** (gimnasio del centro): alquiler de 3 de 6. El alquiler es código de la cueva: mirar que en combate salen
    los alquilados (nivel 50) y que al acabar tu equipo está igual.
@@ -104,7 +115,7 @@ Una tabla con los pasos 0–5 (hecho / falla), fotos de los fallos y, si hay, el
 El usuario sí ha probado la alfa en consola: la Mansión Batalla original se cuelga;
 con su partida normal los combates de historia funcionan. Esto corrige el alcance
 histórico de «nada en 3DS» del encabezado. La modalidad/selección exactas del cuelgue
-no están documentadas. No se ha determinado todavía si la causa es del Frente.
+no están documentadas. La causa se determinó después: véase «Causa medida y arreglo».
 
 Volcado de solo lectura `dumps/crash_dump_00000000.dmp`, SHA256
 `d58509dec10ac67381e34c41f96fa300f912c73e5d4ff6b6da6b8d8688d29787`:
@@ -150,6 +161,28 @@ fijo: 0x114 bytes), nuestro código empieza en 0x579804, y las rutinas de combat
 cuelgue con el mismo equipo 0xd8e007f7 de los volcados; con el arreglo, Mansión original Individual, las siete
 instalaciones y un combate de la historia van bien.
 
-**Para validar en consola** (sin paquete nuevo todavía): con el depurador de Luma, en un combate de la Mansión,
-0x579604–0x579717 debe ser Luma y 0x579804 el principio de `rental_hook` (`e92d41f0`, `push {r4-r8,lr}`); ningún
-combate de tipo Mansión debe colgarse. Falta regenerar el paquete (F7-PAQUETE-V02).
+### Comparación con el depurador de Luma (v0.2)
+
+Usar el `manifest.json` del paquete instalado, apartado `console_check`; no el de otra build. En un combate de la
+Mansión original, pausar el proceso de Rubí Omega con el depurador de Luma y leer memoria sin modificarla:
+
+1. **0x579604–0x579717**: los 276 bytes de LayeredFS. Los primeros 16 bytes deben coincidir con
+   `luma_payload_first16` (bytes en orden de memoria); los saltos de 0x1325a4 y 0x123e80, con `luma_branches`.
+2. **0x579804**: primeros 16 bytes iguales a `hooks_first16`. La primera palabra ARM es **0xe92d41f0**
+   (`push {r4-r8,lr}`), que se ve como bytes `f0 41 2d e9` en memoria little endian.
+3. Comparar la ventana completa **0x579604–0x579fff** con el `code.bin` construido y con su variante de laboratorio:
+
+   ```bash
+   source scripts/env.sh
+   python frontier/probes/luma/package_ips.py dist/oras-frontier-alpha-v0.2 --out work/frontier/pkg02/luma
+   ```
+
+   `work/frontier/pkg02/luma/package-code.bin` contiene ceros en 0x579604–0x579803: **antes** de que Luma escriba.
+   `work/frontier/pkg02/luma/code.bin` contiene el IPS del paquete más la carga de Luma: es la referencia para la
+   memoria **después** de cargar. En ambos ficheros, el offset de una dirección es dirección − **0x100000**.
+   Fuera de la carga de Luma, el código propio desde 0x579804 debe coincidir con ambas referencias.
+   `code_with_luma_sha256_text` identifica la referencia simulada hasta 0x57a000; no es el hash de toda la RAM.
+
+Conservar el volcado de esa ventana, la versión de Luma y el manifiesto instalado junto al resultado del combate.
+Si una versión distinta de Luma usa otros bytes, registrar la diferencia antes de atribuirla al Frente. No aplicar
+el IPS de laboratorio en la consola: el paquete distribuido deja la reserva libre para el Luma real.

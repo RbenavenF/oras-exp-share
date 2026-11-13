@@ -3325,3 +3325,32 @@ No probado: consola; juicio de 3 turnos de la Arena y decisiones del Palacio en 
 Unicorn sobre el CRO parcheado); breakpoints en el CRO no saltan en Azahar (FRONT ENTRY a 0, conocido).
 Siguiente paso: F7-PAQUETE-V02 regenera el paquete con este arreglo; el usuario lo valida en consola con el depurador
 de Luma (0x579604 Luma, 0x579804 rental_hook) y un combate de tipo Mansión.
+
+## 2026-11-13 19:32 — Codex — F7-PAQUETE-V02: cierre del relevo y evidencia del paquete exacto
+Estado: hecho
+Hecho: leídos AGENTS/PLAN/REPARTO/diseño, git status/diff y último commit. Relevo limpio de 18018ba:
+Claude había terminado generador, LEEME y regresión, sin registrar ese hito antes del límite de cuota.
+Recuperada su evidencia fuera de Git en work/frontier/pkg02/recovered/ (copia desde el carril claude,
+solo lectura del origen); revisados START/RESULT de las siete rutas y Mansión original, capturas de
+plaza recargada, puerto, salvaje y DexNav. No se repitió el circuito ya completado.
+Actualizados reports/consola-frente.md a v0.2 (orden, Mansión original y depurador de Luma) y
+reports/frontier.md §50. package_ips.py exporta package-code.bin antes de Luma junto al code.bin simulado.
+Evidencia: reconstrucción desde 18018ba limpio en work/frontier/pkg02/oras-frontier-alpha-v0.2,
+39 hashes reales idénticos a dist/oras-frontier-alpha-v0.2, incluido LEEME; ZIP33fe04dc…16bfc5.
+Checkpoint construido y hash5ddaa992…edeffa. IPS simulado5bcc632a…07974a y binario completos idénticos a
+los usados por Claude (boot-circuit.log verifica los 38 ficheros exactos antes de añadir Luma).
+Regresión heredada: circuito18:37–19:08, siete instalaciones, Mansión ruta0, recarga y ferry; salvaje
+WurmpleNv3 y DexNav15/0. Verificación nueva scripts/save_fixture.py: 58 bloques válidos,
+EXP1105→1129 participante,1105→1117 portador reserva,1105 sin objeto; EV PS+1 a los dos primeros.
+Suite env -u ORCH_LANE python -m pytest -q tests:1407 passed,3 skipped,51.04s (tests-m1.log);
+repetición final1407 passed,3 skipped,46.74s (tests-final.log). git diff --check limpio.
+Commits: 18018ba (Claude, generador); el de esta entrada, «docs(frontier): finish alpha v0.2 handoff and exact-package acceptance».
+Decisiones: política caso d satisfecha por evidencia conservada del paquete exacto, sin repetir el emulador caro.
+Dist compartido es de solo lectura para el carril: reconstrucción local y comprobación de su igualdad;
+el orquestador integra en main y pasa aceptación allí. REPARTO/tasks.json intactos, sin push.
+Incidencias del laboratorio local24691: primer boot sin conductor persistente; segundo conductor abortó en
+pos() por PID GDB entre namespaces antes del marinero; no se cuenta como regresión. Laboratorio parado.
+No probado: v0.2 en consola real, encuentros de Cerebros y rondas completas con este paquete exacto;
+juicio Arena, Portual y otros idiomas. No se cambió el motor durante este cierre.
+Siguiente paso: integración por el orquestador y prueba del usuario en consola siguiendo consola-frente.md;
+comparar reserva0x579604 y rental_hook0x579804 con console_check, y jugar Mansión original Individual.

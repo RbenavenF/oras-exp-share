@@ -3425,3 +3425,64 @@ es que los combates terminan.
 Unicorn: `test_frontier_arena.py`, `test_frontier_palace.py`, sobre el CRO parcheado en dos bases); otras versiones de
 Luma con carga > 0x200. El paquete (`frontier/package.py`) no se ha regenerado: su lista `BUILD_FILES` no incluye
 `a/1/8/3` (Cerebros) y falla; es de F7-PAQUETE-V02.
+
+## 50. Paquete alfa v0.2 — F7-PAQUETE-V02 (2026-11-13)
+
+`frontier/package.py` (commit **18018ba**) genera `dist/oras-frontier-alpha-v0.2` y su ZIP: arreglo
+F7-CUEVA-LUMA, Cerebros y símbolos, sin «Guardar vídeo» en el Frente. Incluye `a/1/8/3` (entrenadores de
+los Cerebros), 38 ficheros de mod y LEEME (39 hashes en el manifiesto). El LEEME explica el fallo de Luma
+que colgaba todo combate de tipo Mansión en v0.1 y los límites que siguen pendientes.
+Partida: `dist/oras-frontier-checkpoint-test-v0.2/FrenteTest-puerto-Calagua/main`, SHA-256
+`5ddaa992c5aea98a3da1af80c1f2486b6d2db1690da0ae8be84abf2397edeffa` (misma partida inicial sin pase de §38).
+
+**Relevo**: Claude dejó el generador en commit, las dos carpetas en `dist/` y la regresión ejecutada en su
+carril, pero se cortó antes de documentarla. Codex recibió el árbol limpio, revisó los registros y capturas
+y los copió a `work/frontier/pkg02/recovered/` del carril codex para conservarlos. No se atribuyen estas
+sesiones de Azahar a Codex. Fuente original: `../claude/work/frontier/pkg02/` y su `pkg/circuit.log`.
+
+**Identidad del paquete**: Codex reconstruyó con
+`python frontier/package.py --output work/frontier/pkg02/oras-frontier-alpha-v0.2` desde 18018ba limpio
+(`package.log`), generó Checkpoint con `package.py checkpoint` y verificó los **39 hashes reales** tanto
+en esa copia como en `dist/oras-frontier-alpha-v0.2`. Todos idénticos a su manifiesto. ZIP reconstruido:
+`33fe04dcf300d645955be8bd9fe2ff876e49ab586f30aaad57553da9df16bfc5`.
+`code.ips` de distribución: `988859140bd930ec6186cb45ae954eb112309acc2bc6558b252cecd21ff80be2`.
+
+**Carga simulada de Luma**: `frontier/probes/luma/package_ips.py` lee el IPS exacto del paquete y comprueba
+`console_check` antes de emitir el IPS exclusivo del laboratorio. SHA-256 de ese IPS:
+`5bcc632aa2797565e47e18555238d8c7f53f0e5c2e775244dab35ceaaa07974a`; su `code.bin`:
+`e1eee2ba2e29dcf9ceac707957f995d7e48d0bb66fda482c809ddad626acf21b`.
+Ambos son idénticos byte a byte a los usados por Claude. `recovered/boot-circuit.log` documenta la copia exacta
+comprobada (38 ficheros) antes de sustituir únicamente el IPS por esta variante. El IPS simulado nunca se distribuye.
+El script exporta además `package-code.bin` (antes de Luma) para comparar ambos estados con el depurador.
+
+**Regresión caso d del paquete exacto + Luma**, por Claude, revisada por Codex:
+
+| Caso | Evidencia en `work/frontier/pkg02/recovered/` |
+| --- | --- |
+| Marinero, pase, ferry, llegada y plaza | `sailor_pass.png`, `shots/c_ferry_menu.png`, `shots/c_island_pier.png`, `shots/c_plaza.png` |
+| Fábrica, ruta 1: alquiler, victoria, siguiente combate y derrota | `circuit.out` 18:40–18:44; `circuit.gdb.log`: dos pares START/RESULT, racha 0→1 |
+| Torre, Arena, Palacio, Tubo, Domo, Pirámide | `circuit.out` 18:45–19:08; START/RESULT de rutas 2/4/3/6/5/7; capturas `shots/c_*_battle.png`, salida de cada edificio y `circuit done` |
+| Mansión original Individual, ruta 0 | `maison.gdb.log`: START ruta 0, RESULT raw=0; `shots/v02_maison_battle.png`, `shots/v02_maison_after.png` |
+| Guardar/cargar en plaza, ferry a Calagua | `shots/saved_plaza.png`, `shots/reloaded_plaza.png`, `shots/back_port.png`, `reload-port.gdb.log`; `saves/v02_saved_plaza.sav`, SHA-256 `4784ac54131ba7cc356b979f1191c055a4f0b9d4cd0ac2b17c2166965e903095` |
+| Combate normal salvaje, Wurmple Nv. 3, Torchic Nv. 12 | `shots/wild_1.png`, `shots/wild_t*.png`; guardado posterior `saves/v02_after_wild.sav` |
+| Repartir Exp. | Comparación de partidas con `scripts/save_fixture.py`, `../exp-check.json`: EXP participante 1105→1129 (+24), portador no participante 1105→1117 (+12), reserva sin objeto 1105→1105; +1 EV PS en participante y portador, ninguno en otra reserva; 58 bloques válidos |
+| DexNav | `shots/dexnav.png`: Wurmple, «Nivel / Racha 15/0» |
+
+Guardado tras salvaje SHA-256 `c701566473a931a84357c1f8af55561fcaafc4f6b3d262f36cf688049e961717`;
+inicial de reserva `9966ec53de0acd99588da932caeb490e3b4fee0ea32b220e2f5c7e5c001ad574`.
+El combate salvaje cubre la carga normal del motor; no se repite el entrenador de §49, conforme a política d.
+
+Codex arrancó también el paquete exacto en su laboratorio 24691 (`boot.log`, `boot2.log`), pero al recuperar
+la regresión completa evitó repetirla. El intento de conductor local falló antes de hablar con el marinero por
+los PID de GDB entre namespaces (`pos()` sin lectura); no es una prueba de combate ni un fallo del paquete.
+El laboratorio codex quedó parado. Ningún proceso del carril claude fue modificado.
+
+**Pruebas**: `source scripts/env.sh; env -u ORCH_LANE python -m pytest -q tests`: 1407 passed, 3 skipped
+(`work/frontier/pkg02/tests-m1.log`, 51.04 s; repetición final `tests-final.log`, 46.74 s); `git diff --check` limpio. El informe de consola v0.2 contiene
+el orden de pruebas, la Mansión original y la comparación de 0x579604–0x579fff con los binarios y `console_check`.
+
+**No probado**: v0.2 en consola real; los siete encuentros de Cerebros, rondas completas y juicio de Arena con
+este paquete exacto (sus pruebas al implementarlos son anteriores); ferry de Portual y otros idiomas.
+No se modificó motor, isla ni LEEME durante el cierre documental: los 39 ficheros validados siguen siendo
+los de 18018ba. Tras integrar este cierre, `package.py` puede regenerar el manifiesto con el nuevo commit;
+los ficheros del juego y LEEME deben mantener sus hashes.
