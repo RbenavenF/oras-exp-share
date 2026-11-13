@@ -55,7 +55,7 @@ def result():
     pv_results+=1
     w=reg('r0');save=rd(rd(rd(w+0xb78)+0x1c))
     print('PYRAMID RESULT n=%u raw=%u state=%s'%(pv_results,rd(w+0x73c,1),state(save)))
-'''+f"Hook({0x1e33dc},start)\nHook({symbols['arena_enter']},enter)\nHook({symbols['pike_iswin']},result)\nend\n"
+'''+f"Hook({0x1e33dc},start)\nHook({patch.battle_cro_runtime('arena_enter')},enter)\nHook({symbols['pike_iswin']},result)\nend\n"
 
 
 if __name__ == '__main__':

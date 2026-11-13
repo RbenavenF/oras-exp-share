@@ -1,6 +1,7 @@
 """Arena B engine constants and guarded CRO bridge specifications (§31).
 
-The logic lives in code.bin's shared cave, never in zero-filled CRO jump tables.
+The battle-time logic (frontier/asm/arena_cro.s) lives in DllBattle.cro's own padding after .text
+(patch.BATTLE_CRO_AT), never in zero-filled CRO jump tables; only arena_start (StartBattle) is in code.bin.
 No retail function reads bit 31 among the measured setup-mask consumers; the
 runtime regression matrix remains required before declaring this stage complete.
 """
@@ -20,13 +21,23 @@ CONSTANTS = {'ARENA_RULE': RULE, 'ARENA_ACTIVE': 16466, 'ARENA_ROUTE': 4,
              'ARENA_HP_OFFSET': 2 * (HP_WORKS[0] - 0x4000), 'ARENA_END_SITE': 0x1D21C}
 
 
-def cro_writes(symbols):
-    """guarded_writes entries; compose with Pike/Palace, then rehash once.
+NOP = 0xE320F000
+BRIDGE_RESUME = 0xEA000000                   # b +0: from site + 8 to site + 16
 
-    After BLX, LR points at the branch, not at the inline literal. The entry
-    snapshot and end-turn hooks return through that branch; a blocked switch
-    restores the retail prologue's frame and returns straight to its caller.
+
+def bridge(site, stub):
+    """16 bytes at CRO file offset `site`: `nop; bl stub; b +0; nop`. `stub` is a CRO file offset in the same
+    segment, so the `bl` is relative (no relocation, any load address). LR = site + 8 as with the former
+    `ldr ip,[pc,#4]; blx ip; b +0; .word stub` into code.bin, so the stubs return the same way."""
+    delta = (stub - (site + 4) - 8) >> 2
+    return struct.pack('<4I', NOP, 0xEB000000 | (delta & 0xFFFFFF), BRIDGE_RESUME, NOP)
+
+
+def cro_writes(symbols):
+    """guarded_writes entries; compose with Pike/Palace, then rehash once. `symbols`: patch.battle_cro_code().
+
+    After the `bl`, LR points at the `b +0`. The entry snapshot and end-turn hooks return through that branch;
+    a blocked switch restores the retail prologue's frame and returns straight to its caller.
     """
-    return [dict(offset=site, before=before.hex(), after=struct.pack(
-        '<4I', 0xE59FC004, 0xE12FFF3C, 0xEA000000, symbols[name]).hex())
+    return [dict(offset=site, before=before.hex(), after=bridge(site, symbols[name]).hex())
             for site, (name, before) in SITES.items()]

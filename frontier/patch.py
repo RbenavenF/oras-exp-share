@@ -41,9 +41,22 @@ HASHES = {
 }
 ASM = ROOT / 'frontier/asm/rental.s'
 ASMS = [ASM, ROOT / 'frontier/asm/dome.s', ROOT / 'frontier/asm/pike.s', ROOT / 'frontier/asm/pyramid.s',
-        ROOT / 'frontier/asm/arena.s', ROOT / 'frontier/asm/palace.s']   # linked together, rental_hook first (at CAVE)
+        ROOT / 'frontier/asm/arena.s']   # linked together, rental_hook first (at HOOKS)
+# Battle-time routines, reached only from DllBattle.cro bridges: linked into DllBattle.cro (battle_cro_code).
+CRO_ASMS = [ROOT / 'frontier/asm/arena_cro.s', ROOT / 'frontier/asm/palace_b_cro.s']
 BASE = 0x100000
-CAVE, CAVE_END = 0x579604, 0x57A000           # .text padding (reports/frontier.md §5)
+CAVE, CAVE_END = 0x579604, 0x57A000           # .text padding (reports/frontier.md §5): exheader .text ends at CAVE
+# Luma3DS LayeredFS (sysmodules/loader/source/patcher.c, findLayeredFsPayloadOffset, Luma3DS 1441535d): when the
+# padding after the exheader's .text size is >= romfsRedirPatchSize, Luma copies its redirection payload
+# (romfsredir.s) to the END OF .text, i.e. CAVE, and points fsOpenFileDirectly/fsTryOpenFile at it (here 0x123e80
+# and 0x1325a4); the "lf:" path goes in the .rodata padding. romfsRedirPatchSize is the fixed size of romfsredir.s:
+# 0x114 = 276 bytes at 1441535d (arm-none-eabi-as of that file), the same 276 bytes measured on the user's console
+# (work/frontier/consola/console-cave.bin, 2026-11-13). The first LUMA_RESERVED bytes of the cave stay zero for it
+# (with margin for a longer payload in another Luma version); our code starts at HOOKS.
+LUMA_PAYLOAD = 0x114
+LUMA_RESERVED = 0x200
+HOOKS = CAVE + LUMA_RESERVED
+assert LUMA_RESERVED >= max(0x140, LUMA_PAYLOAD) and HOOKS % 4 == 0
 SITE = 0x1E3D8C                               # player-party branch of the party builder 0x1e3d2c
 SITE_BEFORE = [0xE5960B78, 0xE590001C, 0xE5908014, 0xE1A00008, 0xEB0747E4]  # ldr r0,[r6,#0xb78] .. bl 0x3b5d34
 RESUME = 0x1E3DDC                             # common tail: level 50 adjust, per-member updates
@@ -179,24 +192,61 @@ def arm_branch(source, target, link=False):
     return (0xEB000000 if link else 0xEA000000) | (delta & 0xFFFFFF)
 
 
-def assemble():
-    """(hook bytes at CAVE, {global symbol: address})."""
+def link(asms, at, entry, constants, functions):
+    """(.text bytes linked at `at`, {global symbol: address}) of `asms` assembled with `constants`."""
     with tempfile.TemporaryDirectory() as tmp:
         elf, binary = (Path(tmp) / n for n in ('hook.elf', 'hook.bin'))
-        defs = [a for k, v in CONSTANTS.items() for a in ('--defsym', f'{k}={v}')]
-        objs = [Path(tmp) / f'{src.stem}.o' for src in ASMS]
-        for src, obj in zip(ASMS, objs):
+        defs = [a for k, v in constants.items() for a in ('--defsym', f'{k}={v}')]
+        objs = [Path(tmp) / f'{src.stem}.o' for src in asms]
+        for src, obj in zip(asms, objs):
             subprocess.run(['arm-none-eabi-as', '-mcpu=mpcore', *defs, '-o', obj, src], check=True)
-        resumes = {f'STREAK_{stub[7:].upper()}_RESUME': site + 4 for site, (stub, _) in STREAK_SITES.items()}
-        syms = [f'--defsym={k}={v:#x}' for k, v in {**FUNCTIONS, **resumes}.items()]
-        subprocess.run(['arm-none-eabi-ld', f'-Ttext={CAVE:#x}', '-e', 'rental_hook', *syms, '-o', elf, *objs],
-                       check=True)
+        syms = [f'--defsym={k}={v:#x}' for k, v in functions.items()]
+        subprocess.run(['arm-none-eabi-ld', f'-Ttext={at:#x}', '-e', entry, *syms, '-o', elf, *objs], check=True)
         subprocess.run(['arm-none-eabi-objcopy', '-O', 'binary', '-j', '.text', elf, binary], check=True)
         names = subprocess.run(['arm-none-eabi-nm', elf], check=True, capture_output=True, text=True).stdout
         symbols = {n: int(a, 16) for a, t, n in (line.split() for line in names.splitlines()) if t == 'T'}
-        if symbols['rental_hook'] != CAVE:
-            raise ValueError('rental_hook is not at the start of the cave')
         return binary.read_bytes(), symbols
+
+
+def assemble():
+    """(hook bytes at HOOKS, {global symbol: address}). Fails if any of it would fall in Luma's reserve or past
+    the cave."""
+    resumes = {f'STREAK_{stub[7:].upper()}_RESUME': site + 4 for site, (stub, _) in STREAK_SITES.items()}
+    hook, symbols = link(ASMS, HOOKS, 'rental_hook', CONSTANTS, {**FUNCTIONS, **resumes})
+    if symbols['rental_hook'] != HOOKS:
+        raise ValueError('rental_hook is not at the start of the hooks')
+    if HOOKS + len(hook) > CAVE_END:
+        raise ValueError(f'code.bin hooks {len(hook)} bytes: past the cave end {CAVE_END:#x} '
+                         f'({CAVE_END - HOOKS} bytes after the Luma reserve)')
+    if any(CAVE <= a < HOOKS for a in symbols.values()):
+        raise ValueError('code.bin hooks inside the Luma reserve')
+    return hook, symbols
+
+
+# DllBattle.cro (v0.5) file offset of the battle-time routines (CRO_ASMS): after palace_cro.s (palace_ai.AT,
+# 0xd7630-0xd7868), in the zero padding of the declared code region before .rodata (palace_ai.RODATA 0xd8000).
+BATTLE_CRO_AT = 0xD7870
+# Where Azahar loaded the v0.5 DllBattle.cro in the measured battles (palace_engine; work/frontier/palace/
+# b2-gdb-m3b.log). Only for laboratory GDB probes: the game code never assumes it.
+DLLBATTLE_AZAHAR = 0x6F3000
+
+
+def battle_cro_runtime(name, base=DLLBATTLE_AZAHAR):
+    """Run-time address of a battle_cro_code() symbol for lab probes (CRO loaded at `base`)."""
+    return base + battle_cro_code()[1][name]
+
+
+def battle_cro_code():
+    """(blob linked at BATTLE_CRO_AT, {symbol: DllBattle.cro file offset}) of CRO_ASMS."""
+    import palace_ai
+    blob, symbols = link(CRO_ASMS, BATTLE_CRO_AT, 'arena_enter', CONSTANTS, {'ARENA_UDIV': ae.UDIV})
+    _, palace_symbols = palace_ai.assemble()
+    if palace_symbols['palace_cro_end'] > BATTLE_CRO_AT or BATTLE_CRO_AT + len(blob) > palace_ai.RODATA:
+        raise ValueError(f'battle CRO code {BATTLE_CRO_AT:#x}+{len(blob)} does not fit between palace_cro.s '
+                         f'and .rodata')
+    if not palace_ai.TEXT_END <= BATTLE_CRO_AT:
+        raise ValueError('battle CRO code is not after .text')
+    return blob, symbols
 
 
 def zone_natives(code, clones):
@@ -226,12 +276,12 @@ def build(native_clones=None):
         if word(code, va) != head:
             sys.exit(f'{va:#x}: unexpected word {word(code, va):08x}')
     hook, symbols = assemble()
-    if CAVE + len(hook) > CAVE_END or any(code[CAVE - BASE:CAVE - BASE + len(hook)]):
-        sys.exit('hook does not fit in the zero padding')
-    code[CAVE - BASE:CAVE - BASE + len(hook)] = hook
+    if any(code[CAVE - BASE:CAVE_END - BASE]):
+        sys.exit('the code.bin cave is not zero padding')
+    code[HOOKS - BASE:HOOKS - BASE + len(hook)] = hook
     site = [0xE1A00006,                               # mov r0, r6        (work)
             0xE1A01009,                               # mov r1, sb        (battle party)
-            arm_branch(SITE + 8, CAVE, link=True),    # bl  rental_hook (Factory: continues at 0x1e3ddc)
+            arm_branch(SITE + 8, HOOKS, link=True),   # bl  rental_hook (Factory: continues at 0x1e3ddc)
             0xE1A08000,                               # mov r8, r0        (player party, as 0x1e3d94)
             0xE1A00000]                               # nop               (0x3b5d34 already called)
     struct.pack_into(f'<{len(site)}I', code, SITE - BASE, *site)
@@ -305,9 +355,11 @@ def battle_cro(romfs=MOD_ROMFS):
     if got != COPY_BACK_BEFORE:
         sys.exit(f'{BATTLE_CRO} {COPY_BACK:#x} differs: {[f"{w:08x}" for w in got]}')
     _, symbols = assemble()
+    blob, cro_symbols = battle_cro_code()
     writes = [dict(offset=COPY_BACK, before=struct.pack('<3I', *COPY_BACK_BEFORE).hex(),
-                   after=struct.pack('<3I', *COPY_BACK_AFTER).hex()), *ae.cro_writes(symbols),
-              *pe.cro_writes(symbols)]
+                   after=struct.pack('<3I', *COPY_BACK_AFTER).hex()), *ae.cro_writes(cro_symbols),
+              *pe.cro_writes(cro_symbols),
+              dict(offset=BATTLE_CRO_AT, before=bytes(len(blob)).hex(), after=blob.hex())]
     changed = guarded_writes(original, dict(path=BATTLE_CRO, sha256=BATTLE_CRO_SHA256, writes=writes))
     changed = rehash_cro(original, changed)
     crr = update_crr((romfs / CRR).read_bytes(), original, changed)
@@ -337,7 +389,8 @@ def main():
     if apply_ips(CLEAN.read_bytes(), read_ips(ips)) != code:
         sys.exit('IPS round trip failed')
     (out / 'code.ips').write_bytes(ips)
-    print(f'hook {len(hook)} bytes at {CAVE:#x}-{CAVE + len(hook):#x}; site {SITE:#x}: '
+    print(f'Luma reserve {CAVE:#x}-{HOOKS:#x}; hook {len(hook)} bytes at {HOOKS:#x}-{HOOKS + len(hook):#x} '
+          f'({CAVE_END - HOOKS - len(hook)} free); site {SITE:#x}: '
           + ' '.join(f'{w:08x}' for w in site))
     print(f'wrote {out}/code.bin (sha256 {sha256(out / "code.bin")[:16]}…) and code.ips ({len(ips)} bytes)')
 

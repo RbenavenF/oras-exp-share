@@ -25,11 +25,17 @@ REGS = {name: getattr(A, f'UC_ARM_REG_{name.upper()}') for name in
 AFTER_ORIGINAL_PREPARE = 0x1E3DA0
 
 
-@pytest.fixture(scope='module')
-def patched():
+@pytest.fixture(scope='module', params=['azahar', 'luma'])
+def patched(request):
+    """The built code.bin as Azahar runs it and with Luma3DS's LayeredFS payload on top, as a console runs it
+    (frontier/luma.py, F7-CUEVA-LUMA): every Unicorn test of this file runs on both."""
     if not fp.REPOLISHED.exists() or not shutil.which('arm-none-eabi-as'):
         pytest.skip('Local baseline and arm-none-eabi binutils required')
-    return fp.build()
+    code, hook, site = fp.build()
+    if request.param == 'luma':
+        import luma
+        code = luma.overlay(code)
+    return code, hook, site
 
 
 def work_address(number):
@@ -131,12 +137,14 @@ def test_active_factory_builds_the_rentals(patched, count):
     preserved(uc)
 
 
-def test_patch_only_touches_site_padding_and_text_row(patched):
+def test_patch_only_touches_site_padding_and_text_row(patched, request):
+    if request.node.callspec.params['patched'] == 'luma':
+        pytest.skip('Luma writes its own bytes (tests/test_frontier_luma.py)')
     code, hook, _ = patched
     original = fp.REPOLISHED.read_bytes()
     diff = [i for i in range(len(original)) if original[i] != code[i]]
     site = fp.SITE - fp.BASE
-    cave = fp.CAVE - fp.BASE
+    cave = fp.HOOKS - fp.BASE
     text = fp.GLOBAL_ROW - fp.BASE + 8
     singles = [va - fp.BASE for va in (fp.RIVAL_SITE, fp.COUNT_SITE, fp.LEVEL_SITE, *fp.STREAK_SITES, fp.BUILD_SITE, fp.ISWIN,
                                         fp.DELETE_SITE, fp.ae.START)]
@@ -144,6 +152,7 @@ def test_patch_only_touches_site_padding_and_text_row(patched):
                or any(s <= i < s + 4 for s in singles) for i in diff)
     assert struct.unpack_from('<8H', code, fp.GLOBAL_ROW - fp.BASE) == (9770, 9779, 5, 1, fp.TEXT_FACTORY, 0, 0, 0)
     assert len(code) == len(original)
+    assert not any(code[fp.CAVE - fp.BASE:fp.HOOKS - fp.BASE])          # Luma's reserve stays zero
 
 
 def run_rival(code, slot, iv, index=0x1A7):

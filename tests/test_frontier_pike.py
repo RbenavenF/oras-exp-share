@@ -697,11 +697,13 @@ def test_battle_copy_back_changes_only_gate_and_validates_hashes(battle_module):
     from build_patch import cro_hashes
     original = (fp.MOD_ROMFS / fp.BATTLE_CRO).read_bytes()
     changed = battle_module[fp.BATTLE_CRO]
+    battle_end = fp.BATTLE_CRO_AT + len(fp.battle_cro_code()[0])   # arena_cro.s + palace_b_cro.s
     assert len(changed) == len(original)
     assert changed[:0x80] == b''.join(cro_hashes(changed))
     assert all(i < 0x80 or fp.COPY_BACK <= i < fp.COPY_BACK + 12
                or any(site <= i < site + 16 for site in [*fp.ae.SITES, *fp.pe.SITES])
                or any(start <= i < end for start, end in fp.pe.palace_ai.cro_ranges())
+               or fp.BATTLE_CRO_AT <= i < battle_end
                for i, (a, b) in enumerate(zip(original, changed)) if a != b)
     crr = battle_module[fp.CRR]
     offset, count = struct.unpack_from('<II', crr, 0x350)

@@ -7,13 +7,13 @@ Measured in Azahar on the v0.5 DllBattle.cro loaded at 0x6f3000 (work/frontier/p
   (0x166c8);
 - command dispatch 0x49b0..0x4a08: row of 0x1c bytes in table 0xdbc68, column = client+0x91.
 
-Same bridge shape as the Arena's (arena_engine.cro_writes): `ldr ip,[pc,#4]; blx ip; b +0; .word stub`.
+Same bridge shape as the Arena's (arena_engine.bridge): `nop; bl stub; b +0; nop`, the stubs (asm/palace_b_cro.s)
+in DllBattle.cro since F7-CUEVA-LUMA (patch.BATTLE_CRO_AT).
 The second dispatcher (0x7664, never reached in the measured battles) is left retail: if it ever carries a
 decision, the player is simply asked (manual control), which is the retail behaviour.
 """
-import struct
-
 import palace_ai  # noqa: E402,F401  (stage C, also reached as pe.palace_ai)
+from arena_engine import bridge
 
 RULE = 0x40000000            # setup+0xa8 bit 30 (the Arena owns bit 31; retail masks measured up to 0x100000)
 AI_FLAGS = 7                 # the Maison trainers' AI flags (trainer object +0xc, 0x1e3620)
@@ -29,10 +29,10 @@ CONSTANTS = {'PALACE_RULE': RULE, 'PALACE_AI': AI_FLAGS, 'PALACE_ROUTE': ROUTE, 
 
 
 def cro_writes(symbols):
-    """guarded_writes entries, composed with the Pike's and the Arena's before the single rehash.
+    """guarded_writes entries, composed with the Pike's and the Arena's before the single rehash. `symbols`:
+    patch.battle_cro_code() (CRO file offsets).
 
     Stage C (palace_ai.py, asm/palace_cro.s) lives in the CRO itself: its `bl` at 0xd468 and its code and tables
     in the padding after .text; it does not use the code.bin cave."""
-    return [*palace_ai.cro_writes(), *[dict(offset=site, before=before.hex(), after=struct.pack(
-        '<4I', 0xE59FC004, 0xE12FFF3C, 0xEA000000, symbols[name]).hex())
+    return [*palace_ai.cro_writes(), *[dict(offset=site, before=before.hex(), after=bridge(site, symbols[name]).hex())
             for site, (name, before) in SITES.items()]]

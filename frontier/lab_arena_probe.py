@@ -106,8 +106,8 @@ def ar_result():
     print('ARENA RESULT raw=%u work=%x' % (ar_read(work+0x73c,1), work))
 end
 '''.replace('MODE', repr(mode))
-    hooks = [(ae.START + 4, 'ar_start'), (symbols['arena_enter'], 'ar_enter'),
-             (symbols['arena_turn_end'], 'ar_end'), (symbols['arena_judge'], 'ar_judge'),
+    hooks = [(ae.START + 4, 'ar_start'), (patch.battle_cro_runtime('arena_enter'), 'ar_enter'),
+             (patch.battle_cro_runtime('arena_turn_end'), 'ar_end'), (patch.battle_cro_runtime('arena_judge'), 'ar_judge'),
              (0x3B48FC, 'ar_ko'), (symbols['pike_iswin'], 'ar_result')]
     return prelude + ''.join(f'break *{address:#x}\ncommands\nsilent\npython {name}()\ncontinue\nend\n'
                              for address, name in hooks)

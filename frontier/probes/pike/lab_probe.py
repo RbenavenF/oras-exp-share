@@ -104,7 +104,7 @@ def setup():
 ''')
 print(f"Hook({symbols['pike_pp']+32},pp)")
 print(f"Hook({symbols['pike_iswin']},result)")
-print(f"Hook({symbols['arena_enter']},enter)\nend")
+print(f"Hook({patch.battle_cro_runtime('arena_enter')},enter)\nend")
 print('python')
 print(f"Hook({symbols['pike_param']},param)")
 print('Hook(0x3b3b48,lambda: getter(6))\nHook(0x4d3204,lambda: getter(7))\nHook(0x4d1730,lambda: getter(22))')

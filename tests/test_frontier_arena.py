@@ -244,7 +244,7 @@ def arena_judge_code(tmp_path_factory):
     import shutil
     if not fp.REPOLISHED.exists() or not shutil.which('arm-none-eabi-as'):
         pytest.skip('Local baseline and ARM binutils required')
-    return fp.build()[0], fp.assemble()[1]['arena_judge']
+    return fp.build()[0], fp.battle_cro()[fp.BATTLE_CRO], fp.battle_cro_code()[1]['arena_judge']
 
 
 @pytest.mark.parametrize('hp, expected', [
@@ -263,10 +263,13 @@ def arena_judge_code(tmp_path_factory):
 def test_arena_cuerpo_arm_judgement(arena_judge_code, hp, expected):
     from unicorn import Uc, UC_ARCH_ARM, UC_MODE_ARM
     from unicorn import arm_const as reg
-    code, entry = arena_judge_code
+    code, cro, offset = arena_judge_code          # arena_judge runs from DllBattle.cro (F7-CUEVA-LUMA)
+    cro_base = 0x02000000
+    entry = cro_base + offset
     uc = Uc(UC_ARCH_ARM, UC_MODE_ARM)
-    uc.mem_map(fp.BASE, (len(code) + 0xFFF) & ~0xFFF)
-    uc.mem_write(fp.BASE, code)
+    for address, data in ((fp.BASE, code), (cro_base, cro)):
+        uc.mem_map(address, (len(data) + 0xFFF) & ~0xFFF)
+        uc.mem_write(address, data)
     stack, finish = 0x8001000, 0x9000000
     uc.mem_map(stack - 0x1000, 0x1000)
     uc.mem_map(finish, 0x1000)
@@ -300,7 +303,7 @@ AREGS = [getattr(AR, f'UC_ARM_REG_R{k}') for k in range(13)]
 
 @pytest.fixture(scope='module')
 def arena_engine_code(arena_judge_code):
-    return arena_judge_code[0], fp.battle_cro()[fp.BATTLE_CRO]
+    return arena_judge_code[0], arena_judge_code[1]
 
 
 def amachine(binaries, flag=True, cro_base=0x02000000):

@@ -7,6 +7,9 @@
 @ player's client 0 an AI client hangs on a black screen: server commands (animations, messages) only have
 @ a UI proc. So client 0 stays UI and gets, as AI clients do, an AI object (+0x1c8, AI flags PALACE_AI);
 @ only its decisions use the AI column: 3 (choose an action) and 5/6 (choose a Pokemon to send in).
+@
+@ Linked in DllBattle.cro with arena_cro.s (patch.BATTLE_CRO_AT; F7-CUEVA-LUMA, 2026-11-13), no longer in the
+@ code.bin cave. Bridges `nop; bl stub; b +0; nop` (palace_engine.cro_writes): LR = site + 8 as before.
     .syntax unified
     .arm
     .section .text

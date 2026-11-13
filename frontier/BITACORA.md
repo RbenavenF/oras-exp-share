@@ -3262,3 +3262,39 @@ Siguiente paso: respuesta del usuario a las preguntas de reports/consola-frente.
 exactos). Con ella, reproducir en Azahar con trace.gdb (MAISON EMPTY se detiene antes del acceso nulo) y medir quién
 deja el equipo vacío. Propuesta de blindaje si no se reproduce (decisión del usuario, motor → regresión b): con
 WORK_ROUTE ≠ 0 ignorar la Caja de Combate en 0x1e3d3c y, en dome_party, no usar huecos vacíos.
+
+## 2026-11-13 — Claude Code (Opus 5.5) — F7-CUEVA-LUMA hito 1: reserva para Luma y rutinas de combate a DllBattle.cro
+Estado: en curso
+Hecho: causa medida en consola por el usuario (Luma copia su carga LayeredFS en 0x579604 = rental_hook). Código fuente
+de Luma3DS clonado en work/tmp/luma-src (1441535d, 2026-11-05): patcher.c findLayeredFsPayloadOffset pone la carga en
+el final de .text del exheader si el relleno es >= romfsRedirPatchSize, y la ruta "lf:" en el relleno de .rodata
+(0x5eba14, fuera de .text); romfsRedirPatchSize = 0x114 = 276 bytes (arm-none-eabi-as de romfsredir.s), igual a lo
+medido; sus palabras no reubicadas coinciden con console-cave.bin. Cambios:
+- patch.py: LUMA_PAYLOAD 0x114, LUMA_RESERVED 0x200 (0x579604–0x579804 se queda a cero), HOOKS 0x579804 =
+  rental_hook; `assemble()` falla si algo cae en la reserva o pasa de 0x57a000; `build()` exige toda la cueva a cero.
+  code.bin: 1768 bytes en 0x579804–0x579eec, 276 libres (antes 2544/2556 desde 0x579604).
+- Arena (enter/switch/turn_end/judge) y Palacio B (ai_want/ai_flags/dispatch), solo llamados desde puentes de
+  DllBattle.cro, pasan a DllBattle.cro 0xd7870–0xd7b84 (788 bytes; tras palace_cro.s 0xd7630–0xd7868; quedan 1148
+  hasta .rodata 0xd8000): asm/arena_cro.s (nuevo; arena_judge llama a UDIV 0x15ec10 por dirección absoluta) y
+  asm/palace_b_cro.s (antes palace.s, sin cambios de código). arena_start/palace_start sigue en code.bin (StartBattle).
+  Puentes `nop; bl stub; b +0; nop` (arena_engine.bridge): bl relativo, LR = sitio+8 como el `ldr ip; blx ip` de antes.
+  guarded_writes y CRR como hoy (battle_cro).
+- frontier/luma.py: la carga medida (276 bytes de console-cave.bin) y los desvíos 0x1325a4→0x579604 y
+  0x123e80→0x579610; `overlay()` y CLI que escribe code.bin/code.ips «como en consola» para el laboratorio.
+- Tests: tests/test_frontier_luma.py (nuevo: reserva ≥ carga, Luma cae sobre ceros y deja intactos nuestros bytes,
+  cada gancho de code.bin apunta a ≥ HOOKS con Luma aplicado, ningún salto/literal nuestro entra en la reserva, pike_param
+  de DllField fuera de ella, puentes de DllBattle con bl a sus rutinas, ensamblado falla si no cabe, la carga coincide con
+  console-text.bin); test_frontier_patch.py corre todos sus casos Unicorn también sobre el code.bin con Luma encima.
+  Comprobación de mutación: con LUMA_RESERVED = 0 los casos «luma» de rental fallan (16 fallos), es decir, el VM
+  reproduce el cuelgue de consola. Sondas de laboratorio: arena_enter etc. en DllBattle (patch.battle_cro_runtime,
+  base Azahar 0x6f3000).
+Evidencia: source scripts/env.sh; env -u ORCH_LANE python -m pytest -q tests: 1405 passed, 2 skipped, 45.49 s
+(work/frontier/cueva/tests-m1.log); git diff --check limpio. python frontier/patch.py --out work/frontier/cueva/patch:
+«Luma reserve 0x579604-0x579804; hook 1768 bytes at 0x579804-0x579eec (276 free)».
+Commits: el de esta entrada, «fix(frontier): leave the start of the code.bin cave to Luma's LayeredFS payload».
+Decisiones: reserva 0x200 (no 0x140) por margen ante versiones de Luma con carga mayor; se movió solo lo de combate de
+Arena y Palacio (bastan 772 bytes); Pike/Domo/Pirámide/Fábrica siguen en code.bin (los llama code.bin). No se cambia el
+exheader (alternativa: sin relleno, Luma usaría otra función del juego).
+No probado: Azahar (con y sin la carga de Luma) y consola.
+Siguiente paso: Azahar 24690 con code.ips de luma.py (Luma simulado): Mansión original Individual, Torre, Fábrica,
+Domo, Palacio, Arena y Tubo arrancan combate, más un combate normal de la historia.

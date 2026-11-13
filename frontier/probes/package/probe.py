@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Lab only, passive (breakpoints that print and continue; no memory writes): GDB probe for the package test.
-FRONT START at StartBattle (0x1e33dc), FRONT ENTRY per Pokémon entering (arena_enter), FRONT RESULT at IsWin
+FRONT START at StartBattle (0x1e33dc), FRONT ENTRY per Pokémon entering (arena_enter, in DllBattle.cro at patch.DLLBATTLE_AZAHAR), FRONT RESULT at IsWin
 (pike_iswin) with the route work 16438 and each facility's streak/active works. Derived from
 frontier/probes/pyramid/lab_probe.py without its RAM-writing modes. Usage: probe.py > work/frontier/pkg/probe.gdb"""
 from pathlib import Path
@@ -38,7 +38,7 @@ def result():
     w=reg('r0'); save=rd(rd(rd(w+0xb78)+0x1c))
     print('FRONT RESULT raw=%u %s'%(rd(w+0x73c,1),state(save)))
 Hook({0x1e33dc:#x},start)
-Hook({symbols['arena_enter']:#x},enter)
+Hook({patch.battle_cro_runtime('arena_enter'):#x},enter)
 Hook({symbols['pike_iswin']:#x},result)
 end
 '''
