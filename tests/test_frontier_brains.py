@@ -1,6 +1,7 @@
 """Frontier Brains, common part (frontier/brains.py, frontier/asm/brains_cro.s): appearance rule, data, the zone
 script routines in scripts/pawn_vm.py and the DllField.cro routines in Unicorn with the code.bin functions stubbed.
 Checks the generated logic, not the game (Azahar: reports/frontier.md §39)."""
+import functools
 from pathlib import Path
 import struct
 import sys
@@ -13,6 +14,7 @@ import brains  # noqa: E402
 import data as fd  # noqa: E402
 import factory  # noqa: E402
 import overlay  # noqa: E402
+import modes  # noqa: E402
 import patch as fp  # noqa: E402
 from pawn import OP, Op, decode, gf_hash, s32  # noqa: E402
 from pawn_vm import VM  # noqa: E402
@@ -390,13 +392,23 @@ TEMPS = (0x08320000, 0x08321000, 0x08322000)
 VTABLE, FREE = 0x08330000, 0x08331000
 
 
-def machine(route, brain=0, streak=0, rank=0, trainer=0):
+@functools.lru_cache(maxsize=None)
+def patched_code():
+    """The built code.bin: the Brains call its F9 streak getter and mode_level (frontier/asm/modes.s) for real."""
+    if not fp.REPOLISHED.exists():
+        pytest.skip('Local baseline required (the Brains call the patched code.bin)')
+    return fp.build()[0]
+
+
+def machine(route, brain=0, streak=0, rank=0, trainer=0, config=0):
     from unicorn import Uc, UC_ARCH_ARM, UC_MODE_ARM
     from unicorn import arm_const as AR
     blob, symbols = brains.assemble()
+    code = patched_code()
     uc = Uc(UC_ARCH_ARM, UC_MODE_ARM)
     uc.mem_map(CRO, 0x100000)
-    uc.mem_map(0x100000, 0x400000)                 # code.bin stubs (hooked before they run)
+    uc.mem_map(0x100000, (len(code) + 0xFFF) & ~0xFFF)   # code.bin (stubbed functions are hooked before they run)
+    uc.mem_write(0x100000, code)
     uc.mem_map(WORK, 0x500000)
     uc.mem_write(CRO + brains.AT, blob)
     for site, (name, _) in brains.SITES.items():
@@ -408,6 +420,8 @@ def machine(route, brain=0, streak=0, rank=0, trainer=0):
     works = SAVE + 0x13144
     put(works + 2 * (fp.WORK_ROUTE - 0x4000), route, '<H')
     put(works + 2 * (brains.WORK_BRAIN - 0x4000), brain, '<H')
+    if route in modes.CONFIG:
+        put(works + 2 * (modes.CONFIG[route] - 0x4000), config, '<H')
     for r, (_, s) in fp.STREAK_ROUTES.items():
         put(works + 2 * (s - 0x4000), streak if r == route else 999, '<H')
     put(WORK + 0x838, rank, '<B')
@@ -459,8 +473,10 @@ CHOOSE_SITE, LOAD_SITE, START_SITE = sorted(brains.SITES)
 C = brains.CODE
 
 
-def choose(route, brain=0, streak=0, rank=0, retail=42):
-    uc, AR, _ = machine(route, brain, streak, rank)
+def choose(route, brain=0, streak=0, rank=0, retail=42, config=0, works=None):
+    uc, AR, put = machine(route, brain, streak, rank, config=config)
+    for work, value in (works or {}).items():
+        put(SAVE + 0x13144 + 2 * (work - 0x4000), value, '<H')
     stubs = {C['CODE_CHOOSER']: lambda m, r: retail, C['CODE_PICK']: lambda m, r: 77}
     return run(uc, AR, CHOOSE_SITE, (WORK, 0xFFFFFFFF), stubs)
 
@@ -502,8 +518,8 @@ def test_load_clears_the_boss_flag_on_frontier_routes(route, flag):
     assert uc.mem_read(WORK + 1, 1)[0] == flag
 
 
-def start(route, brain, trainer, count=3, forced=None):
-    uc, AR, put = machine(route, brain, trainer=trainer)
+def start(route, brain, trainer, count=3, forced=None, config=0):
+    uc, AR, put = machine(route, brain, trainer=trainer, config=config)
     put(PARTY + 0x18, count, '<B')
     if forced is not None:
         for work, value in zip(fp.DOME_FORCED, forced):
@@ -580,3 +596,17 @@ def test_code_bin_functions_are_the_measured_ones():
     for va, head in brains.CODE_HEADS.items():
         assert fp.word(code, va) == head, hex(va)
     assert set(brains.CODE.values()) <= set(brains.CODE_HEADS)
+
+
+def test_open_level_brain_uses_the_challenge_level_and_the_open_bank():
+    """F9: Anabel in Singles Open Level: the same row (symbols are per facility, not per mode) at the fixed L; the
+    late bracket reads the Open bank's streak, not the Level 50 one."""
+    route, variant = fp.ROUTE['tower'], brains.SILVER
+    config = modes.pack_config(route, modes.SINGLE_OPEN, 73)
+    _, calls = start(route, route + 8 * variant, brains.trainer_id('tower', variant), config=config)
+    makes = [c for c in calls if c[0] == C['CODE_MAKE_PARAM']]
+    assert len(makes) == 3 and all(c[2] == 73 for c in makes)
+    open_streak, _ = modes.bank(route, modes.SINGLE_OPEN)
+    # the Level 50 streak (machine's `streak`) is 0; the Open bank's decides
+    assert choose(route, config=config, works={open_streak: 25}, retail=0x73)[0] == 77
+    assert choose(route, streak=25, config=config, works={open_streak: 3}, retail=0x73)[0] == 0x73

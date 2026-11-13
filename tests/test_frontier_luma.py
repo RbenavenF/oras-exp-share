@@ -55,9 +55,16 @@ def code_sites(symbols):
     sites = {fp.SITE + 8: fp.HOOKS, fp.RIVAL_SITE: symbols['rival_hook'], fp.COUNT_SITE: symbols['dome_count'],
              fp.LEVEL_SITE: symbols['pike_level'], fp.BUILD_SITE: symbols['pike_build'],
              fp.ISWIN: symbols['pike_iswin'], fp.DELETE_SITE: symbols['pyramid_save'],
-             fp.ae.START: symbols['arena_start']}
-    sites.update({va: symbols[stub] for va, (stub, _) in fp.STREAK_SITES.items()})
+             fp.ae.START: symbols['arena_start'], fp.CAP_SITE: symbols['mode_cap']}
     return sites
+
+
+def test_streak_tables_point_past_the_reserve_with_luma_applied(built):
+    """F9: the Singles and Doubles entries of the four streak accessors' jump tables hold the modes.s stubs."""
+    _, _, symbols, console = built
+    for va, (stub, *_) in fp.STREAK_SITES.items():
+        assert struct.unpack_from('<2I', console, va - fp.BASE) == (symbols[stub],) * 2
+        assert fp.HOOKS <= symbols[stub] < fp.CAVE_END
 
 
 def test_every_code_bin_hook_points_past_the_reserve_with_luma_applied(built):

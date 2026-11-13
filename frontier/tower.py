@@ -37,6 +37,7 @@ import factory  # noqa: E402
 import battle_video  # noqa: E402
 import brains  # noqa: E402
 import patch  # noqa: E402
+import modes  # noqa: E402
 
 FACILITY = 'tower'
 ZONE = 329                       # frontier/REPARTO.md; verified statically by frontier/zone_check.py (§25)
@@ -76,8 +77,16 @@ def reception_routine(p, facility=FACILITY):
     r.sysreq('WorkSet', patch.WORK_ROUTE, route)
     r.sysreq('WorkGet', active)
     r.op('JNZ', f'{t}_resume')                 # paused challenge: keep the streak, as Emerald
+    r.p.label(f'{t}_new')
+    if facility in MODE_FACILITIES:
+        r.sysreq('WorkSet', modes.CONFIG[route], 0)   # F9: a new challenge is Level 50 Singles (no mode menu yet)
     r.sysreq('WorkSet', streak, 0)              # a new challenge starts at battle 1
+    if facility in MODE_FACILITIES:
+        r.op('JUMP', f'{t}_start')
     r.p.label(f'{t}_resume')
+    if facility in MODE_FACILITIES:              # F9: resume in the persisted mode, if it is one this reception runs
+        config_check(r, route, f'{t}_new', f'{t}_start')
+    r.p.label(f'{t}_start')
     r.sysreq('WorkSet', active, 1)
     r.call(factory.CHALLENGE, 0, 0, 'x')
     r.op('EQ_P_C_PRI', 1)
@@ -102,6 +111,35 @@ def reception_routine(p, facility=FACILITY):
     r.p.label(f'{t}_refused')
     r.const(1)
     r.ret()
+
+
+# F9 (reports/diseno/modos.md §2-§3, frontier/modes.py): receptions that keep the mode of a paused challenge in
+# modes.CONFIG[route]. BASE runs Singles only (the selector refuses Doubles), so it resumes M 0 (CONFIG 0 or Level 50)
+# and M 1 (Singles Open Level, L 60-100); anything else is not resumed: a new Level 50 challenge instead.
+MODE_FACILITIES = ('tower',)
+
+
+def config_check(r, route, invalid, valid):
+    """Jump to `valid` when CONFIG[route] is 0, Level 50 Singles or Singles Open Level with L 60-100, else `invalid`."""
+    work = modes.CONFIG[route]
+    singles_50 = modes.pack_config(route, modes.SINGLE_50, 50)
+    low, high = (modes.pack_config(route, modes.SINGLE_OPEN, level) for level in (60, 100))
+    r.sysreq('WorkGet', work)
+    r.op('JZER', valid)
+    r.sysreq('WorkGet', work)
+    r.op('EQ_P_C_PRI', singles_50)
+    r.op('JNZ', valid)
+    r.sysreq('WorkGet', work)
+    r.op('ADD_P_C', -low)
+    r.op('MOVE_ALT', 0)
+    r.op('ZERO_PRI', 0)
+    r.op('JSGRTR', invalid)                    # below Open Level 60
+    r.sysreq('WorkGet', work)
+    r.op('ADD_P_C', -high)
+    r.op('MOVE_ALT', 0)
+    r.op('ZERO_PRI', 0)
+    r.op('JSLESS', invalid)                    # above Open Level 100, or another mode
+    r.op('JUMP', valid)
 
 
 STAGES = {'pike': 14}           # streak steps per round when not data.STAGES_PER_ROUND (the Pike's rooms)

@@ -171,6 +171,18 @@ Se liberan de la reserva F9 **16471,16673,16677,16678**. No reutilizar los tres
 borrados ni 16399. Esta corrección no cambia turno, bancos M=0, textos/casos ni
 cuevas. Falta repetir persistencia con los CONFIG válidos y esta distribución.
 
+### Motor F9-MODOS-BASE (2026-11-13, Claude)
+
+Sin works, textos ni casos nuevos: usa los CONFIG y bancos de arriba. Sitios de code.bin (guardados en
+`patch.build`): entradas tipo 0 y 1 de las cuatro tablas de salto de los accesores de racha **0x45cdb0, 0x45cf00,
+0x45cfa4, 0x45d028** (8 bytes cada una) → stubs de `frontier/asm/modes.s`; `cmp r0,#50` de la cola del montador
+**0x1e3e00** → `bl mode_cap`. `pike_level`, los alquileres y `brain_start` toman el nivel de `mode_level`;
+`brain_choose` lee la racha por el accesor 0x45cee8. Los antiguos sitios de cuerpo 0x45cdc4/0x45cf14/0x45cfb8/
+0x45d03c vuelven a sus bytes retail. Espacio medido (`modes_audit.py`): code.bin 0x579804–0x579fd4, **44 bytes
+libres**; Cerebros 0xf0480–**0xf0a00** (llega justo al inicio de la reserva F9, sin solaparla); la reserva DllField
+0xf0a00–0xf1000 sigue sin bytes. Luma 0x579604–0x579804 intacta. Recepciones con CONFIG: solo la Torre
+(`tower.MODE_FACILITIES`).
+
 ## Reservas del motor (Arena B, 2026-11-05)
 
 Arena: bit 31 (`0x80000000`) del word `BattleSetup+0xa8`; se pondrá al final de StartBattle solo con ruta 4

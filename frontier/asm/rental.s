@@ -71,8 +71,10 @@ rentals:
     bl      LOAD_SET                @ (heap, archive, index, out)
     mov     r1, #0xff               @ spec+0x1e = sex, 0xff as the rival builder (not fixed yet)
     str     r1, [sp, #4]
+    mov     r0, r4
+    bl      mode_level              @ RENTAL_LEVEL (50), or the Factory's Open Level L (frontier/asm/modes.s)
+    mov     r1, r0
     add     r0, sp, #8
-    mov     r1, #RENTAL_LEVEL
     ldrh    r2, [r8]                @ IV
     ldr     r3, [r4, #0xb70]
     bl      MAKE_PARAM              @ (set, level, IV, heap, ability, u16) -> PokemonParam*
@@ -125,44 +127,5 @@ rival_hook:
     strh    r4, [r0]
     bx      lr
 
-@ Facility streaks, separate from the Maison's. The Maison keeps the Singles streaks in its save block at
-@ base + 0x1c4 + 2*rank (current) and base + 0x1c8 + 2*rank (record), base = save + 0x195e0. Its four accessors
-@ for Singles (increment 0x45cdc4, get 0x45cf14, set 0x45cfb8, get record 0x45d03c) all start with
-@ add OUT, r0, r2, lsl #1 (r0 = base, r2 = rank); each is replaced by a branch here. Saved work WORK_ROUTE names
-@ the facility whose streak is in play (patch.STREAK_ROUTES: 1 Factory, 2 Tower...; the zone script sets it for a
-@ challenge). While it is 1..ROUTES and the rank is Normal, OUT = base - slot_deltas[route - 1], so that +0x1c4 is
-@ the facility's streak work and +0x1c8 its record (two works on). 0, or a value no facility owns, is the Maison's
-@ own streak. Only ip and the flags are used; the flags are set again by the code each accessor resumes into. The
-@ works are reached from r0: &work[N] = base - 0x195e0 + 0x13144 + 2*(N - 0x4000).
-    .macro FACTORY_SLOT out, resume
-    cmp     r2, #0
-    bne     1f
-    sub     ip, r0, #(ROUTE_DELTA & 0xff00)
-    sub     ip, ip, #(ROUTE_DELTA & 0xff)
-    ldrh    ip, [ip]                @ route
-    cmp     ip, #0
-    beq     1f
-    cmp     ip, #ROUTES
-    bhi     1f                      @ no facility owns it: the Maison's streak
-    add     ip, pc, ip, lsl #2      @ pc reads as this instruction + 8
-    ldr     ip, [ip, #(slot_deltas - . - 8)]   @ slot_deltas[route - 1]
-    sub     \out, r0, ip
-    b       \resume
-1:
-    add     \out, r0, r2, lsl #1    @ original instruction
-    b       \resume
-    .endm
-
-    .global streak_inc, streak_get, streak_set, streak_record
-streak_inc:
-    FACTORY_SLOT r1, STREAK_INC_RESUME
-streak_get:
-    FACTORY_SLOT r0, STREAK_GET_RESUME
-streak_set:
-    FACTORY_SLOT r0, STREAK_SET_RESUME
-streak_record:
-    FACTORY_SLOT r0, STREAK_RECORD_RESUME
-
-    .align 2
-slot_deltas:                        @ one per route, from patch.STREAK_ROUTES
-    .word SLOT_DELTA_1, SLOT_DELTA_2, SLOT_DELTA_3, SLOT_DELTA_4, SLOT_DELTA_5, SLOT_DELTA_6, SLOT_DELTA_7
+@ Facility streaks, separate from the Maison's: the four Singles accessors (and the four Doubles ones) branch to
+@ frontier/asm/modes.s, which resolves the bank from (WORK_ROUTE, the route's mode).

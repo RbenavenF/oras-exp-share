@@ -85,10 +85,13 @@ brain_choose:
     ldrb    r3, [r4, #0x838]
     cmp     r3, #0
     bne     9f                             @ rank Super: not a Frontier rank
-    adrl    r3, streak_offsets
-    lsl     r2, r2, #1
-    ldrh    r2, [r3, r2]
-    ldrh    r2, [r0, r2]                   @ the route's streak (wins so far)
+    add     r0, r0, #(MAISON_TO_WORKS & 0xff00)
+    add     r0, r0, #(MAISON_TO_WORKS & 0xff)   @ Maison base
+    ldrb    r1, [r4, #0x839]               @ type
+    mov     r2, #0                         @ rank Normal (r3)
+    ldr     ip, =CODE_WIN_GET
+    blx     ip                             @ the route's streak in its mode's bank (frontier/asm/modes.s)
+    mov     r2, r0
     cmp     r2, #BOSS_STREAK
     blo     9f
     mov     r0, r4
@@ -120,7 +123,7 @@ brain_load:
 
 @ StartBattle's core: (work, a, b). Once the battle setup (work+0x620) and the rival's party (setup+0x50) exist,
 @ before the battle runs: with a Brain due on this route and its trainer chosen (work+4), every rival member is
-@ remade in order from the Brain's row: its set from maisonpkN, level 50, the row's IV for all six, ability slot 0,
+@ remade in order from the Brain's row: its set from maisonpkN, level 50 (the Open Level L in that mode), the row's IV for all six, ability slot 0,
 @ then the six EV exactly (all set to 0, then each value; 0x3b4b64 caps at 252 and 510 in total), full HP; and
 @ copied over the party member (as AddMember does).
     .global brain_start
@@ -227,8 +230,11 @@ brain_start:
     mov     r1, #0xff                      @ as the rival builder (0x1e4e70)
     str     r0, [sp]
     str     r1, [sp, #4]
+    mov     r0, r4
+    ldr     ip, =CODE_MODE_LEVEL
+    blx     ip                             @ 50, or the challenge's Open Level L (frontier/asm/modes.s)
+    mov     r1, r0
     add     r0, sp, #8
-    mov     r1, #50
     ldrb    r2, [r5, #2]                   @ IV
     ldr     r3, [r4, #0xb70]
     ldr     ip, =CODE_MAKE_PARAM
@@ -289,9 +295,6 @@ brain_start:
     pop     {r4-r11, pc}
 
     .ltorg
-    .balign 2
-streak_offsets:                            @ by route - 1: 2*(streak work - 0x4000), filled by brains.py
-    .space 2 * ROUTES
     .balign 4
 brain_table:                               @ by (route - 1) * 2 + variant - 1, filled by brains.py
     .space ENTRY * 2 * ROUTES

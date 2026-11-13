@@ -69,11 +69,12 @@ def test_tower_menu_is_the_maisons_and_party_selection_is_retail(built):
     assert routine(tower.tower_program(retail)) == routine(Program.from_script(retail))
 
 
-def reception(built, active=None, declined=False, streak_after=0, tower_active=0, tower_streak=0, mode=(1, 0, 7)):
+def reception(built, active=None, declined=False, streak_after=0, tower_active=0, tower_streak=0, mode=(1, 0, 7),
+              extra=None):
     """Runs tower_reception. `active`: {facility: value} of other facilities' ACTIVE_WORK."""
     _, _, script, labels, _, _ = built
     works = {fp.ACTIVE_WORK[f]: v for f, v in (active or {}).items()}
-    works.update({tower.ACTIVE: tower_active, tower.STREAK: tower_streak})
+    works.update({tower.ACTIVE: tower_active, tower.STREAK: tower_streak, **(extra or {})})
     log = []
     wins = [streak_after]
 

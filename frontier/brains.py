@@ -706,10 +706,11 @@ SITES = {0x94F04: ('brain_choose', 0x3678), 0x94F18: ('brain_load', 0x3680), 0x9
 CODE = {'CODE_CHOOSER': 0x1E3AAC, 'CODE_LOAD': 0x1E54A0, 'CODE_START': 0x1E30B8, 'CODE_PICK': 0x1E4860,
         'CODE_LOAD_SET': patch.FUNCTIONS['LOAD_SET'], 'CODE_MAKE_PARAM': patch.FUNCTIONS['MAKE_PARAM'],
         'CODE_EV_SET': 0x3B4B64, 'CODE_GET_MAX_HP': patch.FUNCTIONS['GET_MAX_HP'],
-        'CODE_SET_HP': patch.FUNCTIONS['SET_HP'], 'CODE_COPY': 0x3B2444, 'CODE_FRIENDSHIP': 0x3B47EC}
+        'CODE_SET_HP': patch.FUNCTIONS['SET_HP'], 'CODE_COPY': 0x3B2444, 'CODE_FRIENDSHIP': 0x3B47EC,
+        'CODE_WIN_GET': 0x45CEE8}          # Maison GetWinCount(base, type, rank): through F9's mode banks
 # Prologue words of the code.bin functions it calls (Repolished 1.7.6 code.bin), checked by the tests.
 CODE_HEADS = {0x1E3AAC: 0xE92D41F0, 0x1E54A0: 0xE92D43F0, 0x1E30B8: 0xE92D4FF7, 0x1E4860: 0xE92D41F0,
-              0x3B47EC: 0xE590000C,
+              0x3B47EC: 0xE590000C, 0x45CEE8: 0xE3520000,
               0x3B4B64: 0xE92D47F0, 0x3B2444: 0xE92D4010, 0x1EFC18: 0xE92D4030, 0x1EF904: 0xE92D4FF0,
               0x153254: 0xE92D4070, 0x14F450: 0xE92D4070}
 
@@ -723,12 +724,13 @@ def assemble():
     constants = {'WORK_ROUTE': patch.WORK_ROUTE, 'WORK_BRAIN': WORK_BRAIN, 'ROUTES': ROUTES,
                  'BOSS_STREAK': BOSS_STREAK, 'LATE_FIRST': LATE_FIRST, 'LATE_COUNT': LATE_COUNT,
                  'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'WORK_RIVAL': patch.WORK_RIVAL[0],
-                 'DOME_FORCED': patch.DOME_FORCED[0]}
+                 'DOME_FORCED': patch.DOME_FORCED[0], 'MAISON_TO_WORKS': patch.CONSTANTS['MAISON_TO_WORKS']}
+    code = {**CODE, 'CODE_MODE_LEVEL': patch.assemble()[1]['mode_level']}   # F9 (frontier/asm/modes.s)
     with tempfile.TemporaryDirectory() as tmp:
         obj, elf, binary = (Path(tmp) / n for n in ('b.o', 'b.elf', 'b.bin'))
         defs = [a for k, v in constants.items() for a in ('--defsym', f'{k}={v}')]
         subprocess.run(['arm-none-eabi-as', '-mcpu=mpcore', *defs, '-o', obj, ASM], check=True)
-        syms = [f'--defsym={k}={v:#x}' for k, v in CODE.items()]
+        syms = [f'--defsym={k}={v:#x}' for k, v in code.items()]
         subprocess.run(['arm-none-eabi-ld', f'-Ttext={AT:#x}', '-e', 'brain_choose', *syms, '-o', elf, obj],
                        check=True)
         subprocess.run(['arm-none-eabi-objcopy', '-O', 'binary', '-j', '.text', elf, binary], check=True)
@@ -737,8 +739,7 @@ def assemble():
         blob = bytearray(binary.read_bytes())
     if AT + len(blob) != symbols['brains_cro_end']:
         raise ValueError('brains_cro.s layout')
-    streaks = struct.pack(f'<{ROUTES}H', *(2 * (patch.STREAK_ROUTES[r][1] - 0x4000) for r in range(1, ROUTES + 1)))
-    for name, table in (('streak_offsets', streaks), ('brain_table', brain_rows())):
+    for name, table in (('brain_table', brain_rows()),):
         at = symbols[name] - AT
         if any(blob[at:at + len(table)]) or symbols.get(name) is None:
             raise ValueError(f'{name}: reserved space is not empty')

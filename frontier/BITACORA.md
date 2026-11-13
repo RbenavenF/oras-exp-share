@@ -3478,3 +3478,61 @@ savestate guarda la RAM con el código ya cargado, así que habría que rehacerl
 El supervisor en marcha leyó `config.json` al arrancar: el `brief` nuevo vale desde el próximo arranque. Hasta
 entonces manda el texto de los criterios.
 Siguiente paso: ninguno propio. F9-MODOS-BASE sigue en el carril claude.
+## 2026-11-13 23:40 — Claude Code (Opus 5.5) — F9-MODOS-BASE hito 2: relevo y motor (ruta,M)
+Estado: en curso
+Relevo: Codex se cortó por cuota tras 6934d3a (commit del orquestador con sondas `probes/modos/{live,persistence}.py`
+y la corrección CONFIG de REPARTO). Árbol limpio en ambos carriles; nada a medias que deshacer. Sus mediciones de
+laboratorio posteriores al hito 1 no llegaron a la bitácora; se anotan aquí desde sus logs (copiados sin cambios a
+`work/frontier/modos/base/` de este carril, origen `../codex/work/frontier/modos/base/`):
+- Selector tipo 1 aceptado: `MODES CONFIG ... r1=1 type=1 init=1`, `CONFIGURED rank=0 type=1`; el montador recibe
+  `box=0 count=4 indices=[0,1,3,2] rank=0 type=1` (`doubles-gdb.log`, capturas `double-*.png`, combate Doble real).
+- Cancelar el selector: `MODES OUT 0x800c 0` tras un paquete `03000000…000101` (`reload-gdb.log`, `selector-cancel*.png`).
+- Guardar/cargar con 50 centinelas: los 50 works y el hash del equipo coinciden (`saved-doubles.json`, zona 517).
+- Al salir de 517 y volver al vestíbulo se borran 16398, 16429, 16430 (`reload-gdb.log`, `hall-reentered.png`):
+  origen de la corrección CONFIG de REPARTO (6934d3a).
+- Súper con flags 385/386 en la copia: menú «Supercombate Individual» (`super-accepted.png`); sin log GDB del rango.
+- Persistencia con valores CONFIG válidos: **no repetida** (pendiente).
+Hecho (motor, sin menús nuevos):
+- `frontier/asm/modes.s`: `mode_of` (ruta, CONFIG validado), `mode_level`, `mode_cap` y los stubs de racha.
+  - Racha: las entradas tipo 0 y 1 de las tablas de salto 0x45cdb0/0x45cf00/0x45cfa4/0x45d028 apuntan a 4 stubs.
+    Con rango Normal, ruta 1–7 y M del formato del accesor, usan el banco (racha, récord) de `modes.bank`, con
+    direcciones independientes. En cualquier otro caso, el hueco retail de la Mansión: ruta 0, Súper, CONFIG
+    corrupto u otro formato. El incremento reutiliza el cuerpo retail 0x45cdd0 (tope 9999).
+  - Nivel: `mode_cap` sustituye `cmp r0,#50` en 0x1e3e00. En Libre conserva el nivel y fija
+    L = max(L, 60, nivel de cada inscrito) en CONFIG en el primer combate; en Nivel 50, la comparación retail.
+  - `mode_level` (50, o L acotado 50–100) alimenta `pike_level` (salvajes L−4/L−5), los alquileres de Fábrica
+    (100 en Libre) y `brain_start` (Anabel y demás al nivel L, mismas filas y símbolos).
+  - `brain_choose` lee la racha por el accesor 0x45cee8: el tramo tardío usa el banco del modo.
+- Se retira FACTORY_SLOT/slot_deltas de `rental.s` (de ahí sale el espacio) y la tabla `streak_offsets` de Cerebros.
+- Torre (`tower.MODE_FACILITIES`): un desafío nuevo pone CONFIG[2]=0 (Nivel 50; aún sin menú). Uno pausado se
+  reanuda con su CONFIG si es Individual válido (0, 0x32, Libre L 60–100). Si no, empieza uno nuevo Nivel 50.
+  Las demás recepciones no cambian.
+- REPARTO: sitios del motor F9 (sin works/textos/casos nuevos).
+Evidencia:
+- Espacio (`python frontier/modes_audit.py` → `work/frontier/modos/base2/audit.json`): code.bin 0x579804–0x579fd4
+  (2000 bytes), **44 libres**; Cerebros 0xf0480–0xf0a00 (1408 bytes, llega al inicio de la reserva F9 sin
+  solaparla); reserva DllField F9 0xf0a00–0xf1000 sin bytes; DllBattle 1148 libres; Luma intacta.
+- Build exacta (`base2/build-hashes.json`): code.bin `b4eb36a8…f03cb81`, DllField `5827d3f6…c98f70e`,
+  CRR `f651abc4…dc2495`, DllBattle `5cde67f6…d51754` (sin cambios).
+- `tests/test_frontier_modes_engine.py` (470 casos Unicorn/VM), sobre el code.bin construido:
+  - matriz ruta {0,1,2,3,7,8,0xffff} × 10 CONFIG × tipo × rango {0,1,2} con get/inc ×11/récord/clear;
+  - aislamiento byte a byte de bancos y Mansión; saturación 9998/9999; partidas antiguas M=0;
+  - niveles 50/60/73/100 y CONFIG inválidos; `mode_cap` (mínimo 60, nunca baja L, Fábrica 100);
+  - rival compuesto con salas salvajes del Tubo; alquileres a 100; recepción de la Torre nueva/reanudada/inválida.
+- Cerebros (`test_frontier_brains.py`): ahora ejecutan el code.bin construido y no un stub. Anabel Libre a nivel 73;
+  el tramo tardío lee el banco Libre.
+- `env -u ORCH_LANE python -m pytest -q tests`: **2008 passed, 2 skipped**, 51 s (`base2/tests-full.log`).
+  Con `ORCH_LANE` heredado fallan los mismos 9 tests del supervisor que ya anotó Codex.
+No probado: nada de este hito en Azahar ni en consola. No probados en particular L=73 real, pausa/guardar/cargar,
+derrota y regresión de motor (Palacio, Arena, Tubo, historia). Tampoco la persistencia con CONFIG válidos.
+Commits: el de esta entrada.
+Decisiones:
+- Parchear las tablas de salto (8 palabras) en vez del primer `add` de cada cuerpo. Ningún otro código salta a esos
+  cuerpos (barrido de branches y palabras de code.bin) y así caben los 8 accesores con 4 stubs.
+- L se fija en el montador de la parte del jugador, que se ejecuta antes que el rival en StartBattle (0x1e3110
+  antes de 0x1e3158). No hace falta un nativo de script para leer niveles de equipo o Caja.
+- Sin menú: el corte Torre Libre se probará con una copia de partida con desafío Libre pausado (CONFIG M=1 L=60,
+  ACTIVE=1); el menú es de F9-LIBRE-PROPIOS.
+Siguiente paso: laboratorio del carril (24690) con la build exacta. Torre Libre con un inscrito de nivel 73 (medir
+L=73 en CONFIG y en el nivel rival por GDB), guardar/cargar y derrota con banco 50 y equipo/Caja intactos. Después
+un combate de Palacio, Arena, Tubo e historia.

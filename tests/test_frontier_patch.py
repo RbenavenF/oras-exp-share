@@ -42,7 +42,7 @@ def work_address(number):
     return SAVE + 0x13144 + 2 * (number - 0x4000)
 
 
-def run(code, count, iv, sets=(0, 0, 0), stop=fp.RESUME, route=0):
+def run(code, count, iv, sets=(0, 0, 0), stop=fp.RESUME, route=0, works=None):
     uc = Uc(UC_ARCH_ARM, UC_MODE_ARM)
     uc.mem_map(0x100000, (len(code) + 0xFFF) & ~0xFFF)
     uc.mem_write(0x100000, code)
@@ -57,7 +57,7 @@ def run(code, count, iv, sets=(0, 0, 0), stop=fp.RESUME, route=0):
     uc.mem_write(GAMEDATA + 0x14, struct.pack('<I', PLAYER_PARTY))
     uc.mem_write(work_address(fp.WORK_IV), struct.pack('<H', iv))
     uc.mem_write(work_address(fp.WORK_ROUTE), struct.pack('<H', route))
-    for number, value in zip(fp.WORK_SETS, sets):
+    for number, value in [*zip(fp.WORK_SETS, sets), *(works or {}).items()]:
         uc.mem_write(work_address(number), struct.pack('<H', value))
     uc.mem_write(VTABLE + 8, struct.pack('<I', FREE))
     regs = {'r4': WORK + 0x2C, 'r5': 0x55, 'r6': WORK, 'r7': 1, 'r8': 0x88, 'sb': PARTY, 'sl': 0xAA,
@@ -146,8 +146,9 @@ def test_patch_only_touches_site_padding_and_text_row(patched, request):
     site = fp.SITE - fp.BASE
     cave = fp.HOOKS - fp.BASE
     text = fp.GLOBAL_ROW - fp.BASE + 8
-    singles = [va - fp.BASE for va in (fp.RIVAL_SITE, fp.COUNT_SITE, fp.LEVEL_SITE, *fp.STREAK_SITES, fp.BUILD_SITE, fp.ISWIN,
-                                        fp.DELETE_SITE, fp.ae.START)]
+    singles = [va - fp.BASE for va in (fp.RIVAL_SITE, fp.COUNT_SITE, fp.LEVEL_SITE, fp.CAP_SITE, fp.BUILD_SITE,
+                                        fp.ISWIN, fp.DELETE_SITE, fp.ae.START,
+                                        *fp.STREAK_SITES, *(va + 4 for va in fp.STREAK_SITES))]
     assert all(site <= i < site + 20 or cave <= i < cave + len(hook) or text <= i < text + 2
                or any(s <= i < s + 4 for s in singles) for i in diff)
     assert struct.unpack_from('<8H', code, fp.GLOBAL_ROW - fp.BASE) == (9770, 9779, 5, 1, fp.TEXT_FACTORY, 0, 0, 0)

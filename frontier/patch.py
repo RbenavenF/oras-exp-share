@@ -41,7 +41,7 @@ HASHES = {
 }
 ASM = ROOT / 'frontier/asm/rental.s'
 ASMS = [ASM, ROOT / 'frontier/asm/dome.s', ROOT / 'frontier/asm/pike.s', ROOT / 'frontier/asm/pyramid.s',
-        ROOT / 'frontier/asm/arena.s']   # linked together, rental_hook first (at HOOKS)
+        ROOT / 'frontier/asm/arena.s', ROOT / 'frontier/asm/modes.s']   # linked together, rental_hook first (at HOOKS)
 # Battle-time routines, reached only from DllBattle.cro bridges: linked into DllBattle.cro (battle_cro_code).
 CRO_ASMS = [ROOT / 'frontier/asm/arena_cro.s', ROOT / 'frontier/asm/palace_b_cro.s']
 BASE = 0x100000
@@ -68,6 +68,8 @@ BUILD_SITE = 0x1E3110                         # StartBattle 0x1e30b8: bl 0x1e3d2
 BUILD_BEFORE = 0xEB000305
 LEVEL_SITE = 0x1E4E80                         # rival builder 0x1e4a94: mov r1, #50 (MAKE_PARAM level). Pike wild level
 LEVEL_BEFORE = 0xE3A01032
+CAP_SITE = 0x1E3E00                           # party builder tail, per member: cmp r0, #50 (level cap). F9 mode_cap
+CAP_BEFORE = 0xE3500032
 ISWIN = 0x1E5664                              # IsWin: ldrb r0, [r0, #0x73c]; cmp; movne; bx lr. Pike H2
 ISWIN_BEFORE = (0xE5D0073C, 0xE3500001, 0x13A00000, 0xE12FFF1E)
 WORK_DELETE = 0x1E5C48                        # BattleInstWorkDelete (DllField.cro 0x956b4 -> thunk 0x3738), holder r0
@@ -101,9 +103,14 @@ WORK_RIVAL = (16433, 16434, 16435)  # last rival's set indices (maisonpkN/S of t
 WORK_FSTREAK, WORK_ROUTE, WORK_FRECORD = 16437, 16438, 16439   # Factory streak / «route the streak» / record
 MAISON_BASE = 0x195E0                 # Maison block in the save data (GetMyWinCount native, AddWinCount 0x1e2fd4)
 SAVE_WORKS = 0x13144                  # saved works in the save data (WorkGet 0x3fe118)
-# Maison Singles streak accessors: site -> (stub, resume). Each site is add OUT, r0, r2, lsl #1.
-STREAK_SITES = {0x45CDC4: ('streak_inc', 0xE0801082), 0x45CF14: ('streak_get', 0xE0800082),
-                0x45CFB8: ('streak_set', 0xE0800082), 0x45D03C: ('streak_record', 0xE0800082)}
+# Maison streak accessors (reports/modos-base.md): each dispatches by type through a jump table; the entries of
+# type 0 (Singles) and 1 (Doubles) -> the stub of frontier/asm/modes.s, which resolves the bank from (route, mode).
+# table -> (stub, retail Singles body, retail Doubles body). No other code reaches those bodies (scan of code.bin).
+STREAK_SITES = {0x45CDB0: ('streak_inc', 0x45CDC4, 0x45CDFC), 0x45CF00: ('streak_get', 0x45CF14, 0x45CF24),
+                0x45CFA4: ('streak_set', 0x45CFB8, 0x45CFC8), 0x45D028: ('streak_record', 0x45D03C, 0x45D04C)}
+STREAK_INC_BODY = 0x45CDD0                    # Singles increment after its two adds: r0 = S, r2 = R, r3 = limit
+STREAK_INC_BODY_WORDS = (0xE1D010B0, 0xE1510003, 0x2AFFFFF3, 0xE2811001, 0xE6FF1071, 0xE1C010B0, 0xE1D200B0,
+                         0xE1500001, 0x2AFFFFED, 0xE1C210B0, 0xE12FFF1E)
 # Streak routes: the value of saved work WORK_ROUTE -> (facility, its streak work S); its record is S + 2 (the
 # accessors read the record at slot + 0x1c8) and S + 1 is the facility's own (state, free for its owner). 0 is the
 # Maison's own streak. Works free per frontier/ids.py (2026-11-03); assigned in frontier/REPARTO.md.
@@ -154,7 +161,7 @@ MAISON_NATIVE_ZONES = (448, 517, 520)
 CONSTANTS = {'WORK_IV': WORK_IV, 'WORK_SET0': WORK_SETS[0], 'ARCHIVE_NORMAL': 0xB6, 'ARCHIVE_SUPER': 0xB8, 'RENTAL_LEVEL': 50,
              **ae.CONSTANTS, **pe.CONSTANTS,
              'RENTALS': len(WORK_SETS), 'WORK_RIVAL': WORK_RIVAL[0],
-             'ROUTE_DELTA': MAISON_BASE - SAVE_WORKS - 2 * (WORK_ROUTE - 0x4000),
+             'MAISON_TO_WORKS': MAISON_BASE - SAVE_WORKS,
              'ROUTES': len(STREAK_ROUTES), 'WORK_ROUTE': WORK_ROUTE,
              'DOME_ROUTE': ROUTE['dome'], 'DOME_FIGHT0': DOME_FIGHT[0], 'DOME_FORCED0': DOME_FORCED[0],
              'DOME_FIGHTERS': len(DOME_FIGHT),
@@ -162,17 +169,14 @@ CONSTANTS = {'WORK_IV': WORK_IV, 'WORK_SET0': WORK_SETS[0], 'ARCHIVE_NORMAL': 0x
              'PIKE_WILD': PIKE_WILD, 'PIKE_WILD_FAR': PIKE_WILD_FAR,
              'PIKE_PP0': PIKE_PP[0][0], 'PIKE_PP_GAP': 2 * (PIKE_PP[1][0] - PIKE_PP[0][0]) - 2,
              'PYRAMID_ROUTE': ROUTE['pyramid'], 'PYRAMID_SEL0': PYRAMID_SEL[0], 'PYRAMID_COUNT': PYRAMID_COUNT,
-             'PYRAMID_PICKS': len(PYRAMID_SEL),
-             **{f'SLOT_DELTA_{route}': MAISON_BASE - SAVE_WORKS - 2 * (streak - 0x4000) + 0x1C4
-                for route, (_, streak) in STREAK_ROUTES.items()}}
+             'PYRAMID_PICKS': len(PYRAMID_SEL)}
 assert list(WORK_SETS) == [WORK_SETS[0] + k for k in range(3)] and 0 < WORK_IV - WORK_SETS[0] < 128   # rental.s: sub
 assert 0 < WORK_IV - WORK_RIVAL[0] < 128 and 2 * (WORK_IV - 0x4000) < 256                              # rental.s: imm8
 assert WORK_FRECORD == WORK_FSTREAK + 2      # the accessors read the record at slot + 0x1c8
-assert sorted(STREAK_ROUTES) == list(range(1, 8))   # rental.s has seven slot_deltas words
-assert 0 < CONSTANTS['ROUTE_DELTA'] < 0x10000          # two subs: bits 8-15 and 0-7
+assert sorted(STREAK_ROUTES) == list(range(1, 8))   # modes.s has seven mode_config entries
+assert 0 < CONSTANTS['MAISON_TO_WORKS'] < 0x10000      # modes.s: two subs, bits 8-15 and 0-7
 _streak_works = [w for _, s in STREAK_ROUTES.values() for w in (s, s + 1, s + 2)]
 assert len(set(_streak_works)) == len(_streak_works) and WORK_ROUTE == WORK_FSTREAK + 1
-assert all(0 < CONSTANTS[f'SLOT_DELTA_{r}'] for r in STREAK_ROUTES)
 assert 0 < WORK_IV - WORK_ROUTE < 128 and 2 * (WORK_ROUTE - 0x4000) < 256           # rental.s, dome.s: imm8 offsets
 assert DOME_FIGHT[1] == DOME_FIGHT[0] + 1 and DOME_FORCED[1] == DOME_FORCED[0] + 1   # dome.s reads them in pairs
 assert 0 < DOME_FIGHT[0] - WORK_ROUTE and len(DOME_FIGHT) == len(DOME_FORCED) == 2
@@ -208,11 +212,22 @@ def link(asms, at, entry, constants, functions):
         return binary.read_bytes(), symbols
 
 
+def mode_constants():
+    """modes.s tables (frontier/modes.py): CONFIG work per route and the (streak, record) works of every bank, as
+    2*(work - 0x4000), in mode_banks order (M0 routes 1-7, M1 routes 1-7, M2 routes 1-2, M3 routes 1-2)."""
+    import modes
+    rows = [modes.bank(route, mode) for mode, routes in ((0, range(1, 8)), (1, range(1, 8)), (2, (1, 2)),
+                                                           (3, (1, 2))) for route in routes]
+    off = lambda w: 2 * (w - 0x4000)
+    return {**{f'CFG_{r}': off(modes.CONFIG[r]) for r in range(1, 8)},
+            **{f'{k}_{i}': off(w) for i, row in enumerate(rows) for k, w in zip('SR', row)}}
+
+
 def assemble():
     """(hook bytes at HOOKS, {global symbol: address}). Fails if any of it would fall in Luma's reserve or past
     the cave."""
-    resumes = {f'STREAK_{stub[7:].upper()}_RESUME': site + 4 for site, (stub, _) in STREAK_SITES.items()}
-    hook, symbols = link(ASMS, HOOKS, 'rental_hook', CONSTANTS, {**FUNCTIONS, **resumes})
+    hook, symbols = link(ASMS, HOOKS, 'rental_hook', {**CONSTANTS, **mode_constants()},
+                         {**FUNCTIONS, 'STREAK_INC_BODY': STREAK_INC_BODY})
     if symbols['rental_hook'] != HOOKS:
         raise ValueError('rental_hook is not at the start of the hooks')
     if HOOKS + len(hook) > CAVE_END:
@@ -291,6 +306,12 @@ def build(native_clones=None):
     if word(code, COUNT_SITE) != COUNT_BEFORE:
         sys.exit(f'rival count site word differs: {word(code, COUNT_SITE):08x}')
     struct.pack_into('<I', code, COUNT_SITE - BASE, arm_branch(COUNT_SITE, symbols['dome_count'], link=True))
+    if word(code, CAP_SITE) != CAP_BEFORE:
+        sys.exit(f'level cap site word differs: {word(code, CAP_SITE):08x}')
+    struct.pack_into('<I', code, CAP_SITE - BASE, arm_branch(CAP_SITE, symbols['mode_cap'], link=True))
+    got = tuple(word(code, STREAK_INC_BODY + 4 * i) for i in range(len(STREAK_INC_BODY_WORDS)))
+    if got != STREAK_INC_BODY_WORDS:
+        sys.exit(f'streak increment body {STREAK_INC_BODY:#x} differs')
     if word(code, LEVEL_SITE) != LEVEL_BEFORE:
         sys.exit(f'rival level site word differs: {word(code, LEVEL_SITE):08x}')
     struct.pack_into('<I', code, LEVEL_SITE - BASE, arm_branch(LEVEL_SITE, symbols['pike_level'], link=True))
@@ -307,10 +328,10 @@ def build(native_clones=None):
     if word(code, ae.START) != ae.START_BEFORE:
         sys.exit(f'Arena StartBattle site {ae.START:#x} differs')
     struct.pack_into('<I', code, ae.START - BASE, arm_branch(ae.START, symbols['arena_start']))
-    for va, (stub, before) in STREAK_SITES.items():
-        if word(code, va) != before:
-            sys.exit(f'streak accessor {va:#x} differs: {word(code, va):08x}')
-        struct.pack_into('<I', code, va - BASE, arm_branch(va, symbols[stub]))
+    for va, (stub, *before) in STREAK_SITES.items():
+        if [word(code, va), word(code, va + 4)] != before:
+            sys.exit(f'streak accessor table {va:#x} differs')
+        struct.pack_into('<2I', code, va - BASE, symbols[stub], symbols[stub])
     row = struct.unpack_from('<8H', code, GLOBAL_ROW - BASE)
     if row != GLOBAL_ROW_BEFORE:
         sys.exit(f'GlobalCall row {GLOBAL_ROW:#x} differs: {row}')

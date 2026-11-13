@@ -220,14 +220,18 @@ pike_rival:
     bx      lr
 
 @ Rival level: replaces `mov r1, #50` at 0x1e4e80 in the rival builder (fp = facility work; r0 is reloaded at
-@ 0x1e4e84, r1 is MAKE_PARAM's level). Uses r0, ip, the flags (the loop sets them again at 0x1e4e98).
+@ 0x1e4e84, r1 is MAKE_PARAM's level, r2 the IV and r3 the heap, both live). The base level is mode_level's (50, or
+@ the Open Level L, frontier/asm/modes.s); a wild room's set is 4 or 5 below it. Uses r0, ip, the flags (the loop
+@ sets them again at 0x1e4e98).
     .global pike_level
 pike_level:
-    push    {r3, lr}
+    push    {r2, r3, lr}
+    mov     r0, fp
+    bl      mode_level              @ 50, or the challenge's Open Level L (frontier/asm/modes.s)
+    mov     r1, r0
     mov     r0, fp
     bl      pike_wild
-    mov     r1, #50
     subne   r1, r1, #4
     cmp     r0, #PIKE_WILD_FAR
     subhs   r1, r1, #1
-    pop     {r3, pc}
+    pop     {r2, r3, pc}

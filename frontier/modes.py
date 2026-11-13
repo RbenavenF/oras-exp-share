@@ -1,11 +1,12 @@
 """F9 shared mode keys and saved-work allocation (REPARTO, 2026-11-13).
 
-Preparation API only: no reception or native hook imports this module yet.
+The native engine (frontier/asm/modes.s, linked by patch.mode_constants) and the Tower reception
+(tower.config_check) use these tables; no mode menu is enabled yet (F9-LIBRE-*).
 New banks have explicit record addresses: there was insufficient space for the
 eleven unused S+1 holes proposed in modos.md. MODE/LEVEL share one CONFIG u16 per
 route after the laboratory found three additional unsafe works. Legacy M=0
 addresses are unchanged.
-Runtime persistence must be measured before enabling any new mode.
+Runtime persistence: reports/modos-base.md (Azahar evidence, per milestone).
 """
 import patch
 import data as fd
