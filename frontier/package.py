@@ -2,8 +2,8 @@
 """Battle Frontier alpha package for Luma: Repolished 1.7.6 + v0.5 (held Exp. Share, DexNav streak) + the Frontier,
 without the Mew event (user decision, 2026-11-11). Laid out as SD:/luma/titles/<title>/.
 
-  python frontier/package.py [--output dist/oras-frontier-alpha-v0.1] [--replace] [--allow-dirty]
-  python frontier/package.py checkpoint SAVE [--output dist/oras-frontier-checkpoint-test-v0.1] [--replace]
+  python frontier/package.py [--output dist/oras-frontier-alpha-v0.2] [--replace] [--allow-dirty]
+  python frontier/package.py checkpoint SAVE [--output dist/oras-frontier-checkpoint-test-v0.2] [--replace]
 
 Steps (the first fails with any other dump, mod or base package):
 1. Inputs: the ROM and Repolished files of reports/source-lock.json, the clean and Repolished code.bin
@@ -27,26 +27,41 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 TITLE = '000400000011C400'
-VERSION = 'oras-frontier-alpha-v0.1'
+VERSION = 'oras-frontier-alpha-v0.2'
 BASE_DIR = ROOT / 'dist/held-exp-share-v0.5'
 SOURCE_LOCK = ROOT / 'reports/source-lock.json'
 BUILD = ROOT / 'work/frontier/package/build'
 # Romfs files the Frontier build must write (on top of v0.5): scripts, texts, maisonpkN, the island's zone/map/area
-# archives and the patched CROs with their CRR. Measured from overlay.py's output, 2026-11-11.
-BUILD_FILES = {'a/0/1/3', 'a/0/1/4', 'a/0/2/9', 'a/0/3/9', 'a/0/4/0', 'a/1/3/7', 'a/1/8/2', 'DllBattle.cro',
+# archives and the patched CROs with their CRR. Measured from overlay.py's output, 2026-11-11; a/1/8/3 (maisontrN,
+# the Brains' trainers) since F8-CEREBROS-BASE, measured 2026-11-13.
+BUILD_FILES = {'a/0/1/3', 'a/0/1/4', 'a/0/2/9', 'a/0/3/9', 'a/0/4/0', 'a/1/3/7', 'a/1/8/2', 'a/1/8/3', 'DllBattle.cro',
                'DllField.cro', '.crr/static.crr', *(f'a/0/7/{k}' for k in range(1, 10)),
                *(f'a/0/8/{k}' for k in range(7))}
-CHECKPOINT = 'oras-frontier-checkpoint-test-v0.1'
+CHECKPOINT = 'oras-frontier-checkpoint-test-v0.2'
 CHECKPOINT_FOLDER = 'FrenteTest-puerto-Calagua'
 # work/frontier/pkg/saves/checkpoint_harbor.sav: saved by the game with the package at the Lilycove harbor (§38)
 CHECKPOINT_SAVE_SHA256 = '5ddaa992c5aea98a3da1af80c1f2486b6d2db1690da0ae8be84abf2397edeffa'
 
-README = """Omega Ruby Repolished + Repartir Exp. + racha DexNav + Frente de Batalla (alfa v0.1)
+README = """Omega Ruby Repolished + Repartir Exp. + racha DexNav + Frente de Batalla (alfa v0.2)
 
 ESTADO
-Alfa de prueba. Las siete instalaciones tienen pruebas en Azahar (el emulador),
-con límites pendientes; NADA del Frente está probado en una 3DS real. Haz copia
-de tu partida antes de jugar (Checkpoint). No incluye el evento de Mew.
+Alfa de prueba. Las siete instalaciones y sus Cerebros tienen pruebas en Azahar
+(el emulador), con límites pendientes. En una 3DS real solo se ha probado la v0.1,
+que se colgaba (ver abajo); la v0.2 NO está probada aún en consola. Haz copia de tu
+partida antes de jugar (Checkpoint). No incluye el evento de Mew.
+
+NUEVO EN LA v0.2
+- Arreglado el cuelgue de la v0.1 en consola: con Luma, TODO combate de tipo
+  Mansión (la Mansión Batalla original del Resort y las instalaciones del Frente)
+  se colgaba al empezar. Luma escribe su propio código de LayeredFS (276 bytes) en
+  0x579604, el final del código del juego, y la v0.1 tenía ahí el suyo. La v0.2 deja
+  libres 0x579604-0x579803 para Luma y empieza en 0x579804; parte del código de
+  combate de la Arena y el Palacio pasa a DllBattle.cro. En Azahar no se veía porque
+  el emulador no escribe nada ahí (se ha probado simulando lo que escribe Luma).
+- Los siete Cerebros (jefes) con su símbolo de plata y de oro, y la opción
+  «Símbolos» en cada recepción para ver los que tienes.
+- Ya no aparece «Guardar vídeo» en ninguna instalación del Frente (la Mansión
+  Batalla original no cambia).
 
 BASE EXACTA (no funciona con otra)
 - Pokémon Rubí Omega europeo, versión 1.0, SIN la actualización 1.4. Si la tienes
@@ -57,11 +72,12 @@ BASE EXACTA (no funciona con otra)
 
 INSTALACIÓN CON LUMA
 1. Copia tu partida con Checkpoint. Apaga la consola y guarda una copia de la
-   carpeta SD:/luma/titles/000400000011C400/ si ya tienes una (Repolished o v0.5).
+   carpeta SD:/luma/titles/000400000011C400/ si ya tienes una (Repolished, v0.5 o
+   la alfa v0.1).
 2. Borra esa carpeta y copia en su lugar la de este paquete:
    SD:/luma/titles/000400000011C400/  (dentro: code.ips y romfs/).
    romfs/ incluye DllBattle.cro, DllField.cro y .crr/static.crr actualizados:
-   no mezcles estos tres con los de otro mod.
+   no mezcles estos tres con los de otro mod ni con los de la v0.1.
 3. Activa «Enable game patching» en Luma (SELECT al encender; START para guardar).
 4. Inicia Rubí Omega. No hay que instalar una CIA ni editar la partida.
 Para volver a la v0.5 o a Repolished: apaga, borra la carpeta y vuelve a copiar la
@@ -83,43 +99,52 @@ guardado ni tu caja. Puede haber cambios normales del juego: curación, amistad,
 recuerdos o cintas; los Pokémon por debajo del nivel 50 no suben hasta él.
 - Fábrica Batalla (gimnasio del centro): eliges 3 Pokémon de alquiler de 6, rondas
   de 7 combates y tras cada victoria, salvo la séptima, puedes cambiar uno por uno
-  del rival. PB de Esmeralda. Sin Doble ni Nivel Libre, sin el jefe (Noland) ni
-  cartel de récords.
+  del rival. PB de Esmeralda. Cerebro: Noland (combates 21 y 42). Sin Doble ni
+  Nivel Libre ni cartel de récords.
 - Torre Batalla (casa de tejado plano, al norte): tu equipo, combates seguidos como
-  en la Mansión Batalla, con racha y PB propios. Textos y reglas de la Mansión.
+  en la Mansión Batalla, con racha y PB propios. Cerebro: Anabel (combates 35 y 70).
+  Textos y reglas de la Mansión.
 - Palacio Batalla (casa de dos plantas, sureste): tus Pokémon eligen solos el
-  movimiento según su naturaleza y sus PS. Límites: no hay «no obedece»; el rival
-  no sigue su naturaleza; la presentación y la frase de derrota del entrenador
-  esperan que pulses A.
+  movimiento según su naturaleza y sus PS. Cerebro: Spenser (combates 21 y 42).
+  Límites: no hay «no obedece»; el rival no sigue su naturaleza; la presentación y
+  la frase de derrota del entrenador esperan que pulses A.
 - Arena Batalla (casa de paja, sur): combates de 3 turnos; si los dos siguen en
   pie, juicio solo por Cuerpo. Mente y Técnica aún no están implementadas.
-  Cambio prohibido mientras el Pokémon siga en pie. Textos de la Mansión.
+  Cambio prohibido mientras el Pokémon siga en pie. Cerebro: Greta (combates 28 y
+  56). Textos de la Mansión.
 - Domo Batalla (casa del oeste): torneos de 4 combates; inscribes 3 y eliges 2
-  antes de cada combate. Sin cuadro de torneo ni jefe.
+  antes de cada combate. Cerebro: Tucker (final de los torneos 5 y 10). Sin cuadro
+  de torneo.
 - Tubo Batalla (cabaña del suroeste): salas con curas, estados, entrenadores y
   Pokémon salvajes; PS, estado y PP se arrastran entre salas. El veneno grave se
   guarda como veneno normal. Los combates fuertes usan rango Súper y los salvajes
   pueden estar por debajo del nivel 50; conservan la presentación de entrenador.
-  Hay una incidencia de reanudación pendiente de reproducir: un desafío volvió
-  a empezar de cero tras regresar al vestíbulo.
+  Cerebro: Lucy (salas 28 y 140). Hay una incidencia de reanudación pendiente de
+  reproducir: un desafío volvió a empezar de cero tras regresar al vestíbulo.
 - Pirámide Batalla (casa de tejado azul, este): siete pisos de cueva con
-  entrenadores. Sin oscuridad, objetos ni salvajes todavía.
-Comunes: sin jefes de instalación, sin Doble/Multi ni Nivel Libre; textos en
-español (los demás idiomas, en inglés y sin revisar).
-La v0.1 aún muestra «Guardar vídeo» (salvo en el Palacio). Se ha quitado en main
-en el commit 31ba2d4; el cambio entra en la próxima versión.
-El paquete exacto se probó con combates en las siete instalaciones, guardado y
-recarga en la plaza y regreso a Calagua. No se probaron con ese paquete las rondas
-completas, el juicio de la Arena, el ferry
-de Portual ni otros idiomas (reports/frontier.md §38).
+  entrenadores. Cerebro: Brandon en la cima (tras los pisos 21 y 70). Sin
+  oscuridad, objetos ni salvajes todavía.
+Cerebros: el primero da el símbolo de plata y el segundo el de oro; con los dos,
+vuelven a aparecer en las mismas rachas. Ganarle suma PB extra.
+Comunes: sin Doble/Multi ni Nivel Libre; textos en español (los demás idiomas, en
+inglés y sin revisar).
+El paquete exacto se probó en Azahar con combates en las siete instalaciones y en
+la Mansión Batalla original, también simulando lo que Luma escribe en el código;
+guardado y recarga en la plaza y regreso a Calagua. No se probaron con ese paquete
+las rondas completas ni los Cerebros (cada uno se probó al hacerlo, con partidas
+editadas), el juicio de la Arena, el ferry de Portual ni otros idiomas
+(reports/frontier.md).
 
 NO PROBADO EN CONSOLA (solo en Azahar)
-- Nada del Frente: el código nuevo de code.ips (cueva al final del código), el
-  relleno de DllBattle.cro usado por el Palacio, el puente de DllField.cro del Tubo,
-  la isla y sus edificios (memoria de la consola).
-- Probado en consola en versiones anteriores: v0.5 (Repartir Exp. y DexNav).
+- La v0.2 entera: el código nuevo de code.ips (cueva al final del código, desde
+  0x579804), el relleno de DllBattle.cro (Palacio y Arena), el puente de
+  DllField.cro (Tubo y Cerebros), la isla y sus edificios (memoria de la consola).
+- Probado en consola: v0.5 (Repartir Exp. y DexNav); la alfa v0.1 (se colgaba en
+  todo combate de tipo Mansión, arreglado arriba).
 Si algo se cuelga, apaga manteniendo POWER, restaura tu copia y anota dónde fue.
-reports/consola-frente.md (en el repositorio) tiene el orden de pruebas.
+reports/consola-frente.md (en el repositorio) tiene el orden de pruebas y cómo
+comprobar con el depurador de Luma que el código está en su sitio (manifest.json,
+«console_check»).
 
 CONTENIDO
 No contiene partidas, claves ni la ROM. Contiene ficheros derivados del volcado
@@ -129,7 +154,9 @@ local: úsalo solo tú. manifest.json registra el SHA-256 de cada fichero y la b
 CHECKPOINT_README = """Partida de prueba del Frente de Batalla (Rubí Omega EUR 1.0 + paquete {version})
 
 QUÉ ES
-Copia de laboratorio guardada por el propio juego en el puerto de Ciudad Calagua.
+Copia de laboratorio guardada por el propio juego en el puerto de Ciudad Calagua,
+con la alfa v0.1 instalada y antes de pedir el pase: no tiene nada del Frente,
+así que vale igual para {version} (la recorrida en Azahar con este paquete).
 Procede de tu partida (Ruta 102), pasando por la de prueba del evento de Mew, con
 cambios artificiales: flags 2720 (Liga ganada) y 2729 (Episodio Delta), Ticket del
 Barco, y 5 Master Ball y 20 Ultra Ball. No tiene aún el Pase del Frente.
@@ -244,6 +271,28 @@ def assemble(base_files, mod, build_dir):
     return sources
 
 
+def console_check(code_ips):
+    """What Luma's debugger must show on a console with this package (reports/consola-frente.md): Luma's LayeredFS
+    payload at patch.CAVE (frontier/luma.py) and our first hook word at patch.HOOKS, with the built code.bin's bytes."""
+    sys.path[:0] = [str(ROOT / 'scripts'), str(ROOT / 'frontier')]
+    import luma
+    import patch
+    from formats import apply_ips, read_ips
+    code = apply_ips(patch.CLEAN.read_bytes(), read_ips(Path(code_ips).read_bytes()))
+    if any(code[patch.CAVE - patch.BASE:patch.HOOKS - patch.BASE]):
+        raise ValueError(f'code.ips writes into Luma\'s reserve {patch.CAVE:#x}-{patch.HOOKS:#x}')
+    on_console = luma.overlay(code)
+    window = lambda at, n=16: on_console[at - patch.BASE:at - patch.BASE + n].hex()   # noqa: E731
+    return {
+        'luma_reserve': f'{patch.CAVE:#x}-{patch.HOOKS - 1:#x} (zeros in code.ips; Luma writes {patch.LUMA_PAYLOAD} bytes)',
+        'luma_payload_at': f'{patch.CAVE:#x}', 'luma_payload_first16': window(patch.CAVE),
+        'hooks_at': f'{patch.HOOKS:#x}', 'hooks_first16': window(patch.HOOKS),
+        'luma_branches': {f'{site:#x}': on_console[site - patch.BASE:site - patch.BASE + 4].hex()
+                          for site in sorted(luma.HOOKS)},
+        'code_with_luma_sha256_text': hashlib.sha256(on_console[:patch.CAVE_END - patch.BASE]).hexdigest(),
+    }
+
+
 def write_zip(out):
     archive = out.parent / (out.name + '.zip')
     with zipfile.ZipFile(archive, 'x', compression=zipfile.ZIP_DEFLATED) as z:
@@ -291,12 +340,14 @@ def package(args, parser):
     files['LEEME.txt'] = sha(out / 'LEEME.txt')
     manifest = {
         'title_id': TITLE, 'version': VERSION,
-        'status': 'alpha; Frontier validated in Azahar only (reports/frontier.md §38), not on a console',
+        'status': 'alpha; validated in Azahar only, also with Luma\'s payload simulated (reports/frontier.md §49-§50); '
+                  'v0.1 hung on the console (Luma), v0.2 not yet run on a console',
         'base': 'Omega Ruby EUR 1.0 without update + Repolished 1.7.6 + held-exp-share v0.5; no Mew event',
         'git_commit': head, 'git_dirty': dirty,
         'inputs_sha256': inputs,
         'base_manifest_sha256': sha(BASE_DIR / 'manifest.json'),
         'build_romfs': sorted(BUILD_FILES), 'development_warp': False, 'mew_event': False,
+        'console_check': console_check(sources['code.ips']),
         'files': dict(sorted(files.items())),
     }
     (out / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')

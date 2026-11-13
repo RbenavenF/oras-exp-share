@@ -88,8 +88,7 @@ def test_readme_describes_alpha_arena_palace_and_video_limits():
     palace = text.split('- Palacio Batalla', 1)[1].split('- Arena Batalla', 1)[0]
     assert 'la presentación y la frase de derrota del entrenador esperan que pulses A' in palace
     assert 'te piden ordenar' not in palace
-    assert 'La v0.1 aún muestra «Guardar vídeo» (salvo en el Palacio)' in text
-    assert 'Se ha quitado en main en el commit 31ba2d4; el cambio entra en la próxima versión' in text
+    assert 'Guardar vídeo' not in text.replace('Ya no aparece «Guardar vídeo»', '')
 
 
 def test_readme_qualifies_validation_team_changes_and_level_exceptions():
@@ -101,7 +100,7 @@ def test_readme_qualifies_validation_team_changes_and_level_exceptions():
                    'Los combates fuertes usan rango Súper',
                    'los salvajes pueden estar por debajo del nivel 50',
                    'incidencia de reanudación pendiente de reproducir',
-                   'No se probaron con ese paquete las rondas completas, el juicio de la Arena'):
+                   'No se probaron con ese paquete las rondas completas', 'el juicio de la Arena'):
         assert needed in text, needed
 
 
@@ -124,3 +123,43 @@ def test_local_inputs_match_the_locks():
     base, mod = package.check_base()
     assert base['overlay_files']['code.ips'] == package.check_code_inputs()[
         'inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)/code.ips']
+
+
+def test_v02_readme_explains_the_console_hang_brains_and_video():
+    text = ' '.join(package.README.split())
+    assert package.VERSION == 'oras-frontier-alpha-v0.2' and '(alfa v0.2)' in text
+    new = text.split('NUEVO EN LA v0.2', 1)[1].split('BASE EXACTA', 1)[0]
+    for needed in ('TODO combate de tipo Mansión', 'la Mansión Batalla original', 'Luma', '0x579604', '0x579804',
+                   'DllBattle.cro', 'Cerebros', 'Símbolos', 'Ya no aparece «Guardar vídeo»'):
+        assert needed in new, needed
+    for brain in ('Noland', 'Anabel', 'Spenser', 'Greta', 'Tucker', 'Lucy', 'Brandon'):
+        assert brain in text, brain
+    assert 'sin el jefe' not in text and 'ni jefe' not in text and 'sin jefes' not in text
+    assert 'la v0.2 NO está probada aún en consola' in text
+
+
+def test_v02_build_files_include_the_brains_trainers():
+    assert 'a/1/8/3' in package.BUILD_FILES
+
+
+@pytest.mark.skipif(not (ROOT / 'baseline/oras/clean/exefs/code.bin').exists(), reason='needs the clean code.bin')
+def test_console_check_reports_luma_and_our_hook_and_refuses_the_reserve(tmp_path):
+    sys.path.insert(0, str(ROOT / 'scripts'))
+    import luma
+    import patch
+    from build_patch import diff_ips
+    clean = patch.CLEAN.read_bytes()
+    code = bytearray(clean)
+    hook = bytes.fromhex('f0412de9')                               # push {r4-r8, lr}
+    code[patch.HOOKS - patch.BASE:patch.HOOKS - patch.BASE + 4] = hook
+    ips = tmp_path / 'code.ips'
+    ips.write_bytes(diff_ips(clean, bytes(code)))
+    check = package.console_check(ips)
+    assert check['luma_payload_at'] == '0x579604' and check['hooks_at'] == '0x579804'
+    assert check['luma_payload_first16'] == luma.PAYLOAD[:16].hex()
+    assert check['hooks_first16'].startswith(hook.hex())
+    assert set(check['luma_branches']) == {'0x123e80', '0x1325a4'}
+    code[patch.CAVE - patch.BASE] = 1
+    ips.write_bytes(diff_ips(clean, bytes(code)))
+    with pytest.raises(ValueError, match='reserve'):
+        package.console_check(ips)

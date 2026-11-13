@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Lab only (F7-PAQUETE, reports/frontier.md §38): install the EXACT package folder (no loose builds) into this
 # checkout's Azahar lab, check it against the package manifest, copy a lab save, boot with the GDB stub of the lane
-# port and press A through the title. Usage: frontier/probes/package/boot.sh SAVE [PACKAGE_DIR]
+# port and press A through the title. Usage: [LUMA_IPS=code.ips] frontier/probes/package/boot.sh SAVE [PACKAGE_DIR]
+# LUMA_IPS (frontier/probes/luma/package_ips.py): after the manifest check, the package code.ips is replaced by that
+# one (the same code.ips with Luma's LayeredFS payload written over it, as a console runs it).
 set -euo pipefail
 cd "$(dirname "$0")/../../.."; source scripts/env.sh >/dev/null 2>&1
 SAVE=$1; PKG=${2:-dist/oras-frontier-alpha-v0.1}
@@ -22,6 +24,7 @@ got = {p.relative_to(mod).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
 assert got == files, 'lab mod differs from the package manifest'
 print(f'lab mod = package manifest ({len(files)} files)')
 PY
+if [ -n "${LUMA_IPS:-}" ]; then cp "$LUMA_IPS" "$MOD/code.ips"; echo "Luma simulated: $(sha256sum < "$LUMA_IPS")"; fi
 mkdir -p "$SAVEDIR"; cp "$SAVE" "$SAVEDIR/main"; sha256sum "$SAVE"
 python scripts/azahar_lab.py start
 PORT=$(cat work/lab-port); for i in $(seq 1 60); do ss -ltn | grep -q ":$PORT " && break; sleep 1; done
