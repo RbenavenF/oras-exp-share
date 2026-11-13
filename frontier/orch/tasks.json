@@ -360,10 +360,51 @@
       "evidence": ""
     },
     {
+      "id": "F11-ISLA-TRAZADO",
+      "owner": "any",
+      "after": [
+        "F7-PAQUETE-V02"
+      ],
+      "title": "Isla Esmeralda 1/2: trazado calcado, techo de carga retail y prototipo de terreno de 8 celdas",
+      "design": "reports/diseno/isla-esmeralda.md §1–§2",
+      "accept": "Referencia: reports/diseno/referencias/frente-esmeralda.webp; diseño reports/diseno/isla-esmeralda.md. Suite completa en verde, bitácora con fuentes y commits. Ficheros comunes (island_build.py, faraway/java/): los hace quien integra. (1) Cuadrícula 128×72 calcada de la imagen (16 px/casilla, pokeemerald 731ad5bf, Oeste 56 + Este 72) en un fichero de datos versionado (p. ej. frontier/island_layout.py o .txt con leyenda): suelo, camino, hierba, acantilado/terraza por altura, agua, escaleras, muelle, parterres, árboles, arena, vallas/banderines y huecos de edificio; puertas de §1 en sus casillas; sin cueva ni cascada. Test que compruebe tamaño, puertas y que no hay casillas sin clase. Render cenital del calco junto a la imagen (work/, enlazado en la bitácora). (2) Tabla de materiales ORAS por clase (§2.2): pieza del catálogo CTRMap-F5 o área retail de origen y coste medido; la más próxima si no hay exacta, anotándolo. (3) Techo de carga: misma métrica que Plaza («load budget») sobre exteriores retail grandes (Resort 210/211/212 y al menos una ciudad grande) y anotarlo en reports/frontier.md con la fuente. (4) Prototipo en Azahar: zona 209 con 4×2 celdas de terreno según el calco (edificios de hoy sin mover o ninguno; solo tiene que cargar), llegar en ferry, cruzar las fronteras entre celdas en horizontal y vertical, guardar/cargar en una celda que no sea la de llegada. Si no carga: causa documentada (gdb, WorldTextures, presupuesto) y prueba de la opción B (dos sectores) antes de reducir escala. Decisión A/B escrita en isla-esmeralda.md. Sin consola. Mantener la reserva de Luma 0x579604–0x579804: no reutilizarla. Medir espacio actual.",
+      "status": "pending",
+      "notes": "Petición del usuario 2026-11-13 (tras validar v0.2 en 3DS): isla con la distribución y paisaje de Esmeralda, edificios provisionales. Va detrás de F9-MODOS-BASE en la cola sin esperarla: no comparte ficheros de modos. Regresión: caso c (isla).",
+      "evidence": ""
+    },
+    {
+      "id": "F11-ISLA-CONSTRUCCION",
+      "owner": "any",
+      "after": [
+        "F11-ISLA-TRAZADO"
+      ],
+      "title": "Isla Esmeralda 2/2: exterior completo, siete puertas recolocadas, ferry y retornos",
+      "design": "reports/diseno/isla-esmeralda.md §2–§3",
+      "accept": "Referencia: reports/diseno/referencias/frente-esmeralda.webp; diseño reports/diseno/isla-esmeralda.md. Suite completa en verde, bitácora con fuentes y commits. Ficheros comunes: quien integra. Con la decisión de F11-ISLA-TRAZADO, construir el exterior entero: avenidas amplias, terrazas, estanques, jardines, escaleras, muelle y recorrido de entrada con hall (hueco de Recepción); Domo NO, Torre N, Pirámide NE, Fábrica O, Tubo centro-O, Arena E, Palacio SE. Edificios de hoy (island_build.FACILITIES) en su posición nueva con la puerta en la casilla de §1 y el hueco del edificio definitivo reservado (silueta aproximada de la referencia); huecos de Centro, Tienda, Sala de clasificación, Scott, Intercambio y salones reservados sin puerta. Actualizar llegada y regreso del ferry (island.ARRIVAL y su test), warps de puerta, salidas de los interiores a su puerta (incluido dome_room y LOBBY_RETURN donde aplique), colisiones y cámaras; interiores, mecánicas y textos sin cambios. Presupuesto <= LOAD_BUDGET (o el techo retail de F11-ISLA-TRAZADO con su fuente), WorldTextures vacía, ZO de 209 <= 17248. Tests: puertas en sus casillas, cada salida vuelve a su puerta, presupuesto. Actualizar frontier/probes/package/circuit.py a las coordenadas nuevas. Azahar: vista cenital comparada con la imagen (captura y montaje en work/, distribución y proporciones reconocibles), recorrido completo ferry→siete puertas (entrar y salir)→ferry, cruces entre celdas, escaleras, guardado/carga en la isla. Sin consola. Mantener la reserva de Luma 0x579604–0x579804: no reutilizarla. Medir espacio actual.",
+      "status": "pending",
+      "notes": "Petición del usuario 2026-11-13. Solo edificios provisionales; cueva y cascada omitidas. Regresión: caso c completo (todas las puertas) porque cambia la isla entera.",
+      "evidence": ""
+    },
+    {
+      "id": "F7-PAQUETE-V03",
+      "owner": "any",
+      "after": [
+        "F11-ISLA-CONSTRUCCION",
+        "F9-MODOS-BASE"
+      ],
+      "title": "Alfa v0.3 para la consola: isla con la distribución de Esmeralda",
+      "design": "frontier/package.py; reports/consola-frente.md; reports/diseno/isla-esmeralda.md",
+      "accept": "dist/oras-frontier-alpha-v0.3 (y su partida de prueba) con python frontier/package.py desde main. LEEME al día: qué es nuevo (isla Esmeralda, edificios aún provisionales), y AVISO destacado: antes de actualizar, guardar la partida FUERA de la isla (en el mapa nuevo la casilla vieja puede ser mar o muro). Modos de F9-MODOS-BASE solo si no habilitan menús incompletos. Política de regresión caso d: recorrido completo en Azahar con el paquete EXACTO más el IPS que simula la carga de Luma (frontier/probes/luma/package_ips.py), incluida la Mansión original. reports/consola-frente.md con el orden de prueba v0.3. No atribuir a consola lo probado en Azahar: el manifiesto dice validated in Azahar only hasta que el usuario lo pruebe. Tests en verde. Mantener la reserva de Luma 0x579604–0x579804: no reutilizarla. Medir espacio actual.",
+      "status": "pending",
+      "notes": "Siguiente alfa tras la isla y antes de seguir con las modalidades (petición del usuario 2026-11-13).",
+      "evidence": ""
+    },
+    {
       "id": "F9-LIBRE-PROPIOS",
       "owner": "any",
       "after": [
-        "F9-MODOS-BASE"
+        "F9-MODOS-BASE",
+        "F7-PAQUETE-V03"
       ],
       "title": "Nivel Libre: Torre, Palacio y Arena",
       "design": "reports/diseno/modos.md",
@@ -512,13 +553,14 @@
       "owner": "any",
       "after": [
         "F10-PERSONALIDAD-DISENO",
-        "F10-SALA-PIRAMIDE"
+        "F10-SALA-PIRAMIDE",
+        "F11-ISLA-CONSTRUCCION"
       ],
       "title": "Un letrero con su nombre delante de cada puerta de la plaza",
       "design": "reports/diseno/personalidad.md §2",
-      "accept": "Suite completa en verde, bitácora con fuentes y commits. Ficheros comunes: quien integra. Siete Sign post del catálogo en las casillas de §2 (o equivalentes que no bloqueen la puerta ni el frente); presupuesto de la build <= LOAD_BUDGET (medido 2.708.224 en variante). Rutina de letrero trasplantada a la isla 209 (SignWrapperInjector desde el host de FrontierPlaza) y verificada en island_build con findSignWrapper; siete registros interactivos con sus casos; ZO de 209 <= 17248 (hoy 11.288). Textos propios ES/EN (§2) y las otras seis lenguas con EN o declaradas pendientes; líneas reservadas en REPARTO antes de usarlas. Tests: rutina y siete registros presentes, rechazo si falta alguno, presupuesto sobre la cota rechazado. Azahar caso c: la isla carga, leer los siete letreros en ES, entrar y salir por las siete puertas. Sin consola. Mantener la reserva de Luma 0x579604–0x579804: no reutilizarla. Medir espacio actual; las cifras anteriores a F7-CUEVA-LUMA están obsoletas.",
+      "accept": "Suite completa en verde, bitácora con fuentes y commits. Ficheros comunes: quien integra. Siete Sign post del catálogo delante de cada puerta del trazado de F11 (sin bloquear la puerta ni el frente); presupuesto de la build <= LOAD_BUDGET vigente (medir de nuevo sobre la isla F11). Rutina de letrero trasplantada a la isla 209 (SignWrapperInjector desde el host de FrontierPlaza) y verificada en island_build con findSignWrapper; siete registros interactivos con sus casos; ZO de 209 <= 17248 (hoy 11.288). Textos propios ES/EN (§2) y las otras seis lenguas con EN o declaradas pendientes; líneas reservadas en REPARTO antes de usarlas. Tests: rutina y siete registros presentes, rechazo si falta alguno, presupuesto sobre la cota rechazado. Azahar caso c: la isla carga, leer los siete letreros en ES, entrar y salir por las siete puertas. Sin consola. Mantener la reserva de Luma 0x579604–0x579804: no reutilizarla. Medir espacio actual; las cifras anteriores a F7-CUEVA-LUMA están obsoletas.",
       "status": "pending",
-      "notes": "Propuesta nueva. Independiente de las salas. Encolada por autorización del usuario 2026-11-13. Cadena serial para evitar cambios compartidos simultáneos; F9 antes de F10.",
+      "notes": "Propuesta nueva. Independiente de las salas. Encolada por autorización del usuario 2026-11-13. Cadena serial para evitar cambios compartidos simultáneos; F9 antes de F10. Las coordenadas y cifras de la plaza antigua (personalidad.md §2–§3) ya no valen tras F11 (reports/diseno/isla-esmeralda.md §4).",
       "evidence": ""
     },
     {
@@ -527,11 +569,11 @@
       "after": [
         "F10-LETREROS"
       ],
-      "title": "Exterior fase 1: vallas de la Arena y anfitrión en cada puerta",
+      "title": "Exterior fase 1: anfitrión en cada puerta",
       "design": "reports/diseno/personalidad.md §3.2",
-      "accept": "Suite completa en verde, bitácora con fuentes y commits. Ficheros comunes: quien integra. Dos Iron fence (4-tile run) a los lados de la Arena (x15 y x25, y25–28; variante medida 2.716.288 con los postes). Las de la Torre solo con el sí del usuario (margen 128 bytes). Siete NPC anfitriones junto a las puertas, sin bloquear puerta ni frente, con una frase propia ES/EN (líneas reservadas en REPARTO) y modelos registrados con regdonor; ZO de 209 <= 17248. Medir y anotar la memoria que no recoge el presupuesto: la isla carga en Azahar sin cuelgue con los ocho NPC. Azahar caso c: plaza, hablar con los siete anfitriones, entrar y salir por las siete puertas. Sin consola. Mantener la reserva de Luma 0x579604–0x579804: no reutilizarla. Medir espacio actual; las cifras anteriores a F7-CUEVA-LUMA están obsoletas.",
+      "accept": "Suite completa en verde, bitácora con fuentes y commits. Ficheros comunes: quien integra. Siete NPC anfitriones junto a las puertas, sin bloquear puerta ni frente, con una frase propia ES/EN (líneas reservadas en REPARTO) y modelos registrados con regdonor; ZO de 209 <= 17248. Medir y anotar la memoria que no recoge el presupuesto: la isla carga en Azahar sin cuelgue con los ocho NPC. Azahar caso c: plaza, hablar con los siete anfitriones, entrar y salir por las siete puertas. Sin consola. Mantener la reserva de Luma 0x579604–0x579804: no reutilizarla. Medir espacio actual; las cifras anteriores a F7-CUEVA-LUMA están obsoletas.",
       "status": "pending",
-      "notes": "Propuesta nueva. El coste de memoria de los NPC no está medido. Encolada por autorización del usuario 2026-11-13. Cadena serial para evitar cambios compartidos simultáneos; F9 antes de F10.",
+      "notes": "Propuesta nueva. El coste de memoria de los NPC no está medido. Encolada por autorización del usuario 2026-11-13. Cadena serial para evitar cambios compartidos simultáneos; F9 antes de F10. Vallas de la Arena retiradas: eran coordenadas de la plaza antigua; el paisaje de F11 ya delimita la Arena. Las coordenadas y cifras de la plaza antigua (personalidad.md §2–§3) ya no valen tras F11 (reports/diseno/isla-esmeralda.md §4).",
       "evidence": ""
     },
     {
@@ -543,21 +585,21 @@
       "title": "Medir una cota de carga de la isla mayor que 2.724.608",
       "design": "reports/diseno/personalidad.md §3.3; reports/frontier.md §23",
       "accept": "Bitácora con fuentes y commits; suite en verde si cambia código o tests. Bisección en Azahar, sin empaquetar, con las variantes medidas de plaza_variants.sh (2.728.704, 2.732.160, 2.795.776, 2.872.064; 2.986.112 ya se colgó): por cada una, la isla carga, se entra y sale por las siete puertas y se recarga una partida guardada en la plaza. Registrar la mayor que carga y la menor que cuelga. LOAD_BUDGET solo se sube con decisión del usuario, porque una cota de Azahar no asegura la consola; si el usuario no decide, dejar status blocked con la pregunta. Sin consola. Mantener la reserva de Luma 0x579604–0x579804: no reutilizarla. Medir espacio actual; las cifras anteriores a F7-CUEVA-LUMA están obsoletas.",
-      "status": "pending",
-      "notes": "Propuesta nueva. Necesita decisión del usuario para cambiar LOAD_BUDGET. Encolada por autorización del usuario 2026-11-13. Cadena serial para evitar cambios compartidos simultáneos; F9 antes de F10.",
+      "status": "done",
+      "notes": "ANULADA 2026-11-13 (no hecha): las variantes de plaza_variants.sh son de la plaza antigua; el techo de carga lo mide F11-ISLA-TRAZADO con exteriores retail.",
       "evidence": ""
     },
     {
       "id": "F10-EXTERIOR-FASE2",
       "owner": "any",
       "after": [
-        "F10-COTA-CARGA"
+        "F10-EXTERIOR-FASE1"
       ],
-      "title": "Exterior fase 2: Pirámide, Torre y Palacio con edificio propio",
-      "design": "reports/diseno/personalidad.md §3.3",
-      "accept": "Suite completa en verde, bitácora con fuentes y commits. Solo si F10-COTA-CARGA subió LOAD_BUDGET con el sí del usuario. island_build.FACILITIES: Pirámide → Lavaridge house (31,13), Torre → Rustboro apartment house (17,1), Palacio → Mossdeep gold-shingle house (28,25), en el orden que quepa; cada puerta en su casilla de hoy (test que compare puertas antes y después). Presupuesto de la build <= nueva cota. Azahar caso c: la isla carga, se ven los edificios (captura), el tejado de la Pirámide ya no es azul (o se anota que sigue), y se entra y sale por las siete puertas. Sin consola. Mantener la reserva de Luma 0x579604–0x579804: no reutilizarla. Medir espacio actual; las cifras anteriores a F7-CUEVA-LUMA están obsoletas.",
+      "title": "Exterior fase 2: edificio definitivo de cada instalación en su hueco reservado",
+      "design": "reports/diseno/isla-esmeralda.md §3; reports/diseno/personalidad.md §3",
+      "accept": "Suite completa en verde, bitácora con fuentes y commits. Ficheros comunes: quien integra. Sustituir el edificio provisional de cada instalación por uno de ORAS más parecido a la silueta de la referencia, en el hueco reservado por F11 y con la puerta en su casilla actual (test que compare puertas antes y después). Proponer primero la elección por instalación con capturas y coste medido, y pedir el sí del usuario (status blocked con la pregunta si no hay respuesta). Presupuesto <= LOAD_BUDGET vigente. Azahar caso c: la isla carga, captura cenital, entrar y salir por las siete puertas. Sin consola. Mantener la reserva de Luma 0x579604–0x579804: no reutilizarla. Medir espacio actual.",
       "status": "pending",
-      "notes": "Propuesta nueva. Depende de una decisión del usuario. Encolada por autorización del usuario 2026-11-13. Cadena serial para evitar cambios compartidos simultáneos; F9 antes de F10.",
+      "notes": "Reescrita 2026-11-13: las casas ancladas en la plaza antigua ya no valen tras F11.",
       "evidence": ""
     }
   ]

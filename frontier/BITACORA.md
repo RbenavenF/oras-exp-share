@@ -3411,3 +3411,40 @@ Siguiente paso: laboratorio24691 con copia y build exacta para medir selector No
 Súper, tipo1 y cuatro inscritos de equipo/Caja; guardar/cargar los 42 works al entrar/
 salir. Después resolvedor nativo (ruta,M) con racha/récord independientes y API
 selección/nivel/pausa; mantener menús cerrados hasta corte Torre Libre L73 aceptado.
+
+## 2026-11-13 22:20 — Claude Code (Opus 5.5) — Cola de la isla con la distribución de Esmeralda
+Estado: hecho
+Hecho: el usuario ha validado la alfa v0.2 en su 3DS: el cuelgue de la Mansión por la carga de Luma está arreglado.
+Pide que la próxima alfa tenga la distribución y el paisaje del Frente de Esmeralda con recursos de ORAS. Solo los
+edificios siguen provisionales; sin cueva ni cascada.
+- Imagen guardada en `reports/diseno/referencias/frente-esmeralda.webp` (2048×1152, la del usuario).
+- Diseño en `reports/diseno/isla-esmeralda.md`:
+  - medidas de pokeemerald;
+  - encaje 4×2 celdas;
+  - techo de carga retail;
+  - opción B en dos sectores;
+  - qué se conserva.
+- Cola (`frontier/orch/tasks.json`), justo detrás de F9-MODOS-BASE:
+  - F11-ISLA-TRAZADO;
+  - F11-ISLA-CONSTRUCCION;
+  - F7-PAQUETE-V03 (después de la isla y de F9-MODOS-BASE).
+- F9-LIBRE-PROPIOS pasa a depender de F7-PAQUETE-V03.
+- F10 revisadas:
+  - LETREROS y EXTERIOR-FASE1 sin coordenadas de la plaza antigua; FASE1 ya no lleva vallas;
+  - COTA-CARGA anulada: queda en estado done, pero no se hizo;
+  - EXTERIOR-FASE2 reescrita como edificio definitivo en su hueco, con el sí del usuario.
+Evidencia: la imagen mide 16 px por casilla: 128×72 = Oeste 56×72 + Este 72×72
+(`data/layouts/layouts.json` y `data/maps/BattleFrontier_Outside{West,East}/map.json` de pret/pokeemerald
+731ad5bf; puertas de `warp_events`, tabla en `isla-esmeralda.md` §1). `python -m pytest -q tests/test_frontier_orch.py`:
+63 passed. `frontier-orch status` muestra el orden nuevo.
+Commits: ver git log (turno 5079dea y este).
+Decisiones:
+- F11-ISLA-TRAZADO no espera a F9-MODOS-BASE (en curso en el carril de Codex, sin cuota hasta las 00:25): no
+  comparten ficheros, y así el carril de Claude no se queda parado. La alfa sí espera a las dos.
+- Se mantiene la escala 1:1 en casillas.
+- El techo de carga sale de exteriores retail medidos con la métrica de Plaza: lo que carga de fábrica carga en
+  consola. Reducir la escala solo después de la opción B y con la causa escrita.
+- Se descarta el cambio pendiente del carril claude a `reports/consola-frente.md` (borrador v0.2 superado por
+  8146ea0).
+Siguiente paso: relanzar `frontier/orch/frontier-orch auto --parallel --follow`. Claude toma F11-ISLA-TRAZADO y Codex
+retoma F9-MODOS-BASE cuando vuelva su cuota.
