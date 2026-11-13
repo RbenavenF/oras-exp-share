@@ -18,7 +18,7 @@ import patch  # noqa: E402
 
 
 def test_allocation_is_disjoint_from_legacy_and_does_not_consume_holes():
-    assert len(m.RESERVED) == len(set(m.RESERVED)) == 42
+    assert len(m.RESERVED) == len(set(m.RESERVED)) == 35
     assert not set(m.RESERVED) & (audit.LEGACY | audit.EXCLUDED)
     assert len(m.NEW_BANKS) == 11
     assert all(m.bank(r, 0) == (s, s + 2) for r, (_, s) in patch.STREAK_ROUTES.items())
@@ -33,6 +33,29 @@ def test_bank_resolution_matrix(route, mode):
     expected = 1 <= route <= 7 and (mode in (0, 1) or (route <= 2 and mode in (2, 3)))
     assert m.valid(route, mode) == expected
     assert (m.bank(route, mode) is not None) == expected
+
+
+@pytest.mark.parametrize('route', range(1, 8))
+def test_persistent_config_values_and_corruption(route):
+    assert m.unpack_config(route, 0) == (0, 50)  # old saves
+    for mode in range(4):
+        for level in (0, 49, 50, 59, 60, 73, 100, 101, 255):
+            allowed = (mode < 2 or route <= 2) and (
+                level == (100 if mode & 1 else 50) if route == 1
+                else 60 <= level <= 100 if mode & 1 else level == 50)
+            if allowed:
+                word = m.pack_config(route, mode, level)
+                assert m.unpack_config(route, word) == (mode, level)
+                assert all(m.unpack_config(route, word | 1 << bit) is None for bit in range(10, 16))
+            else:
+                with pytest.raises(ValueError):
+                    m.pack_config(route, mode, level)
+    assert m.unpack_config(route, -1) is None
+    assert m.unpack_config(route, 65535) is None
+    for other in (0, 8, 65535):
+        assert m.unpack_config(other, 50) is None
+        with pytest.raises(ValueError):
+            m.pack_config(other, 0, 50)
 
 
 @pytest.mark.parametrize('route', (1, 2))
@@ -55,7 +78,7 @@ def test_local_allocation_and_current_space():
     import ids
     used, _, _ = ids.scan()
     candidates = audit.check_allocation(used)
-    assert candidates - set(m.RESERVED) == {16399}
+    assert candidates - set(m.RESERVED) == {16471, 16673, 16677, 16678}
     space = audit.measure_space()
     assert space['code']['free'] >= 0
     assert space['code']['luma_reserved'] == [0x579604, 0x579804]
@@ -146,12 +169,15 @@ def test_setrank_really_does_not_validate(retail, raw_rank):
 
 @pytest.mark.parametrize('kind', (0, 1))
 @pytest.mark.parametrize('selector_rank', (1, 2))
-@pytest.mark.parametrize('packet_status,accepted', ((0, 0), (1, 0), (1, 1)))
+@pytest.mark.parametrize('packet_status,accepted',
+                         ((0, 0), (1, 0), (1, 1), (2, 0), (2, 1), (3, 0), (3, 1)))
 def test_selector_callback_packets_and_auxiliary_x(retail, kind, selector_rank, packet_status, accepted):
     """Execute the real callback and configuration function with synthetic packets.
 
     status=0 leaves output works untouched; status=1 + acceptance=0 writes zeros
-    without changing facility configuration. UI mapping remains unmeasured.
+    without changing facility configuration. Azahar emits status=3 on Normal
+    confirmation, which also initializes the opponent list and seed machinery.
+    Those external calls are intercepted here; their internals are not tested.
     """
     from formats import sha256
     from unicorn import UC_HOOK_CODE
@@ -174,13 +200,22 @@ def test_selector_callback_packets_and_auxiliary_x(retail, kind, selector_rank, 
     put(facility + 0xB78, game)
     put(game + 0x1C, game + 4)
     put(game + 4, save)
+    put(facility + 0xB70, engine)
+    put(engine, engine + 4)
+    virtual = 0x8010000
+    put(engine + 4 + 0x34, virtual)
     uc.mem_write(facility + 0x838, b'\xCC\xCC\xCC')
-    writes, configurations = [], []
+    writes, configurations, initializations = [], [], []
 
     def intercept(uc, address, size, _):
         r0, r1, r2, r3 = (uc.reg_read(reg) for reg in
                           (a.UC_ARM_REG_R0, a.UC_ARM_REG_R1, a.UC_ARM_REG_R2, a.UC_ARM_REG_R3))
         thunk = address - field_base
+        if address in (0x1E8474, 0x301FB4, virtual, 0x1E8900):
+            initializations.append((address, r0, r1, r2, r3))
+            uc.reg_write(a.UC_ARM_REG_R0, 0x1234)
+            uc.reg_write(a.UC_ARM_REG_PC, uc.reg_read(a.UC_ARM_REG_LR))
+            return
         if thunk == 0x3870:
             configurations.append((r0, r1, r2, r3))
             uc.reg_write(a.UC_ARM_REG_PC, 0x1E5684)
@@ -205,8 +240,14 @@ def test_selector_callback_packets_and_auxiliary_x(retail, kind, selector_rank, 
         assert configurations == []
     else:
         assert writes == [(0x800D, kind), (0x800E, 7), (0x800C, 1)]
-        assert configurations == [(facility, selector_rank, kind, 0)]
+        assert configurations == [(facility, selector_rank, kind, int(packet_status != 1))]
         assert bytes(uc.mem_read(facility + 0x838, 3)) == bytes([selector_rank - 1, kind, selector_rank])
         assert bytes(uc.mem_read(save + patch.MAISON_BASE + 0x1F4, 1)) == bytes([selector_rank - 1])
     if not configurations:
         assert bytes(uc.mem_read(facility + 0x838, 3)) == b'\xCC\xCC\xCC'
+    if packet_status in (2, 3) and accepted:
+        assert [i[0] for i in initializations] == [0x1E8474, 0x301FB4, virtual, 0x1E8900]
+        assert initializations[0][1:3] == (selector_rank, kind)
+        assert initializations[-1][1:] == (0x1234, 0x1234, facility + 0x840, 0x1234)
+    else:
+        assert initializations == []

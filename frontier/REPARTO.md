@@ -147,6 +147,30 @@ en la reserva (`modes_audit.py`). La integración futura usará `guarded_writes`
 sin esos guards. code.bin conserva 276 bytes libres y la reserva Luma
 0x579604–0x579804 intocable. Sin textos/casos nuevos reservados en este hito.
 
+### Corrección F9 tras laboratorio (2026-11-13, Codex)
+
+**Sustituye la asignación de MODE/LEVEL/FACTORY_RENTS anterior antes de uso en
+motor.** La copia con centinelas guarda/carga los 42, pero al salir de 517 y
+caminar de vuelta al acceso del salón se borran **16398,16429,16430**:
+`work/frontier/modos/base/reload-gdb.log`, captura `hall-reentered.png` (evento
+del vestíbulo, aún sin franquear la cortina). Se excluye además el vecino 16399
+por prudencia; no se afirma haberlo medido. Los otros 39 centinelas sobreviven.
+
+Reserva definitiva candidata: **35 u16**, manteniendo los 22 racha/récord y los
+2 cuartos sets de la tabla anterior. Se compactan MODE y LEVEL **por ruta** en
+un CONFIG u16: bits 8–9 = M, bits 0–7 = L; demás bits a cero. CONFIG=0 conserva
+la semántica de partida antigua M=0/L=50. No se compactan contadores de racha,
+récord ni cambios; no se usa el rango retail para almacenar M.
+
+| Uso | Works (orden explícito) |
+| --- | --- |
+| CONFIG, rutas 1–7 | 16546,16573,16594,16603,16635,16637,16638 |
+| FACTORY_RENTS, M=0,1,2,3 | 16451,16455,16456,16469 |
+
+Se liberan de la reserva F9 **16471,16673,16677,16678**. No reutilizar los tres
+borrados ni 16399. Esta corrección no cambia turno, bancos M=0, textos/casos ni
+cuevas. Falta repetir persistencia con los CONFIG válidos y esta distribución.
+
 ## Reservas del motor (Arena B, 2026-11-05)
 
 Arena: bit 31 (`0x80000000`) del word `BattleSetup+0xa8`; se pondrá al final de StartBattle solo con ruta 4

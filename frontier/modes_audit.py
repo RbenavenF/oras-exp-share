@@ -26,14 +26,14 @@ LEGACY_RANGES = (
     (16729, 16731), (16733, 16733),
 )
 LEGACY = {w for first, last in LEGACY_RANGES for w in range(first, last + 1)} | ids.KNOWN.keys()
-EXCLUDED = set(range(0x4010, 0x4020))
+EXCLUDED = set(range(0x4010, 0x4020)) | {16398, 16399, 16429, 16430}
 
 
 def check_allocation(used):
     candidates = set(ids.WORKS) - used.keys() - LEGACY - EXCLUDED
     allocated = modes.RESERVED
-    if len(allocated) != 42 or len(set(allocated)) != 42:
-        raise ValueError('F9 must reserve exactly 42 distinct works')
+    if len(allocated) != 35 or len(set(allocated)) != 35:
+        raise ValueError('F9 must reserve exactly 35 distinct works')
     bad = set(allocated) - candidates
     if bad:
         raise ValueError(f'F9 work collision: {sorted(bad)}')
