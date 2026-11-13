@@ -3298,3 +3298,30 @@ exheader (alternativa: sin relleno, Luma usaría otra función del juego).
 No probado: Azahar (con y sin la carga de Luma) y consola.
 Siguiente paso: Azahar 24690 con code.ips de luma.py (Luma simulado): Mansión original Individual, Torre, Fábrica,
 Domo, Palacio, Arena y Tubo arrancan combate, más un combate normal de la historia.
+
+## 2026-11-13 — Claude Code (Opus 5.5) — F7-CUEVA-LUMA hito 2: Azahar con Luma simulado
+Estado: hecho
+Hecho: laboratorio 24690 con el code.bin «como en consola» (frontier/luma.py) y la carpeta de mod de
+frontier/probes/luma/lab_mod.py (v0.5 + overlay.py + code.ips; 38 ficheros = los 37 del paquete alfa + a/1/8/3).
+Informes: reports/frontier.md §49 y reports/consola-frente.md («Causa medida y arreglo»).
+Evidencia (work/frontier/cueva/ del carril claude):
+- Reproducción: alfa v0.1 + carga de Luma (mod-alpha-luma, code.ips a885e4b7…), reception.sav 98089a84…, Mansión
+  original Individual → SIGSEGV en el montador, pc 0x1e3dc0 (bl 0x3b6150; 0x3b6154 ldrcc), r8 = 0xd8e007f7, la huella
+  de los volcados de consola (alpha-luma-maison.gdb.log).
+- Arreglo + Luma (mod-luma, code.ips 5bcc632a…): Mansión original Individual con la misma partida: FRONT START ruta 0,
+  FRONT RESULT raw0 (maison-luma.gdb.log, maison_battle.png). circuit.py desde checkpoint_harbor.sav (5ddaa992…):
+  Fábrica, Torre, Arena, Palacio, Tubo, Domo y Pirámide, cada una con FRONT START de su ruta y FRONT RESULT (derrotas,
+  equipo débil) y vuelta a la plaza; «circuit done» 18:22 (circuit.log/out, circuit.gdb.log, shots/c_*_battle.png).
+  Historia: s1_story.sav (aeacbea8…), combate del Cazabichos hasta el final y vuelta al campo (shots/story_*.png).
+- Suite: env -u ORCH_LANE python -m pytest -q tests: 1405 passed, 2 skipped, 45.50 s (tests-m2.log); diff --check limpio.
+- Laboratorio parado (gdbctl stop + reap; sin session.json).
+Commits: 059b04a hito 1; el de esta entrada, «test(frontier): run the Frontier in Azahar with Luma's payload applied».
+Decisiones: política caso b ampliada a las siete instalaciones y la Mansión original porque cambia la cueva (lo pide el
+criterio). La regresión se hizo con Luma simulado, que es más estricta que sin él (los ganchos de code.bin son los
+mismos). No se regeneró el paquete: frontier/package.py falla por BUILD_FILES sin a/1/8/3 (tarea F7-PAQUETE-V02).
+Para el integrador: REPARTO dice «cueva 2452/2556» y «quedan 1944 bytes» en DllBattle; ahora code.bin 0x579804–0x579eec
+(276 libres, 0x579604–0x579804 reservado a Luma) y DllBattle 0xd7870–0xd7b84 (1148 libres hasta 0xd8000).
+No probado: consola; juicio de 3 turnos de la Arena y decisiones del Palacio en Azahar tras el traslado (sí en
+Unicorn sobre el CRO parcheado); breakpoints en el CRO no saltan en Azahar (FRONT ENTRY a 0, conocido).
+Siguiente paso: F7-PAQUETE-V02 regenera el paquete con este arreglo; el usuario lo valida en consola con el depurador
+de Luma (0x579604 Luma, 0x579804 rental_hook) y un combate de tipo Mansión.

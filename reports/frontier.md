@@ -3369,3 +3369,59 @@ DOME_FIGHT apuntan a Pokémon vacíos (AddMember 0x3b645c descarta especie 0, 0x
 (0x1e5910) pone a 0 +0x2c..+0x4c, y el Domo no llama a la app de selección, así que ninguna de las dos se ha visto en
 Azahar. Estado: **no reproducido**; falta saber los pasos exactos de la consola. No se ha cambiado el motor.
 No probado: v0.5 (no aplica: sin cuelgue que comparar), consola.
+
+## 49. F7-CUEVA-LUMA: Luma pisa el principio de la cueva de code.bin (2026-11-13, Claude)
+
+**Causa** (medida por el usuario en su 3DS con el depurador de Luma; `work/frontier/consola/`): con LayeredFS, el
+cargador de Luma3DS (`sysmodules/loader/source/patcher.c`, `findLayeredFsPayloadOffset`/`patchLayeredFs`,
+comprobado en 1441535d) copia su carga de redirección (`romfsredir.s`, `romfsRedirPatchSize` = 0x114 = 276 bytes,
+tamaño fijo del ensamblado) **al final del .text del exheader** si el relleno hasta la página es ≥ ese tamaño, y
+desvía `fsOpenFileDirectly` (0x1325a4 → 0x579604) y `fsTryOpenFile` (0x123e80 → 0x579610); la ruta «lf:…» va al
+relleno de .rodata (0x5eba14), fuera de .text. Nuestra cueva empezaba en ese mismo 0x579604 con `rental_hook`: en
+consola todo combate de tipo Mansión ejecutaba código de Luma. Azahar aplica LayeredFS por su cuenta y no escribe
+nada en el ejecutable. Las palabras de la carga de consola que no son reubicaciones coinciden con el ensamblado de
+`romfsredir.s`; el resto de .text de consola difiere de nuestro code.bin solo en bytes que no tocamos.
+
+**Arreglo** (`frontier/patch.py`):
+- `LUMA_PAYLOAD` 0x114, `LUMA_RESERVED` **0x200**: 0x579604–0x579804 se deja a cero; nuestro código empieza en
+  `HOOKS` = 0x579804 (`rental_hook`). `assemble()` falla si algo cae en la reserva o pasa de 0x57a000; `build()` exige
+  la cueva entera a cero. code.bin: 1768 bytes (0x579804–0x579eec), **276 libres**.
+- Las rutinas que solo corren en combate y solo se llaman desde DllBattle.cro (Arena: `arena_enter`, `arena_switch`,
+  `arena_turn_end`, `arena_judge`; Palacio B: `palace_ai_want`, `palace_ai_flags`, `palace_dispatch`) pasan al
+  relleno de la región de código de **DllBattle.cro, 0xd7870–0xd7b84** (788 bytes, tras `palace_cro.s`
+  0xd7630–0xd7868; quedan 1148 hasta .rodata 0xd8000): `asm/arena_cro.s` y `asm/palace_b_cro.s` (antes `palace.s`),
+  enlazados en su offset de fichero (`patch.battle_cro_code`, `BATTLE_CRO_AT`). `arena_judge` llama a UDIV 0x15ec10
+  por dirección absoluta. Puentes `nop; bl stub; b +0; nop` (`arena_engine.bridge`): `bl` relativo dentro del CRO
+  (sin reubicación, cualquier base) y LR = sitio + 8 como antes. Escritos con `guarded_writes`, rehash y CRR como hoy.
+  `arena_start`/`palace_start` (StartBattle), Fábrica, rival, rachas, Domo, Tubo y Pirámide siguen en code.bin.
+- `frontier/luma.py`: la carga medida y los dos desvíos (`overlay()`), y CLI que escribe un code.bin/code.ips «como lo
+  ve la consola» para el laboratorio. `frontier/probes/luma/lab_mod.py`: carpeta de mod como el paquete (v0.5 + build
+  + code.ips, `plain` o `luma`) con `manifest.json` para `probes/package/boot.sh`.
+
+**Tests** (`tests/test_frontier_luma.py`; `test_frontier_patch.py` corre todos sus casos Unicorn también con Luma
+encima): reserva ≥ carga; Luma cae sobre ceros y deja intactos nuestros bytes; cada gancho de code.bin apunta a
+≥ HOOKS con Luma aplicado; ningún salto ni literal nuestro entra en la reserva; `pike_param` (DllField) fuera de ella;
+puentes de DllBattle con `bl` a sus rutinas; ensamblado que no cabe → error; la carga coincide con
+`console-text.bin`. Mutación: con `LUMA_RESERVED` = 0 los casos «luma» del alquiler fallan (16): la VM reproduce el
+cuelgue. Suite: 1405 passed, 2 skipped.
+
+**Azahar con Luma simulado** (laboratorio 24690; `work/frontier/cueva/`):
+
+| Prueba | Build | Resultado |
+| --- | --- | --- |
+| Mansión original (517) Individual, `reception.sav` 98089a84… | **alfa v0.1 + carga de Luma** (`mod-alpha-luma`, code.ips a885e4b7…) | **SIGSEGV** en el montador (pc 0x1e3dc0 → `bl 0x3b6150`, `ldrcc r0,[r0,…]` en 0x3b6154) con equipo r8 = **0xd8e007f7**: la huella de los volcados 4/6 de consola (`alpha-luma-maison.gdb.log`) |
+| Mansión original Individual, misma partida | **arreglo + carga de Luma** (`mod-luma`, code.ips 5bcc632a…, 38 ficheros) | «¡La Turista Kate te desafía!», tres Pokémon, `FRONT START` ruta 0 y `FRONT RESULT raw=0` (`maison-luma.gdb.log`, `maison_battle.png`) |
+| Circuito `circuit.py` desde `checkpoint_harbor.sav` (5ddaa992…): marinero, ferry, plaza y las siete | arreglo + Luma | Fábrica (ruta 1, 16489 = 3), Torre (2), Arena (4), Palacio (3), Tubo (6, sala superada), Domo (5) y Pirámide (7, piso 141): cada uno `FRONT START` con su ruta y `FRONT RESULT` (derrota, equipo Nv. 6–12), vuelta a la plaza; `circuit done` (`circuit.log`, `circuit.out`, `circuit.gdb.log`, `shots/c_*_battle.png`) |
+| Historia: `s1_story.sav` (aeacbea8…), Cazabichos de la Ruta 102 | arreglo + Luma | combate de entrenador hasta el final y vuelta al campo con su línea posterior (`shots/story_*.png`) |
+
+Los puentes de Arena y Palacio están en todo combate (constructor de clientes, despacho de órdenes, entrada y fin de
+turno), así que el combate de la historia y el de la Mansión original los ejecutan desde su nueva ubicación. Un
+breakpoint de GDB en el CRO no salta en Azahar (el cargador repone los marcadores, `probes/maison/README.md`): la sonda
+`FRONT ENTRY` en `arena_enter` (`patch.battle_cro_runtime`, base 0x6f3000) quedó a 0 avisos; la prueba de que corren
+es que los combates terminan.
+
+**Sin probar**: consola (el usuario puede validarlo con el depurador de Luma: 0x579604–0x579717 será Luma y
+0x579804 `rental_hook`); juicio de 3 turnos de la Arena y decisiones del Palacio en Azahar tras el traslado (sí en
+Unicorn: `test_frontier_arena.py`, `test_frontier_palace.py`, sobre el CRO parcheado en dos bases); otras versiones de
+Luma con carga > 0x200. El paquete (`frontier/package.py`) no se ha regenerado: su lista `BUILD_FILES` no incluye
+`a/1/8/3` (Cerebros) y falla; es de F7-PAQUETE-V02.

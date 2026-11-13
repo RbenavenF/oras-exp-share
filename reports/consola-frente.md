@@ -12,7 +12,7 @@ textos). Este paquete añade, sin probar en consola:
 
 | Pieza | Dónde | Se ejecuta en | Riesgo |
 | --- | --- | --- | --- |
-| Código nuevo al final de `.text` (cueva 0x579604–0x57A000) | `code.ips` | toda instalación (alquiler, rachas, rival, Domo, Tubo, Pirámide) | medio: se ejecuta en Azahar; en consola, ningún parche de este proyecto había usado esa cueva |
+| Código nuevo al final de `.text` (cueva 0x579604–0x57A000; desde F7-CUEVA-LUMA, 0x579604–0x579804 reservado a Luma y el código en 0x579804) | `code.ips` | toda instalación (alquiler, rachas, rival, Domo, Tubo, Pirámide) | **alfa v0.1: fallo medido** (Luma escribe ahí su LayeredFS; ver «Causa medida» al final) |
 | `DllBattle.cro`: copia de vuelta del equipo, puentes de Arena y Palacio, filtro del Palacio en el relleno de la región de código (0xd7630) | `romfs/DllBattle.cro` + `.crr/static.crr` | **cualquier combate** carga el CRO; el código del relleno solo corre en el Palacio | alto para el Palacio (permisos de `ldr:ro` sobre el relleno, sin medir); la carga del CRO en sí, medio |
 | `DllField.cro`: puente del Tubo (0x4e644) | `romfs/DllField.cro` + CRR | consultas de equipo del Tubo | medio |
 | Isla 209, plaza con siete edificios, interiores 213/329/340/456/457/458/140–142 | `romfs/a/0/1/3`, `a/0/1/4`, `a/0/3/9`, `a/0/4/0`, `a/1/3/7` | al llegar a la isla y entrar en cada edificio | medio: memoria de la consola con la plaza cargada (en Azahar no hay límite real) |
@@ -136,3 +136,20 @@ hasta tener las trazas de los combates. No se ha cambiado el motor.
    anterior al cuelgue.
 3. Los pasos desde Continuar: a quién hablaste, opciones elegidas (Combatir, qué tres inscribiste y qué dos
    elegiste como luchadores; si pulsaste B en algún menú), y si antes, en la misma sesión, jugaste otra instalación.
+
+### Causa medida y arreglo (F7-CUEVA-LUMA, 2026-11-13)
+
+Medido por el usuario con el depurador de Luma: Luma copia su código de LayeredFS (276 bytes) en **0x579604**, el
+final del .text del exheader, que era el principio de nuestra cueva (`rental_hook`), y desvía 0x1325a4 y 0x123e80
+hacia él. Por eso en consola se colgaba **todo** combate de tipo Mansión (también la Mansión original), y en Azahar,
+que no escribe nada en el ejecutable, no. Las preguntas de arriba quedan contestadas por la medida.
+
+Arreglo (`reports/frontier.md` §49): 0x579604–0x579804 se deja libre para Luma (su tamaño, según su código fuente, es
+fijo: 0x114 bytes), nuestro código empieza en 0x579804, y las rutinas de combate de Arena y Palacio pasan a
+`DllBattle.cro`. En Azahar, simulando a Luma (sus 276 bytes escritos en el code.bin): la alfa v0.1 reproduce el
+cuelgue con el mismo equipo 0xd8e007f7 de los volcados; con el arreglo, Mansión original Individual, las siete
+instalaciones y un combate de la historia van bien.
+
+**Para validar en consola** (sin paquete nuevo todavía): con el depurador de Luma, en un combate de la Mansión,
+0x579604–0x579717 debe ser Luma y 0x579804 el principio de `rental_hook` (`e92d41f0`, `push {r4-r8,lr}`); ningún
+combate de tipo Mansión debe colgarse. Falta regenerar el paquete (F7-PAQUETE-V02).
