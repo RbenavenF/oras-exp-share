@@ -3460,3 +3460,21 @@ Evidencia: `python -m pytest -q tests/test_frontier_orch.py` en verde.
 Commits: este.
 Decisiones: reducir la escala sigue siendo el último recurso, detrás de B.
 Siguiente paso: `frontier/orch/frontier-orch auto --parallel --follow`.
+
+## 2026-11-13 22:55 — Claude Code (Opus 5.5) — Regresión agrupada en las alfas
+Estado: hecho
+Hecho: el usuario aprueba agrupar la regresión.
+- Política nueva en el `brief` de `frontier/orch/config.json` y en `frontier/orch/README.md`.
+- En los criterios de las tareas pendientes, que el agente lee en cada ejecución y valen ya sin reiniciar el
+  supervisor.
+Qué cambia:
+- Cada tarea prueba en Azahar solo lo nuevo, más lo movido si mueve código que ya funcionaba.
+- Los combates del Palacio, la Arena, el Tubo y la historia van solo en el recorrido completo de cada alfa.
+Evidencia: `circuit.log` del carril claude: el recorrido completo de la v0.2 tarda 35 min (18:33–19:08), unos 4–5 min
+por instalación (andar ~1, recepción ~1,3, combate ~1). `python -m pytest -q tests/test_frontier_orch.py` en verde.
+Commits: este.
+Decisiones: no se encola la tarea de savestates propuesta. Medido, andar es ~1 min por instalación (~7 de 35). Un
+savestate guarda la RAM con el código ya cargado, así que habría que rehacerlo en cada build. No compensa.
+El supervisor en marcha leyó `config.json` al arrancar: el `brief` nuevo vale desde el próximo arranque. Hasta
+entonces manda el texto de los criterios.
+Siguiente paso: ninguno propio. F9-MODOS-BASE sigue en el carril claude.
