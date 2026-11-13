@@ -221,3 +221,60 @@ callback Súper real y el guard de estado inactivo de §2 (el resolvedor actual
 valida ruta/CONFIG pero no ACTIVE). También auditar L fijo si cambia la selección
 al reanudar: el hook actual permite subir L, aunque nunca bajarlo. No habilitar
 menús ni marcar BASE completa con esos pendientes.
+
+## Hito 5: persistencia35 y callback Súper (2026-11-14, Codex)
+
+Sin cambios de motor desde b449950. Reutiliza la misma build exacta y la suite
+completa del hito 4 (2267 passed, 3 skipped). `sentinels-source.sav` es una copia
+de paused73.sav, trasladada a zona 517 (23.5,25.5), flags retail 385/386=1 para
+mostrar Súper. Fuente SHA-256
+`c60c62395705cd311821ff76bfacbb6d914b256a1324cd040ca0a808a30bed39`.
+`persistence.py seed SOURCE SHA OUTPUT` produce `sentinels-valid.sav`, SHA-256
+`195fbe87f5cfd6830cd7dc8f61da6ef7ecca456a4ea3eeffda0e7d6887fdea13`:
+35 reservas no nulas, CONFIG válidos, ACTIVE y WORK_ROUTE=0. Metadatos con todos
+los valores esperados en `sentinels-valid.sav.json`. No se inició combate con
+rachas/sets artificiales.
+
+`sentinels-super-gdb.log`: callback real de Súper Individual. Configurador
+0x1e5684 recibe r1=2, tipo=0, init=1, LR=0x789b50 (DllField base 0x6f3000).
+Paquete `0300000044258208000201000101000000000000`: bytes +8/+9/+10/+11 =
+0/2/1/0, por tanto **auxiliar X=0**; resultado rango=1, tipo=0, selector=2.
+Se declina la confirmación y cancela el selector: work 0x800c pasa a 0 sin
+comenzar desafío. La lectura de 43 works (35 reservas + 7 ACTIVE + ruta) no
+encuentra diferencias. No confundir este rango Súper con Libre.
+
+Tras salir del salón a la antesala, avanzar el evento retail de recepción y
+volver a entrar, guardado real desde menú X→Guardar. `sentinels-saved.sav`,
+SHA-256 `4ec0ea564573cda563ef89d5ec8e64ba470fba0421d15cc5cc1e2d819db75f7a`,
+zona 517 (19.5,31.5). `sentinels-saved.json`: checksums válidos de 58 bloques,
+43 works sin diferencias, equipo y Cajas idénticos a la copia fuente.
+Apagado y arranque desde ese guardado: `sentinels-reload-gdb.log` mide los mismos
+43 valores en RAM, otra vez sin diferencias (`sentinels-reload-check.json`).
+Esta vez selector Normal: código 1→rango 0, tipo 0 y X=0. Confirma los dos rangos
+con la misma sonda y build; no demuestra persistencia frente a todos los eventos
+retail del juego. Laboratorio del carril detenido con azahar_lab.py reap.
+
+### Pendientes concretos para continuar BASE
+
+`contract-gaps.json` ejecuta los helpers Unicorn de
+`tests/test_frontier_modes_engine.py` contra el code.bin construido:
+
+- Ruta 2, ACTIVE=0, CONFIG=0x149: mode_level devuelve **73**, debería usar 50
+  en estado inactivo según §2. No basta añadir un guard a todos los accesores:
+  tower.facility_program limpia ACTIVE al entrar en LOST, antes de las lecturas
+  y ClearWinCount retail; hay que preservar limpieza/guardado del banco Libre.
+- Con CONFIG=0x149 y nuevos inscritos [100,55,41], mode_cap cambia CONFIG a
+  **0x164**. El contrato pide conservar L durante la pausa/reanudación. Hace
+  falta distinguir fijación inicial de selección y desafío ya fijado; no usar
+  rango 1/2 para este estado. La medición aceptada de niveles 6/6/7 solo prueba
+  que L no baja, no que sea inmutable ante un inscrito superior.
+- Code.bin está lleno (0 libres); diseñar/medir espacio para esas correcciones
+  conservando Luma 0x579604–0x579804. DllField 0xf0a00–0xf1000 sigue vacío, con
+  auditoría/guards/CRR preparados; no asumir su dirección runtime desde code.bin.
+- Selección de Caja de Combate no probada en vivo. Domo: auditar el máximo de
+  los tres inscritos antes de sustituir selección por dos combatientes
+  (dome_party); no declarar esa composición solo por probar dos niveles.
+
+No hay decisión externa que pedir: tarea **in_progress**, sin menús nuevos y
+sin prueba de consola. La regresión de otras instalaciones/historia se mantiene
+para el recorrido de la alfa por instrucción del usuario.

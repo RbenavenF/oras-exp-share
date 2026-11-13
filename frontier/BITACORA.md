@@ -3582,3 +3582,28 @@ total de esa primera transición. Los demás campos y Cajas intactos. Laboratori
 Siguiente paso: completar persistencia35 y selector Súper; corregir/auditar
 estado inactivo (mode_of no mira ACTIVE) y L fijo ante selección distinta al
 reanudar (hoy puede subir). No marcar done ni abrir menús con estos pendientes.
+
+## 2026-11-14 — Codex — F9-MODOS-BASE hito 5: persistencia35 y cierre de laboratorio
+Estado: en curso
+Hecho: medidas reales de selector Súper (código2→rango1, tipo0, X=0) y Normal
+(código1→rango0, tipo0, X=0), cancelación posterior sin combate. Las 35 reservas
+con CONFIG válidos sobreviven salir del salón/entrar en antesala/volver, guardar
+y apagar/cargar. Comparación de 43 works (reservas+ACTIVE+ruta), equipo y Cajas.
+Evidencia: reports/modos-base.md hito 5; work/frontier/modos/base3/
+sentinels-super-gdb.log, sentinels-valid.sav/json, sentinels-saved.sav/json,
+sentinels-reload-gdb.log y sentinels-reload-check.json. Guardado real SHA-256
+4ec0ea564573cda563ef89d5ec8e64ba470fba0421d15cc5cc1e2d819db75f7a.
+Checksums58 válidos, 43 works sin diferencias en disco y RAM tras recargar.
+Motor/build idénticos a b449950 (hashes hito3, ZO16828, hook2044); suite completa
+vigente tests-hito4.log: 2267 passed,3 skipped (58,86 s). Sin cambio de código
+tras esa ejecución, solo documentación. Consola y selección de Caja no probadas.
+Commits: el de esta entrada; 9255a20 utilidad/evidencia vertical; b449950 motor.
+Decisiones: no marcar done. contract-gaps.json confirma en Unicorn dos defectos
+pendientes: ACTIVE=0 con ruta2/CONFIG149 aún devuelve73; al reanudar con un
+inscrito100, CONFIG149 sube a164 en lugar de fijar73. Cave code.bin sin espacio;
+no invadir Luma. Laboratorio24691 detenido con python scripts/azahar_lab.py reap.
+Siguiente paso: resolver guard de nivel inactivo y distinguir L inicial/fijo;
+auditar el orden LOST (ACTIVE se borra antes de ClearWinCount/guardado) antes
+de extender el guard a accesores. Diseñar espacio con guards/hashes/CRR y probar
+la selección superior al reanudar. Después Caja efectiva y máximo de los tres
+inscritos del Domo antes de reducir a dos. Todo detallado en informe hito5.
