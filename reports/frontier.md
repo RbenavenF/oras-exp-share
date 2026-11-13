@@ -3486,3 +3486,21 @@ este paquete exacto (sus pruebas al implementarlos son anteriores); ferry de Por
 No se modificó motor, isla ni LEEME durante el cierre documental: los 39 ficheros validados siguen siendo
 los de 18018ba. Tras integrar este cierre, `package.py` puede regenerar el manifiesto con el nuevo commit;
 los ficheros del juego y LEEME deben mantener sus hashes.
+
+## 51. Modalidades F9-BASE, hito 1: reservas y medidas previas (2026-11-13)
+
+Estado en curso; detalle y continuación en `reports/modos-base.md`.
+`frontier/modes_audit.py`: 43 candidatos tras REPARTO y exclusión 0x4010–0x401f;
+reservadas 42 posiciones en REPARTO (53 propuestos menos 11 huecos S+1).
+M=0 intacto; nuevos bancos con racha/récord explícitos, no presuponer S+2.
+Espacio medido: code.bin 1768 bytes en 0x579804–0x579eec, 276 libres y reserva Luma
+intacta; Cerebros DllField termina 0xf09f4, reserva F9 0xf0a00–0xf1000.
+Accesores Dobles reales por tablas de salto: incremento 0x45cdfc, lectura 0x45cf24,
+borrado 0x45cfc8 y récord 0x45d04c. Unicorn ejecuta los bytes retail, límite 9999,
+rangos 0/1 y normalización de no cero; callback 0x96b00 con paquetes sintéticos,
+configuración 0x1e5684 y SetRank sin validación. PB Dobles cotejados en las 30 filas
+de pokeemerald 731ad5bf; API Python preparada, sin hooks/menús activos nuevos.
+Evidencia: work/frontier/modos/base/{audit.json,static.txt,reference-bp.json,build-hashes.json}.
+Suite env -u ORCH_LANE python -m pytest -q tests: 1512 passed, 3 skipped, 48.80s.
+No probado: UI/cancelación real, cuatro inscritos, persistencia Azahar, Libre L=73,
+nativos nuevos ni consola. Binarios reconstruidos sin cambios respecto al inicio.

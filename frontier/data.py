@@ -71,6 +71,13 @@ FRONTIER_BP = {
     'pyramid': [5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14] + [15] * 10,
 }
 BATTLE_POINTS = FRONTIER_BP['factory']
+# sBattlePointAwards[][TOWER/FACTORY][FRONTIER_MODE_DOUBLES], same fixed source.
+# Extracted and compared for all 30 rows by probes/modos/reference_bp.py.
+# Libre changes levels, not the reward column. Never add one after saturation.
+FRONTIER_BP_DOUBLES = {
+    'tower': [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] + [15] * 17,
+    'factory': [4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14] + [15] * 8,
+}
 BRAIN_BONUS = 10
 # sFrontierBrainStreakAppearances[FACTORY] = {21, 42, 21, 1}: battle 21 (silver), 42 (gold), then every 21.
 BRAIN_BATTLES = (21, 42, 21)

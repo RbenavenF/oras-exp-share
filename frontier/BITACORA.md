@@ -3376,3 +3376,38 @@ F10-COTA-CARGA conserva decisión expresa antes de subir LOAD_BUDGET; v0.2 no va
 No probado: ningún combate nuevo en esta sesión; confirmación consola viene del usuario.
 Siguiente paso: lanzar frontier/orch/frontier-orch auto --follow en tmux frente, comprobar que
 Codex empieza F9-MODOS-BASE (Claude en cooldown hasta 22:02). El supervisor toma el turno.
+
+## 2026-11-13 20:52 — Codex — F9-MODOS-BASE hito 1: reservas y medidas sin habilitar modalidades
+Estado: en curso
+Hecho: leídos AGENTS (sin CLAUDE.md), PLAN, REPARTO, últimas entradas y modos.md;
+turno/tasks.json intactos (carril). Añadidas reservas antes de usarlas y módulos
+modes.py/modes_audit.py. 1157 scripts/147 ficheros: 121 candidatos retail, 48 tras
+asignaciones, 43 al excluir también todo 0x4010–0x401f. La solicitud de 53 no cabe:
+42 posiciones con racha/récord explícitos nuevos, sin los 11 huecos S+1; M=0 intacto.
+Reserva DllField 0xf0a00–0xf1000 con auditor de hash, ceros, página, relocaciones,
+hashes CRO y CRR. Cerebros termina actualmente 0xf09f4; code.bin deja 276 bytes;
+Luma 0x579604–0x579804 intacto. PB Dobles Torre/Fábrica extraídos de la fuente fijada.
+Sondas reproducibles measure.py/reference_bp.py; informe reports/modos-base.md y §51.
+Evidencia: work/frontier/modos/base/{ids.txt,audit.json,static.txt,reference-bp.json,
+build.txt,build-hashes.json}. Callback 0x96b00 ejecutado con paquetes sintéticos,
+configuración 0x1e5684, SetRank sin validación; Dobles reales 0x45cdfc/cf24/cfc8/d04c
+por sus tablas, Unicorn límites 0/9998/9999, rangos 0/1/2/255 y bancos vecinos.
+Tests propios: 104 passed,1.82s. Suite obligatoria inicial con ORCH_LANE heredado:
+9 fallos de tests del supervisor,1503 passed,3 skipped (tests-full.log); repetición
+con entorno habitual env -u ORCH_LANE python -m pytest -q tests:1512 passed,3 skipped,
+48.80s (tests-full-clean-env.log). git diff --check limpio.
+Build exacta reconstruida sin cambios: code.bin82ddec4c…b57275, DllField10278e96…efc593,
+DllBattle5cde67f6…d51754, CRR151abe3f…133747 (hashes completos en informe).
+Commits: el de esta entrada, «feat(frontier): reserve mode banks and audit selector, streaks and doubles BP».
+Decisiones: no reinterpretar rango retail como Libre; nuevos bancos sin ABI S+2,
+con necesidad documentada de resolver ambas direcciones en el incrementador futuro.
+Este hito solo prepara API/asignación y tablas: no modifica bytes del motor ni menús;
+no necesita regresión de combate hasta integrar hooks. Original inputs/save/main no
+existe en este carril; los 42 works están a cero en la copia F3 (hash en audit.json),
+no se ha cotejado la partida original ni escrito ninguna partida.
+No probado: UI/cancelación real y auxiliar X válido, count4/Caja, persistencia real,
+Libre L=73, hooks nuevos ni consola. Azahar no iniciado; sin session.json del carril.
+Siguiente paso: laboratorio24691 con copia y build exacta para medir selector Normal/
+Súper, tipo1 y cuatro inscritos de equipo/Caja; guardar/cargar los 42 works al entrar/
+salir. Después resolvedor nativo (ruta,M) con racha/récord independientes y API
+selección/nivel/pausa; mantener menús cerrados hasta corte Torre Libre L73 aceptado.

@@ -116,6 +116,37 @@ en `DllField.cro` 0x4e644 usa 104 bytes de la cueva común. Medida actual tras F
 Libres para pedir (según `python frontier/ids.py`, 2026-11-03; 16485–16487 y 16489–16490 son de la Fábrica y 16493–16495,
 16649–16651, 16653–16655 y 16657–16659 del Domo desde el 2026-11-04): 16661–16663, 16669–16671, 16673–16675 y más; 16665 y 16667 son del evento de Mew.
 
+### Reserva F9-MODOS-BASE (2026-11-13, Codex, carril del orquestador)
+
+Reserva previa al uso; persistencia en Azahar **pendiente**. No habilita menús.
+Fuente: `python frontier/ids.py`, cruce reproducible `python frontier/modes_audit.py`.
+La foto retail de 121 candidatos incluye los mods: quedan 48 tras REPARTO/Mew y
+43 excluyendo también todo 0x4010–0x401F (borrado por rango sospechado, §25).
+Se ajusta la solicitud de modos.md §3 de 53 a **42** posiciones: se eliminan los
+11 huecos S+1 de los bancos nuevos. Sus accesores deberán resolver racha y récord
+por separado (no presumir S+2); los siete bancos **M=0 conservan S/S+2 y estado**.
+No se compactan modalidad/nivel ni contadores de alquiler. Queda libre 16399.
+
+| Uso | Works reservados (orden explícito) |
+| --- | --- |
+| (racha, récord) M=1, rutas 1–7 | (16690,16691), (16695,16719), (16734,16735), (16738,16739), (16741,16743), (16745,16746), (16747,16749) |
+| (racha, récord) M=2, rutas 1,2 | (16750,16751), (16753,16754) |
+| (racha, récord) M=3, rutas 1,2 | (16755,16757), (16758,16759) |
+| MODE, rutas 1–7 | 16429,16430,16451,16455,16456,16469,16471 |
+| LEVEL, rutas 1–7 | 16546,16573,16594,16603,16635,16637,16638 |
+| FACTORY_SET3, FACTORY_RIVAL3 | 16646,16647 |
+| FACTORY_RENTS, M=0,1,2,3 | 16673,16677,16678,16398 |
+
+Motor: reservar **DllField.cro 0xf0a00–0xf1000** (1536 bytes) para F9, sin
+escribir todavía. Medida actual `brains.assemble`: termina en **0xf09f4**, no en
+0xf0978; quedan 12 bytes de alineación antes de F9. Ceros del v0.5 comprobados
+con hash `patch.FIELD_CRO_SHA256`, relleno de la última página de texto (fuera del
+tamaño lógico del segmento, igual que Cerebros/DexNav) y ausencia de relocaciones
+en la reserva (`modes_audit.py`). La integración futura usará `guarded_writes`,
+`rehash_cro` y `update_crr` de `patch.battle_cro`; no queda autorizada una escritura
+sin esos guards. code.bin conserva 276 bytes libres y la reserva Luma
+0x579604–0x579804 intocable. Sin textos/casos nuevos reservados en este hito.
+
 ## Reservas del motor (Arena B, 2026-11-05)
 
 Arena: bit 31 (`0x80000000`) del word `BattleSetup+0xa8`; se pondrá al final de StartBattle solo con ruta 4
