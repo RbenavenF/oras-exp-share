@@ -319,6 +319,30 @@
       "status": "blocked",
       "notes": "No se reproduce en Azahar: la Mansión original va bien en las cinco modalidades (y con la partida domo-cuelgue del usuario). El volcado tiene la pila de un combate del DOMO y 2 Pokémon en el combate (rival 2, jugador 0; solo el Domo pone rival 2). Pregunta al usuario: 1) ¿la pantalla de Luma salió en la Mansión del Resort o en el Domo de la isla (casa del oeste)? 2) ¿dumps/domo-cuelgue/main es la partida cargada justo antes? si no, la copia de Checkpoint anterior. 3) pasos exactos desde Continuar (opciones, los tres inscritos, los dos luchadores, si pulsó B, si jugó otra instalación antes en la misma sesión). Alternativa sin esperar: blindaje del motor (ignorar Caja de Combate con ruta de instalación, no usar huecos vacíos en dome_party) con regresión b; ¿se aprueba?",
       "evidence": "reports/frontier.md §48.1; reports/consola-frente.md (resultado y preguntas); frontier/probes/maison/{stack.gdb,stackdiff.py}; work/frontier/console-maison/{triple,rotation,multi,user-dome}.log, transcribed.txt, stackdiff.txt, tests.log (1365 passed, 1 skipped); commit «test(frontier): fingerprint the console crash as a Dome battle»"
+    },
+    {
+      "id": "F7-CUEVA-LUMA",
+      "owner": "claude",
+      "after": [],
+      "title": "URGENTE (consola): Luma pisa el principio de nuestra cueva de code.bin; mover el código",
+      "design": "work/frontier/consola/ (volcados de la consola: console-cave.bin, console-text.bin, dumps/)",
+      "accept": "CAUSA MEDIDA en la 3DS del usuario con el depurador de Luma (2026-11-13, Claude Code interactivo): Luma inyecta su código de redirección (LayeredFS) en el hueco del final de .text, justo donde empieza nuestra cueva: en la consola 0x579604–0x579717 (276 bytes) contienen código de Luma (b 0x57961c; push…; b 0x1325a8…) y Luma desvía 0x123e80 y 0x1325a4 hacia él; el resto de nuestra cueva está intacto. Resultado: rental_hook (0x1e3d8c→0x579604) ejecuta código de Luma y devuelve un equipo basura; en consola se cuelgan TODOS los combates de tipo Mansión, también la Mansión original (volcados 3–6: Domo/Fábrica en DllBattle+0x7338c con equipo vacío; Torre/Mansión en 0x3b6154 con equipo 0xd8e007f7). Azahar no inyecta nada: por eso allí va bien. Fuera de la cueva Luma solo cambia bytes que no tocamos (lista en work/frontier/consola/; console-text.bin es el .text de la consola, 0x100000–0x57a000). HACER: (1) patch.py: reservar al principio de la cueva una zona para Luma (LUMA_RESERVED ≥ 0x140, idealmente 0x200; comprobar en el código fuente de Luma3DS cómo calcula el tamaño de su carga y anotarlo) y que el ensamblado falle si invade la reserva; (2) como hoy la cueva está llena (2544/2556 bytes), mover fuera de code.bin lo que solo se ejecuta durante el combate (rutinas llamadas desde los puentes de DllBattle.cro: Arena, Palacio, Tubo, etc.) al relleno ejecutable de DllBattle.cro (entre el final del segmento 0 en 0xd7628 y 0xd8000, ya usado por el filtro del Palacio en 0xd7630–0xd7864; ~1,9 KB libres), con guarded_writes y CRR como hoy; si no basta, el relleno de DllField.cro (ya probado en consola por la v0.5); (3) test que construya el code.bin final, le aplique encima la carga de Luma medida (los 276 bytes de console-cave.bin en 0x579604, más los dos desvíos) y compruebe que ningún gancho nuestro apunta a la reserva; tests de que cada gancho sigue funcionando (Unicorn/VM existentes); (4) Azahar con un IPS de laboratorio que simule a Luma (escribe esos bytes en la reserva): Mansión original Individual, Torre, Fábrica, Domo, Palacio, Arena y Tubo arrancan combate (política de regresión: caso b, es motor, más todas las instalaciones porque cambia la cueva). Apuntar en reports/frontier.md y reports/consola-frente.md. Tests en verde.",
+      "status": "pending",
+      "notes": "Sustituye a F7-CONSOLA-MANSION (sus preguntas quedan contestadas por la medida en consola: no era el Domo ni la partida). El usuario puede volver a conectar el depurador de Luma para validar en consola después.",
+      "evidence": ""
+    },
+    {
+      "id": "F7-PAQUETE-V02",
+      "owner": "any",
+      "after": [
+        "F7-CUEVA-LUMA"
+      ],
+      "title": "Alfa v0.2 para la consola: paquete con el arreglo de la cueva, Cerebros y sin «Guardar vídeo»",
+      "design": "frontier/package.py; reports/consola-frente.md",
+      "accept": "dist/oras-frontier-alpha-v0.2 (y su partida de prueba) con python frontier/package.py desde main: arreglo F7-CUEVA-LUMA, Cerebros, sin «Guardar vídeo», LEEME corregido y al día (qué es nuevo en v0.2, que la v0.1 se colgaba en todo combate de tipo Mansión en consola por Luma). Política de regresión, caso d: recorrido completo en Azahar con el paquete EXACTO más el IPS de laboratorio que simula la carga de Luma (si F7-CUEVA-LUMA lo dejó), incluida la Mansión original. reports/consola-frente.md actualizado con el orden de prueba para v0.2 y la comprobación con el depurador de Luma (comparar 0x579604… con el code.bin construido). Tests en verde.",
+      "status": "pending",
+      "notes": "",
+      "evidence": ""
     }
   ]
 }
