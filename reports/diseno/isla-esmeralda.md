@@ -50,9 +50,13 @@ con el pintor de CTRMap-F5 (`frontier/island_build.py`, `faraway/java/ctrmap/tes
 - Las celdas de mapa de ORAS miden 40×40 casillas. Para 128×72 hacen falta **4×2 celdas** (160×80). Se centra la
   referencia y el sobrante es mar: 16 casillas a cada lado y 4 arriba y abajo.
 - Opción A, la pedida: **un exterior continuo en una zona** con 8 celdas.
+  Es la preferida por el usuario (2026-11-13): una sola área, sin cortes. Antes de descartarla hay que probar a
+  compartir texturas, quitar del área lo que no se usa y elegir piezas más ligeras.
 - Opción B, solo si A no carga y está documentada la causa: **dos sectores**, como en la propia Esmeralda.
-  - Oeste y Este en dos zonas unidas por una conexión sin corte, en una zona libre que encuentre
-    `ZoneRepurposeScanner`.
+  - Oeste y Este en dos zonas, la segunda en una zona libre que encuentre `ZoneRepurposeScanner`.
+  - El paso entre las dos zonas es continuo si comparten área. Si cada una necesita su propia área para caber,
+    el paso lleva un **fundido o warp**, como las rutas que ORAS parte respecto a Esmeralda: hay que cargar la
+    otra área. El usuario acepta el fundido.
   - Reducir la escala va **después** de B, y con el porqué escrito.
 
 ### 2.1 Presupuesto de carga

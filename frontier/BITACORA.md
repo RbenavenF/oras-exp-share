@@ -3448,3 +3448,15 @@ Decisiones:
   8146ea0).
 Siguiente paso: relanzar `frontier/orch/frontier-orch auto --parallel --follow`. Claude toma F11-ISLA-TRAZADO y Codex
 retoma F9-MODOS-BASE cuando vuelva su cuota.
+
+## 2026-11-13 22:35 — Claude Code (Opus 5.5) — Isla Esmeralda: preferencia A y fundido aceptado en B
+Estado: hecho
+Hecho: el usuario prefiere la opción A (una sola zona y una sola área). Si hay que partir la isla, acepta un paso
+con fundido entre Oeste y Este, como las rutas que ORAS parte respecto a Esmeralda. Afinados:
+- el criterio de aceptación de F11-ISLA-TRAZADO: agotar A antes de B;
+- el apartado §2 de `reports/diseno/isla-esmeralda.md`.
+El orquestador estaba parado; el usuario lo relanza ahora. Turno libre.
+Evidencia: `python -m pytest -q tests/test_frontier_orch.py` en verde.
+Commits: este.
+Decisiones: reducir la escala sigue siendo el último recurso, detrás de B.
+Siguiente paso: `frontier/orch/frontier-orch auto --parallel --follow`.
