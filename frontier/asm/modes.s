@@ -34,12 +34,34 @@ mode_of:
     add     r3, r1, r3
     ldrh    ip, [r3]
     cmp     ip, #0x200
-    bxlo    lr                      @ M 0 or 1: every route
+    blo     validate_level          @ M 0 or 1: every route
     cmp     ip, #0x400
     cmplo   r2, #2                  @ M 2 or 3: routes 1 and 2 only
+    bxhs    lr
+validate_level:
+    cmp     ip, #1
+    bxlo    lr                      @ legacy CONFIG=0, carry clear
+    push    {r0}
+    and     r0, ip, #0xff
+    tst     ip, #0x100
+    beq     level_50
+    cmp     r2, #0
+    beq     factory_level
+    sub     r0, r0, #60
+    cmp     r0, #41                 @ Open own-team: 60..100, unsigned
+    b       level_checked
+factory_level:
+    sub     r0, r0, #100
+    b       exact_level
+level_50:
+    sub     r0, r0, #50
+exact_level:
+    cmp     r0, #1                  @ only the exact level is valid
+level_checked:
+    pop     {r0}
     bx      lr
 
-@ r0 = facility work -> r0 = the level of the challenge's rivals: L in an Open Level mode (clamped to 50..100),
+@ r0 = facility work -> r0 = the level of the challenge's rivals: validated L in an Open Level mode,
 @ else 50. Called by the rival builder (pike_level), the rentals (rental_hook) and the Brains (DllField brains_cro.s,
 @ by absolute address). Uses r1-r3, ip.
     .global mode_level
@@ -51,10 +73,6 @@ mode_level:
     pophs   {pc}
     tst     ip, #0x100
     andne   r0, ip, #0xff
-    cmp     r0, #50
-    movlo   r0, #50                 @ L not fixed yet or corrupt: never below Level 50
-    cmp     r0, #100
-    movhi   r0, #100
     pop     {pc}
 
 @ Player party tail 0x1e3ddc, per member (r0 = its level, r6 = facility work, r7 = StartBattle's second argument):
@@ -75,8 +93,6 @@ mode_cap:
     and     r0, ip, #0xff
     cmp     r0, r4
     movlo   r0, r4
-    cmp     r0, #60
-    movlo   r0, #60                 @ (a corrupt L above 100 stays: mode_level clamps it)
     bic     ip, ip, #0xff
     orr     ip, ip, r0
     strh    ip, [r3]

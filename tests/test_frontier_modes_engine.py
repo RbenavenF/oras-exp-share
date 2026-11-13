@@ -75,16 +75,15 @@ def expected_slot(route, config, kind, rank):
     retail = MAISON + 0x1C4 + 8 * kind + 2 * bool(rank)
     unpacked = m.unpack_config(route, config) if route in m.CONFIG else None
     mode = config >> 8 if 0 <= config < 0x400 else None
-    # The engine validates route and M (not L): the level byte is the level code's business.
-    if rank or route not in m.CONFIG or mode is None or not m.valid(route, mode) or mode >> 1 != kind:
+    if rank or unpacked is None or mode >> 1 != kind:
         return retail, retail + 4
-    assert unpacked is None or unpacked[0] == mode
+    assert unpacked[0] == mode
     streak, record = m.bank(route, mode)
     return work_address(streak), work_address(record)
 
 
 CONFIGS = (0, 0x32, m.pack_config(2, 1, 73), m.pack_config(1, 1, 100), m.pack_config(2, 2, 50),
-           m.pack_config(2, 3, 73), 0x400, 0x0500, 0xFFFF, 0x1FF)
+           m.pack_config(2, 3, 73), 0x400, 0x0500, 0xFFFF, 0x1FF, 0x100, 0x13B, 0x165, 0x31, 0x233, 0x300)
 
 
 @pytest.mark.parametrize('route', (0, 1, 2, 3, 7, 8, 0xFFFF))
@@ -138,12 +137,13 @@ def test_old_saves_keep_their_level_50_streaks():
 
 @pytest.mark.parametrize('config, level', [
     (0, 50), (0x32, 50), (m.pack_config(2, 1, 60), 60), (m.pack_config(2, 1, 73), 73), (m.pack_config(1, 1, 100), 100),
-    (m.pack_config(2, 2, 50), 50), (m.pack_config(2, 3, 73), 73), (0x100, 50), (0x1FF, 100), (0x400, 50),
+    (m.pack_config(2, 2, 50), 50), (m.pack_config(2, 3, 73), 73), (0x100, 50), (0x1FF, 50), (0x400, 50),
     (0xFFFF, 50)])
 @pytest.mark.parametrize('route', (1, 2))
 def test_mode_level(route, config, level):
     uc, symbols = machine(route, config)
-    assert call(uc, symbols['mode_level'], r0=WORK) == level
+    expected = m.unpack_config(route, config)
+    assert call(uc, symbols['mode_level'], r0=WORK) == (expected[1] if expected else 50)
     uc, symbols = machine(0, None, {m.CONFIG[route]: config})
     assert call(uc, symbols['mode_level'], r0=WORK) == 50          # no route: retail
 
@@ -174,7 +174,8 @@ def test_open_level_keeps_levels_and_fixes_l_from_the_selection(levels, fixed):
 
 
 @pytest.mark.parametrize('route, config', [(0, 0), (2, 0), (2, 0x32), (2, m.pack_config(2, 2, 50)), (8, 0),
-                                           (2, 0xFFFF), (2, 0x400)])
+                                           (2, 0xFFFF), (2, 0x400), (2, 0x100), (2, 0x1FF), (2, 0x13B),
+                                           (2, 0x165), (1, 0x149), (1, 0x13C), (2, 0x31), (2, 0x233)])
 def test_level_50_modes_keep_the_retail_cap(route, config):
     skips, after = cap(route, config, (73, 50, 49, 5)) if route in m.CONFIG else (None, None)
     if skips is None:

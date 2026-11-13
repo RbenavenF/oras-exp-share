@@ -3536,3 +3536,26 @@ Decisiones:
 Siguiente paso: laboratorio del carril (24690) con la build exacta. Torre Libre con un inscrito de nivel 73 (medir
 L=73 en CONFIG y en el nivel rival por GDB), guardar/cargar y derrota con banco 50 y equipo/Caja intactos. Después
 un combate de Palacio, Arena, Tubo e historia.
+
+## 2026-11-14 — Codex — F9-MODOS-BASE hito 3: CONFIG corrupto y relevo limpio
+Estado: en curso
+Hecho: revisados git status, git diff y último commit 9b1b09a; árbol limpio,
+sin cambios de Claude a medias. Leídos AGENTS, PLAN, REPARTO y modos.md.
+`mode_of` ahora valida también L con el mismo contrato que modes.unpack_config;
+los niveles inválidos conservan accesores y ajuste retail, sin tocar CONFIG.
+Eliminados clamps redundantes después de validar. Ampliada la matriz Unicorn
+para niveles inválidos y comparación de bancos con la API, sin excepciones de L.
+Evidencia: `work/frontier/modos/base3/tests-full.log`: env -u ORCH_LANE python -m
+pytest -q tests → 2267 passed, 3 skipped (53,22 s). Overlay completa con
+`python frontier/overlay.py --out work/frontier/modos/base3/patch`: ZO 16828,
+hook 2044 bytes. `audit.json`: 0x579804–0x57a000, 0 bytes libres; reserva Luma
+intacta. Build exacta y hashes completos en reports/modos-base.md hito 3 y
+base3/build-hashes.json. Laboratorio iniciado en puerto 24691 sobre copia
+base3/tower73.sav; aún no hay resultado de combate. Consola no probada.
+Commits: el de esta entrada (Agent: Codex); anterior 9b1b09a.
+Decisiones: no cambiar REPARTO ni tasks.json por instrucción del carril. La
+regresión agrupada del 13/11 manda sobre el cierre anterior: no combatir en
+otras instalaciones/historia en esta tarea. No habilitar menús incompletos.
+Siguiente paso: terminar medición Torre Libre 73/55/41, rival L=73,
+pausa/guardar/cargar y derrota, banco 50 y equipo/Caja intactos; persistencia de
+35 works con CONFIG válidos. Laboratorio del carril: 24691.

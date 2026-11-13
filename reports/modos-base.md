@@ -132,3 +132,39 @@ nivel L, VM/Unicorn de los hooks, build ZO <=17248, pausa/guardar/cargar/derrota
 equipo/Caja intactos y regresión de motor Palacio/Arena/Tubo/historia. No hubo
 Azahar ni consola en este hito preparatorio; se aplica regresión cuando cambien
 los bytes del motor.
+
+
+## Hito 3: validación nativa de CONFIG (2026-11-14, Codex)
+
+Corrige el hito 2 (`9b1b09a`): `mode_of` validaba M y ruta, pero aceptaba
+niveles corruptos (por ejemplo 0x100 y 0x1ff). Ahora comparte el contrato de
+`modes.unpack_config`: CONFIG=0 conserva partidas antiguas; Nivel 50 requiere
+L=50; Libre requiere 60–100 en equipo propio y exactamente 100 en Fábrica.
+Configuraciones inválidas vuelven al acceso retail, no escriben sus bancos ni
+CONFIG y conservan el ajuste retail del jugador. `mode_level` devuelve 50 para
+ellas. No se habilitan menús nuevos.
+
+El código usa el carry como resultado de validación; la salida legacy compara
+CONFIG con 1 para devolver C=0. Las pruebas ejecutan los cuatro accesores retail
+parcheados y comparan bancos con la API Python, también para niveles inválidos,
+formatos incompatibles y rangos Normal/Súper. Se elimina la saturación separada
+de `mode_level` y el mínimo redundante del montador: L ya está validado antes.
+
+Evidencia: `work/frontier/modos/base3/`. `tests-full.log`: **2267 passed,
+3 skipped**, 53,22 s, comando `env -u ORCH_LANE python -m pytest -q tests` tras
+`source scripts/env.sh`. `build.log`: overlay completa, ZO Mansión **16828**,
+script compartido 22080 bytes. `audit.json`: code.bin **2044 bytes**, intervalo
+**0x579804–0x57a000**, **0 libres**. Luma 0x579604–0x579804 conservada;
+DllField F9 0xf0a00–0xf1000 sigue reservada y vacía. Los símbolos de Cerebros
+se reconstruyen con la dirección actual de `mode_level` y sus guards/CRR.
+
+Build exacta en `build-hashes.json`:
+
+- code.bin: `2c5c1ffbd1c3dcc12426b6957fb821a9b3c013a2450b3214aca2d32ba6f224b7`
+- DllField.cro: `9de84813459e1254974417e2ac1cf868a649bb4f3a2a083a24c44c6daf6635e5`
+- static.crr: `a45e9079570cddd33b0eee11caa37dc4e8bc5b97e2d6a7542b448f151a6496a3`
+- DllBattle.cro: `5cde67f65c9692c7b710956689a1ca5e6128d01f22d5a61eca5bb4ec83d51754`
+
+Azahar para esta build sigue en curso; consola no probada. La regresión de otras
+instalaciones/historia queda para la alfa por la instrucción del usuario del
+13 de noviembre, que sustituye el siguiente paso de la entrada anterior.
