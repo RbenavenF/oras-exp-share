@@ -483,6 +483,24 @@ def test_follow_waits_idle_and_takes_tasks_added_through_the_inbox(lanes_repo):
     assert fo.TURN.search((lanes_repo / 'frontier/REPARTO.md').read_text()).group(2).startswith('libre')
 
 
+def test_follow_observes_stop_within_a_minute_during_cooldown(lanes_repo):
+    set_tasks(lanes_repo, [{'id': 'T1', 'owner': 'any'}])
+    clock, waits = Clock(), []
+    orch = fo.Orch(lanes_repo, now=clock.now, out=lambda line: None)
+    orch.state['cooldown'] = {a: clock.now() + 3600 for a in orch.cfg['agents']}
+
+    def sleep(seconds):
+        waits.append(seconds)
+        orch.flag('stop').write_text('test')
+        clock.sleep(seconds)
+
+    orch.sleep = sleep
+    assert orch.auto_parallel(follow=True) == 'stop'
+    assert len(waits) == 1 and 0 < waits[0] <= 60
+    assert orch.tasks()[0]['status'] == 'pending'
+    assert orch.turn().startswith('libre')
+
+
 def test_follow_does_not_stop_for_a_blocked_task(lanes_repo):
     set_tasks(lanes_repo, [{'id': 'T1', 'owner': 'claude'}, {'id': 'T2', 'owner': 'claude'},
                            {'id': 'T3', 'owner': 'codex'}])

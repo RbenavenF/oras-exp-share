@@ -3,7 +3,9 @@
 Paquete: `dist/oras-frontier-alpha-v0.2` (lo genera `python frontier/package.py`; hashes en su `manifest.json`).
 Partida de prueba: `dist/oras-frontier-checkpoint-test-v0.2` (su `LEEME.txt`).
 Evidencia anterior en Azahar: `reports/frontier.md` §38 y §49; la validación del paquete v0.2 se registra en §50.
-**La v0.2 no está probada en una 3DS.** La v0.1 sí se probó y se colgaba en todo combate de tipo Mansión por la
+**El usuario confirma el 2026-11-13 que la v0.2 funciona en su 3DS.**
+Fuente: conversación («Confirmado en la 3ds funciona»). Confirmación funcional general; no se ha aportado
+un desglose de modalidades/jefes ni un nuevo volcado de RAM. Se cierra F7-CONSOLA-MANSION con el arreglo de Luma. La v0.1 sí se probó y se colgaba en todo combate de tipo Mansión por la
 colisión con Luma descrita al final. No se instala nada automáticamente: lo copia el usuario.
 
 ## Qué es nuevo para la consola

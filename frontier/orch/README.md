@@ -121,8 +121,8 @@ puerto, lee un registro de cada uno y comprueba que `reap` de uno no mata al otr
 
 ### Sin parar (`auto --follow`, 2026-11-11)
 
-`frontier/orch/frontier-orch auto --follow` es el modo paralelo sin fin: un carril sin nada que hacer espera (mira
-cada `poll_minutes`, 10) en vez de salir; una tarea bloqueada no para a los demás; una cuota agotada se espera. Sale
+`frontier/orch/frontier-orch auto --follow` es el modo paralelo sin fin: un carril sin nada que hacer espera (revisa controles y bandeja
+cada minuto como máximo (`poll_minutes` puede acortar la espera)) en vez de salir; una tarea bloqueada no para a los demás; una cuota agotada se espera. Sale
 solo con `drain`, `stop` o si los dos agentes se quedan sin login.
 
 Cola y orden:
@@ -151,3 +151,13 @@ Lo nuevo es opcional: `auto` sin `--parallel` funciona como antes. Cambios fuera
 
 Marcha atrás: `frontier/orch/frontier-orch lanes remove` y `git revert -m 1 <commit de la fusión de orch-parallel>`.
 Si un carril tiene commits sin integrar, `lanes remove` conserva su rama.
+
+### Cola revisada el 2026-11-13
+
+El usuario confirma v0.2 funcional en 3DS y autoriza continuar. F7-CONSOLA-MANSION cerrada.
+Se encolan las seis implementaciones F9 y las diez F10, en cadena: modalidades primero,
+personalidad después. El modo `--follow` conserva los dos carriles y los relevos por cuota,
+pero esta cadena solo permite una tarea a la vez porque comparten motor y construcción.
+Las cifras de espacio de los diseños anteriores a F7-CUEVA-LUMA deben medirse de nuevo;
+la reserva de Luma no se reutiliza. F10-COTA-CARGA sigue requiriendo decisión del usuario
+antes de subir LOAD_BUDGET; la confirmación de v0.2 no valida una carga futura mayor.

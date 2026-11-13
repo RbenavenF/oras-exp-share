@@ -638,7 +638,8 @@ class Orch:
                 if not follow and not timed:
                     self.out('stopped: no lane can take the open tasks (' + ', '.join(t['id'] for t in open_) + ')')
                     return 'stop'
-                wake = min(timed + [self.now() + poll]) if follow else min(timed)
+                # Check controls/inbox within a minute even during long idle/cooldown waits.
+                wake = min(timed + [self.now() + min(poll, 60)]) if follow else min(timed)
                 why = (('waiting for a cooldown' if timed and min(timed) <= wake else 'idle: nothing to take')
                        + (f'; open: {", ".join(t["id"] for t in open_)}' if open_ else '')
                        + (f'; blocked for you: {", ".join(blocked)}' if blocked else ''))

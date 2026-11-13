@@ -29,9 +29,15 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-Codex, desde 2026-11-13 20:42 (revisión de cola y supervisor autorizada por el usuario)
+libre (último: Codex, 2026-11-13 20:43; cola revisada, lista para frontier-orch)
 
 ## Instalaciones
+
+Actualización 2026-11-13 (prevalece sobre la foto del 11 de noviembre de la tabla):
+F8 Cerebros de las siete instalaciones y F7-PAQUETE-V02 están done en tasks.json.
+El usuario confirma que alfa v0.2 funciona en 3DS (confirmación general, sin matriz
+completa de pruebas); F7-CONSOLA-MANSION queda cerrada. Se encolan seis tareas F9 y
+diez F10, en ese orden y en cadena por sus ficheros compartidos. Véase orch/README.md.
 
 Diseños en `reports/diseno/`, hechos por agentes de solo lectura el 2026-11-03 (sus reglas de Esmeralda están sin
 fijar a un commit de pokeemerald). Dueños confirmados por el usuario el 2026-11-03.
@@ -91,7 +97,8 @@ la ruta 1 (16437 = 1, récord 1) y las de la Torre por la ruta 2, sin tocar la d
 
 El Tubo v2 reserva además slots virtuales 256–258 de `PokePartyGetParam`, solo con ruta 6:
 consultan las posiciones inscritas (incluida Caja de Combate); slots retail sin cambios. Un puente
-en `DllField.cro` 0x4e644 usa 104 bytes de la cueva común. Medida acumulada: 2452/2556, 104 libres.
+en `DllField.cro` 0x4e644 usa 104 bytes de la cueva común. Medida actual tras F7-CUEVA-LUMA: code.bin 0x579804–0x579eec, 276 bytes libres;
+0x579604–0x579804 reservado a Luma (no reutilizar).
 
 ## Works asignados
 
@@ -122,5 +129,6 @@ lector de `+0xa8` con máscara que incluya el bit 30 en code.bin ni en las 145 C
 `reports/frontier.md` §33). El bit 31 sigue siendo de la Arena.
 
 Palacio C (2026-11-11, F6-PALACIO-C): DllBattle.cro **0xd7630–0xd7868** (filtro y tablas, en el relleno a cero
-0xd7628–0xd8000 de la región de código; quedan 1944 bytes hasta 0xd8000) y el `bl` de **0xd468**. No usa la cueva
+0xd7628–0xd8000 de la región de código; quedaban 1944 bytes hasta 0xd8000; tras F7-CUEVA-LUMA, Arena/Palacio B ocupan
+0xd7870–0xd7b84 y quedan 1148 bytes) y el `bl` de **0xd468**. No usa la cueva
 de code.bin (`reports/frontier.md` §36).

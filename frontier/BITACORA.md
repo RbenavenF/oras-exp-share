@@ -3354,3 +3354,25 @@ No probado: v0.2 en consola real, encuentros de Cerebros y rondas completas con 
 juicio Arena, Portual y otros idiomas. No se cambió el motor durante este cierre.
 Siguiente paso: integración por el orquestador y prueba del usuario en consola siguiendo consola-frente.md;
 comparar reserva0x579604 y rental_hook0x579804 con console_check, y jugar Mansión original Individual.
+
+## 2026-11-13 20:43 — Codex — confirmación 3DS, revisión del supervisor y siguiente cola
+Estado: hecho
+Hecho: usuario confirma «Confirmado en la 3ds funciona» tras alfa v0.2 y autoriza revisar/continuar.
+Cerrada F7-CONSOLA-MANSION por el arreglo F7-CUEVA-LUMA/F7-PAQUETE-V02 y confirmación funcional
+del usuario (sin atribuir una matriz completa ni un volcado nuevo). Actualizados consola-frente y REPARTO.
+Revisados config, selección por dependencias, carriles, integración, cuotas y control del supervisor.
+Estaba vivo (PID 1472737, auto --follow) sin tarea ejecutable; stop solicitado, después Ctrl+C
+sobre su terminal ociosa para interrumpir sleep: liberó el turno en ec9693a. Tomado turno db5f406.
+Corregida espera de follow: controles/inbox como máximo cada 60 segundos aun con cooldown,
+antes podía dormir diez minutos. Test nuevo comprueba stop durante cooldown sin iniciar tareas.
+Encoladas las seis propuestas F9 y las diez F10, serializadas también entre salas/edificios
+porque comparten construcción; modalidades antes de personalidad. Reserva Luma explícita en criterios.
+Evidencia: source scripts/env.sh && env -u ORCH_LANE python -m pytest -q tests →
+1410 passed, 1 skipped, 46.98 s; git diff --check limpio. Validación check_task de 46 IDs,
+dependencias anteriores sin ciclos/duplicados; única pendiente lista: F9-MODOS-BASE.
+Commits: db5f406 (turno); el de esta entrada (revisión, cola y liberación del turno).
+Decisiones: mantener modelos, cuotas, laboratorios aislados y relevo existente; no reiniciar cuotas.
+F10-COTA-CARGA conserva decisión expresa antes de subir LOAD_BUDGET; v0.2 no valida cargas futuras.
+No probado: ningún combate nuevo en esta sesión; confirmación consola viene del usuario.
+Siguiente paso: lanzar frontier/orch/frontier-orch auto --follow en tmux frente, comprobar que
+Codex empieza F9-MODOS-BASE (Claude en cooldown hasta 22:02). El supervisor toma el turno.
