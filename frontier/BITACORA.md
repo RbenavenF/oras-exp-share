@@ -3559,3 +3559,26 @@ otras instalaciones/historia en esta tarea. No habilitar menús incompletos.
 Siguiente paso: terminar medición Torre Libre 73/55/41, rival L=73,
 pausa/guardar/cargar y derrota, banco 50 y equipo/Caja intactos; persistencia de
 35 works con CONFIG válidos. Laboratorio del carril: 24691.
+
+## 2026-11-14 — Codex — F9-MODOS-BASE hito 4: corte Torre Libre medido
+Estado: en curso
+Hecho: utilidad reproducible vertical.py (fixture nuevo con hash de origen y
+sonda pasiva). Torre Libre con inscritos 73/41/55: L=73, rival 73, victoria,
+racha/récord 6/6→7/7 y premio 1 PB. Pausa guardada, apagado/carga de disco,
+inscritos 6/6/7 mantienen sus niveles y rival sigue 73; derrota 7/7→0/7,
+ACTIVE=0, M0=12/20 y PB=4 intactos. Equipo y Cajas idénticos tras pausa→derrota.
+Evidencia: reports/modos-base.md hito 4 y work/frontier/modos/base3/
+win-gdb.log, rival73.png, paused73.sav/json, reload-loss-gdb.log, lost73.sav/json.
+Build sin cambios desde b449950 (hashes en hito 3), ZO16828 y hook2044.
+Suite tests-hito4.log: env -u ORCH_LANE python -m pytest -q tests →
+2267 passed, 3 skipped (58,86 s). Tabla PB30 cotejada con fuente fijada.
+No probado: consola, persistencia35 con CONFIG válidos y callback Súper real.
+Commits: el de esta entrada; motor b449950.
+Decisiones: descartar intento con breakpoint software pre-CRO que restauraba
+ceros y causaba SIGSEGV; repetición pasiva sin asistencia termina normalmente.
+Seed→pausa cambia metadata PK6+0xa4..a9 en slot1 y checksum; no declarar identidad
+total de esa primera transición. Los demás campos y Cajas intactos. Laboratorio
+24691 activo para persistencia; no se usan otras instalaciones ni historia.
+Siguiente paso: completar persistencia35 y selector Súper; corregir/auditar
+estado inactivo (mode_of no mira ACTIVE) y L fijo ante selección distinta al
+reanudar (hoy puede subir). No marcar done ni abrir menús con estos pendientes.

@@ -168,3 +168,56 @@ Build exacta en `build-hashes.json`:
 Azahar para esta build sigue en curso; consola no probada. La regresión de otras
 instalaciones/historia queda para la alfa por la instrucción del usuario del
 13 de noviembre, que sustituye el siguiente paso de la entrada anterior.
+
+## Hito 4: Torre Libre 73, pausa y derrota reales (2026-11-14, Codex)
+
+Build exacta del hito 3, laboratorio del carril 24691; copias bajo
+`work/frontier/modos/base3/`. `frontier/probes/modos/vertical.py seed SOURCE SHA
+OUTPUT` reproduce `tower73.sav` (SHA-256
+`7a8c2cc32aa3d084eac64ef087e8963f97b3640f9474c63afef508b2212cdd72`)
+desde `cerebros/base/tower34.sav` (SHA en `tower73.json`): tres candidatos de
+niveles 73/55/41, CONFIG=0x13c, Libre S/R=6/6 y M0 S/R=12/20. La copia conserva
+las estadísticas originales del fixture; el montador reconstruye la copia de
+combate. No es una partida de usuario ni se distribuye el binario.
+
+`win-gdb.log`: selección efectiva [0,2,1], tipo 0/rango 0; cap recibe 73/41/55,
+CONFIG pasa de 0x13c a **0x149** y las tres llamadas MAKE_PARAM reciben **73**.
+`rival73.png` muestra Houndour 73. Victoria real (raw=1), S/R Libre **7/7**,
+M0 **12/20**, premio **1 PB**. Pausar guarda `paused73.sav`, SHA-256
+`9490d5929b70562faa4b1a9e394d70689d93fb42c9c9a82f9c47db232eaf79b2`,
+CONFIG 0x149, ACTIVE=1, PB=4 (`paused73.json`).
+
+Carga desde disco de esa pausa, sin asistencia de combate:
+`reload-loss-gdb.log` registra inscritos [3,5,4], niveles **6/6/7** conservados,
+CONFIG 0x149 y tres rivales construidos a **73**. Derrota real raw=0. El guardado
+`lost73.sav`, SHA-256
+`4262eabaa1147d9e547d9f1e8517979e7e2f3c01b708a65e68e65850205cec9d`,
+contiene Libre **0/7**, ACTIVE=0, CONFIG=0x149, M0 **12/20** y PB=4.
+`lost73.json` comprueba **equipo y Cajas idénticos byte a byte a paused73.sav**.
+WORK_ROUTE=2 queda en el autosave anterior a la limpieza de retorno; el script
+lo limpia en RAM al salir de la rutina. No interpretar esa ruta como ACTIVE.
+
+Comparación inicial seed→pausa: las Cajas sí son idénticas; en el segundo PK6
+cambian exclusivamente +0xa4..0xa9 (metadata de entrenador/geografía) y su
+checksum. No afirmar identidad total en esa primera transición: esos campos
+pasan de 0103/0900/0900 a 0317/1700/0000. Los otros cinco PK6 y todos los campos
+restantes, incluidos nivel, experiencia, movimientos, objetos y estadísticas,
+son iguales. Tras normalizarse en la pausa, la derrota no cambia ni un byte.
+
+Sonda reproducible: `vertical.py probe DIRECTORY`. Excluye el hook de asistencia
+en arena_enter y observa los hooks de code.bin; callback CRO dinámico por
+hardware. Un intento descartado (`reload-breakpoint-corruption.log`) usó un
+breakpoint software antes de cargar el CRO: GDB restauró 00000000 sobre su
+primera instrucción e2850c01 y causó SIGSEGV. No es evidencia de fallo del parche;
+la repetición pasiva anterior termina normalmente. No hubo escrituras de RAM
+para forzar victoria/derrota en las mediciones aceptadas.
+
+Suite tras la utilidad: `tests-hito4.log`, **2267 passed, 3 skipped**, 58,86 s,
+`env -u ORCH_LANE python -m pytest -q tests`. Tabla PB de 30 filas cotejada otra
+vez con el objeto Git fijado (`reference-bp.json`). Consola no probada.
+
+Sigue pendiente cerrar persistencia de las 35 reservas con CONFIG válidos,
+callback Súper real y el guard de estado inactivo de §2 (el resolvedor actual
+valida ruta/CONFIG pero no ACTIVE). También auditar L fijo si cambia la selección
+al reanudar: el hook actual permite subir L, aunque nunca bajarlo. No habilitar
+menús ni marcar BASE completa con esos pendientes.
