@@ -4209,3 +4209,46 @@ más próxima, sin fabricar banderines propios. Política caso(c), sin combates 
 La reserva Luma no se modifica. Sin paquete, sin push, sin subagentes; laboratorio se detendrá al terminar.
 Siguiente paso: comprobar flags por ferry y las siete puertas, inspeccionar escaleras y cuatro puntos, guardar
   y recargar; corregir lo que se mida y entregar integración de helpers a faraway/java al integrador.
+
+## 2026-11-14 14:43 — Codex — F11 acabado: UV corregidas y candidato validado en Azahar
+Estado: en curso (pendiente integración en los constructores comunes, asignada al integrador)
+Hecho: IslandLandscape.stairs usa U=1-x/128, V=y/128 en la banda de piedra del atlas retail. Se corrige
+la hipótesis de la entrada de 14:17: tanto dense como flags seguían blancos; final muestra piedra gris.
+LandscapeAudit exporta BGRA correctamente y registra atributos/materiales. LandscapeUvProof comprueba
+los bytes reales del seguimiento UV; landscape_compare genera referencia/antes/después del mismo calco.
+drive.py añade rutas por obstáculos y valida/crea el directorio de evidencia. landscape.py registra hashes
+propios y del layout. No se modifican island_build.py, overlay.py, faraway/java ni edificios provisionales.
+Evidencia:
+- landscape.py --name final; lab_mod.py work/f11/finish/final. final/sources.json fija el builder83b3a4f6…,
+  helpers y layout; final/installed-hashes.json fija los39 ficheros del mod instalado. Raíz work/f11/finish/.
+- final/build.log: 4151040 <=4192384, mundo835328 props209152 modelos3106560; margen41344;
+  WorldTextures{}. final/movement-proof.json: archivo entero de zonas idéntico, ZO20911288 <=17248,
+  GR[0,2,3,4,5,6] idénticos en las8 celdas. GRID conserva B. Sin cambios de motor ni reserva Luma.
+- Azahar24691, flags-ferry.out: ferry desde copia v03-back-calagua a(34,73). flags-doors.out y
+  work/f11/proto/finish-flags/doors.log: las7 puertas entran/salen, DOORS ok14:33:21; rutas por8 celdas.
+- final/uv-only-proof.log: flags→final752 bytes, todos UV de escaleras; posiciones, normales, colores,
+  comandos y otros GR intactos. final/archive-diff.json: solo a/0/3/9 distinto; otros38 ficheros idénticos.
+  Se aplica política caso(c): no repetir7 puertas para UV. final-walk.out: escalera Arena110,39→110,37→110,39,
+  piedra gris confirmada en proto/finish-final/at_110_37.png y at_110_39.png; paseo hasta plaza(85,52).
+- Cuatro puntos: proto/finish-flags/arrival.png (muelle), pike_out.png (Tubo),
+  proto/finish-final/reloaded-palace.png y central-plaza.png. Rutas relativas a work/f11/.
+- UI save Palacio f5455b20… recargado en final; UI save plaza-final.sav39b80c791a42052db23ed57867f751dd0ef5c84feb68e52152b5b4912bbcd443,
+  58 bloques válidos, zona209(85,52). final-save-load.log y proto/finish-final/reloaded-plaza.png:
+  reinicio con ese guardado final y posición(85,52),14:42:03.
+- before-reference-after.png: referencia/F11 reconstruida/final, triángulos con color medio de textura,
+  método de F11; no captura cenital de Azahar. Capturas de suelo sí son del emulador.
+- source scripts/env.sh; env -u ORCH_LANE python -m pytest -q tests: 2931 passed,4 skipped,59.56s;
+  tests-close.log. git diff --check limpio. gdbctl stop + azahar_lab.py reap solo del carril:
+  cleanup.log remaining=[] y session_metadata=false. Laboratorio parado.
+Commits: a9fa187 frontier: prototipo aislado del acabado ORAS de la isla; el de esta entrada
+  (frontier: valida paisaje ORAS y corrige UV de escaleras).
+Decisiones: conservar piezas/texturas originales y emblemas Aqua; las copas ORAS aproximan el calco.
+No declarar done: la producción aún usa el constructor anterior y el brief reserva su modificación al integrador.
+work/lane-task.json in_progress, sin tocar REPARTO ni tasks.json. Sin paquete, push, inputs ni subagentes.
+No probado: aceptación del constructor integrado, cenital del propio Azahar, consola, combates (no aplican a c).
+Siguiente paso: integrador, trasladar helper/selección según reports/diseno/isla-esmeralda-acabado.md y
+  final/integration.diff. Pintar brochas visuales por separado y sustituir SOLO bc.model, conservando tilemap
+  y colisión originales; no copiar remember/preserve con IDs de un build previo. Generar con otro nombre
+  (final contiene checkpoints), verificar presupuesto, zonas y GR contra F11, pasar suite y comparar hashes.
+  Si la integración reproduce los ficheros probados, reutilizar evidencia; si cambia juego, aplicar caso(c).
+  Si el criterio exige cenital del emulador, falta esa toma; la comparación disponible sigue el método de F11.

@@ -25,7 +25,7 @@ public final class LandscapeAudit {
             BufferedImage image=new BufferedImage(t.getWidth(),t.getHeight(),BufferedImage.TYPE_INT_ARGB);
             for(int y=0;y<t.getHeight();y++)for(int x=0;x<t.getWidth();x++){
                 int i=(y*t.getWidth()+x)*4;
-                image.setRGB(x,y,((rgba[i+3]&255)<<24)|((rgba[i]&255)<<16)|((rgba[i+1]&255)<<8)|(rgba[i+2]&255));
+                image.setRGB(x,y,((rgba[i+3]&255)<<24)|((rgba[i+2]&255)<<16)|((rgba[i+1]&255)<<8)|(rgba[i]&255));
             }
             ImageIO.write(image,"png",new File(out,"tex-"+area+"-"+t.name+".png"));
         }
@@ -43,11 +43,23 @@ public final class LandscapeAudit {
             System.out.println(t+" mesh="+mi+" material="+m.getMaterialName(m.getMeshMaterialIndex(mi))+" textures="+textures+" uv="+Arrays.toString(PaintedMaterials.uvScaleOf(Workspace.session(),m,mi)));
         }
         texture(229,names,out);
+        texture(8,new LinkedHashSet<>(Arrays.asList("chip_wood_b")),out);
+        texture(229,new LinkedHashSet<>(Arrays.asList("chip_wood_b")),out);
         for(int i=0;i<m.meshCount;i++)System.out.println("mesh="+i+" vertices="+m.geometry().get(i).vertexCount+" material="+m.getMaterialName(m.getMeshMaterialIndex(i))+" textures="+m.getMaterialTextureNames(m.getMeshMaterialIndex(i)));
         for(int i=0;i<m.meshCount;i++) if(m.getMaterialTextureNames(m.getMeshMaterialIndex(i)).contains("chip_steps01")){
             BchMapModel.MeshGeom g=m.geometry().get(i);
             BchMapModel.MeshAttr uv=m.findAttr(i,4);
             System.out.println("stair candidate mesh="+i+" material="+m.getMaterialName(m.getMeshMaterialIndex(i))+" vertices="+g.vertexCount);
+            RandomAccessBAIS stream=new RandomAccessBAIS(m.raw);
+            stream.seek(m.meshes.get(i)[1]);
+            System.out.println("vsh7="+new PICACommandReader(stream,m.meshes.get(i)[2],false).getVSHFloatUniformData(7));
+            int params=m.materialParamOffsets.get(m.getMeshMaterialIndex(i));
+            for(int t=0;t<3;t++){
+                int start=params+12+t*24;
+                System.out.print("coordinator="+ctrmap.util.LittleEndian.i32(m.raw,start));
+                for(int j=1;j<6;j++)System.out.print(" "+ctrmap.util.LittleEndian.f32(m.raw,start+j*4));
+                System.out.println();
+            }
             if(uv!=null && uv.type==3)for(int v=0;v<Math.min(4,g.vertexCount);v++){
                 int at=g.vtxAbs+v*g.stride+uv.offset;
                 System.out.println("uv="+ctrmap.util.LittleEndian.f32(m.raw,at)+","+ctrmap.util.LittleEndian.f32(m.raw,at+4));

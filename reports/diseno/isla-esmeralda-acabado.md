@@ -11,8 +11,8 @@ y un diff generado de los cuatro puntos de integración; no modifica esos ficher
 source scripts/env.sh
 python frontier/overlay.py --out work/f11/finish/base/out \
   --romfs dist/held-exp-share-v0.5/mods/000400000011C400/romfs
-python frontier/probes/island/landscape.py --name flags
-python frontier/probes/island/lab_mod.py work/f11/finish/flags
+python frontier/probes/island/landscape.py --name final
+python frontier/probes/island/lab_mod.py work/f11/finish/final
 env -u ORCH_LANE python -m pytest -q tests
 ```
 
@@ -20,21 +20,24 @@ El primer comando genera la isla vigente; el segundo copia su game/workspace,
 compila una copia de `FrontierIsland.java` con las funciones de `IslandLandscape`,
 y reconstruye solo su exterior. Los originales se leen. Las cuatro sustituciones
 exigen coincidencia única para detenerse si cambia el constructor.
-`work/f11/finish/flags/integration.diff` es el diff revisable. `sources.json`
+`work/f11/finish/final/integration.diff` es el diff revisable. `sources.json`
 registra revisión, hashes de constructor, plan y archivos de entrada.
 El corredor reemplaza únicamente su subdirectorio de ensayo; `base` está reservado.
 
 ## Cambios y medidas
 
 - La escalera blanca **sí tenía** `chip_steps01` en AD229[11]. El material
-  `chip_steps01a` (mesh 9 del primer GR) usa la proyección de mundo 1/72,
-  que recorre la zona blanca del atlas. `IslandLandscape.stairs` limita las UV
-  a la banda de piedra x65–126/y98–125 del atlas retail 128×128. El sampler
-  runtime invierte V respecto al exportado: la variante `dense` con V sin invertir
-  todavía muestra franjas blancas (`factory_out.png`). `flags` prueba V=1-y/128.
-  No crea textura; la corrección queda pendiente de inspección en Azahar.
-  Fuentes: `work/f11/finish/material-audit.txt`, `stair-retail-uv.txt`,
-  `tex-229-chip_steps01.png`. Pendiente aceptación visual en Azahar.
+  `chip_steps01a` usa la proyección de mundo 1/72, que recorre la zona blanca
+  del atlas. `IslandLandscape.stairs` limita las UV a la banda de piedra
+  x65–126/y98–125 del atlas retail 128×128: U=1-x/128, V=y/128.
+  `TextureCodec.flipToBgra` exporta la imagen girada 180 grados; el sampler ya
+  recorre V de abajo arriba, pero hay que deshacer el giro de U. Las hipótesis
+  anteriores `dense` y `flags` todavía salían blancas: se descartan. **`final`
+  muestra piedra gris en Azahar y se cruza la rampa de Arena en ambos sentidos**
+  (`work/f11/proto/finish-final/at_110_37.png`, `at_110_39.png`). No añade textura.
+  Fuentes: `LandscapeAudit.java`, `work/f11/finish/flags-stairs-audit.log`,
+  `tools/CTRMap-F5/src/ctrmap/formats/h3d/texturing/TextureCodec.java`,
+  `work/f11/finish/final/uv-only-proof.log` y `work/f11/finish/final-walk.out`.
 - Baldosa: material retail `tokusane_miti` del contenedor del Resort, compartido
   con los edificios. Los huecos B se cubren con baldosa, excepto la caja de la
   Pirámide (x122–136/y11–20), que lleva arena. **B sigue en GRID y la reserva
@@ -50,7 +53,7 @@ El corredor reemplaza únicamente su subdirectorio de ensayo; `base` está reser
   No se generan imágenes ni se modifican los siete edificios provisionales.
 - Cada pieza ocupa solo T/p/f, una altura y una celda. No invade pasos, agua,
   puertas ni B. La selección es determinista y distribuida; se conserva en
-  `flags/placements.txt`. No se intenta llenar todos los bloques del calco:
+  `final/placements.txt`. No se intenta llenar todos los bloques del calco:
   los límites explícitos mantienen el presupuesto de carga.
 
 Presupuesto medido por `FrontierPlaza.loadBudget` sobre el archivo construido:
@@ -59,10 +62,10 @@ Presupuesto medido por `FrontierPlaza.loadBudget` sobre el archivo construido:
 | --- | ---: | ---: | ---: | ---: |
 | F11 vigente | 3.534.592 | 654.336 | 209.152 | 2.671.104 |
 | Acabado dense (sin banderas, V inicial) | 4.101.760 | 818.560 | 209.152 | 3.074.048 |
-| Acabado flags | 4.151.040 | 835.328 | 209.152 | 3.106.560 |
+| Acabado final (mismas piezas que flags) | 4.151.040 | 835.328 | 209.152 | 3.106.560 |
 
 Quedan **41.344 bytes** respecto a ISLAND_BUDGET 4.192.384. WorldTextures: `{}`.
-Fuentes: `base-build.log`, `before-world.txt`, `dense/build.log`, `flags/build.log`. Los incrementos
+Fuentes: `base-build.log`, `before-world.txt`, `dense/build.log`, `final/build.log`. Los incrementos
 por colocación se imprimen en el último log; no equivalen al coste de textura,
 que se comparte una sola vez en el world pack. La variante `flags` añade 49.280
 bytes sobre `dense`: +16.768 de world pack y +32.512 de modelos, descontando dos
@@ -73,7 +76,7 @@ del descarte Magma y del coste de texels (16.384): `LandscapeAudit.java`,
 `work/f11/finish/audit.log`, `audit/tex-{207,80,210}-flag.png`.
 ZO209: 11.288 bytes (límite 17.248).
 
-`flags/movement-proof.json` verifica los GARCs resultantes: archivo completo de
+`final/movement-proof.json` verifica los GARCs resultantes: archivo completo de
 zonas a/0/1/3 idéntico (SHA256
 `10a6c1c753533b151f8403711b405e87abbfb096b8fe723b17af598027b8d183`);
 GR[0,2,3,4,5,6] idénticos para las ocho celdas originales 872–879 y nuevas
@@ -82,27 +85,70 @@ No se modifica code.bin, CRO, asm ni la reserva Luma 0x579604–0x579804.
 
 ## Pruebas e integración pendiente
 
-Suite del candidato final: **2931 passed, 4 skipped**, 61,52 s,
-`work/f11/finish/tests-final.log`.
+Suite de cierre: **2931 passed, 4 skipped**;
+`work/f11/finish/tests-close.log` (duración al pie del log).
 El entorno ORCH_LANE se retira para las pruebas del propio orquestador, que
 necesitan arrancar sin pertenecer a un carril. No se omiten tests de juego.
 Los tres nuevos tests validan ubicación/ausencia de solapes y reserva intacta,
 rechazo de un constructor cambiado y rechazo de contenedores ajenos.
 
-Comparación cenital: `work/f11/finish/before.png` (F11 anterior),
-`dense-topview.png` y `dense-reference.png`. `TopView.java` representa los
-triángulos con el color medio de su textura; **no es captura de Azahar ni permite
-juzgar el muestreo UV**. La comparación a ras de suelo se registra aparte.
+Comparación cenital nueva: `work/f11/finish/before-reference-after.png`, con la
+referencia, F11 vigente reconstruida (`before.png`) y acabado (`final-topview.png`).
+`TopView.java` representa los triángulos de los ocho modelos con el color medio
+de su textura; **no es captura de Azahar ni permite juzgar el muestreo UV**.
+Se sigue el método de la cenital de F11 (§51). `landscape_compare.py` alinea los
+recortes con el mismo OFFSET del calco. La captura cenital en Azahar no está
+probada; las vistas de suelo sí son capturas del emulador.
 
-Para integrar, trasladar `IslandLandscape` al paquete Java común y aplicar los
-cuatro hooks de `integration.diff`. El ensayo `LandscapeTrial` toma los datos de
-movimiento de la isla anterior antes de repintar. En producción, conservar el
-tilemap/colisión de las brochas originales y cambiar solo las brochas visuales;
-no depender de IDs 872–879 ni de un build previo. Pasar la lista de placements
-determinista desde Python o un fichero del plan. Mantener el guard de presupuesto,
-WorldTextures vacío y las pruebas de puertas de F11.
+### Azahar ejecutado (solo laboratorio del carril, puerto 24691)
 
-Pendiente: inspección visual y recorrido de la variante final en Azahar;
-integración común y aceptación del resultado integrado.
-No empaquetar. Consola y combates: no probados, no corresponden a esta regresión
-de exterior (política del usuario, caso c).
+- `flags-ferry.out`: copia de `v03-back-calagua.sav` → ferry → llegada (34,73).
+  `work/f11/proto/finish-flags/arrival.png` muestra el muelle.
+- `flags-doors.out`, `work/f11/proto/finish-flags/doors.log`: siete entradas/salidas
+  reales, terminado a las 14:33:21. Fábrica (26,45), Domo (34,24), Tubo (57,34),
+  Torre (87,21), Pirámide (129,21), Arena (110,36), Palacio (116,63). Las rutas
+  cruzan las ocho celdas. Capturas `*_in.png`/`*_out.png` en ese mismo directorio.
+- La última corrección `flags` → `final` cambia **solo 752 bytes de UV de
+  escaleras**. `LandscapeUvProof.java` comprueba los modelos reales: no cambia
+  ningún vértice de posición, normal, color, comando ni otro subfichero GR.
+  `final/uv-only-proof.log`; `final/archive-diff.json`: de los 39 ficheros del
+  mod, solo difiere a/0/3/9, los otros 38 son idénticos. Por la política caso(c),
+  no se repiten las siete puertas para ese cambio de UV; se comprueba su aspecto
+  y el paso de Arena 110,39 →110,37 →110,39 (`final-walk.out`).
+- Cuatro puntos a ras de suelo: muelle (`finish-flags/arrival.png`), plaza central
+  (`finish-final/central-plaza.png`), Tubo (`finish-flags/pike_out.png`), Palacio
+  (`finish-final/reloaded-palace.png`), todos bajo `work/f11/proto/`.
+  El agua se ve en Tubo y Palacio; también `finish-final/at_97_47.png`, con valla
+  y bandera retail. Árboles/arbustos del catálogo son una aproximación de forma
+  ORAS al calco; no reproducen las copas de Esmeralda. Se conservan emblemas Aqua.
+- Guardado mediante UI en Palacio, 58 bloques válidos, recargado en `final`:
+  `final/palace-scene.json`, SHA256 f5455b207ffe1aeeff3322911f071bff85d686004e14cf3bd6e38f5c6cc6151a.
+  Segundo guardado mediante UI en plaza (85,52), ya en `final`:
+  `plaza-final.json`, SHA256 39b80c791a42052db23ed57867f751dd0ef5c84feb68e52152b5b4912bbcd443,
+  58 bloques válidos. Resultado de recarga: `final-save-load.log` y
+  `work/f11/proto/finish-final/reloaded-plaza.png`.
+
+### Integración pendiente, responsabilidad del integrador
+
+Trasladar `IslandLandscape` al paquete Java común y aplicar los cuatro hooks de
+`final/integration.diff`. El ensayo `LandscapeTrial` toma los datos de movimiento
+de la isla anterior antes de repintar. **No copiar esa dependencia a producción**:
+conservar tilemap/colisión de las brochas originales, pintar las nuevas brochas
+visuales por separado y sustituir solo `bc.model`; mantener el tratamiento de
+escaleras y el estampado de edificios existente. No depender de IDs 872–879 ni
+de un build previo. Pasar la lista determinista de placements desde Python o
+el plan. Mantener el guard de presupuesto, WorldTextures vacío y tests de puertas.
+El test de cuatro hooks del ensayo deberá adaptarse al trasladar las funciones:
+rechaza deliberadamente un constructor distinto del que se ensayó.
+
+No reconstruir `--name final` sobre esta evidencia: el corredor sustituye su
+subdirectorio, incluidos los checkpoints; usar otro nombre para la integración.
+El manifiesto `final/sources.json` fija los hashes exactos de los helpers además
+de la revisión base a9fa187; `final/installed-hashes.json` fija los 39 ficheros
+instalados. Los recursos comerciales, capturas y partidas quedan en work, fuera
+de Git. Código, pruebas y documentación sí quedan en Git.
+
+Pendiente: integración común, aceptación del resultado integrado y, si se exige
+una cenital del propio emulador en vez del método de F11, esa toma específica.
+No empaquetar. Consola y combates: no probados; no corresponden a esta regresión
+de exterior (política del usuario, caso c). Laboratorio cerrado: `work/f11/finish/cleanup.log`, remaining=[], session_metadata=false.

@@ -64,9 +64,10 @@ public final class IslandLandscape {
         if(uv==null || uv.type!=3 || g.vertexCount%4!=0) throw new IllegalStateException("Expected painted stair quads");
         for(int v=0;v<g.vertexCount;v++) {
             int at=g.vtxAbs+v*g.stride+uv.offset;
-            LittleEndian.putF32(bc.model,at,((v%4)%2==0 ? 65f : 126f)/128f);
-            // TextureCodec's exported rows run opposite to the runtime sampler's V.
-            LittleEndian.putF32(bc.model,at+4,1f-((v%4)/2==0 ? 98f : 125f)/128f);
+            // TextureCodec.decode exports BGRA rotated 180 degrees. Runtime V
+            // already runs bottom-up, while U must undo the export's horizontal flip.
+            LittleEndian.putF32(bc.model,at,1f-((v%4)%2==0 ? 65f : 126f)/128f);
+            LittleEndian.putF32(bc.model,at+4,((v%4)/2==0 ? 98f : 125f)/128f);
         }
     }
 

@@ -3949,24 +3949,31 @@ La consola real continúa sin probar.
 
 ## 53. Isla Esmeralda: acabado con piezas ORAS — F11-ISLA-ACABADO (2026-11-14, Codex)
 
-Estado: candidato aislado; producción pendiente de integración. Fuentes y reproducción en
-[`diseno/isla-esmeralda-acabado.md`](diseno/isla-esmeralda-acabado.md). No se modifican los builders comunes,
-asignados al integrador en el brief. `frontier/probes/island/landscape.py` compila una copia de FrontierIsland
-con cuatro hooks revisables, compartiendo texturas, sin modificar el trazado ni los edificios provisionales.
+Estado: candidato aislado validado en Azahar; producción pendiente de integración común.
+Fuentes, comandos y guía de integración en
+[`diseno/isla-esmeralda-acabado.md`](diseno/isla-esmeralda-acabado.md).
+No se modifican `island_build.py`, `overlay.py` ni `faraway/java/`, asignados al integrador.
+`frontier/probes/island/landscape.py` compila una copia de FrontierIsland con cuatro hooks revisables.
 
-Medidas del candidato `work/f11/finish/flags` (`build.log`, `movement-proof.json`): 361 piezas retail
-(43 árboles, 236 arbustos, 68 tramos de valla, 8 parterres, 6 banderas azules Aqua), **4.151.040 bytes**
-(mundo 835.328, props 209.152, modelos 3.106.560). Margen 41.344 sobre Resort211; WorldTextures `{}`.
-ZO209 11.288 <=17.248; el archivo entero de zonas permanece idéntico. Los GR[0,2,3,4,5,6] de las ocho
-celdas también son idénticos a F11: pasos, colisiones, coordenadas y props conservados. B se conserva en GRID,
-pero se cubre con baldosa o arena (Pirámide). Canales y estanques ya tenían agua en F11 y se conservan.
+Medidas de `work/f11/finish/final` (`build.log`, `movement-proof.json`): 361 piezas retail
+(43 árboles, 236 arbustos, 68 tramos de valla, 8 parterres, 6 banderas Aqua), **4.151.040 bytes**
+(mundo 835.328, props 209.152, modelos 3.106.560). Margen 41.344; WorldTextures `{}`.
+ZO209 11.288 <=17.248; archivo entero de zonas y GR[0,2,3,4,5,6] de las ocho celdas idénticos a F11.
+B conserva la reserva en GRID y se cubre con baldosa o arena (Pirámide). Agua preexistente conservada.
 
-La textura `chip_steps01` sí estaba presente en AD229[11]; se investiga la UV del pintor, no una imagen ausente.
-Primer ensayo `dense`: la banda gris exportada con V sin invertir aún sale blanca en Azahar. `flags` prueba
-V invertida. No se da por corregida hasta inspección. Banderines: las piezas del catálogo son banderas de
-Aqua/Magma; se eligen las azules originales como aproximación, con emblema, sin arte propio.
+Escaleras: `chip_steps01` ya estaba en AD229[11]. Corregido el muestreo del pintor a la banda de piedra,
+U=1-x/128 y V=y/128 sobre el atlas exportado. `dense` y `flags` salían blancos y se descartan sus UV;
+`final` muestra piedra gris y permite subir/bajar la rampa de Arena (`final-walk.out`, capturas at_110_37/39).
+`LandscapeUvProof.java`: flags→final solo 752 bytes UV; ningún otro atributo ni subfichero GR cambia.
 
-Regresión en curso, caso (c) de la política del usuario: ferry, exterior y siete puertas, guardado/recarga.
-El primer ensayo cargó por ferry (34,73), Fábrica y Domo entraron/salieron a su puerta; recorrido interrumpido
-para cargar la variante final. No constituye aceptación del candidato final. No se tocan engine, CRO, asm,
-reserva Luma 0x579604–0x579804, inputs, partida original, REPARTO ni tasks.json. No paquete ni consola.
+Azahar, caso(c): ferry a(34,73), siete puertas entrar/salir (`finish-flags/doors.log`, DOORS ok14:33:21).
+Al cambiar solo UV no se repiten esas siete puertas: final prueba escalera, recorrido plaza y guardado/recarga.
+Capturas de suelo: muelle, plaza, Tubo y Palacio; cenital de los ocho modelos junto a referencia y F11
+(`work/f11/finish/before-reference-after.png`, color medio de texturas, **no captura de Azahar**).
+Guardado final por UI en(85,52), 58 bloques, SHA25639b80c79… y recarga (`final-save-load.log`).
+Suite completa: 2931 passed, 4 skipped (`tests-close.log`). Detalle de identidades y evidencias en el diseño.
+
+Pendiente para cerrar: integrar helpers con brochas visuales separadas de colisiones y validar resultado común;
+la cenital del propio emulador, si se exige en lugar del método usado en F11, no está probada.
+No se tocan motor, CRO, asm, reserva Luma 0x579604–0x579804, inputs, partida original, REPARTO ni tasks.json.
+Sin paquete, consola ni subagentes. Laboratorio cerrado: cleanup.log, remaining=[], session_metadata=false.

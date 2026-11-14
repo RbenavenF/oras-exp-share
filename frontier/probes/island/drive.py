@@ -7,6 +7,7 @@ Inputs only, never writes RAM; the position is read from RAM by gdb (frontier/pr
     drive.py NAME ferry [sailor] the Lilycove sailor's pass (with «sailor») and the ferry to «Isla del Frente»
     drive.py NAME pos            prints the tile
     drive.py NAME walk X,Y ...   frontier/probes/pyramid/walk_to.py to each tile, a screenshot at each
+    drive.py NAME route X,Y ... follows island_build.route around the island's obstacles
     drive.py NAME shot LABEL     screenshot to work/f11/proto/NAME/LABEL.png
     drive.py NAME keys K ...     presses keys (azahar_lab key names), 1.2 s apart
 Every step is logged to work/f11/proto/NAME/walk.log with the tile.
@@ -24,6 +25,9 @@ import circuit as c  # noqa: E402
 def main():
     name, cmd, args = sys.argv[1], sys.argv[2], sys.argv[3:]
     out = ROOT / 'work/f11/proto' / name
+    if not name.replace('-', '').replace('_', '').isalnum():
+        raise ValueError('Simple evidence name required')
+    out.mkdir(parents=True, exist_ok=True)
     log = out / 'walk.log'
 
     def note(text):
@@ -44,11 +48,15 @@ def main():
     elif cmd == 'keys':
         c.keys(*args)
         note(f'keys {args} -> {c.pos()}')
-    elif cmd == 'walk':
+    elif cmd in ('walk', 'route'):
         for xy in args:
             x, y = map(int, xy.split(','))
             try:
-                c.walk((x, y))
+                if cmd == 'route':
+                    steps = c.island_build.route(c.pos(), (x, y))
+                    c.walk(*c.island_build.corners(steps))
+                else:
+                    c.walk((x, y))
                 note(f'walk {x},{y} -> {c.pos()}')
             except RuntimeError as e:
                 note(f'walk {x},{y} FAILED at {c.pos()}: {str(e)[-200:]}')

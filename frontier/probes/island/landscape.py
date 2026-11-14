@@ -174,6 +174,9 @@ def main():
     sources = {'git': subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
                'builder': hashlib.sha256(source.read_bytes()).hexdigest(),
                'plan': hashlib.sha256((BASE/'out-island/plan.properties').read_bytes()).hexdigest(),
+               'probes': {name: hashlib.sha256((HERE/name).read_bytes()).hexdigest()
+                          for name in ('landscape.py', 'IslandLandscape.java', 'LandscapeTrial.java')},
+               'layout': hashlib.sha256(Path(island_layout.__file__).read_bytes()).hexdigest(),
                'settings': vars(args),
                'base_archives': {rel: hashlib.sha256((BASE/'out-island/game'/rel).read_bytes()).hexdigest()
                                  for rel in island_build.ZONE_ARCHIVES}}
