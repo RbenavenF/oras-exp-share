@@ -3740,3 +3740,35 @@ hay menús: siguen cerrados.
 Siguiente paso: decidir si BASE se da por cumplida. Los criterios de nivel, racha, pausa y derrota de la Torre están
 medidos (hitos 4–9). Lo que queda es de F9-LIBRE-*: menús; Domo con TEAM 16493–16495; Fábrica Libre 100 en
 recepción.
+
+## 2026-11-14 — Claude Code (Opus 5.5) — F9-MODOS-BASE: cierre y evidencia de Anabel no anotada
+Estado: hecho
+Hecho: anoto una medición de mi sesión del 13/11 que se cortó antes de llegar a la bitácora. Build de 7c7a7bb
+(`work/frontier/modos/build`), copia de `work/frontier/brains/t34.sav` con racha Libre 34, CONFIG M1 L60 y Silcoon a
+nivel 73:
+- el combate 35 es **Anabel**: la racha se lee del banco Libre; el de Nivel 50 estaba a 0;
+- `CAP level=73 config=0x13c` → 0x149;
+- `brain_start` rehace su equipo a nivel **73** (tres `MAKE level=73 iv=24` desde el CRO);
+- los de nivel 6 combaten a nivel 6.
+Derrota: Libre 34/34 → 0/34; Nivel 50 0/34 y ACTIVE 0; símbolos sin cambio. El guardado tras la derrota conserva el
+hash del equipo de la copia.
+Evidencia: `work/frontier/modos/libre/run3-gdb.log`, `after-loss.json`, `v12.png`, `v13.png`, `v16.png`. Esa build es
+anterior a los guards de Codex (hitos 3–6). El nivel de los Cerebros sigue pasando por `mode_level`. No se ha
+repetido con la build base9.
+Criterios de F9-MODOS-BASE y dónde está su evidencia:
+- reservas 35 con su justificación, y persistencia (hitos 1 y 5);
+- selector Normal/Súper, X y tipo 1 (hitos 1, 2 y 5);
+- espacio y guards (hitos 2, 6 y 9);
+- (ruta,M) y los cuatro accesores Dobles, con ruta 0 retail (hitos 1–3 y Unicorn);
+- L inicial nativo: en la Torre por inscripción (hito 9) y en la Fábrica a 100 en `mode_register` (Unicorn);
+- rival compuesto (Tubo y Domo por Unicorn; Anabel en Azahar);
+- corte Torre L=73 con pausa, recarga y derrota, y banco 50, equipo y Caja intactos (hitos 4–8);
+- matriz VM/Unicorn y ZO ≤ 17248;
+- sin menús.
+Pasan a F9-LIBRE-*:
+- menús;
+- Domo con los tres inscritos (TEAM 16493–16495) llamando a `mode_register` antes de reducir a dos;
+- Fábrica Libre en recepción;
+- la diferencia 0xcc–0xd0 del hito 7, no reproducida.
+Commits: este; 35f7d6f.
+Siguiente paso: integración del orquestador; después F9-LIBRE-PROPIOS (tras F7-PAQUETE-V03).
