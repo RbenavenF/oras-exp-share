@@ -3772,3 +3772,36 @@ Pasan a F9-LIBRE-*:
 - la diferencia 0xcc–0xd0 del hito 7, no reproducida.
 Commits: este; 35f7d6f.
 Siguiente paso: integración del orquestador; después F9-LIBRE-PROPIOS (tras F7-PAQUETE-V03).
+
+## 2026-11-14 — Claude Code (Opus 5.5) — F11-ISLA-TRAZADO hito 1: cuadrícula calcada 128×72
+Estado: en curso
+Hecho:
+- `frontier/island_trace.py` (nuevo) genera `frontier/island_layout.py` (datos versionados, no se editan a mano).
+  Fuentes:
+  - pret/pokeemerald 731ad5bf: `map.bin` (colisión), comportamientos de metatile (agua, cascada, puertas) y
+    `warp_events`;
+  - la imagen de referencia (16 px por casilla), para el color de cada casilla.
+- Clases: mar, estanque, suelo de baldosa, camino, hierba, arena, muelle, escalera, acantilado, árbol/seto,
+  parterre, roca, valla/banderín, decoración que bloquea, hueco de edificio y puerta. Leyenda en `LEGEND`.
+- Cajas de edificio medidas a mano sobre la imagen (`BUILDINGS`, 22). Puertas con `+` en las 7 instalaciones y en
+  la recepción (26,61)/(26,65). Huecos sin puerta en `RESERVED_DOORS`.
+- Sin cueva: las dos bocas y su explanada pasan a acantilado. Sin cascada: también acantilado.
+- Alturas (`HEIGHT`, 0–3): las 7 escaleras de Esmeralda (metatiles 175/207) suben al norte. Muelle 1, plaza 2,
+  terrazas del Domo/Torre, Pirámide y Arena 3, agua 0. Los estanques del jardín del Palacio, a la altura de la plaza.
+- Ferry de Esmeralda: (19,67) del muelle (`warp MAP_BATTLE_FRONTIER_OUTSIDE_WEST, 19, 67`, puertos de
+  Calagua/Portual).
+Evidencia:
+- `tests/test_frontier_island_layout.py`: 8 tests. Comprueban tamaño, encaje 4×2 con OFFSET (16,4), clases de la
+  leyenda, puertas de §1 en `+` junto a un hueco, huecos reservados sin puerta, puertas alcanzables desde la plaza,
+  muelle aislado salvo por la recepción, sin cueva ni cascada y el mar alrededor.
+- Suite `env -u ORCH_LANE python -m pytest -q tests`: 2902 passed, 2 skipped (`work/f11/tests-m1.log`).
+- Render cenital junto a la imagen: `work/f11/calco.png` (arriba la referencia, en medio las clases, abajo las
+  clases sombreadas por altura). Lo genera `work/f11/render.py`.
+Commits: el de esta entrada.
+Decisiones:
+- La colisión de Esmeralda decide qué se pisa y qué no; la imagen solo decide la clase. Así el calco no inventa
+  pasos.
+- Las motas azules de ≤4 casillas (pilares de los arcos, ventanas) son decoración, no agua.
+- La recepción separa el muelle de la plaza, como en Esmeralda: F11-ISLA-CONSTRUCCION tiene que darle paso
+  (interior o pasillo).
+Siguiente paso: techo de carga retail (Resort y ciudades) y tabla de materiales; después, el prototipo de 8 celdas.
