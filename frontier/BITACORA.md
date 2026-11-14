@@ -4098,3 +4098,33 @@ Commits: bd828f7, 29988e9 y el de esta entrada (Agent: Codex).
 Decisiones: derrotas controladas para cerrar cada desafío; no se atribuye esta prueba a consola.
 No probado todavía: recarga/ferry de regreso, Mansión original, historia/Repartir Exp./DexNav; consola real.
 Siguiente paso: reload-return.out en el mismo conductor persistente; después Mansión original y partida de historia.
+
+## 2026-11-14 — Codex — F7-PAQUETE-V03 hito 4 y cierre del carril: regresión completa, dist pendiente
+Estado: en curso (solo falta entrega desde main tras integrar)
+Hecho: recarga en (129,21), camino al muelle y ferry a Calagua, Mansión original y combate salvaje de historia;
+Repartir Exp. medido en guardado UI y pantalla DexNav comprobada. reports/frontier.md §52 reúne la evidencia.
+Evidencia (work/frontier/pkg03/):
+- return-menu.out y shots/c_island_reload.png: recarga con assert (129,21). La primera automatización de regreso
+  eligió Portual por defecto aunque su log decía Calagua; no aceptar ese rótulo. Segunda prueba selecciona Ciudad
+  Calagua explícitamente: c_return_destinations.png, c_return_calagua_confirm.png, c_back_calagua_correct.png.
+  v03-back-calagua.json: zona317 (16.5,25.5), 58 bloques válidos; SHA256
+  ea4fcf602d8a15a5c5003bc838c3032c453d4ffa3a22cbb03f214d19fbdb3efd (checkpoint.py).
+- maison.out/maison.gdb.log: paquete exacto+Luma, Mansión original ruta0, FRONT START 11:34:09,
+  FRONT RESULT raw=0 11:35:14, recepción (23,25); todas las variables del Frente desactivadas.
+- wild-boot.out, shots/c_wild_encounter.png y c_wild_finished.png: Poochyena Nv3 contra Torchic Nv12,
+  victoria y vuelta al campo. v03-after-wild.sav: 2a73e83ff0149ddebccb0ab41eebec7430146cbb4931ea6361b69da2886133da,
+  zona24, 58 bloques; exp-check.json (save_fixture.inspect): EXP 1105→1129/1117/1105 (+24/+12/+0),
+  EV Ataque +1/+1/+0 (participante/portador216 en reserva/reserva sin objeto).
+- shots/c_dexnav.png: Wurmple, Nivel/Racha14/0. Sin nueva prueba de cadenas largas ni premios.
+- identity-final.json: los 39 hashes del paquete y 38 del mod instalado siguen coincidiendo; solo IPS Luma simulado.
+- Suite final: env -u ORCH_LANE python -m pytest -q tests → 2928 passed, 4 skipped, 56.10s (tests-close.log).
+- Conductor terminado con código0; gdbctl stop + reap. cleanup.log: remaining=[], session_metadata=false.
+Commits: bd828f7, 29988e9, 9c19635 y el de esta entrada (Agent: Codex).
+Decisiones: regresión caso d completa del paquete exacto. Sin pruebas de consola real; manifiesto conserva
+validated in Azahar only. Sin cambios a inputs, partida original, REPARTO, tasks.json ni reserva de Luma.
+Siguiente paso OBLIGATORIO: el orquestador integra y ejecuta desde main limpio python frontier/package.py y
+python frontier/package.py checkpoint dist/oras-frontier-checkpoint-test-v0.2/FrenteTest-puerto-Calagua/main.
+dist es enlace fuera de la raíz escribible; todavía no existe v0.3 allí (consulta de cierre), por eso no se marca done.
+Comparar manifest.files con work/orch/lanes/codex/work/frontier/pkg03/oras-frontier-alpha-v0.3/manifest.json;
+39 hashes idénticos y Checkpoint 5ddaa992… permiten cerrar sin repetir Azahar. Si la integración cambia juego,
+aplicar regresión al cambio. Los cambios de solo docs/commit del manifiesto no invalidan la prueba.

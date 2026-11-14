@@ -3812,8 +3812,8 @@ hierba o roca (tareas F10 sobre el trazado nuevo).
 
 ## 52. Paquete alfa v0.3 — F7-PAQUETE-V03 (2026-11-14, Codex)
 
-**Estado: en curso; no distribuir como validado hasta completar el circuito.** La confirmación de v0.2 en
-3DS no valida la isla nueva de v0.3. No se ha ejecutado v0.3 en consola.
+**Estado: regresión del paquete exacto completa en Azahar; entrega en dist desde main pendiente de integración.**
+La confirmación de v0.2 en 3DS no valida la isla nueva de v0.3. No se ha ejecutado v0.3 en consola.
 
 Relevo limpio sobre `fa68d218633a7e6465f1eed08138f96187105983`: ese commit de Claude cambió generador y tests,
 pero faltaban bitácora y aceptación del paquete exacto. Se conserva su implementación. Construcción local:
@@ -3873,5 +3873,58 @@ Regresión caso d del paquete exacto + Luma, evidencia en `work/frontier/pkg03/`
 SHA256 `53eab46215af5a94f1bc6adb16557c4135435305ceef83b0792aa854d0fa9eca`, zona 209,
 (129.5,21.5), altura 56, 58 bloques válidos (`v03-island.json`). No se escribe RAM.
 
-Pendiente: recargar y volver en ferry, Mansión original, combate normal, Repartir Exp. y DexNav. El texto anticipado
-del LEEME heredado no constituye evidencia de estas pruebas hasta su cierre.
+Recarga de `v03-island.sav`: lectura inicial de posición (129,21), altura 56 en `reload-return.gdb.log`;
+segunda recarga comprobada con assert y captura `shots/c_island_reload.png` (`return-menu.out`). Vuelta al muelle
+(34,73). La primera automatización aceptó el destino predeterminado **Portual**, aunque su log decía Calagua:
+no se usa ese rótulo como prueba de destino. Repetición con selección explícita de la segunda opción **Ciudad
+Calagua** (`shots/c_return_destinations.png`, `c_return_calagua_confirm.png`): llegada visible **Ciudad Calagua**
+(`c_back_calagua_correct.png`) y guardado UI `v03-back-calagua.sav`, zona **317**, (16.5,25.5),
+58 bloques válidos, SHA256 `ea4fcf602d8a15a5c5003bc838c3032c453d4ffa3a22cbb03f214d19fbdb3efd`
+(`ferry-finish.out`, `v03-back-calagua.json`).
+
+Mansión original: fixture local de recepción `work/frontier/console-maison/reception.sav` (98089a84…), paquete
+exacto + Luma comprobados otra vez al arrancar (`maison.out`). FRONT START **ruta 0**, sin variables activas del
+Frente; FRONT RESULT raw=0 (11:34:09→11:35:14) y regreso a recepción (23,25), `maison.gdb.log`,
+`shots/c_maison_battle.png` y `c_maison_after.png`. No se alteró la partida original.
+
+Historia: fixture local `work/frontier/pkg02/s0_reserve.sav` (9966ec53…), tres Torchic Nv.12 con 1105 EXP,
+solo el segundo lleva el objeto 216. Arranque con identidad del paquete verificada (`wild-boot.out`);
+Poochyena salvaje Nv.3 (`shots/c_wild_encounter.png`), combate sin asistencia y vuelta a Ruta102
+(`c_wild_finished.png`). Guardado UI `v03-after-wild.sav`, zona24 (127.5,134.5), 58 bloques válidos,
+SHA256 `2a73e83ff0149ddebccb0ab41eebec7430146cbb4931ea6361b69da2886133da`.
+Comparación con `save_fixture.inspect`, `exp-check.json`:
+
+| Pokémon | Objeto | EXP antes → después | EV de Ataque antes → después |
+| --- | --- | --- | --- |
+| Participante | ninguno | 1105 → 1129 (+24) | 0 → 1 |
+| Reserva | Repartir Exp. (216) | 1105 → 1117 (+12) | 0 → 1 |
+| Reserva | ninguno | 1105 → 1105 (+0) | 0 → 0 |
+
+DexNav: Wurmple, «Nivel / Racha **14/0**», `shots/c_dexnav.png`. Esta regresión comprueba la pantalla del mod;
+no vuelve a medir cadenas largas ni premios. No se repiten Cerebros, rondas completas ni juicio de Arena.
+La afirmación del LEEME sobre este recorrido queda ahora respaldada por ejecución del paquete exacto.
+
+Identidad final (`identity-final.json`): **39 hashes** del paquete y **38** del mod instalado comprobados;
+única sustitución prevista: code.ips de laboratorio con Luma. Suite de cierre
+`env -u ORCH_LANE python -m pytest -q tests`: **2928 passed, 4 skipped**, 56.10s (`tests-close.log`).
+ORCH_LANE se elimina para los tests de configuración del orquestador, como en la validación de F11;
+no afecta al juego ni al generador. Laboratorio cerrado por el conductor persistente: gdbctl stop + reap;
+`cleanup.log`: remaining=[] y session_metadata=false. No se ha tocado el laboratorio del otro carril.
+
+**Pendiente exclusivamente de integración/entrega:** el `main` consultado al cierre sigue en fa68d21 y no existe
+dist v0.3. El carril no puede escribir a través del enlace dist (fuera de su sandbox). Tras integrar sus commits,
+el orquestador debe ejecutar desde main limpio:
+
+```bash
+source scripts/env.sh
+python frontier/package.py
+python frontier/package.py checkpoint dist/oras-frontier-checkpoint-test-v0.2/FrenteTest-puerto-Calagua/main
+```
+
+Comparar `manifest.json.files` de la entrega con el paquete validado, disponible desde main en
+`work/orch/lanes/codex/work/frontier/pkg03/oras-frontier-alpha-v0.3/manifest.json`; todos los hashes deben
+coincidir (el commit del manifiesto y el hash del ZIP cambiarán). Verificar también main de Checkpoint contra
+5ddaa992c5aea98a3da1af80c1f2486b6d2db1690da0ae8be84abf2397edeffa. Si coinciden, la regresión ya cubre
+los ficheros entregados; no repetir Azahar. Si cambian ficheros del juego por integración concurrente, determinar
+qué cambió y aplicar la política de regresión antes de cerrar F7. `work/lane-task.json` permanece in_progress
+hasta esta entrega, sin atribuir a consola lo probado solo en Azahar.
