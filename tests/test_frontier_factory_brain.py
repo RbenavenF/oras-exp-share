@@ -10,6 +10,7 @@ from test_frontier_brains import scripts
 import brains
 import factory
 import factory_brain as noland
+import modes
 import patch
 from pawn_vm import VM
 
@@ -47,9 +48,11 @@ def test_script_thresholds_and_repeats(scripts, symbols):
 
 
 @pytest.mark.parametrize('variant,previous,expected', [(1, 0, 1), (2, 1, 3), (1, 3, 3)])
-def test_factory_symbol_and_bonus_only_once(scripts, variant, previous, expected):
+@pytest.mark.parametrize('config', [0, 0x164])
+def test_factory_symbol_and_bonus_only_once(scripts, variant, previous, expected, config):
     script, labels = scripts['factory']
-    works = {patch.WORK_ROUTE: 1, brains.WORK_BRAIN: 1 + 8 * variant, brains.WORK_SYMBOLS: previous | 0x3000}
+    works = {patch.WORK_ROUTE: 1, modes.CONFIG[1]: config,
+             brains.WORK_BRAIN: 1 + 8 * variant, brains.WORK_SYMBOLS: previous | 0x3000}
     paid = []
     stubs = base.natives({'WorkGet': lambda vm, a: works.get(a[0], 0),
                           'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
@@ -62,8 +65,9 @@ def test_factory_symbol_and_bonus_only_once(scripts, variant, previous, expected
 
 @pytest.mark.parametrize('variant,iv,ids', [(1, 15, [170, 185, 200]),
                                         (2, 31, [0x8000 | 104, 0x8000 | 558, 0x8000 | 600])])
-def test_native_preserves_dynamic_team_across_retail_builder(variant, iv, ids):
-    uc, ar, put = base.machine(1, 1 + 8 * variant, trainer=brains.trainer_id('factory', variant))
+@pytest.mark.parametrize('config,level', [(0, 50), (0x164, 100)])
+def test_native_preserves_dynamic_team_across_retail_builder(variant, iv, ids, config, level):
+    uc, ar, put = base.machine(1, 1 + 8 * variant, trainer=brains.trainer_id('factory', variant), config=config)
     works = base.SAVE + 0x13144
     for w, v in zip(patch.WORK_RIVAL, ids):
         put(works + 2 * (w - 0x4000), v, '<H')
@@ -92,7 +96,7 @@ def test_native_preserves_dynamic_team_across_retail_builder(variant, iv, ids):
     assert [v[1:5] for v in seen] == [(218, 1, 218, 218)] * 3
     loads = [v for v in calls if v[0] == c['CODE_LOAD_SET']]
     assert [v[2:4] for v in loads] == [(0xB8 if i & 0x8000 else 0xB6, i & 1023) for i in ids]
-    assert [v[2:5] for v in calls if v[0] == c['CODE_MAKE_PARAM']] == [(50, iv, base.HEAP)] * 3
+    assert [v[2:5] for v in calls if v[0] == c['CODE_MAKE_PARAM']] == [(level, iv, base.HEAP)] * 3
     assert [v[2] for v in calls if v[0] == c['CODE_FRIENDSHIP']] == [0, 0, 0]
     assert [struct.unpack('<H', uc.mem_read(works + 2 * (w - 0x4000), 2))[0] for w in patch.WORK_RIVAL] == ids
     assert struct.unpack('<H', uc.mem_read(works + 2 * (patch.WORK_IV - 0x4000), 2))[0] == 9

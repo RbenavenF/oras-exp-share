@@ -383,3 +383,37 @@ rondas7–700 y ausencia dentro de ronda; símbolo/bonus Noland una vez en
 test_frontier_factory_brain.py, dos callbacks consecutivos pagan solo10. Motor
 Libre100 en test_frontier_modes_engine.py; replay con snapshot en
 test_frontier_factory_open_vm.py. Todos incluidos en la suite anterior. Consola no probada. Estado de tarea in_progress.
+
+## Hito 5 — cierre de aceptación (2026-11-14, en curso)
+
+La derrota tras reanudar se jugó sin asistencia: `azahar-reload.log` registra
+`BRAINS RESULT raw=0`. Al regresar a recepción, `FACTORY AFTER LOSS` mide ruta0,
+rachaLibre0/contadorLibre0/récordLibre6, IV0/marca0, CONFIG356; Nivel50 mantiene
+racha12/récord20/contador22 y Dobles contadores24/25. Guardado manual retail:
+`hito4/after-loss.sav/json`, 58 bloques válidos, SHA256
+`c936a3fab45d9f467c020648332b5410d3fcdd2de229113ebb92b58cf1384ff0`, PB3.
+No se borra el contenido inactivo de alquileres/semilla; IV0 impide reanudarlo.
+Equipo real: seis Pokémon 73/55/41/6/7/6, no reemplazados por alquileres. La
+comparación PK6 descifrada (`after-loss-party-diff.json`, save_fixture.decode_pk)
+encuentra únicamente en el cuarto Pokémon byte0xCC 2→3 y su checksum0x06
+247→248 (recuerdo retail, véase reports/frontier.md §Torre). Todo otro byte de
+los seis PK6, incluidas EXP, EV/IV, movimientos, objeto y PS, se conserva;
+cajas idénticas. El hash bruto del equipo cambia por ese recuerdo, no se afirma
+identidad byte a byte del bloque tras la derrota.
+
+Noland: los tests ARM del constructor dinámico ahora ejecutan CONFIG0/0x164
+en plata/oro, conservando IDs del equipo y WORK_IV y comprobando nivel50/100
+e IV15/31 reales de las llamadas; VM símbolo/+10 una vez en ambas modalidades.
+Suite final `env -u ORCH_LANE python -m pytest -q tests`: **3586 passed,
+4 skipped, 95.97s**, `hito4/tests-brain-open.log`; ejecución previa a ampliar
+Noland:3581/4/90.42s en `tests-probe.log`. Sin cambios de producto desde build hito4.
+
+Fixture de cierre `fabrica.py round-end SOURCE SHA256 OUTPUT`: copia nueva de
+paused.sav con rachas16690/16429 de1 a6; no representa seis victorias naturales.
+Guard de hash/zona/works esperados, rechazo de sobrescritura, 58 checksums.
+`round-end.sav/json` SHA256
+`c873a1dd128a866d86699049f898c500d7e51d885749dededa121d91c02d421a`;
+`round-end-diff.json` comprueba que son los únicos dos works modificados;
+`round-end-guard.json` prueba hash incorrecto rechazado, salida ausente y fuente
+intacta. PB/equipo/cajas/IV/semilla/contador/marca preservados. Pendiente medir el
+cierre de ronda en esta copia y cerrar el laboratorio antes de terminar.

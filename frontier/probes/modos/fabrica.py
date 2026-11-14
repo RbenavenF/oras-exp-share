@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Factory Open acceptance: separate checksummed lab fixtures and passive GDB probe.
 
-seed SOURCE SHA256 OUTPUT; snapshot SOURCE OUTPUT; probe DIRECTORY
+seed SOURCE SHA256 OUTPUT; round-end SOURCE SHA256 OUTPUT;
+snapshot SOURCE OUTPUT; probe DIRECTORY
 No source-save or inferior-memory writes. Run from the lane root.
 """
 import hashlib
@@ -71,6 +72,28 @@ def snapshot(source, destination):
     return output(source, destination, data, dict(works={w: se.work(data, w) for w in sorted(works)}))
 
 
+def round_end(source, sha256, destination):
+    """Advance a separate real paused Open save to battle seven, not six claimed wins.
+
+    Keep rentals, RNG, counters, records, IV, party, boxes and BP byte-for-byte.
+    The next victory must award BP and perform a real round-two draft itself.
+    """
+    raw = source.read_bytes()
+    sf.blocks(raw)
+    streak, record = modes.bank(1, 1)
+    required = {modes.CONFIG[1]: 0x164, streak: 1, record: 6,
+                patch.WORK_IV: 3, fo.WORK_PENDING_RENT: 2,
+                modes.FACTORY_RENTS[1]: 1, factory.WORK_STREAK: 1}
+    if digest(raw) != sha256 or se.place(raw)['zone'] != 213:
+        raise ValueError('source hash or Factory pause zone mismatch')
+    if any(se.work(raw, w) != v for w, v in required.items()):
+        raise ValueError('expected the measured post-swap paused Open save')
+    works = {streak: 6, factory.WORK_STREAK: 6}
+    data = se.edit(raw, works=works.items())
+    return output(source, destination, data, dict(source_sha256=sha256, works=works,
+                  artificial_streak=True, purpose='round-seven BP/draft acceptance, not six natural wins'))
+
+
 def script(directory):
     s = probe(str(directory)).replace('16573-0x4000', '16546-0x4000')
     return s + '''python
@@ -87,6 +110,8 @@ end
 if __name__ == '__main__':
     if len(sys.argv) == 5 and sys.argv[1] == 'seed':
         print(json.dumps(seed(Path(sys.argv[2]), sys.argv[3], Path(sys.argv[4])), indent=2))
+    elif len(sys.argv) == 5 and sys.argv[1] == 'round-end':
+        print(json.dumps(round_end(Path(sys.argv[2]), sys.argv[3], Path(sys.argv[4])), indent=2))
     elif len(sys.argv) == 4 and sys.argv[1] == 'snapshot':
         print(json.dumps(snapshot(Path(sys.argv[2]), Path(sys.argv[3])), indent=2))
     elif len(sys.argv) == 3 and sys.argv[1] == 'probe':
