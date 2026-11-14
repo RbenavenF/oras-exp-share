@@ -3974,7 +3974,8 @@ Guardado final por UI en(85,52), 58 bloques, SHA25639b80c79… y recarga (`final
 Suite completa: 2931 passed, 4 skipped (`tests-close.log`). Detalle de identidades y evidencias en el diseño.
 
 Pendiente para cerrar: integrar helpers con brochas visuales separadas de colisiones y validar resultado común;
-la cenital del propio Azahar exigida por el brief sigue pendiente; la comparación de modelos no la sustituye.
+la cenital única de las ocho celdas en Azahar sigue pendiente. Hay tomas regionales reales, descritas abajo;
+la comparación de modelos no sustituye la captura del emulador.
 Adaptación aislada sin snapshots ejecutada con `landscape.py --name integration-fresh --fresh-movement`:
 `work/f11/finish/integration-fresh/integration.diff` conserva las brochas originales para movimiento y sustituye
 solo `bc.model` por el pintado visual. No llama a remember/preserve. `equivalence.json`: los seis GARCs completos
@@ -3982,3 +3983,17 @@ idénticos byte a byte a `final`, con el mismo presupuesto; no requiere repetir 
 `final` como propuesta para quien integra; los ficheros comunes siguen sin modificar.
 No se tocan motor, CRO, asm, reserva Luma 0x579604–0x579804, inputs, partida original, REPARTO ni tasks.json.
 Sin paquete, consola ni subagentes. Laboratorio cerrado: cleanup.log, remaining=[], session_metadata=false.
+
+Cámara de evidencia (15:00): `PhotoCamera.java` + `photo_camera.py` generan una copia desechable del candidato,
+modificando solo AD229[3] (cámara), sin afectar a los otros 38 archivos del mod ni otro área/subfichero del archivo
+de áreas. Pitch=-89,9°, distancia=1000, FOV=110°; el ensayo a distancia3000/FOV45 salió negro, causa no determinada.
+`photo-reproduce/camera-only-proof.json`, copia con guard `photo-guarded` idéntica, `photo-evidence.json`:
+`final/mod` sigue idéntico a su manifiesto. Cámara fotográfica excluida de producción.
+Desde la copia de plaza se camina a(34,24) y(129,21), sin escribir posición; capturas reales en
+`work/f11/proto/finish-photo/at_34_24.png` y `at_129_21.png`, ruta `photo-reproduce/route.out`.
+`photo-reference-before-after.png` compara los dos fotogramas con referencia y modelos F11; variante
+`photo-reference-before-after-crops.png` amplía recortes con cajas/hashes en su JSON. No se cosen perspectivas
+ni rellenan píxeles negros: solo se ven las columnas de celdas próximas al jugador. No se declara toma única.
+Suite: **2931 passed,4 skipped**, 67,11s (`tests-photo-final.log`); comparación y generación ejecutadas.
+`photo-reproduce/cleanup.json`: remaining=[], session_metadata=false, cierre en la shell que arrancó el laboratorio.
+No se repiten ferry/puertas por una cámara de evidencia que no se incorpora a los archivos jugables validados.

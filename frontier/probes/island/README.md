@@ -128,3 +128,32 @@ java -Djava.awt.headless=true -cp $CP faraway.TopView work/f11/build/out-island/
 
 El prototipo de terreno sigue aquí como laboratorio; usa también `island_layout.OFFSET`, que
 pasó de (16,4) a (15,6) para que ningún edificio provisional cruce el borde de una celda.
+
+### Cámara fotográfica de Azahar (solo copia desechable)
+
+`photo_camera.py NOMBRE` copia el candidato `work/f11/finish/final` sin reemplazar
+evidencias existentes y genera una cámara cenital en AD229[3]. `PhotoCamera.java`
+usa el formato del editor de CTRMap-F5, con guard de área privada; no modifica
+el constructor común. `camera-only-proof.json` exige que ningún otro subfichero
+de área, zona, modelo, textura, colisión ni archivo del mod cambie.
+
+```sh
+source scripts/env.sh
+python frontier/probes/island/photo_camera.py foto-nueva
+F11_OUT=work/f11/finish/foto-nueva bash frontier/probes/island/boot.sh work/f11/finish/plaza-final.sav
+python frontier/probes/island/drive.py foto-nueva route 34,24 129,21
+faraway/gdbctl.sh stop
+python scripts/azahar_lab.py reap
+```
+
+Ejecutar arranque, controles y cierre en **la misma sesión de shell** si el
+sandbox aísla procesos/X11 por llamada. En una terminal persistente se conserva
+el laboratorio entre comandos. No usar snapshots ni escribir la posición.
+La cámara por defecto usa pitch=-89,9°, distancia=1000 y FOV=110°; distancia=3000,
+FOV=45° dio pantalla negra. Azahar sigue mostrando solo las celdas cargadas junto
+al jugador: hacen falta vistas regionales, que no son una toma completa continua.
+`photo_compare.py OUT.png OESTE.png ESTE.png` coloca los fotogramas completos
+junto a la referencia y la vista de modelos del F11 anterior, sin reconstruir
+las zonas negras ni coser perspectivas distintas. Usa `/usr/bin/python3` (Pillow).
+**No entregar el mod fotográfico ni copiar su a/0/1/4 a producción.** El candidato
+jugable conserva su cámara original; esta herramienta solo obtiene evidencia.

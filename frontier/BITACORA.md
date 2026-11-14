@@ -4279,3 +4279,38 @@ Siguiente paso: integrador, trasladar helper sin remember/preserve/movement, car
   y aplicar integration-fresh/integration.diff siguiendo reports/diseno/isla-esmeralda-acabado.md. Validar
   construcción común y hashes contra final, suite y cenital de Azahar; si cambian archivos de juego,
   aplicar caso(c). work/lane-task.json in_progress; no empaquetar ni declarar done antes de esos criterios.
+
+## 2026-11-14 15:00 — Codex — F11 acabado: cenitales regionales reales de Azahar
+Estado: en curso
+Hecho: revisados AGENTS, PLAN, REPARTO, diseño, git log/status y última entrega. Sin cambios al turno ni
+ficheros comunes. PhotoCamera.java y photo_camera.py crean una copia fotográfica, con guard de área privada
+229 y prueba de que solo AD[3] cambia; photo_compare.py compara capturas reales con referencia y modelos F11,
+con recortes opcionales explícitos (cajas y hashes en JSON). README y diseño documentan la reproducción.
+Evidencia:
+- photo_camera.py photo-reproduce --pitch -89.9 --distance 1000 --fov 110; repetido como photo-guarded con
+  guard de área: 39 archivos del mod idénticos entre ambos. camera-only-proof.json: solo romfs/a/0/1/4,
+  solo área229, solo subfichero3 distinto del candidato final; modelos/texturas/movimiento íntegros.
+- Ensayo previo distancia3000/FOV45: pantalla negra. Distancia1000/FOV110: terreno visible. Causa del primer
+  resultado no determinada. No se envía ninguna cámara de prueba a producción.
+- Azahar del carril24691, shell persistente: boot.sh con copia plaza-final.sav; drive.py route34,24 129,21;
+  photo-reproduce/route.out: oeste14:56:04, este14:58:52; at_34_24.png y at_129_21.png bajo
+  work/f11/proto/finish-photo. Sin snapshots ni escritura de posición. east-final.png confirma(129,21).
+- /usr/bin/python3 photo_compare.py (argumentos y variantes en reports/diseno/isla-esmeralda-acabado.md):
+  work/f11/finish/photo-reference-before-after.png y photo-reference-before-after-crops.png, inspeccionadas
+  las capturas originales y comparación completa. Los negros son terreno no dibujado fuera de las columnas
+  próximas; no se reconstruye. Son cenitales regionales, NO una captura única de las ocho celdas.
+- photo-evidence.json: hashes de capturas/comparaciones/tests/cierre; final/mod conserva sus39 hashes originales.
+- source scripts/env.sh; env -u ORCH_LANE python -m pytest -q tests: 2931 passed,4 skipped,67.11s;
+  work/f11/finish/tests-photo-final.log (primera pasada también verde, tests-photo.log,59.72s).
+  Compilación/ejecución de helper con guard y comparación con/sin recortes correctas; git diff --check limpio.
+- gdbctl stop + azahar_lab.py reap ejecutados en la shell del arranque: photo-reproduce/cleanup.json,
+  remaining=[], session_metadata=false. Laboratorio cerrado, ningún proceso ajeno tocado.
+Commits: e9bec95 (adaptación sin snapshots); el de esta entrada (frontier: obtiene cenitales regionales de Azahar).
+Decisiones: no tocar island_build.py/overlay.py/faraway/java, reservados al integrador. La cámara fotográfica
+no cambia el candidato probado: se reutiliza ferry/puertas/guardar-cargar según caso(c). No empaquetar ni push;
+inputs, partida original, motor, reserva Luma0x579604–0x579804, REPARTO y tasks.json intactos.
+No probado: construcción común integrada, cenital única de las ocho celdas, consola.
+Siguiente paso: integrador, aplicar integration-fresh/integration.diff y helper sin remember/preserve/movement,
+placements desde el plan; validar construcción/hashes contra final y suite. Si cambian archivos jugables,
+regresión caso(c). Para la cenital completa aún hace falta resolver cobertura de celdas al alejar la cámara;
+las dos tomas regionales ya tienen evidencia real y comparación. work/lane-task.json in_progress.

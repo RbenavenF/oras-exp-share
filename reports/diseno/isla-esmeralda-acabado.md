@@ -172,3 +172,50 @@ cenital del propio Azahar exigida por el brief; la comparación de modelos no
 sustituye ese criterio.
 No empaquetar. Consola y combates: no probados; no corresponden a esta regresión
 de exterior (política del usuario, caso c). Laboratorio cerrado: `work/f11/finish/cleanup.log`, remaining=[], session_metadata=false.
+
+### Cámara de evidencia, separada del candidato jugable
+
+`frontier/probes/island/photo_camera.py` y `PhotoCamera.java` generan una copia
+desechable con cámara cenital. No forman parte de la integración del paisaje.
+El ensayo inicial pitch=-89,9°, distancia=3000, FOV=45° dio pantalla negra;
+distancia=1000 y FOV=110° sí muestran el mapa. No se ha determinado la causa
+exacta del primer resultado. Los campos proceden del lector/editor de cámaras
+de CTRMap-F5 (`CameraDataFile`, `CameraData`, `CameraCoordinates`).
+
+La cámara se aplica solo al AD229[3], con límites (0,0)–(159,79). La herramienta
+comprueba que el área sea privada y rechaza reemplazar un directorio existente.
+Su prueba por bytes exige que ese sea el único subfichero cambiado del único
+área cambiada del único archivo cambiado entre los 39 del mod. Modelos,
+texturas, colisiones, puertas, scripts, motor y cámara del candidato `final`
+se conservan. **El a/0/1/4 fotográfico nunca debe ir a producción.**
+
+La toma desde arriba revela una limitación de cobertura: se ven las columnas
+de celdas próximas al jugador; las demás quedan negras. Las capturas regionales
+no sustituyen una toma única de las ocho celdas a la vez. `photo_compare.py`
+compara los fotogramas completos, sin reconstruir las zonas negras ni coser
+las perspectivas, junto a la referencia y el F11 anterior (este último sigue
+siendo la vista de modelos con color medio, identificada expresamente).
+
+Ejecución del 2026-11-14, 14:56–14:59, puerto del carril 24691:
+
+- `photo-reproduce/camera-only-proof.json`: solo AD229[3] distinto de `final`.
+  `photo-guarded` reproduce los 39 archivos de ese mod con el guard de área.
+- `work/f11/proto/finish-photo/at_34_24.png` y `at_129_21.png`: capturas cenitales
+  reales oeste/este, llegando por movimiento normal desde el guardado de plaza.
+  Recorrido: `work/f11/finish/photo-reproduce/route.out`.
+- `work/f11/finish/photo-reference-before-after.png`: comparación con fotogramas
+  completos; `photo-reference-before-after-crops.png`: recortes ampliados con
+  sus cajas y hashes de originales en el JSON homónimo. Sin recursos generados.
+  Se conserva la relación de aspecto y no se reconstruye ningún píxel faltante.
+- `photo-evidence.json`: manifiesto de capturas, comparación, suite y cierre;
+  comprueba que los 39 archivos de `final/mod` siguen iguales a su manifiesto.
+- `tests-photo-final.log`: **2931 passed, 4 skipped**, 67,11 s. Compilación Java
+  y ejecución completa de `photo_camera.py photo-guarded` correctas; comparación
+  con y sin recortes ejecutada con Pillow. `git diff --check` limpio.
+- `photo-reproduce/cleanup.json`: laboratorio cerrado en la misma shell que
+  lo arrancó, `remaining=[]`, `session_metadata=false`.
+
+La integración común sigue pendiente de su dueño. La evidencia cenital pasa de
+no probada a **regional en Azahar**; no se declara lograda una captura única de
+las ocho celdas. No se repiten puertas ni ferry por una cámara de fotografía
+que no se entrega: los archivos jugables siguen idénticos a los ya validados.
