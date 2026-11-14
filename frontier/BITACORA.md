@@ -4033,3 +4033,32 @@ No probado: consola. Pendiente estético: escalera del pintor blanca; árboles/v
 hierba/roca (F10 sobre el trazado nuevo). Partidas guardadas en la isla vieja reaparecen en (54,34) del mapa nuevo:
 el LEEME de F7-PAQUETE-V03 debe avisar (diseño §3).
 Siguiente paso: F7-PAQUETE-V03 (o F10 sobre el trazado nuevo).
+
+## 2026-11-14 — Codex — F7-PAQUETE-V03 hito 1: relevo y paquete reproducible
+Estado: en curso
+Hecho:
+- Relevo revisado antes de escribir: git status/diff vacíos sobre fa68d218633a7e6465f1eed08138f96187105983.
+  Ese último commit de Claude dejó package.py y sus tests en v0.3, sin entrada de bitácora ni aceptación runtime;
+  se conserva, sin cambios a medias que deshacer. No existe CLAUDE.md en el carril.
+- reports/consola-frente.md actualizado a v0.3: aviso destacado para guardar fuera de la isla antes de actualizar,
+  trazado de Esmeralda, edificios provisionales, recorrido por sus posiciones nuevas y comparación Luma v0.3.
+- Construido desde fa68d21 limpio con `python frontier/package.py --output work/frontier/pkg03/oras-frontier-alpha-v0.3`;
+  Checkpoint v0.3 con el subcomando checkpoint y la partida publicada v0.2 (hash fijado por el generador).
+  dist es un enlace fuera de la raíz escribible de este carril: entrega local en work/ para regenerar en main.
+Evidencia:
+- work/frontier/pkg03/package.log: 39 hashes verificados, ZIP 5ee0adb86eb4fe145d60148f03a194f2ac02a2dd453cfb7db46803467a0f42c1;
+  IPS 0368f52100d49dfe34809ddda710637a58b1055fb8f07b7de0a5337d2a4dbb2d; manifest git_dirty=false.
+- `package.py checkpoint`: main 5ddaa992c5aea98a3da1af80c1f2486b6d2db1690da0ae8be84abf2397edeffa.
+- package_ips.py: IPS simulado 75618a08cb5baa746d6638a1065de5a01c3c13c42a8cf3ad920d843b5034ca49,
+  console_check comprobado; únicamente para laboratorio, no distribución.
+- `python frontier/modes_audit.py` → work/frontier/pkg03/space.json: code.bin 0x579804–0x579fdc,
+  2008 bytes usados, 36 libres; reserva Luma 0x579604–0x579804 intacta. DllBattle 1148 libres;
+  reserva F9 DllField 472 usados/1064 libres. Sin cambios de motor ni menús (Torre conserva Individual 50).
+- Primera suite heredando ORCH_LANE: 9 fallos de tests del orquestador; repetida como en hitos anteriores con
+  `env -u ORCH_LANE python -m pytest -q tests`: 2928 passed, 4 skipped (work/frontier/pkg03/tests.log).
+Commits: fa68d21 (relevo); el de esta entrada.
+Decisiones: aplicar regresión caso d, paquete exacto + Luma; no atribuir a consola las pruebas de Azahar.
+No probado todavía: circuito completo v0.3, Mansión original, historia/Repartir Exp./DexNav, guardar/cargar y retorno;
+consola real. El texto heredado del LEEME que anticipa el circuito no constituye evidencia de que ya se haya ejecutado.
+Siguiente paso: completar laboratorio 24691 (boot.log y circuit.out en work/frontier/pkg03), registrar resultados,
+corregir cualquier fallo antes de dar por válida la entrega. Integración final y construcción dist desde main pendientes.

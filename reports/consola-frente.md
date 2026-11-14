@@ -1,14 +1,25 @@
-# Plan de prueba en consola: Frente de Batalla alfa v0.2
+# Plan de prueba en consola: Frente de Batalla alfa v0.3
 
-Paquete: `dist/oras-frontier-alpha-v0.2` (lo genera `python frontier/package.py`; hashes en su `manifest.json`).
-Partida de prueba: `dist/oras-frontier-checkpoint-test-v0.2` (su `LEEME.txt`).
+Paquete: `dist/oras-frontier-alpha-v0.3` (lo genera `python frontier/package.py`; hashes en su `manifest.json`).
+Partida de prueba: `dist/oras-frontier-checkpoint-test-v0.3` (su `LEEME.txt`).
+**AVISO ANTES DE ACTUALIZAR:** con la alfa anterior instalada, volver en ferry a Calagua y guardar
+**FUERA de la isla y sus edificios**. La casilla antigua puede ser mar o muro en el mapa nuevo.
+Hacer copia con Checkpoint antes de sustituir el paquete.
+
 Evidencia anterior en Azahar: `reports/frontier.md` §38 y §49; la validación del paquete v0.2 se registra en §50.
 **El usuario confirma el 2026-11-13 que la v0.2 funciona en su 3DS.**
 Fuente: conversación («Confirmado en la 3ds funciona»). Confirmación funcional general; no se ha aportado
 un desglose de modalidades/jefes ni un nuevo volcado de RAM. Se cierra F7-CONSOLA-MANSION con el arreglo de Luma. La v0.1 sí se probó y se colgaba en todo combate de tipo Mansión por la
 colisión con Luma descrita al final. No se instala nada automáticamente: lo copia el usuario.
 
-## Qué es nuevo para la consola
+## Qué cambia en v0.3
+
+La isla adopta la distribución de Esmeralda, con ocho celdas, caminos y escaleras, y las siete puertas
+en su posición nueva. Los edificios siguen siendo provisionales; árboles, vallas y decoración pendientes.
+F9-MODOS-BASE aporta infraestructura: los menús continúan limitados a Individual Nivel 50.
+**v0.3 no probada en consola**. La confirmación del usuario sobre v0.2 no valida esta isla.
+
+## Antecedentes v0.2
 
 La v0.2 incorpora el arreglo de la cueva para Luma, los siete Cerebros con símbolos de plata/oro y la consulta
 «Símbolos» en las recepciones. El Frente ya no ofrece «Guardar vídeo»; la Mansión original conserva esa opción.
@@ -19,7 +30,7 @@ La consola ha ejecutado v0.5, el evento de Mew y la alfa v0.1 fallida. Estas pie
 | Código nuevo al final de `.text` (cueva 0x579604–0x57A000; desde F7-CUEVA-LUMA, 0x579604–0x579804 reservado a Luma y el código en 0x579804) | `code.ips` | toda instalación (alquiler, rachas, rival, Domo, Tubo, Pirámide) | v0.1: colisión medida; v0.2: reserva separada, validación real de Luma pendiente |
 | `DllBattle.cro`: copia de vuelta del equipo, puentes de Arena y Palacio, Palacio C y rutinas de Arena/Palacio B en el relleno de la región de código (0xd7630–0xd7b83) | `romfs/DllBattle.cro` + `.crr/static.crr` | **cualquier combate** carga el CRO; el código del relleno corre en Palacio y Arena | alto para Palacio y Arena (permisos de `ldr:ro` sobre el relleno, sin medir); la carga del CRO en sí, medio |
 | `DllField.cro`: puente del Tubo (0x4e644) y Cerebros (0xf0480…) | `romfs/DllField.cro` + CRR | consultas de equipo del Tubo y rivales de Cerebros | medio |
-| Isla 209, plaza con siete edificios, interiores 213/329/340/456/457/458/140–142 | `romfs/a/0/1/3`, `a/0/1/4`, `a/0/3/9`, `a/0/4/0`, `a/1/3/7` | al llegar a la isla y entrar en cada edificio | medio: memoria de la consola con la plaza cargada (en Azahar no hay límite real) |
+| Isla 209, trazado de Esmeralda con siete edificios provisionales, interiores 213/329/340/456/457/458/140–142 | `romfs/a/0/1/3`, `a/0/1/4`, `a/0/3/9`, `a/0/4/0`, `a/1/3/7` | al llegar a la isla y entrar en cada edificio | medio: memoria de la consola con la plaza cargada (en Azahar no hay límite real) |
 | Scripts y textos (marinero, ferry, recepciones, texto 637) | `a/0/2/9`, `a/0/7/x`, `a/0/8/x` | puerto, ferry, recepciones | bajo: misma técnica que el evento de Mew, probada en consola |
 
 ## Antes de empezar
@@ -57,8 +68,8 @@ Anotar en cada paso: hecho / falla, y si falla, la pantalla exacta y lo último 
 
 ### 2. Isla y plaza
 - «Isla del Frente» → Sí: fundido y llegada al muelle de la isla. **Primer punto de riesgo de memoria.**
-- Caminar al oeste y bajar hasta la explanada: se ven los siete edificios. Recorrerla entera (riesgo de memoria con todo
-  cargado).
+- Desde el muelle suroeste, subir hacia la plaza y recorrer los caminos hasta las siete puertas. Cruzar las
+  ocho celdas, incluida la terraza de la Arena por su escalera (riesgo de memoria con todo cargado).
 - Guardar en la plaza (menú X → Guardar). Apagar con HOME → cerrar programa, volver a abrir y Continuar: apareces en la
   plaza.
 
@@ -68,19 +79,19 @@ jugar un combate, terminar (perder vale) y salir por la puerta a la plaza.
 En el Frente no debe aparecer «Guardar vídeo». Consultar también «Símbolos» en cada recepción: una partida nueva
 no tiene ninguno. Los encuentros de plata/oro requieren las rachas que indica el LEEME; no se declaran probados
 en consola por completar solamente este circuito.
-1. **Torre** (casa de tejado plano, al norte): tu equipo. Prueba la cueva de `code.bin` (racha por ruta).
-2. **Fábrica** (gimnasio del centro): alquiler de 3 de 6. El alquiler es código de la cueva: mirar que en combate salen
+1. **Torre** (casa de tejado plano, norte central): tu equipo. Prueba la cueva de `code.bin` (racha por ruta).
+2. **Fábrica** (gimnasio del oeste): alquiler de 3 de 6. El alquiler es código de la cueva: mirar que en combate salen
    los alquilados (nivel 50) y que al acabar tu equipo está igual.
-3. **Domo** (casa del oeste): sala de piedra amplia. Inscribir 3, el rival enseña sus 3, elegir 2. **Al acabar, salir
+3. **Domo** (casa del noroeste): sala de piedra amplia. Inscribir 3, el rival enseña sus 3, elegir 2. **Al acabar, salir
    por abajo**: en Azahar la primera build dejaba al jugador encerrado; está arreglado, pero es lo primero que hay que
    mirar.
-4. **Pirámide** (casa de tejado azul, este): inscripción y paso a la cueva (zona 141). Hablar con un entrenador del
+4. **Pirámide** (casa de tejado azul, noreste): inscripción y paso a la cueva (zona 141). Hablar con un entrenador del
    piso. Mirar que la cueva carga (riesgo de memoria) y que al perder vuelves al vestíbulo.
 
 ### 4. Instalaciones con motor de combate nuevo (lo más arriesgado, al final)
-5. **Arena** (casa de paja, sur): puente de `DllBattle.cro` hacia la cueva. Si el combate llega al turno 3 con los dos
+5. **Arena** (casa de paja, este, sobre la escalera): puente de `DllBattle.cro` hacia la cueva. Si el combate llega al turno 3 con los dos
    en pie, hay juicio.
-6. **Tubo** (cabaña del suroeste): puente de `DllField.cro`. Elegir puertas; mirar al menos una sala sin combate y un
+6. **Tubo** (cabaña del centro oeste): puente de `DllField.cro`. Elegir puertas; mirar al menos una sala sin combate y un
    combate; PS/estado arrastrados.
 7. **Palacio** (casa de dos plantas, sureste): **código en el relleno de `DllBattle.cro`, el mayor riesgo**. Tus Pokémon
    eligen solos el movimiento. Si se cuelga al primer turno de un Pokémon tuyo, es este código (anotar el turno).
@@ -163,7 +174,7 @@ fijo: 0x114 bytes), nuestro código empieza en 0x579804, y las rutinas de combat
 cuelgue con el mismo equipo 0xd8e007f7 de los volcados; con el arreglo, Mansión original Individual, las siete
 instalaciones y un combate de la historia van bien.
 
-### Comparación con el depurador de Luma (v0.2)
+### Comparación con el depurador de Luma (v0.3)
 
 Usar el `manifest.json` del paquete instalado, apartado `console_check`; no el de otra build. En un combate de la
 Mansión original, pausar el proceso de Rubí Omega con el depurador de Luma y leer memoria sin modificarla:
@@ -176,11 +187,11 @@ Mansión original, pausar el proceso de Rubí Omega con el depurador de Luma y l
 
    ```bash
    source scripts/env.sh
-   python frontier/probes/luma/package_ips.py dist/oras-frontier-alpha-v0.2 --out work/frontier/pkg02/luma
+   python frontier/probes/luma/package_ips.py dist/oras-frontier-alpha-v0.3 --out work/frontier/pkg03/luma
    ```
 
-   `work/frontier/pkg02/luma/package-code.bin` contiene ceros en 0x579604–0x579803: **antes** de que Luma escriba.
-   `work/frontier/pkg02/luma/code.bin` contiene el IPS del paquete más la carga de Luma: es la referencia para la
+   `work/frontier/pkg03/luma/package-code.bin` contiene ceros en 0x579604–0x579803: **antes** de que Luma escriba.
+   `work/frontier/pkg03/luma/code.bin` contiene el IPS del paquete más la carga de Luma: es la referencia para la
    memoria **después** de cargar. En ambos ficheros, el offset de una dirección es dirección − **0x100000**.
    Fuera de la carga de Luma, el código propio desde 0x579804 debe coincidir con ambas referencias.
    `code_with_luma_sha256_text` identifica la referencia simulada hasta 0x57a000; no es el hash de toda la RAM.
