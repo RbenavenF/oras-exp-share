@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Lab only (F7-PAQUETE, reports/frontier.md §38): the whole alpha circuit on the EXACT package, from a save at the
 Lilycove harbor with the League won (flag 2720) and the S.S. Ticket: sailor -> pass -> ferry -> island -> the seven
-facilities, one battle each (the Pike: one room, then its battle) -> back to the plaza after each. Needs the lab
+facilities, one battle each (the Pike: one room, then its battle) -> back to the plaza after each. On the island
+(F11-ISLA-CONSTRUCCION) the walks to each door are computed over the island's own grid (island_build.route), so they
+follow the doors' tiles in island_build.FACILITIES. Needs the lab
 booted with frontier/probes/package/boot.sh and the passive probe (probe.py) sourced in GDB. Screenshots go to
 work/frontier/pkg/shots/c_*.png and steps to work/frontier/pkg/circuit.log. Inputs only; never writes RAM.
 
@@ -20,6 +22,8 @@ LOG = ROOT / 'work/frontier/pkg/circuit.log'
 GDB = ROOT / 'work/faraway/gdb/out.log'
 SHOTS = ROOT / 'work/frontier/pkg/shots'
 HERE = 'frontier/probes/package'
+sys.path[:0] = [str(ROOT / 'frontier'), str(ROOT / 'scripts')]
+import island_build  # noqa: E402  (F11 island: door tiles and walks over the painted grid)
 
 
 def log(text):
@@ -61,6 +65,12 @@ def walk(*points):
         out = run('python', 'frontier/probes/pyramid/walk_to.py', str(x), str(y), timeout=200)
         if 'WALK at' not in out:
             raise RuntimeError(f'walk to {(x, y)}: {out}')
+
+
+def to_door(facility):
+    """Walk (island_build.route over the island's grid) to the doorstep of a facility's door."""
+    _, x, y = island_build.FACILITIES[facility]
+    walk(*island_build.corners(island_build.route(pos(), (x, y + 1))))
 
 
 def enter(name):
@@ -132,9 +142,9 @@ def main():
     a = p.parse_args()
     skip = {a.first} if a.inside else set()
 
-    def go(step, *points):
+    def go(step):
         if step not in skip:
-            walk(*points)
+            to_door(step.capitalize())
             enter(step)
     todo = STEPS[STEPS.index(a.first):]
     SHOTS.mkdir(parents=True, exist_ok=True)
@@ -162,42 +172,35 @@ def main():
         run('python', f'{HERE}/to_field.py', '--max', '12')
         log(f'ferry: arrived at {pos()}')
         shot('island_pier')
-        walk((37, 34), (37, 44), (37, 60))
-        shot('plaza')
-        log(f'plaza: at {pos()}')
     if 'factory' in todo:
-        walk((20, 60), (20, 58))
-        enter('factory')
+        go('factory')
         maison('factory', 1, factory=True)
     if 'factory' in todo or a.first == 'factory-out':
         leave('factory')
     if 'tower' in todo:
-        go('tower', (20, 60), (27, 60), (27, 48), (19, 48), (19, 47))
+        go('tower')
         maison('tower', 2)
         leave('tower')
     if 'arena' in todo:
-        go('arena', (19, 48), (27, 48), (27, 62), (25, 62), (25, 71), (20, 71), (20, 70))
+        go('arena')
         maison('arena', 4)
         leave('arena')
     if 'palace' in todo:
-        go('palace', (20, 71), (31, 71), (31, 70))
+        go('palace')
         maison('palace', 3)
         leave('palace')
     if 'pike' in todo:
-        go('pike', (31, 71), (5, 71), (5, 70))
+        go('pike')
         maison('pike', 6)
         leave('pike')
     if 'dome' in todo:
-        if 'dome' not in skip:
-            walk((5, 71), (12, 71), (12, 58), (6, 58))
-            keys('t', hold='0.3', pause=3)
-            enter('dome')
+        go('dome')
         walk((16, 26), (23, 26))
         reception(9)
         battle('dome', 5)
         leave('dome', inside_exit=(16, 30), approach=(16, 26))
     if 'pyramid' in todo:
-        go('pyramid', (6, 58), (12, 58), (12, 60), (32, 60), (32, 58))
+        go('pyramid')
         walk((20, 25), (23, 25))
         reception(8)
         out = run('python', f'{HERE}/to_field.py', '--max', '20')

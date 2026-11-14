@@ -3767,3 +3767,45 @@ la isla v0.2 con la pieza sola en (16,13) de la plaza, como §24; base solo cami
 
 Coinciden con la tabla de materiales: la palmera, la roca y la valla de hierro no añaden texturas a esta área;
 los árboles y arbustos del área 8 cuestan ~135 KB de texturas la primera vez (una sola vez si se comparten).
+
+### F11-ISLA-CONSTRUCCION: exterior completo con las siete puertas (2026-11-14, Claude)
+
+**Construcción.** `frontier/island_build.py` ya no pinta la plaza de v0.2: tras los clones, `faraway.Island`
+(`faraway/java/ctrmap/tests/FrontierIsland.java`) rehace la matriz privada de la zona 209 en 4×2 celdas desde
+`island_build.island_rows()` (calco de `island_layout.py` en su OFFSET, mar alrededor), con el contenedor GR retail
+de 489 y fila/columna en GR[4] (§F11 hito 7). Cada instalación conserva su edificio provisional de v0.2, estampado
+en la celda que lo contiene con la puerta en su casilla de Esmeralda, su prop de puerta en el GR[3] de esa celda y
+un warp de puerta (orden FACILITIES: Torre 0, Domo 1, Fábrica 2, Pirámide 3, Tubo 4, Arena 5, Palacio 6) hacia su
+interior; las salidas de los interiores (warp 0, el Domo con su tipo 2) vuelven a su puerta como antes. El empleado
+del ferry (NPC 0) va al muelle, al oeste de la llegada. Interiores, mecánicas y textos sin cambios.
+
+Decisiones medidas:
+- **OFFSET (16,4) → (15,6)**: con (16,4) el Gym de la Fábrica (filas 34–39) y la casa del Palacio (columnas 98–104)
+  cruzaban un borde de celda, y el pintor estampa dentro de una sola celda. Llegada del ferry: (34,73).
+- **Escalera de la Arena**: en (110,39), última fila de la celda (2,0), con su escalón bajo en la celda de abajo.
+  Cada celda se pinta sola y la rampa no casaba: en Azahar se subía a ella pero no se salía al norte
+  (`work/f11/proto/c1/doors2.out`, `arena_stair_block.png`). `island_rows` la sube una casilla, dentro de su celda
+  (`EDGE_STAIRS`); el test exige que ninguna escalera tenga su rampa partida entre celdas.
+- **Compactación sin pérdida** (`IslandFloors.java`): baldosas planas contiguas con vértices idénticos salvo posición
+  y UV de mundo → un quad. Modelos de 3.621.632 a 2.671.104 bytes. No se podó el world pack.
+
+Presupuesto (`work/f11/build/out-island/java.log`): **3.534.592** bytes (mundo 654.336, props 209.152, modelos
+2.671.104), ≤ `ISLAND_BUDGET` 4.192.384 (Resort 211). `outside the world pack: {}`. ZO de 209 ≤ 17248 (comprobado
+en `build()`). Reserva de Luma 0x579604–0x579804 sin usar (no se toca code.bin ni asm).
+
+**Azahar** (laboratorio del carril, 24690; construcción `python frontier/overlay.py --out work/f11/build/out
+--romfs dist/held-exp-share-v0.5/mods/000400000011C400/romfs`, mod de `lab_mod.py`):
+- `work/f11/proto/c2/`: Calagua (`checkpoint_harbor.sav` 5ddaa992…) → pase y ferry → (34,73) (`arrival.png`);
+  `doors.py`: las siete puertas, cada una entrar (interior en (20,31), el Domo en (16,31)) y salir al escalón de su
+  puerta: Fábrica (26,45), Domo (34,24), Tubo (57,34), Torre (87,21), Pirámide (129,21), Arena (110,36), Palacio
+  (116,63); vuelta al muelle (34,73); las rutas cruzan las ocho celdas (`doors.out`, capturas `*_in.png`/`*_out.png`).
+- Guardado por la interfaz en (110,37), celda (2,0), nivel 3: `arena-terrace.sav` db40ff88…, 58 bloques válidos;
+  reinicio con esa partida en (110,37) (`reloaded.png`).
+- Vista cenital de la isla construida (`frontier/probes/island/TopView.java`, triángulos de los ocho modelos) bajo la
+  referencia: `work/f11/proto/c2/topview_vs_reference.png` (Pillow: `/usr/bin/python3`).
+- Tras la recarga: Arena entrar/salir a (110,36), bajada por la escalera movida, vuelta al muelle (`reload-doors.out`) y
+  ferry de vuelta: empleado → «Ciudad Calagua» → puerto de Calagua (16,25) (`return_menu.png`, `return_list.png`,
+  `back_lilycove.png`). Laboratorio parado (gdbctl stop + reap).
+No probado: consola; combates (no se toca el motor ni los interiores: regresión caso (c)).
+Pendiente estético: la textura de escalera del pintor se ve blanca; árboles, vallas y decoración se pintan aún como
+hierba o roca (tareas F10 sobre el trazado nuevo).

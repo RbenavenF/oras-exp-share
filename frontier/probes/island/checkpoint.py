@@ -22,13 +22,14 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('name')
     parser.add_argument('zone', type=int, nargs='?', default=209)
+    parser.add_argument('--dir', type=Path, default=ROOT/'work/f11/prototype', help='where the save copy goes')
     parser.add_argument('--ui-only', action='store_true', help='do not connect to GDB; validate a fresh UI save only')
     args=parser.parse_args()
     name=args.name
     if not name.replace('-','').replace('_','').isalnum():
         raise ValueError('simple checkpoint name required')
     zone=args.zone
-    out=ROOT/'work/f11/prototype'/f'{name}.sav'
+    out=args.dir.resolve()/f'{name}.sav'
     if out.exists():
         raise FileExistsError(out)
     source=next((ROOT/'work/azahar-lab/data/azahar-emu/sdmc').glob('**/00000001/main'))

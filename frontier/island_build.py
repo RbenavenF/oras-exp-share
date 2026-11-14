@@ -125,6 +125,8 @@ CATALOGUE = ROOT / 'tools/CTRMap-F5/src/ctrmap/resources/oras_buildings.tsv'
 # The reception (island_layout.DOORS ReceptionNorth/South) has no building yet: a one-tile passage crosses its hueco
 # from the pier landing (stair at its south door) to the plaza (its north door), as in the F11 terrain prototype.
 RECEPTION_PASSAGE = [(26, y) for y in range(61, 66)]
+# Stairs of the trace on a cell's last row (map tiles), moved one tile north by island_rows: the Arena's.
+EDGE_STAIRS = {(110, 39)}
 
 
 def catalogue(name):
@@ -164,6 +166,16 @@ def island_rows():
             for x in range(x0, x1 + 1):
                 if rows[y][x] == 'B':
                     rows[y][x] = '.'
+    # A stair climbs north from its lower tile. Each cell is painted on its own (FrontierIsland), so a stair on a
+    # cell's last row, whose lower tile is in the cell below, gets a ramp that does not meet it: in Azahar the Arena's
+    # stair (110,39) let the player on but not off to the north. Such a stair moves one tile north, inside its cell,
+    # and its old tile becomes path at the lower level.
+    for y in range(39, h - 1, 40):
+        for x in range(w):
+            if rows[y][x] == '=' and heights[y + 1][x] < heights[y][x]:
+                if rows[y - 1][x] not in ':.,' or heights[y - 1][x] != heights[y][x]:
+                    raise ValueError(f'stair {x},{y} on a cell edge cannot move north')
+                rows[y - 1][x], rows[y][x], heights[y][x] = '=', ':', heights[y + 1][x]
     return [''.join(r) for r in rows + heights]
 
 
@@ -344,13 +356,24 @@ def check_budget(text, bound=None):
     return budget
 
 
-def steps_from(at, rows):
+def building_tiles():
+    """Map tiles a provisional building's footprint may block: its whole box but the doorstep below its door (a
+    building's box also holds things beside the door, such as the Gym's sign)."""
+    out = set()
+    for facility, (_, dx, dy) in FACILITIES.items():
+        x0, y0, x1, y1 = building_box(facility)
+        out |= {(x, y) for x in range(x0, x1 + 1) for y in range(y0, y1 + 1)} - {(dx, dy + 1)}
+    return out
+
+
+def steps_from(at, rows, blocked=frozenset()):
     """The tiles one step from `at` on the island map (island_rows): walkable classes only (island_layout.WALKABLE),
-    and a change of height level only by one level up or down a stair ('=') walked north-south."""
+    none in `blocked`, and a change of height level only by one level up or down a stair ('=') walked north-south."""
     h = len(rows) // 2
     x, y = at
     for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
-        if not (0 <= nx < len(rows[0]) and 0 <= ny < h) or rows[ny][nx] not in island_layout.WALKABLE:
+        if not (0 <= nx < len(rows[0]) and 0 <= ny < h) or rows[ny][nx] not in island_layout.WALKABLE \
+                or (nx, ny) in blocked:
             continue
         delta = abs(int(rows[h + ny][nx]) - int(rows[h + y][x]))
         if delta and not (delta == 1 and '=' in (rows[ny][nx], rows[y][x]) and nx == x):
@@ -359,10 +382,11 @@ def steps_from(at, rows):
 
 
 def route(start, goal=None, rows=None):
-    """Shortest walk on the island map from `start` to `goal` (map tiles), as the list of tiles; raises if there is
-    none. With no goal: {tile: previous tile} of everything reached. Used by the tests and the lab's circuit."""
+    """Shortest walk on the island map from `start` to `goal` (map tiles), around the provisional buildings, as the
+    list of tiles; raises if there is none. With no goal: {tile: previous tile} of everything reached. Used by the tests and the lab's circuit."""
     from collections import deque
     rows = rows or island_rows()
+    blocked = building_tiles()
     queue, prev = deque([start]), {start: None}
     while queue:
         at = queue.popleft()
@@ -372,7 +396,7 @@ def route(start, goal=None, rows=None):
                 steps.append(at)
                 at = prev[at]
             return steps[::-1]
-        for nxt in steps_from(at, rows):
+        for nxt in steps_from(at, rows, blocked):
             if nxt not in prev:
                 prev[nxt] = at
                 queue.append(nxt)

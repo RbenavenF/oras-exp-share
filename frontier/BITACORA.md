@@ -3996,3 +3996,40 @@ Decisiones:
   comunes, REPARTO y tasks.json intactos; reserva Luma sin usar (espacio medido en el hito 2 de Codex).
 No probado: consola; edificios, decoración y puertas sobre el terreno nuevo (F11-ISLA-CONSTRUCCION).
 Siguiente paso: F11-ISLA-CONSTRUCCION sobre `frontier/island_layout.py` y `frontier/probes/island/`.
+
+## 2026-11-14 — Claude Code (Opus 5.5) — F11-ISLA-CONSTRUCCION: exterior completo, siete puertas, ferry y retornos
+Estado: hecho
+Hecho:
+- `island_build.py` construye la isla de 8 celdas con `faraway.Island` → `ctrmap.tests.FrontierIsland` (nuevo;
+  `ctrmap.IslandArea` da acceso al commit del área del pintor): terreno del calco, contenedor GR retail con
+  fila/columna en GR[4], los siete edificios provisionales de v0.2 con la puerta en su casilla de Esmeralda y su prop
+  de puerta, un warp por puerta (orden FACILITIES), el empleado en el muelle. Huecos sin puerta reservados como roca.
+  Plaza.java ya no se usa en la construcción. Llegada del ferry `island.ARRIVAL` = (209,34,1,73,2).
+- `island_layout.OFFSET` (16,4) → (15,6) (y en `island_trace.py`): con (16,4) la Fábrica y el Palacio cruzaban un
+  borde de celda. Prototipo, sus tests y `ferry.py`/`route.py` usan ahora `L.OFFSET`.
+- `IslandFloors.java`: compactación sin pérdida de baldosas planas idénticas (modelos 3,62 → 2,67 MB).
+- Escalera de la Arena en el borde de celda (110,39): no se salía al norte en Azahar; `island_rows` la sube a
+  (110,38) (`EDGE_STAIRS`), con test.
+- `ISLAND_BUDGET` = 4.192.384 (Resort 211, fuente §2.1); `LOAD_BUDGET` queda para los interiores. `build()` comprueba
+  el log (8 celdas, 7 edificios y props, puertas en su casilla, empleado, `outside the world pack: {}`), el
+  presupuesto y el ZO de 209 ≤ 17248.
+- `circuit.py` (paquete) camina a las puertas con `island_build.route`; lab: `lab_mod.py`, `doors.py`, `TopView.java`,
+  `topview_montage.py`, `boot.sh` con `F11_OUT`, `checkpoint.py --dir`.
+- Diseño §2.4, `reports/frontier.md` «F11-ISLA-CONSTRUCCION», README de probes/island.
+Evidencia:
+- `work/f11/build/out-island/java.log`: load budget **3.534.592** (mundo 654.336, props 209.152, modelos 2.671.104),
+  `outside the world pack: {}`, warps 0–6 en (87,20) (34,23) (26,44) (129,20) (57,33) (110,35) (116,62).
+- Azahar 24690, `work/f11/proto/c2/`: Calagua → pase → ferry → (34,73); `doors.out`: las siete puertas entrar/salir al
+  escalón de su puerta y vuelta al muelle (DOORS ok); guardado UI `arena-terrace.sav` db40ff88… en (110,37) celda
+  (2,0), 58 bloques; reinicio con ella, Arena y regreso al muelle (`reload-doors.out`), ferry a Calagua (16,25)
+  (`back_lilycove.png`). Primer intento en `c1/` (bloqueo de la escalera, `arena_stair_block.png`).
+- Vista cenital construida vs referencia: `work/f11/proto/c2/topview_vs_reference.png`.
+- Suite `env -u ORCH_LANE python -m pytest -q tests`: **2928 passed, 2 skipped** (`work/f11/build/tests-final.log`).
+Commits: 6219b13 y el de esta entrada.
+Decisiones: regresión caso (c) completa (todas las puertas, plaza, celdas, escaleras, guardado/carga, ferry); sin
+combates porque no cambian motor ni interiores. Reserva Luma 0x579604–0x579804 sin usar (no se toca code.bin/asm).
+No se ha podado el world pack ni se ha subido LOAD_BUDGET.
+No probado: consola. Pendiente estético: escalera del pintor blanca; árboles/vallas/decoración pintados como
+hierba/roca (F10 sobre el trazado nuevo). Partidas guardadas en la isla vieja reaparecen en (54,34) del mapa nuevo:
+el LEEME de F7-PAQUETE-V03 debe avisar (diseño §3).
+Siguiente paso: F7-PAQUETE-V03 (o F10 sobre el trazado nuevo).

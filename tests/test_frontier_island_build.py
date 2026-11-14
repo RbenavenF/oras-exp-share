@@ -32,6 +32,10 @@ def test_rows_are_the_trace_at_its_offset_with_sea_around():
                 assert at(x, y) == ('~', '0')
             elif (x, y) in passage:
                 assert at(x, y) == ('=' if ey == 65 else ':', '2')
+            elif (x, y) in ib.EDGE_STAIRS:
+                assert at(x, y) == (':', '2') and at(x, y - 1) == ('=', '3')
+            elif (x, y + 1) in ib.EDGE_STAIRS:
+                pass
             elif (x, y) in boxes and L.GRID[ey][ex] == 'B':
                 assert at(x, y) == ('.', L.HEIGHT[ey][ex])      # floor under the provisional building
             else:
@@ -91,6 +95,15 @@ def test_every_door_is_walked_to_from_the_ferry_and_back(facility):
     there = ib.route(start, (x, y + 1))
     assert there[0] == start and there[-1] == (x, y + 1)
     assert ib.route((x, y + 1), start)[-1] == start
+
+
+def test_no_stair_ramp_crosses_a_cell_edge():
+    """Every stair's lower (south) and upper (north) tiles are in its own cell: cells are painted one by one."""
+    assert ib.EDGE_STAIRS == {(110, 39)}          # the Arena's, moved to (110,38)
+    for y in range(80):
+        for x in range(160):
+            if ROWS[y][x] == '=':
+                assert (y - 1) // 40 == y // 40 == (y + 1) // 40, (x, y)
 
 
 def test_the_walk_crosses_into_all_eight_cells():

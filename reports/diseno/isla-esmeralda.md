@@ -134,6 +134,28 @@ los retornos de interiores y la consola siguen **no probados**: F11-ISLA-CONSTRU
 compartirá texturas, retirará lo que no use y elegirá piezas ligeras antes de plantear B. Los builders comunes,
 el motor y la reserva Luma 0x579604–0x579804 no se modifican en este hito.
 
+### 2.4 Construcción (F11-ISLA-CONSTRUCCION, 2026-11-14, Claude)
+
+- La isla de producción la construye `frontier/island_build.py` con la clase Java `faraway.Island`
+  (`faraway/java/ctrmap/tests/FrontierIsland.java`); la plaza de la v0.2 (`Plaza.java`) ya no se construye.
+  Ocho celdas pintadas desde el calco, contenedor GR retail de 7 subficheros y fila/columna en GR[4] (§2.3).
+- **OFFSET pasa de (16,4) a (15,6).** Un edificio del catálogo se estampa dentro de una sola celda de 40×40; con
+  (16,4) la Fábrica (Gym, 9×6, filas 34–39 de Esmeralda) cruzaba el borde horizontal y el Palacio (columnas 98–104)
+  el vertical. Con (15,6) los bordes caen en x 25/65/105 e y 34 de Esmeralda y ningún edificio provisional los cruza
+  (test `test_building_door_on_its_emerald_tile_inside_one_cell_and_its_hueco`). La llegada del ferry pasa a (34,73).
+- Edificios provisionales (los de v0.2, `FACILITY_BUILDINGS`) con la puerta en su casilla de §1 y el resto del
+  hueco reservado como roca; bajo la caja del edificio se pinta suelo. Huecos sin puerta: roca. La recepción no
+  tiene edificio: un pasillo de una casilla la cruza del muelle a la plaza (como en el prototipo).
+- **Compactación sin pérdida** (`IslandFloors.java`): las baldosas planas contiguas cuyos cuatro vértices son
+  idénticos salvo posición y UV de mundo (misma normal, mismo color/AO, sin degradado dentro de la baldosa) se
+  escriben como un solo quad. Se dibujan igual: la UV es lineal en x/z y lo demás es constante. A diferencia del
+  ensayo `compact` del prototipo, no interpola AO. No toca tilemap ni colisión.
+- Presupuesto: sin compactar 4.485.120 bytes (> Resort 211); con la compactación **3.532.544**, por debajo de
+  `ISLAND_BUDGET` = 4.192.384 (Resort 211, §2.1). `LOAD_BUDGET` (2.724.608) sigue siendo la cota de los interiores.
+  `outside the world pack: {}`. Fuente: `work/f11/build/out-island/java.log`.
+- Pendiente para tareas posteriores: árboles, vallas, banderines y decoración (hoy los árboles del calco se pintan
+  como hierba), los edificios definitivos (F10-EXTERIOR-FASE2) y la Recepción.
+
 ## 3. Lo que se conserva y lo que cambia
 
 - **Se conservan**:

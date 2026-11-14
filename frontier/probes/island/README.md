@@ -97,3 +97,34 @@ Rectificación del hito 5: las instalaciones manuales de variantes omitían áre
 geometría. Sus resultados de ejecución no permiten excluir esas hipótesis. La
 construcción completa con build.py sí exportaba los cuatro archivos; por eso el
 ferry, recorrido y guardado del prototipo inicial mantienen su evidencia.
+
+## F11-ISLA-CONSTRUCCION: la isla de producción
+
+Desde F11-ISLA-CONSTRUCCION la isla la construye `frontier/island_build.py` (clase Java
+`faraway.Island` → `ctrmap.tests.FrontierIsland`), no este prototipo. Para probarla:
+
+```sh
+source scripts/env.sh
+python frontier/overlay.py --out work/f11/build/out \
+  --romfs dist/held-exp-share-v0.5/mods/000400000011C400/romfs        # build (≈10 s)
+python frontier/probes/island/lab_mod.py                               # v0.5 + build → work/f11/build/mod
+F11_OUT=work/f11/build bash frontier/probes/island/boot.sh work/f11/saves/checkpoint_harbor.sav
+python frontier/probes/island/drive.py NAME ferry sailor               # pase + ferry → (34,73)
+python frontier/probes/island/doors.py NAME [FACILITY ...] [--pier]    # cada puerta: entrar, salir, escalón
+```
+
+`doors.py` calcula las rutas con `island_build.route` sobre la misma rejilla que se pinta
+(rodeando la caja de cada edificio provisional salvo el escalón de su puerta) y exige que al
+salir el jugador quede en el escalón de su puerta. `TopView.java` dibuja desde arriba los
+modelos de las ocho celdas tal como se han construido (puertas en rojo, PNJ en azul) y
+`topview_montage.py` lo pone bajo la referencia del usuario a la misma escala:
+
+```sh
+CP=work/faraway/classes:tools/CTRMap-F5/build/classes:tools/CTRMap-F5/lib/jogl-all.jar:tools/CTRMap-F5/lib/gluegen-rt.jar
+javac --release 8 -nowarn -cp $CP -d work/faraway/classes frontier/probes/island/TopView.java
+java -Djava.awt.headless=true -cp $CP faraway.TopView work/f11/build/out-island/game work/f11/build/out-island/ws 209 OUT.png 8
+/usr/bin/python3 frontier/probes/island/topview_montage.py OUT.png MONTAGE.png   # Pillow
+```
+
+El prototipo de terreno sigue aquí como laboratorio; usa también `island_layout.OFFSET`, que
+pasó de (16,4) a (15,6) para que ningún edificio provisional cruce el borde de una celda.

@@ -5,10 +5,11 @@ cd "$(dirname "$0")/../../.."
 source scripts/env.sh
 SAVE=${1:-work/frontier/pkg02/s1_story.sav}
 LAB=work/azahar-lab
-python - <<'PYHASH'
-import hashlib,json
+OUT=${F11_OUT:-work/f11/prototype}   # F11_OUT=work/f11/build: a production build (lab_mod.py)
+python - "$OUT" <<'PYHASH'
+import hashlib,json,sys
 from pathlib import Path
-p=Path('work/f11/prototype')
+p=Path(sys.argv[1])
 expected=json.loads((p/'hashes.json').read_text())
 actual={str(f.relative_to(p/'mod')):hashlib.sha256(f.read_bytes()).hexdigest()
         for f in (p/'mod').rglob('*') if f.is_file()}
@@ -29,11 +30,11 @@ p.write_text('\n'.join(lines)+'\n')
 PYCFG
 MOD=$LAB/data/azahar-emu/load/mods/000400000011C400
 rm -rf "$MOD"
-cp -r work/f11/prototype/mod "$MOD"
-python - "$MOD" <<'PYHASH'
+cp -r "$OUT/mod" "$MOD"
+python - "$MOD" "$OUT" <<'PYHASH'
 import hashlib,json,sys
 from pathlib import Path
-p=Path(sys.argv[1]); out=Path('work/f11/prototype')
+p=Path(sys.argv[1]); out=Path(sys.argv[2])
 actual={str(f.relative_to(p)):hashlib.sha256(f.read_bytes()).hexdigest()
         for f in p.rglob('*') if f.is_file()}
 assert actual==json.loads((out/'hashes.json').read_text()), 'Installed mod differs'
