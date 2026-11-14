@@ -395,7 +395,7 @@
       "title": "Alfa v0.3 para la consola: isla con la distribución de Esmeralda",
       "design": "frontier/package.py; reports/consola-frente.md; reports/diseno/isla-esmeralda.md",
       "accept": "dist/oras-frontier-alpha-v0.3 (y su partida de prueba) con python frontier/package.py desde main. LEEME al día: qué es nuevo (isla Esmeralda, edificios aún provisionales), y AVISO destacado: antes de actualizar, guardar la partida FUERA de la isla (en el mapa nuevo la casilla vieja puede ser mar o muro). Modos de F9-MODOS-BASE solo si no habilitan menús incompletos. Política de regresión caso d: recorrido completo en Azahar con el paquete EXACTO más el IPS que simula la carga de Luma (frontier/probes/luma/package_ips.py), incluida la Mansión original. reports/consola-frente.md con el orden de prueba v0.3. No atribuir a consola lo probado en Azahar: el manifiesto dice validated in Azahar only hasta que el usuario lo pruebe. Tests en verde. Mantener la reserva de Luma 0x579604–0x579804: no reutilizarla. Medir espacio actual.",
-      "status": "pending",
+      "status": "in_progress",
       "notes": "Siguiente alfa tras la isla y antes de seguir con las modalidades (petición del usuario 2026-11-13).",
       "evidence": ""
     },
