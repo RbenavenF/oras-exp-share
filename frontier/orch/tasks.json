@@ -614,6 +614,19 @@
       "status": "pending",
       "notes": "Reescrita 2026-11-13: las casas ancladas en la plaza antigua ya no valen tras F11.",
       "evidence": ""
+    },
+    {
+      "id": "F11-ISLA-REVISION-VISUAL",
+      "owner": "codex",
+      "after": [
+        "F11-ISLA-ACABADO"
+      ],
+      "title": "Revisión visual tras prueba v0.3: materiales coherentes y cámara durante el paseo",
+      "design": "reports/diseno/isla-esmeralda.md; reports/diseno/isla-esmeralda-acabado.md; reports/diseno/referencias/frente-esmeralda.webp",
+      "accept": "Registrar en BITACORA la prueba del usuario del 2026-11-14: v0.3 probada en 3DS, distribución con mejor aspecto pero acabados muy deficientes, algunas texturas mal elegidas y cámara que a veces se aleja con mala estética. No equivale a validación completa de mecánicas ni aceptación visual. Revisar el acabado integrado con capturas reales de Azahar a altura normal de juego en muelle, plaza, Tubo, Palacio y transiciones entre celdas. Identificar materiales incoherentes, escala y repetición de texturas, uniones y cambios de distancia de cámara; documentar ubicación, antes/después y causa medida. Corregir materiales con recursos ORAS apropiados y ajustar cámara si se reproduce e identifica la causa; si no se reproduce, dejarlo explícitamente pendiente, sin darlo por resuelto. Mantener distribución Esmeralda, puertas, retornos y pasos transitables; respetar presupuesto y reserva Luma. Edificios definitivos siguen en F10. Comparar referencia y vistas reales: una cenital técnica sola no acredita calidad durante el paseo. Verificar cambios de mapa/cámara con recorrido Azahar, siete puertas y guardar/cargar; suite apropiada y bitácora con fuentes y commits. No declarar consola ni aceptación estética del usuario sin su prueba. No empaquetar en esta tarea.",
+      "status": "pending",
+      "notes": "Feedback directo del usuario tras v0.3. Continuación del acabado actual; revisar también cámara, que no figuraba expresamente en el brief anterior.",
+      "evidence": ""
     }
   ]
 }
