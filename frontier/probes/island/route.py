@@ -4,6 +4,7 @@
 Run in the SAME live shell/namespace as boot.sh, after ferry arrival. No buildings exist here.
 """
 from collections import deque
+import argparse
 import importlib.util
 from pathlib import Path
 import sys
@@ -18,11 +19,12 @@ spec.loader.exec_module(prototype)
 ROWS = prototype.grids()
 
 
-def path(start, cell):
+def path(start, cell, *, exact=False):
     queue = deque([start]); prev = {start: None}
     while queue:
         at = queue.popleft()
-        if (at[0]//40, at[1]//40) == cell:
+        destination = at if exact else (at[0]//40, at[1]//40)
+        if destination == cell:
             steps = []
             while at is not None:
                 steps.append(at); at = prev[at]
@@ -47,15 +49,21 @@ def corners(steps):
 
 
 def main():
-    for cell in ((1,1),(1,0),(0,0),(2,0),(3,0),(3,1),(2,1)):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--pier', action='store_true', help='walk back out of the plaza to the arrival pier')
+    args = parser.parse_args()
+    c.SHOTS = ROOT / 'work/f11/prototype/shots'
+    c.SHOTS.mkdir(parents=True, exist_ok=True)
+    targets = ((prototype.L.FERRY[0]+16, prototype.L.FERRY[1]+4),) if args.pier else ((1,1),(1,0),(0,0),(2,0),(3,0),(3,1),(2,1))
+    for cell in targets:
         start = c.pos()
-        steps = path(start,cell)
+        steps = path(start,cell,exact=args.pier)
         print('PLAN',start,'->',cell,'steps',len(steps)-1,flush=True)
         for point in corners(steps):
             c.walk(point)
             print('AT',c.pos(),flush=True)
-        c.shot('f11_cell_%s_%s'%cell)
-        print('CELL',cell,'at',c.pos(),flush=True)
+        c.shot('f11_pier_return' if args.pier else 'f11_cell_%s_%s'%cell)
+        print('PIER' if args.pier else 'CELL',cell,'at',c.pos(),flush=True)
 
 
 if __name__ == '__main__':

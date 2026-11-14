@@ -3572,3 +3572,49 @@ apariencia en Azahar aún no están probados.
 Espacio actual (`work/f11/space.json`, `modes_audit.measure_space()`): code.bin 0x579804–0x579fdc, **36 bytes**
 libres hasta 0x57a000; Luma **0x579604–0x579804** reservada y no utilizada. DllBattle libre 1148 bytes;
 Cerebros termina 0xf0a00; F9 Field ocupa 472/1536 (1064 libres). Este hito no escribe motor.
+
+### Prototipo A de terreno: contenedor ORAS y llegada por ferry
+
+Generador aislado: `frontier/probes/island/build.py` y `TerrainPrototype.java`; instrucciones de laboratorio
+en `frontier/probes/island/README.md`. Base: staging de isla más overlay íntegro del paquete v0.2; hashes de
+los archivos resultantes en `work/f11/prototype/hashes.json`. Una zona (209), su área privada y una matriz
+4×2 de regiones 872–879, área **229**, matriz **431** (`zones-final.txt`, Probe). Escala 1:1, mar de relleno
+(16,4), sin edificios ni entidades. El calco versionado
+permanece intacto; solo el exportador abre un pasillo de recepción temporal (26,61–65).
+
+`work/f11/prototype/build.log`: **4028928 bytes** = mundo 654336 + props 209152 + modelos 3165440;
+163456 menos que Resort 211. Texturas compartidas en AD[11], `outside the world pack: {}`. No se ha cambiado
+LOAD_BUDGET de producción, ni reutilizado la reserva de Luma.
+
+El primer GR generado tenía seis subficheros (forma XY) y la llegada daba pantalla blanca; los registros de GDB
+no demostraron agotamiento de memoria. Clonar los **siete** subficheros del GR retail ORAS 489 y sustituir solo
+0–3 permitió cargar exactamente el mismo presupuesto: `ferry4.log` registra llegada real por ferry a **(35,71)**;
+[captura](../work/f11/prototype/shots/c_arrival.png). No atribuir esa pantalla blanca a la cota de carga.
+
+El primer recorrido avanzó hasta (40,71), cruzando la frontera horizontal de celda, pero quedó en (42,70) al
+intentar subir la escalera temporal de recepción: `route.log`, `ramp.log`. `ramp-audit.txt` mide suelo 18 en
+(42,70), 27 en el centro de (42,69) y 36 arriba: hay pendiente, con comportamiento de baldosa `0x6c` del catálogo.
+El siguiente ensayo conserva geometría/materiales y cambia ese comportamiento por andar normal: **sí sube**.
+`route-walk.log` registra el cruce vertical (42,71) → (42,39), la celda noroeste (39,32), centro-norte (84,39),
+noreste (126,39), sureste (126,40) y centro-sur (119,45). Con la llegada (35,71) y (40,71), quedan recorridas
+**las ocho celdas**, sin warp entre ellas ni escritura de posición. No se toca el motor ni se reduce la escala.
+
+`checkpoint.py terrain-saved` guarda mediante UI en **zona 209, (119.5,45.5), altura 38**, celda (2,1), distinta
+de la llegada (0,1). `terrain-saved.json` mide 58 bloques con checksum válido y hash
+`672478e158d9ef1a986f73a4ec9b8e84dbfd93981d98983e13e46b22e0585f21`; `save.log` y
+[captura](../work/f11/prototype/terrain-saved.png). Es una copia del laboratorio: la partida fuente no cambia.
+Reinicio completo con `boot.sh work/f11/prototype/terrain-saved.sav`: `reload.log` confirma **(119,45)**,
+caminar a (120,45) y volver a (119,45); [captura tras recargar](../work/f11/prototype/shots/reloaded.png).
+La fuente `work/frontier/pkg02/recovered/saves/v02_saved_plaza.sav` conserva SHA-256
+`4784ac54131ba7cc356b979f1191c055a4f0b9d4cd0ac2b17c2166965e903095` antes y después.
+
+El generador comprueba 45 hashes del manifiesto v0.2 y de los fallbacks del staging frente al baseline;
+`sources.json` fija las fuentes medidas. Ensayo de rechazo en copia temporal: paquete alterado y fallback alterado
+dan ValueError (`source-checks.log`); se acepta el fixture intacto. Suite completa tras esos cambios:
+**2904 passed, 3 skipped**, 58,48 s (`work/f11/tests-final.log`).
+
+Incidencia pendiente del regreso: el primer `route.py --pier` tras recargar quedó a medio paso cerca de
+(99,45), sin responder tampoco a subir o izquierda (`return-pier.log`, `return-probe.log`). GDB muestra el hilo
+principal en el bucle 0x110a5c y un hilo en IPC 0x2c5c00; **no demuestra falta de memoria ni una colisión**.
+Se guardan `return-{threads,bt,regs,io-regs,io-stack,flags}.txt`. Un segundo arranque y desvío por (104,44)
+está en ensayo (`return-retry.log`, `return-pier2.log`); no declarar todavía probado el regreso.

@@ -73,6 +73,13 @@ de fábrica también carga en consola, y eso da un techo seguro:
 Si el exterior continuo cabe por debajo de ese techo retail, `LOAD_BUDGET` puede subir a él con esa justificación.
 Hay que anotar la fuente y la zona. Si no cabe, se documenta qué pesa: celdas, texturas o modelos de región.
 
+**Medición F11-ISLA-TRAZADO (2026-11-14):** Resort 211 suma **4192384 bytes** con esta métrica
+(9 regiones); Resort 210/212: 3507584/1849472; Calagua: 3329536; Portual: 3265152; matriz de Férrica:
+8356096 (incluye rutas, no demuestra carga simultánea). Fuentes, comandos y desglose en
+[`reports/frontier.md`, apartado F11](../frontier.md#f11--trazado-materiales-y-cota-retail-2026-11-14-codex-hito-2),
+`frontier/probes/island/survey.sh` y `work/f11/retail/zone*.txt`. Se usa Resort 211 como referencia comparable;
+no se cambia aquí LOAD_BUDGET de producción ni se considera la suma una garantía de RAM residente.
+
 ### 2.2 Materiales (solo ORAS)
 
 Hay que elegir del catálogo de CTRMap-F5 y de las áreas retail el equivalente más próximo de cada elemento:
@@ -90,6 +97,31 @@ Hay que elegir del catálogo de CTRMap-F5 y de las áreas retail el equivalente 
 Los árboles del área 8 cuestan ~146 KB (`personalidad.md` §3.1). Hay que preferir los del área que ya carga la isla, o
 medir antes una alternativa. Ningún espacio importante del paisaje se elimina por falta de pieza exacta: se usa la
 más próxima y se anota.
+
+La tabla medida por cada clase del calco está en **reports/frontier.md, apartado F11 → Materiales ORAS por clase**,
+con región/mesh/área, texels y aumento del world pack. `frontier/probes/island/Materials.java` reproduce los costes.
+La palmera sin passengers comparte `yashi` ya cargada; el árbol redondo exige un atlas mayor. La palmera completa
+introduce un conflicto de imagen con `chip_kusa` y no se propone importarla así.
+
+### 2.3 Decisión A/B de F11-ISLA-TRAZADO (2026-11-14)
+
+**A: una zona (209), una sola área privada y 4×2 celdas, a escala 1:1, sin cortes.** El prototipo de terreno
+comparte texturas en AD[11], no tiene referencias fuera del world pack y mide **4028928 bytes**, 163456 menos
+que Resort 211. Ha cargado por ferry en Azahar y se han cruzado fronteras horizontales y verticales leyendo la
+posición, sin modificarla. Fuentes: `work/f11/prototype/{build.log,ferry5.log,route-walk.log}` y generador aislado
+`frontier/probes/island/`. B no se justifica por el terreno medido; no se reduce la escala.
+Se han recorrido las ocho celdas, guardado mediante UI en (119,45), celda (2,1), y recargado allí con movimiento
+posterior: `terrain-saved.json` y `reload.log`. Zona/área/matriz final: **209/229/431** (`zones-final.txt`).
+
+El GR debe conservar el contenedor ORAS retail completo (7 subficheros), sustituyendo 0–3. El contenedor nuevo
+de 6 subficheros dio pantalla blanca con el mismo presupuesto: no era prueba de falta de memoria. La pendiente
+de recepción funciona con andar normal; el comportamiento de escalera `0x6c` del catálogo la bloqueaba en
+este ensayo. Solo el exportador del prototipo abre el pasillo temporal por recepción (26,61–65); el calco no cambia.
+
+Esta decisión valida el **terreno**. La carga con los siete edificios recolocados y su decoración definitiva,
+los retornos de interiores y la consola siguen **no probados**: F11-ISLA-CONSTRUCCION medirá su composición,
+compartirá texturas, retirará lo que no use y elegirá piezas ligeras antes de plantear B. Los builders comunes,
+el motor y la reserva Luma 0x579604–0x579804 no se modifican en este hito.
 
 ## 3. Lo que se conserva y lo que cambia
 

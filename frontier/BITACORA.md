@@ -3862,3 +3862,37 @@ No probado todavía: llegada por ferry a esta geometría, carga de la isla, cruc
 aplicada es caso (c), sin combates ni siete instalaciones: el prototipo no tiene edificios/puertas de instalación.
 Siguiente paso: terminar ensayo de ferry en el shell vivo; luego route.py, guardar/cargar fuera de celda (0,1),
 medir/corregir lo que falle y escribir decisión A/B. Parar el laboratorio al acabar.
+
+## 2026-11-14 — Codex — F11-ISLA-TRAZADO hito 4: ferry, ocho celdas y persistencia
+Estado: en curso
+Hecho:
+- Corregido el prototipo aislado: clona el GR ORAS retail completo (7 subficheros), sustituye 0–3 y conserva
+  auxiliares. El contenedor nuevo de 6 daba blanco; con el completo carga el mismo presupuesto. No se demuestra
+  que el blanco fuese falta de memoria ni se ha descartado A por ello.
+- La pendiente de recepción (18/27/36 unidades, ramp-audit.txt) quedaba bloqueada con tuple 0x6c. Conservando
+  geometría/material y usando andar normal sí sube. Generador y helpers ferry/checkpoint versionados.
+- Validación de fuentes del generador: manifiesto v0.2 y fallbacks baseline, 45 hashes; rechazo de corrupción
+  ensayado en fixture temporal. Fuentes en work/f11/prototype/sources.json y source-checks.log.
+- Decisión A para terreno, cota retail y tabla de materiales enlazadas desde reports/diseno/isla-esmeralda.md.
+  Builders comunes, motor, REPARTO y tasks.json intactos. Reserva Luma sin reutilizar.
+Evidencia:
+- Artefactos locales en work/f11 del carril lane/codex; render: [calco junto a referencia](../work/f11/calco.png).
+- build.log: 209/área229/matriz431, regiones872–879, presupuesto4028928, texturas fuera del pack {}.
+- ferry5.log: ferry real desde Calagua → (35,71). route-walk.log: ocho celdas; cruces (40,71), (42,39),
+  (39,32), (84,39), (126,39), (126,40), (119,45). Capturas en work/f11/prototype/shots/.
+- Guardado UI terrain-saved.sav en zona209/(119.5,45.5)/altura38, celda(2,1), 58 CRC válidos;
+  SHA256 672478e158d9ef1a986f73a4ec9b8e84dbfd93981d98983e13e46b22e0585f21. Reinicio completo: reload.log
+  recupera (119,45), camina a (120,45) y vuelve. Fuente v02_saved_plaza.sav conserva hash4784ac54…39095.
+- Suite completa tras el último cambio de código: env -u ORCH_LANE python -m pytest -q tests → **2904 passed,
+  3 skipped**, 58,48 s (work/f11/tests-final.log). git diff --check limpio.
+Commits: el de esta entrada; anteriores 7d089eb, 99b9cff, 3879a67.
+Decisiones:
+- A sigue: una zona/área, escala completa, sin subir LOAD_BUDGET de producción. Edificios y consola no probados.
+- Regresión caso(c): entrada plaza por muelle, ocho celdas y guardar/cargar; regreso todavía pendiente. Sin
+  puertas en el prototipo vacío; no corresponde ejecutar instalaciones ni combates del motor.
+Incidencia: primer regreso quedó inmóvil cerca de (99,45), a medio paso; tampoco acepta subir. Hilos/registros
+GDB en return-*.txt, sin prueba de causa de memoria o colisión. Segundo arranque desde terrain-saved.sav y
+rodeo por (104,44) en curso en el shell vivo 62609 (mismo namespace del laboratorio), GDB24691; logs
+return-retry.log / return-pier2.log. No confundir la incidencia con un retorno superado.
+Siguiente paso: terminar/diagnosticar retorno, anotar resultado, ejecutar suite y commit de cierre; reap del
+laboratorio del carril. Mantener work/lane-task.json in_progress hasta completar, sin editar tasks.json.

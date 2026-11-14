@@ -24,6 +24,34 @@ CP = ':'.join(str(ROOT / p) for p in ('work/faraway/classes', 'tools/CTRMap-F5/b
                                     'tools/CTRMap-F5/lib/jogl-all.jar', 'tools/CTRMap-F5/lib/gluegen-rt.jar'))
 
 
+def verify_sources():
+    """Reject a modified v0.2 package or an unverified staging fallback."""
+    package_root = PACKAGE.parents[2]
+    manifest = json.loads((package_root / 'manifest.json').read_text())
+    if manifest['version'] != 'oras-frontier-alpha-v0.2':
+        raise ValueError('Expected the accepted v0.2 package')
+    baseline = json.loads((ROOT / 'baseline/oras/manifest.json').read_text())['repolished']
+    hashes = {}
+    for rel, expected in manifest['files'].items():
+        actual = hashlib.sha256((package_root / rel).read_bytes()).hexdigest()
+        if actual != expected:
+            raise ValueError(f'Package hash mismatch: {rel}')
+        hashes[f'package/{rel}'] = actual
+    for p in STAGE.rglob('*'):
+        if not p.is_file() or (PACKAGE / 'romfs' / p.relative_to(STAGE)).exists():
+            continue
+        rel = p.relative_to(STAGE).as_posix()
+        data = p.read_bytes()
+        if rel == 'sound/sango_sound.bcsar' and not data:
+            continue  # CTRMap staging sentinel, never installed in the mod.
+        actual = hashlib.sha256(data).hexdigest()
+        expected = baseline.get('romfs/' + rel, {})
+        if actual != expected.get('sha256') or len(data) != expected.get('size'):
+            raise ValueError(f'Staging fallback hash mismatch: {rel}')
+        hashes[f'stage/{rel}'] = actual
+    return hashes
+
+
 def grids():
     rows = [['~'] * 160 for _ in range(80)]
     heights = [['0'] * 160 for _ in range(80)]
@@ -43,6 +71,8 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     if (OUT / 'game').exists():
         raise SystemExit('Existing prototype; keep its evidence or remove only work/f11/prototype/game and ws before rebuild')
+    sources = verify_sources()
+    (OUT / 'sources.json').write_text(json.dumps(sources, indent=2) + '\n')
     shutil.copytree(STAGE, OUT / 'game')
     # The staging predates the package overlay (notably harbor NPCs/scripts).
     # Preserve the complete accepted package before replacing island geometry.

@@ -36,7 +36,9 @@ public final class TerrainPrototype {
         matrix.cambounds.get(0).east=160*18;
         matrix.cambounds.get(0).south=80*18;
         int first=GeometryForker.nextFreeRegion(Workspace.session(),Workspace.getArchive(ArchiveType.FIELD_DATA));
-        byte[] donor=BuildingCatalog.pristineRegion(Workspace.session(),489).getFile(1);
+        GR nativeRegion=BuildingCatalog.pristineRegion(Workspace.session(),489);
+        byte[] donor=nativeRegion.getFile(1);
+        System.out.println("Retail GR slots="+nativeRegion.len+" (preserving auxiliary subfiles)");
         Map<Integer,Set<String>> needs=new LinkedHashMap<>();
         AD ad=new AD(Workspace.getWorkspaceFile(ArchiveType.AREA_DATA,area),Workspace.session());
         for(int cy=0;cy<2;cy++) for(int cx=0;cx<4;cx++) {
@@ -48,9 +50,16 @@ public final class TerrainPrototype {
             }
             byte[] template=MapPainter.importBrushMaterials(donor,grid,null,needs);
             RegionFactory.BlankContent bc=PaintedRegionBuilder.build(Workspace.session(),template,grid,height,ramp,TerrainLighting.daytime(),false);
+            // Keep the generated stair slope, but use ordinary walking in this
+            // terrain-only lab: 0x6c blocked this prototype's reception step.
+            for(int y=0;y<40;y++) for(int x=0;x<40;x++)
+                if(grid[y][x]==TilePalette.STAIRS_Z) bc.tilemap[4+(y*40+x)*4+3]=0;
             int region=first+cy*4+cx;
             File out=new File(Workspace.getExtractionDirectory(ArchiveType.FIELD_DATA),String.valueOf(region));
-            GR gr=new GR(out,6,Workspace.session());
+            // ORAS carries a seventh KAGE subfile: retain the retail container shape,
+            // including auxiliary fields, instead of synthesizing a six-slot XY GR.
+            Files.copy(nativeRegion.getOriginFile().toPath(),out.toPath(),StandardCopyOption.REPLACE_EXISTING);
+            GR gr=new GR(out,Workspace.session());
             gr.storeFile(0,bc.tilemap);gr.storeFile(1,bc.model);gr.storeFile(2,bc.collision);gr.storeFile(3,bc.props);
             Workspace.session().registerPendingCompression(ArchiveType.FIELD_DATA,region,true);
             matrix.ids.set(cx,cy,(short)region);
