@@ -3928,3 +3928,21 @@ coincidir (el commit del manifiesto y el hash del ZIP cambiarán). Verificar tam
 los ficheros entregados; no repetir Azahar. Si cambian ficheros del juego por integración concurrente, determinar
 qué cambió y aplicar la política de regresión antes de cerrar F7. `work/lane-task.json` permanece in_progress
 hasta esta entrega, sin atribuir a consola lo probado solo en Azahar.
+
+
+### 52.1 Revisión de entrega tras integración (2026-11-14, Codex)
+
+`git worktree list` confirma ahora **main y lane/codex en 6bc1b0b**: los commits de la regresión ya están
+integrados. No existen aún `dist/oras-frontier-alpha-v0.3` ni `dist/oras-frontier-checkpoint-test-v0.3`.
+La entrega sigue pendiente; no es necesario volver a integrar el juego ni repetir Azahar.
+
+Revisión de solo lectura en el carril: `work/frontier/pkg03/delivery-audit.json`, generado con
+`package.checked_files`, `package.sha` y `package.console_check`: **39 ficheros verificados**, Checkpoint
+`5ddaa992c5aea98a3da1af80c1f2486b6d2db1690da0ae8be84abf2397edeffa` y `console_check` idéntico al manifiesto.
+No existe `work/azahar-lab/session.json`; no se arranca laboratorio. No hay cambios al juego.
+
+**Bloqueo de entrega:** `dist` sigue enlazado fuera de las raíces escribibles del sandbox del carril;
+la política de permisos no permite pedir ampliación. El integrador debe ejecutar los dos comandos anteriores
+**desde main**, comparar los 39 hashes y la partida, y cerrar F7-PAQUETE-V03 si coinciden. Se comunica
+`blocked` en `work/lane-task.json` para evitar reanudar indefinidamente un carril que no puede publicar allí.
+La consola real continúa sin probar.

@@ -4128,3 +4128,27 @@ dist es enlace fuera de la raíz escribible; todavía no existe v0.3 allí (cons
 Comparar manifest.files con work/orch/lanes/codex/work/frontier/pkg03/oras-frontier-alpha-v0.3/manifest.json;
 39 hashes idénticos y Checkpoint 5ddaa992… permiten cerrar sin repetir Azahar. Si la integración cambia juego,
 aplicar regresión al cambio. Los cambios de solo docs/commit del manifiesto no invalidan la prueba.
+
+
+## 2026-11-14 11:49 — Codex — F7-PAQUETE-V03: bloqueo de publicación desde el carril
+Estado: bloqueado (entrega en main; regresión completa)
+Hecho: relevo leído, árbol inicial limpio; git worktree list confirma main y lane/codex en 6bc1b0b.
+Los commits anteriores ya están integrados. No existen las dos carpetas v0.3 en dist. Se añade reports/frontier.md
+§52.1 y se deja work/lane-task.json blocked con la acción concreta para el integrador. Sin cambios al juego.
+Evidencia:
+- work/frontier/pkg03/delivery-audit.json: package.checked_files verifica los 39 ficheros reales contra el
+  manifiesto; package.console_check idéntico al publicado. Checkpoint SHA256
+  5ddaa992c5aea98a3da1af80c1f2486b6d2db1690da0ae8be84abf2397edeffa.
+- env -u ORCH_LANE python -m pytest -q tests (tras source scripts/env.sh): 2928 passed, 4 skipped, 55.86s;
+  work/frontier/pkg03/tests-delivery-audit.log. git diff --check limpio.
+- dist es enlace fuera de las raíces escribibles del sandbox; permisos sin escalación. No se intenta escribir
+  fuera del carril. work/azahar-lab/session.json ausente; no se abre laboratorio ni se repite Azahar.
+Commits: regresión fa68d21, bd828f7, 29988e9, 9c19635, d90d265; el de esta entrada para el bloqueo.
+Decisiones: no declarar done sin dist. El bloqueo es de publicación por permisos, no una decisión de diseño.
+Se comunica blocked para evitar otra reanudación idéntica del carril. No se modifican REPARTO ni tasks.json.
+No probado: consola real; generación final desde main (fuera del sandbox de este carril).
+Siguiente paso: integrador, desde main limpio: python frontier/package.py; python frontier/package.py checkpoint
+  dist/oras-frontier-checkpoint-test-v0.2/FrenteTest-puerto-Calagua/main. Comparar manifest.files con
+  work/orch/lanes/codex/work/frontier/pkg03/oras-frontier-alpha-v0.3/manifest.json (39 hashes) y Checkpoint con
+  5ddaa992c5aea98a3da1af80c1f2486b6d2db1690da0ae8be84abf2397edeffa; si coinciden, cerrar done sin repetir
+  Azahar. Si cambia juego, aplicar regresión al cambio. La reserva Luma sigue intacta; 36 bytes libres medidos §52.
