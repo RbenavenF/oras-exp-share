@@ -4314,3 +4314,33 @@ Siguiente paso: integrador, aplicar integration-fresh/integration.diff y helper 
 placements desde el plan; validar construcción/hashes contra final y suite. Si cambian archivos jugables,
 regresión caso(c). Para la cenital completa aún hace falta resolver cobertura de celdas al alejar la cámara;
 las dos tomas regionales ya tienen evidencia real y comparación. work/lane-task.json in_progress.
+
+## 2026-11-14 15:35 — Codex — F11 acabado: entrega al integrador sin snapshots
+Estado: bloqueado (integración común reservada al integrador)
+Hecho: relevo auditado con git status, git diff y git log; árbol limpio, último commit 37b8ccf del
+orquestador y último hito 3574678. No había cambio interrumpido que completar o deshacer. Leídos AGENTS,
+PLAN, REPARTO, bitácora y diseños; CLAUDE.md no existe. Se añade integration_bundle.py: entrega helper,
+diff, placements como claves de plan y hashes sin depender de artefactos locales ni modificar common.
+landscape.py --fresh-movement compila ahora el helper sin remember/preserve ni mapa de snapshots;
+la variante histórica se conserva para reproducir evidencias. Guía concreta en el diseño de acabado.
+Evidencia:
+- source scripts/env.sh; python frontier/probes/island/integration_bundle.py work/f11/finish/integration-kit.
+  361 placements; helper SHA256 4d534b26aa489ca93cf0b0091bc36e8885a5508c0597c97145e49d10ff66ceb9.
+  git apply --check work/f11/finish/integration-kit/FrontierIsland.diff: correcto.
+- python frontier/probes/island/landscape.py --name integration-stripped --fresh-movement: compila y
+  construye. build.log:4151040 <=4192384, WorldTextures{}, ZO20911288 <=17248. movement-proof.json:
+  zonas y GR[0,2,3,4,5,6] idénticos. integration-stripped/equivalence.json: seis GARCs completos
+  idénticos a final. Helper compilado idéntico al exportado y 361 claves idénticas a final/placements.txt.
+- env -u ORCH_LANE python -m pytest -q tests:2931 passed,4 skipped,56.46s;
+  work/f11/finish/tests-integration-stripped.log. git diff --check limpio.
+- No se abre Azahar para archivos idénticos (política caso c); work/azahar-lab/session.json ausente.
+Commits: 3574678 (última entrega); el de esta entrada (frontier: entrega integración de paisaje sin snapshots).
+Decisiones: no repetir sesiones in_progress sin activar producción: la siguiente acción necesaria está
+expresamente reservada al integrador. work/lane-task.json blocked con esa dependencia concreta.
+No se tocan common, REPARTO, tasks.json, motor, reserva Luma, inputs ni partida original. Sin paquete/push.
+No probado: runner común leyendo placements, construcción común integrada, cenital única de ocho celdas,
+consola. Las cenitales regionales anteriores siguen siendo evidencia parcial, no aceptación de toma única.
+Siguiente paso: integrador, generar un kit con integration_bundle.py, copiar helper/aplicar diff, añadir
+claves al plan y lectura en faraway.Island como documenta el diseño. Construir en nombre nuevo, comparar
+con final y ejecutar suite; si cambia juego, regresión caso c. Resolver después la cobertura de cámara
+para cenital única o solicitar criterio explícito del usuario; no declarar done con esos puntos pendientes.

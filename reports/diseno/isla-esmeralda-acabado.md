@@ -219,3 +219,40 @@ La integración común sigue pendiente de su dueño. La evidencia cenital pasa d
 no probada a **regional en Azahar**; no se declara lograda una captura única de
 las ocho celdas. No se repiten puertas ni ferry por una cámara de fotografía
 que no se entrega: los archivos jugables siguen idénticos a los ya validados.
+
+### Entrega reproducible al integrador, sin APIs de snapshots
+
+```sh
+source scripts/env.sh
+python frontier/probes/island/integration_bundle.py work/f11/finish/kit-nuevo
+git apply --check work/f11/finish/kit-nuevo/FrontierIsland.diff
+```
+
+El exportador versionado no necesita una construcción anterior ni datos del juego.
+Rechaza un destino existente y un constructor cuyos puntos de integración cambien.
+Entrega `IslandLandscape.java` sin `remember`, `preserve` ni el mapa de snapshots,
+`FrontierIsland.diff`, `landscape-plan.properties` (361 claves consecutivas
+`island.landscape.N`) y `manifest.json` con hashes. No aplica cambios comunes.
+
+El integrador debe copiar el helper a `faraway/java/ctrmap/tests/`, aplicar el diff,
+añadir las claves del plan a `frontier/island_build.py:plan` y cargar su lista en
+`faraway/java/faraway/Island.java`, antes de llamar a `FrontierIsland.build`:
+
+```java
+IslandLandscape.placements = new ArrayList<>();
+for (int i = 0; plan.getProperty("island.landscape." + i) != null; i++) {
+    IslandLandscape.placements.add(plan.getProperty("island.landscape." + i));
+}
+```
+
+Añadir el import `ctrmap.tests.IslandLandscape`. Reinicializar la lista en cada
+ejecución evita conservar placements de otra construcción en la misma JVM.
+Las claves contienen texto UTF-8; conservar la lectura de Properties mediante
+Reader existente. No añadir `LandscapeTrial` ni las herramientas fotográficas a producción.
+
+Verificación ejecutada: `landscape.py --name integration-stripped --fresh-movement`
+compila exactamente el helper exportado y genera los seis GARCs idénticos byte a
+byte a `final` (`integration-stripped/equivalence.json`). El plan exportado coincide
+con los 361 placements probados; `git apply --check` acepta el diff. Presupuesto
+4.151.040, WorldTextures vacía, ZO209 11.288. Esta prueba no valida aún la lectura
+del plan en el runner común: ese cambio sigue reservado al integrador.

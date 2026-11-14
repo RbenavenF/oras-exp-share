@@ -3997,3 +3997,12 @@ ni rellenan píxeles negros: solo se ven las columnas de celdas próximas al jug
 Suite: **2931 passed,4 skipped**, 67,11s (`tests-photo-final.log`); comparación y generación ejecutadas.
 `photo-reproduce/cleanup.json`: remaining=[], session_metadata=false, cierre en la shell que arrancó el laboratorio.
 No se repiten ferry/puertas por una cámara de evidencia que no se incorpora a los archivos jugables validados.
+
+Entrega al integrador (15:35): `frontier/probes/island/integration_bundle.py` exporta helper sin APIs de
+snapshots, diff aplicable y 361 claves `island.landscape.N` con manifiesto; no necesita builds ni ROM.
+`landscape.py --name integration-stripped --fresh-movement` compila ese helper exacto; seis GARCs idénticos
+a `final` (`work/f11/finish/integration-stripped/equivalence.json`), mismo presupuesto y movimiento.
+`git apply --check work/f11/finish/integration-kit/FrontierIsland.diff` correcto. Suite: 2931 passed,
+4 skipped,56.46s (`tests-integration-stripped.log`). Guía de lectura del plan en el diseño de acabado.
+El carril queda bloqueado por la integración común reservada a su dueño; no implica aceptación final ni
+resuelve la cenital única. Laboratorio no abierto, sin sesión activa.
