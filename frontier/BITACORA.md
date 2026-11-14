@@ -4372,3 +4372,47 @@ la nueva recepción, consola. Laboratorio24691 en curso, aún no aceptación.
 Siguiente paso: terminar selección en Palacio pausadoL73/racha6, medir reglas/niveles,
 cierre7 y PB, guardar/cargar; luego Arena nuevo Libre y juicio/cambio prohibido.
 Usar propios.py pasivo: hooks de naturaleza/divisor solo tras StartBattle.
+
+## 2026-11-14 16:17 — Codex — F9 propios: aceptación Libre Palacio/Arena
+Estado: terminado (carril; integración pendiente del orquestador)
+Hecho: completados los dos combates nuevos sin asistencia ni escrituras de RAM.
+Palacio reanuda Libre L73/racha6, cierra7, cobra4PB y guarda/recarga conservando
+modalidad/nivel y sin duplicar premio. Arena inicia Libre desde el menú nuevo,
+conserva niveles, bloquea cambio y aplica juicio con PS iniciales recalculados.
+Helpers seed/snapshot reproducen copias nuevas bajo work/, validan fuente/hash
+/checksums y no sobrescriben. Probe Arena verifica instrucción cargada antes
+de armar hook hardware; se retira antes de descargar el CRO.
+Evidencia (work/frontier/modos/propios1/, detalles/hashes en reports/modos-propios.md):
+- env -u ORCH_LANE python -m pytest -q tests:3090 passed,4 skipped,82.36s,
+  tests-acceptance.log; git diff --check correcto. Python de ambos GDB compila.
+- Build release del hito anterior: build-release.log y build-hashes.json;
+  zonas329/340/457 idénticas al primer build instalado (target-equivalence.json).
+  Recarga Palacio y Arena usan release. Sin cambios jugables desde 1e52882.
+- palace-gdb.log: rank0/type0, selección0/1/2, CAP73/55/41 sin ajuste,
+  rivales73, bit30, filtro naturaleza13/porcentajes59/85/52/29, PS223 y150.
+  Victoria raw1; palace-battle.log16 pulsaciones. palace-paused7.json: banco
+  Libre6/6→7/7, Nivel50 12/20 intacto, PB3→7,58 bloques válidos.
+- Recarga real palace-paused7.sav con release: menú de pausa; inscribir55/41/7
+  no altera L73 ni racha7/7; palace-reloaded-gdb.log y palace-reloaded7.json,
+  PB7,58 bloques válidos, equipo/Cajas iguales a fuente. No premio duplicado.
+- arena-level-menu.png/arena-gdb.log: nuevo Libre, rank0/type0, inscritos
+  73/55/41 sin ajuste y rivales73, bit31. arena-switch-refused.png: cambio
+  rechazado con activo vivo. Works16693/4=223/165; arena_judge0x7caa58
+  verificado e92d40f8: current-entry=193/223,165/165 ages=3/3; cae Metagross
+  con193PS. Hook retirado antes de salir del combate.
+- Arena derrota raw0,32 pulsaciones, sin asistencia. arena-loss.json: ACTIVE0,
+  Libre0/6 y Nivel50 12/20 intactos,PB3,58 bloques válidos. Inscritos idénticos
+  byte a byte; seis niveles conservados y Cajas idénticas. arena-party-diff.json:
+  solo metadatos0xcc/0xcd/0xce/0xd0 del slot3 no inscrito y su checksum cambian;
+  causa no investigada, no cambios de experiencia/nivel ni de los inscritos.
+- gdbctl stop y azahar_lab reap del carril24691: lab-stopped.log devuelve
+  F9 LAB REMAINING []; session.json ausente. No se toca laboratorio ajeno.
+Commits: 1e52882; el de esta entrada (frontier: verifica Libre de Palacio y Arena en Azahar).
+Decisiones: no repetir Torre BASE ni combates ajenos (política agrupada2026-11-13).
+Luma0x579604–0x579804 intacta; espacio actual medido en el hito anterior. La ficha
+retail de reglas aún dice reducir a50; las trazas prueban los niveles efectivos.
+No probado: consola, recorrido completo alfa; la columna Palacio bajo50% de PS
+no se alcanzó en esta pelea (pruebas del motor existente siguen verdes).
+Siguiente paso: orquestador, integrar los dos commits, pasar aceptación en main
+ y continuar F10. work/lane-task.json done. Sin push, paquete, inputs ni partida
+original; tasks.json y turno REPARTO no modificados.
