@@ -8,7 +8,10 @@ Never changes a source save or writes inferior memory.
 """
 from pathlib import Path
 import hashlib
+import contextlib
+import io
 import json
+import runpy
 import struct
 import sys
 
@@ -18,6 +21,7 @@ import modes
 import patch
 import save_event as se
 import save_fixture as sf
+import pyramid
 from vertical import probe
 
 FACILITIES = {'dome': 456, 'pike': 458, 'pyramid': 140}
@@ -59,6 +63,7 @@ def snapshot(source, destination):
     data = source.read_bytes()
     blocks = sf.blocks(data)
     works = {patch.WORK_ROUTE, 16729, 16730, *patch.PYRAMID_SEL, patch.PYRAMID_COUNT,
+             pyramid.WORK_BEATEN, pyramid.WORK_SUMMIT,
              *patch.PIKE_HP, *patch.PIKE_ST, *(w for pair in patch.PIKE_PP for w in pair)}
     for name in FACILITIES:
         route = patch.ROUTE[name]
@@ -74,7 +79,19 @@ def snapshot(source, destination):
 
 def script(facility, directory):
     route = patch.ROUTE[facility]
-    return probe(directory).replace('16573-0x4000', f'{modes.CONFIG[route]}-0x4000')
+    result = probe(directory).replace('16573-0x4000', f'{modes.CONFIG[route]}-0x4000')
+    if facility == 'pike':
+        # Observe the existing HP/status/PP path as well. Room forcing, if wanted,
+        # changes only the clock return; pk_want is empty by default.
+        capture = io.StringIO()
+        with contextlib.redirect_stdout(capture):
+            runpy.run_path(str(Path(__file__).parents[1] / 'pike/lab_probe.py'))
+        extra = capture.getvalue().replace('work(16477)', 'work(16745)').replace(
+            "super().__init__('*%#x'%addr, temporary=temporary)",
+            "super().__init__('*%#x'%addr, temporary=temporary, "
+            "type=gdb.BP_HARDWARE_BREAKPOINT if addr >= 0x600000 else gdb.BP_BREAKPOINT)")
+        result += extra
+    return result
 
 
 if __name__ == '__main__':

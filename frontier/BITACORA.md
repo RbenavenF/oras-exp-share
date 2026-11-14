@@ -4448,3 +4448,33 @@ piso/recarga sin selector; medir bancos/PB y comparar equipo/Cajas. Helper
 frontier/probes/modos/especiales.py y copia inicial pyramid.sav/json preparados.
 Carril24691; no se ha abierto laboratorio en este hito. work/lane-task.json
 in_progress. Sin push, inputs ni partida original; turno y tasks.json intactos.
+
+## 2026-11-14 — Codex — F9 especiales: Pirámide Libre en Azahar
+Estado: en curso
+Hecho: aceptación Pirámide del release de ba0580a, inscripción nueva Libre,
+tres victorias naturales en planta1, cambio a planta2, guardado y recarga completa.
+Helper especiales.py exporta BEATEN/SUMMIT y combina observación de niveles con
+la sonda existente de PP/Tubo; modo normal y cola de reloj vacía por defecto.
+Evidencia: reports/modos-especiales.md, work/frontier/modos/especiales1/:
+- tests-lab.log: suite completa3178 passed,4 skipped,78.01s. py_compile correcto.
+- pyramid-gdb.log: CONFIG149, tres inscritos0/1/2 antes del delete; CAP73/55/41
+  force0, MAKE73 en cada rival; victorias raw1 sin asistencia36/18/23 pulsaciones
+  en pyramid-battle.log, pyramid-battle2.log, pyramid-battle3.log.
+- pyramid-floor2.json/sav: zona142, ACTIVE2, Libre1/6, antiguo12/20, PB3,
+  CONFIG329, selección0/1/2, BEATEN0/SUMMIT0; 58 bloques válidos. SHA256
+  edfbbcd75b5697fd1e9a70ec7e6eb44ef4ea271e0e526f26428fdf8c9151f805.
+- pyramid-reloaded.png y pyramid-reloaded-gdb.log: recarga de esa copia sin
+  reinscripción, siguiente construcción conserva niveles73/55/41 y rival73.
+  Ese combate de planta2 no se terminó; solo se midió su construcción.
+- Equipo completo y Cajas idénticos byte a byte a tower73.sav tanto en inscripción
+  como planta2; hashes en informe. No se usó pyramid-cleared.sav (fixture preparada
+  pero descartada); la planta se despejó ganando sus tres combates.
+- Build exacto sin cambios desde ba0580a; hashes build-hashes.json, 28 archivos
+  instalados cotejados antes del arranque. Puerto exclusivo24691, D-Bus privado.
+Commits: ba0580a; el de esta entrada (frontier: verifica Pirámide Libre y recarga).
+Decisiones: solo rutas nuevas según regresión agrupada2026-11-13. No combates
+ajenos ni historia. No cambia turno REPARTO, tasks.json, inputs ni fuente original.
+No probado: aceptación Domo/Tubo todavía pendiente, consola y recorrido alfa.
+Siguiente paso: Tubo Libre (arrastre PS/PP/estado y salvaje L−4/L−5) y Domo Libre
+(cierre torneo, bancos y equipo). Laboratorio del carril sigue abierto en shell
+persistente durante esta ejecución; pararlo antes de terminar. lane-task in_progress.

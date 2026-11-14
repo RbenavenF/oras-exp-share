@@ -59,8 +59,29 @@ Fuente inicial `base3/tower73.sav`, SHA256
 `7a8c2cc32aa3d084eac64ef087e8963f97b3640f9474c63afef508b2212cdd72`,
 equipo73/55/41. No cambia fuente, inputs ni partida original.
 
-Pendiente Azahar: un combate Libre por instalación; cerrar torneo Domo; Tubo
-PS/PP/estado tras recálculo y salvaje a nivel correcto; Pirámide cambio de piso y
-recarga sin reinscribir, medir bancos/PB/niveles y equipo real. No probado aún.
+Azahar, Pirámide (mismo release y 28 hashes instalados comprobados):
+
+- `pyramid-gdb.log`: inscripción real 0/1/2, CONFIG=0x149 (Individual Libre L73)
+  antes de destruir el work. En las tres peleas de planta 1, descriptor retail
+  vacío reconstruido con la selección persistida, CAP73/55/41 force0 y tres
+  MAKE73. `pyramid-battle{,2,3}.log`: victorias raw1 con36/18/23 pulsaciones,
+  modo normal, sin asistencia ni escrituras RAM.
+- `pyramid-registered.json`: 58 bloques válidos, banco antiguo12/20 y Libre0/6,
+  PB3. `pyramid-floor2.json`: zona142, ACTIVE2, Libre1/6, antiguo12/20, PB3,
+  CONFIG329 y selección0/1/2 conservadas, BEATEN0/SUMMIT0. Cambio natural tras
+  ganar los tres entrenadores; no se usó la copia de planta ya despejada.
+  Save SHA256 `edfbbcd75b5697fd1e9a70ec7e6eb44ef4ea271e0e526f26428fdf8c9151f805`.
+- `pyramid-floor2.png`, `pyramid-reloaded.png`, `pyramid-reloaded-gdb.log`:
+  reinicio completo del emulador cargando esa copia, sin selector por planta.
+  El primer combate de planta2 vuelve a construir73/55/41 y rivales73 con
+  CONFIG149; se detuvo después de construir, no se declara victoria adicional.
+- Equipo completo y Cajas idénticos a la fuente, byte a byte, antes del primer
+  combate y al guardar planta2 (SHA256 equipo
+  e376f1b635055be23d12e0dc18b1d8fbf836c806d6e2fdc40515a80c4da5d54a;
+  Cajas4b00b99e63599ba5f9a744f075f66b5e7ef9f068b15987e8d610945d0d8621d8).
+- Nueva suite completa `tests-lab.log`:3178 passed,4 skipped,78.01s.
+
+Pendiente Azahar: Domo combate Libre y cierre torneo; Tubo PS/PP/estado tras
+recálculo y salvaje a nivel correcto; medir bancos/PB y equipo real de ambos.
 Regresión agrupada2026-11-13: solo lo nuevo/movido; otras instalaciones e historia
 quedan para el recorrido completo alfa. Consola no probada.
