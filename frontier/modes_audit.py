@@ -44,6 +44,7 @@ def measure_space():
     hook, _ = patch.assemble()
     battle, _ = patch.battle_cro_code()
     brain, _ = brains.assemble()
+    selection, _ = modes.assemble_selection()
     # Same validated v0.5 input as patch.battle_cro, before F8 writes.
     path = patch.MOD_ROMFS / patch.FIELD_CRO
     raw = path.read_bytes()
@@ -78,6 +79,7 @@ def measure_space():
         'brains': {'start': brains.AT, 'end': brains.AT + len(brain)},
         'f9_reserved': {'start': modes.FIELD_AT, 'end': modes.FIELD_END,
                         'size': modes.FIELD_END - modes.FIELD_AT, 'text_segment_end': text_end,
+                        'used': len(selection), 'free': modes.FIELD_END - modes.FIELD_AT - len(selection),
                         'sha256_input': hashlib.sha256(raw).hexdigest()},
     }
 

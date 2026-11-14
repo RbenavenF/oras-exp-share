@@ -745,8 +745,10 @@ def test_field_bridge_changes_only_guarded_instructions_and_updates_crr(battle_m
     changed = battle_module[fp.FIELD_CRO]
     assert len(original) == len(changed)
     assert changed[:0x80] == b''.join(cro_hashes(changed))
-    brain_ranges = [(w['offset'], w['offset'] + len(w['after']) // 2) for w in brains.cro_writes()]
-    assert all(i < 0x80 or fp.PIKE_PARAM_SITE <= i < fp.PIKE_PARAM_SITE+16 or any(a <= i < b for a, b in brain_ranges)
+    import modes
+    payload_ranges = [(w['offset'], w['offset'] + len(w['after']) // 2)
+                      for w in [*brains.cro_writes(), *modes.cro_writes()]]
+    assert all(i < 0x80 or fp.PIKE_PARAM_SITE <= i < fp.PIKE_PARAM_SITE+16 or any(a <= i < b for a, b in payload_ranges)
                for i, (a, b) in enumerate(zip(original, changed)) if a != b)
     assert not any(fp.PIKE_PARAM_SITE <= t < fp.PIKE_PARAM_SITE+16 for t, _, _ in Cro(original).relocs)
     imports = CRO(fp.MOD_ROMFS / fp.FIELD_CRO).static_imports(CRO(overlay.ROMFS / 'static.crs'))

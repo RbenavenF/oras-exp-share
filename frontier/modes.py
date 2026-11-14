@@ -26,6 +26,8 @@ FACTORY_RENTS = (16451, 16455, 16456, 16469)
 RESERVED = (*[w for bank in NEW_BANKS.values() for w in bank],
             *CONFIG.values(), FACTORY_SET3, FACTORY_RIVAL3, *FACTORY_RENTS)
 FIELD_AT, FIELD_END = 0xF0A00, 0xF1000
+SELECTION_CODE = {'CODE_PARTY_SLOT': 0x3B6150, 'CODE_GET_LEVEL': 0x14FD1C}
+SELECTION_HEADS = {0x3B6150: 0xE3510006, 0x14FD1C: 0xE92D4070}
 
 
 def valid(route, mode):
@@ -107,3 +109,25 @@ def selection_config(route, mode, levels, *, persisted=None):
             type(level) is not int or not 1 <= level <= 100 for level in levels):
         raise ValueError('incomplete or invalid effective selection')
     return pack_config(route, mode, max(60, *levels) if mode & 1 else 50)
+
+
+def assemble_selection():
+    """Native registration API in the previously reserved Field cave. No callback
+    or reception calls it yet: accepted/new/resume must be explicit at that caller.
+    Descriptor ABI and side effects: frontier/asm/modes_selection.s.
+    """
+    blob, symbols = patch.link(
+        [patch.ROOT / 'frontier/asm/modes_selection.s'], FIELD_AT, 'mode_register',
+        {**patch.mode_constants(), 'ROUTE_OFF': 2 * (patch.WORK_ROUTE - 0x4000)},
+        {**SELECTION_CODE, 'CODE_MODE_OF': patch.assemble()[1]['mode_of']})
+    if FIELD_AT + len(blob) > FIELD_END:
+        raise ValueError('registration API exceeds the F9 Field reservation')
+    return blob, symbols
+
+
+def cro_writes():
+    """Unreachable API payload; no hook until callback linkage is measured.
+    patch.battle_cro supplies v0.5 identity, rehash and CRR validation.
+    """
+    blob, _ = assemble_selection()
+    return [dict(offset=FIELD_AT, before=bytes(len(blob)).hex(), after=blob.hex())]

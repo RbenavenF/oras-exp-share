@@ -407,8 +407,15 @@ def battle_cro(romfs=MOD_ROMFS):
                        after=struct.pack('<4I', 0xE59FC004, 0xE12FFF3C, 0xEA000000,
                                          symbols['pike_param']).hex())
     import brains                       # DllField natives SetTrainer/StartBattle -> the Frontier Brains (brains.py)
+    import modes                        # F9 registration API only; callback not connected yet
+    if sha256(REPOLISHED) != HASHES[REPOLISHED]:
+        sys.exit('registration accessors: wrong Repolished code.bin hash')
+    code = REPOLISHED.read_bytes()
+    for at, expected in modes.SELECTION_HEADS.items():
+        if word(code, at) != expected:
+            sys.exit(f'registration accessor {at:#x} differs')
     field_changed = guarded_writes(field, dict(path=FIELD_CRO, sha256=FIELD_CRO_SHA256,
-                                               writes=[field_write, *brains.cro_writes()]))
+                                               writes=[field_write, *brains.cro_writes(), *modes.cro_writes()]))
     field_changed = rehash_cro(field, field_changed)
     crr = update_crr(crr, field, field_changed)
     return {BATTLE_CRO: changed, FIELD_CRO: field_changed, CRR: crr}
