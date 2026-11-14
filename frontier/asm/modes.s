@@ -21,7 +21,7 @@ works_of:
     bx      lr
 
 @ r1 = &work[0x4000] -> r2 = route - 1, r3 = &CONFIG[route], ip = CONFIG; flags hs = no mode (route 0 or unknown,
-@ M > 3, a bit above M set, or Doubles off the Factory/Tower): the caller takes the retail path. Uses r2, r3, ip.
+@ M > 3, a bit above M set, or Doubles off the Factory/Tower): the caller takes the retail path. Uses r0, r2, r3, ip.
     .global mode_of
 mode_of:
     ldrh    r2, [r1, #ROUTE_OFF]
@@ -41,24 +41,18 @@ mode_of:
 validate_level:
     cmp     ip, #1
     bxlo    lr                      @ legacy CONFIG=0, carry clear
-    push    {r0}
     and     r0, ip, #0xff
     tst     ip, #0x100
-    beq     level_50
+    subeq   r0, r0, #50
+    beq     exact_level
     cmp     r2, #0
-    beq     factory_level
+    subeq   r0, r0, #100
+    beq     exact_level            @ Factory Open: exactly 100
     sub     r0, r0, #60
-    cmp     r0, #41                 @ Open own-team: 60..100, unsigned
-    b       level_checked
-factory_level:
-    sub     r0, r0, #100
-    b       exact_level
-level_50:
-    sub     r0, r0, #50
+    cmp     r0, #41                 @ own-team Open: 60..100, unsigned
+    bx      lr
 exact_level:
     cmp     r0, #1                  @ only the exact level is valid
-level_checked:
-    pop     {r0}
     bx      lr
 
 @ r0 = facility work -> r0 = the level of the challenge's rivals: validated L in an Open Level mode,
@@ -68,7 +62,7 @@ level_checked:
 mode_level:
     push    {lr}
     bl      works_of
-    bl      mode_of
+    bl      mode_live
     mov     r0, #50
     pophs   {pc}
     tst     ip, #0x100
@@ -86,16 +80,15 @@ mode_cap:
     mov     r4, r0
     mov     r0, r6
     bl      works_of
-    bl      mode_of
+    bl      mode_live
     bhs     1f
     tst     ip, #0x100
     beq     1f                      @ a Level 50 mode
     and     r0, ip, #0xff
     cmp     r0, r4
-    movlo   r0, r4
-    bic     ip, ip, #0xff
-    orr     ip, ip, r0
-    strh    ip, [r3]
+    biclo   ip, ip, #0xff
+    orrlo   ip, ip, r4
+    strhlo  ip, [r3]
     cmp     r0, r0                  @ Z: keep the level
     pop     {r4, pc}
 1:  cmp     r4, #50

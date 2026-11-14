@@ -109,6 +109,9 @@ SAVE_WORKS = 0x13144                  # saved works in the save data (WorkGet 0x
 STREAK_SITES = {0x45CDB0: ('streak_inc', 0x45CDC4, 0x45CDFC), 0x45CF00: ('streak_get', 0x45CF14, 0x45CF24),
                 0x45CFA4: ('streak_set', 0x45CFB8, 0x45CFC8), 0x45D028: ('streak_record', 0x45D03C, 0x45D04C)}
 STREAK_INC_BODY = 0x45CDD0                    # Singles increment after its two adds: r0 = S, r2 = R, r3 = limit
+MODE_LIVE = 0x45CDFC                          # reclaimed Doubles increment: table entry now targets streak_inc
+MODE_LIVE_BEFORE = (0xE0801082, 0xE2810F73, 0xE2812E1D, 0xE1D010B0, 0xE1510003, 0x2AFFFFE5,
+                    0xE2811001, 0xE6FF1071, 0xE1C010B0, 0xE1D200B0, 0xE1500001, 0x2AFFFFDF, 0xEAFFFFF0)
 STREAK_INC_BODY_WORDS = (0xE1D010B0, 0xE1510003, 0x2AFFFFF3, 0xE2811001, 0xE6FF1071, 0xE1C010B0, 0xE1D200B0,
                          0xE1500001, 0x2AFFFFED, 0xE1C210B0, 0xE12FFF1E)
 # Streak routes: the value of saved work WORK_ROUTE -> (facility, its streak work S); its record is S + 2 (the
@@ -227,7 +230,7 @@ def assemble():
     """(hook bytes at HOOKS, {global symbol: address}). Fails if any of it would fall in Luma's reserve or past
     the cave."""
     hook, symbols = link(ASMS, HOOKS, 'rental_hook', {**CONSTANTS, **mode_constants()},
-                         {**FUNCTIONS, 'STREAK_INC_BODY': STREAK_INC_BODY})
+                         {**FUNCTIONS, 'STREAK_INC_BODY': STREAK_INC_BODY, 'mode_live': MODE_LIVE})
     if symbols['rental_hook'] != HOOKS:
         raise ValueError('rental_hook is not at the start of the hooks')
     if HOOKS + len(hook) > CAVE_END:
@@ -236,6 +239,17 @@ def assemble():
     if any(CAVE <= a < HOOKS for a in symbols.values()):
         raise ValueError('code.bin hooks inside the Luma reserve')
     return hook, symbols
+
+
+def mode_live_code(symbols):
+    """ACTIVE guard in the retired Doubles increment body; guarded against the fixed baseline in build()."""
+    constants = {f'ACTIVE_{route}': 2 * (ACTIVE_WORK[facility] - 0x4000)
+                 for route, (facility, _) in STREAK_ROUTES.items()}
+    blob, _ = link([ROOT / 'frontier/asm/modes_live.s'], MODE_LIVE, 'mode_live', constants,
+                   {'MODE_OF': symbols['mode_of']})
+    if len(blob) > 4 * len(MODE_LIVE_BEFORE):
+        raise ValueError('mode_live exceeds the retired Doubles increment body')
+    return blob
 
 
 # DllBattle.cro (v0.5) file offset of the battle-time routines (CRO_ASMS): after palace_cro.s (palace_ai.AT,
@@ -291,6 +305,10 @@ def build(native_clones=None):
         if word(code, va) != head:
             sys.exit(f'{va:#x}: unexpected word {word(code, va):08x}')
     hook, symbols = assemble()
+    if tuple(word(code, MODE_LIVE + 4 * i) for i in range(len(MODE_LIVE_BEFORE))) != MODE_LIVE_BEFORE:
+        sys.exit('retired Doubles increment body differs')
+    live = mode_live_code(symbols)
+    code[MODE_LIVE - BASE:MODE_LIVE - BASE + len(live)] = live
     if any(code[CAVE - BASE:CAVE_END - BASE]):
         sys.exit('the code.bin cave is not zero padding')
     code[HOOKS - BASE:HOOKS - BASE + len(hook)] = hook

@@ -59,8 +59,9 @@ def unpack_config(route, word):
 def bank(route, mode):
     """(streak, record) works, or None for retail/invalid combinations.
 
-    Rank and active-state guards are the caller's responsibility. In particular,
-    this does not reinterpret a retail Super rank as a level mode.
+    Rank guards are the caller's responsibility. Streak access remains available
+    after ACTIVE is cleared by LOST; level hooks require ACTIVE separately.
+    This does not reinterpret a retail Super rank as a level mode.
     """
     if not valid(route, mode):
         return None

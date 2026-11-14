@@ -278,3 +278,72 @@ retail del juego. Laboratorio del carril detenido con azahar_lab.py reap.
 No hay decisión externa que pedir: tarea **in_progress**, sin menús nuevos y
 sin prueba de consola. La regresión de otras instalaciones/historia se mantiene
 para el recorrido de la alfa por instrucción del usuario.
+
+
+## Hito 6: guard ACTIVE solo para niveles (2026-11-14, Codex)
+
+`mode_level` y `mode_cap` pasan por `mode_live`: requieren ACTIVE no nulo de
+la ruta, además de validar ruta/CONFIG. Los accesores de racha/récord conservan
+`mode_of` sin ACTIVE: LOST pone ACTIVE=0 antes de GetMyWinCount/ClearWinCount.
+Así se limpia el banco Libre después de la retirada/derrota y se conserva M=0.
+No se habilitan menús. La corrección de L inmutable sigue pendiente.
+
+Espacio medido, sin invadir Luma 0x579604–0x579804:
+
+- Cave principal 0x579804–0x579ff0: **2028 bytes, 16 libres**. Se compacta la
+  validación de L y la escritura condicional de CONFIG sin cambiar el contrato.
+  `mode_of` puede destruir r0; auditados sus consumidores en modes.s.
+- Reserva nueva 0x45cdfc–0x45ce30: antiguo incremento Dobles, cuya entrada de
+  tabla 0x45cdb4 ya apunta a `streak_inc`. Se usan **40 de 52 bytes** para
+  modes_live.s. Test de auditoría sobre la base fijada: única word alineada
+  hacia el intervalo = esa entrada; ningún B/BL ARM directo externo. El barrido
+  no prueba ausencia de saltos calculados arbitrarios; la entrada retail y los
+  cuatro accesores ya se ejecutan en la matriz Unicorn.
+- Guard de las 13 instrucciones originales y SHA global antes de escribir.
+  `base6/live-bytes.json` conserva bytes antes/después. Nuevos 40 bytes:
+  `04e02de5007404eb04f09d240c008fe20200d0e7b00091e1000070e204f09de4d2749ca4b4bcc400`.
+  Los últimos 12 bytes del cuerpo quedan intactos. No requiere CRR por estar
+  en code.bin; se regenera DllField/CRR al moverse el símbolo de mode_level.
+  DllField reservado 0xf0a00–0xf1000 sigue sin ocupar.
+
+Pruebas: `env -u ORCH_LANE python -m pytest -q tests` → **2297 passed,
+3 skipped**, 53,40 s (`work/frontier/modos/base6/tests-full.log`). La primera
+suite detectó un fixture de Cerebros sin ACTIVE; se corrigió el fixture y se
+repitió toda la suite. La matriz nueva prueba siete rutas × ACTIVE 0/1/31/65535,
+niveles/cap, Get/Clear tras ACTIVE=0 y bancos/record legacy intactos; Anabel
+73 activa/50 inactiva sin cambiar la selección de banco ni símbolos.
+
+Build completa: `python frontier/overlay.py --out
+work/frontier/modos/base6/patch`, ZO **16828 <=17248**, script517 16036,
+shared5 22080 (`build.log`, `audit.json`, `symbols.json`, `build-hashes.json`).
+Hashes SHA-256 exactos:
+
+- code.bin: `8a4db924e603321bf96f58e7c04d23e340b61eff00b91a0a3e497696c0555849`
+- DllField.cro: `04599b9884fb44f70b44998cb7b7b008da963762c0c67192f9f3c092e0def785`
+- DllBattle.cro: `5cde67f65c9692c7b710956689a1ca5e6128d01f22d5a61eca5bb4ec83d51754`
+- static.crr: `b4b95582decc2236e20c9c6b635f68f14996046d0f924a8d3d341ec1ae92c31d`
+
+Azahar propio 24691, copia base3/paused73.sav (SHA documentado en hito4), sonda
+pasiva `base6/passive.gdb`, sin asistencia ni escrituras de RAM. Reanuda Torre
+Libre, inscritos [0,2,4] de niveles **73/41/7**, tipo0/rango0/Caja0; CONFIG149,
+cap mantiene niveles propios y los tres MakeParam reciben73. `rival73.png`
+muestra Gothorita73. Se elige **retirada**, resultado raw=3 (no KO), vuelve a
+recepción y guarda: `retired73.json` valida58 checksums; ACTIVE 1→0, Libre7/7→0/7,
+legacy12/20 intacto, CONFIG149 intacto, equipo y Cajas idénticos byte a byte a
+paused73. Guardado `retired73.sav` SHA-256
+`2329feb4ac9422fb668a457f20dce35aa1a4ac3dbbf65320c03a5d3725213dcf`.
+Log `retirement-gdb.log`. La derrota KO real corresponde al hito4, no se repite
+ni se atribuye a esta build. No se ha medido ACTIVE=0 fuera de desafío en
+Azahar (sí en Unicorn). Sin regresión en otras instalaciones/historia por
+política agrupada; consola no probada. Laboratorio detenido con
+`python scripts/azahar_lab.py reap` al terminar.
+
+Siguiente paso: distinguir fijación inicial de L frente a reanudación antes de
+retirar el max de mode_cap; debe considerar toda la inscripción efectiva
+(equipo/Caja y los tres del Domo antes de dome_party), mantener el orden de
+copias/PS/estados y validar reanudar73 con inscrito100 sin cambiar CONFIG149.
+No añadir un bit persistente sin revisar pack/unpack/VM y las reservas u16.
+Hay 16 bytes principales y 12 del cuerpo retirado, no contar Luma como libre;
+si hace falta más, auditar otro cuerpo retirado con sus referencias y guards
+antes de reservarlo. Después medir Caja efectiva y máximo de tres del Domo.
+Estado de BASE: **en curso**, sin decisión externa pendiente.

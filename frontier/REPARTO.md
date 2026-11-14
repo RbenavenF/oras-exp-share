@@ -199,3 +199,15 @@ Palacio C (2026-11-11, F6-PALACIO-C): DllBattle.cro **0xd7630–0xd7868** (filtr
 0xd7628–0xd8000 de la región de código; quedaban 1944 bytes hasta 0xd8000; tras F7-CUEVA-LUMA, Arena/Palacio B ocupan
 0xd7870–0xd7b84 y quedan 1148 bytes) y el `bl` de **0xd468**. No usa la cueva
 de code.bin (`reports/frontier.md` §36).
+
+### Reserva F9 del guard ACTIVE (2026-11-14, Codex)
+
+Reserva adicional F9-MODOS-BASE (2026-11-14, Codex): code.bin
+**0x45cdfc–0x45ce30**, antiguo cuerpo de incremento Dobles. Su entrada de tabla
+0x45cdb4 ya se redirige a `streak_inc`; barrido de words alineadas y saltos ARM
+directos de la base fijada: única referencia externa = esa entrada, sin saltos
+entrantes. Se reutilizan 40 de esos 52 bytes para `modes_live.s` (guard ACTIVE de
+nivel, sin modificar accesores tras LOST), con hash global y guard de las 13
+instrucciones originales. No requiere CRR al residir en code.bin; no consume
+DllField reservado ni la reserva Luma. Evidencia y límites del barrido:
+`reports/modos-base.md` hito 6 y pruebas de modos.

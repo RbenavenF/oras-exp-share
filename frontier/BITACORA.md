@@ -3607,3 +3607,33 @@ auditar el orden LOST (ACTIVE se borra antes de ClearWinCount/guardado) antes
 de extender el guard a accesores. Diseñar espacio con guards/hashes/CRR y probar
 la selección superior al reanudar. Después Caja efectiva y máximo de los tres
 inscritos del Domo antes de reducir a dos. Todo detallado en informe hito5.
+
+## 2026-11-14 — Codex — F9-MODOS-BASE hito 6: ACTIVE de nivel y banco tras retirada
+Estado: en curso
+Hecho: guard ACTIVE solo en mode_level/mode_cap; accesores mantienen resolución
+por ruta/CONFIG tras LOST para limpiar el banco correcto. Reservado cuerpo
+retirado de incremento Dobles 0x45cdfc–0x45ce30: 40/52 bytes, guard de 13
+instrucciones y hash global. Auditoría de referencias y límites en informe.
+Compactada cave principal: 2028 bytes, 16 libres; Luma intacta. DllField/CRR
+regenerados al mover símbolos; reserva Field 0xf0a00–0xf1000 sin ocupar.
+Evidencia: reports/modos-base.md hito6 y work/frontier/modos/base6/. Suite
+completa env -u ORCH_LANE python -m pytest -q tests: 2297 passed, 3 skipped
+(53,40 s), tests-full.log. Primer intento detectó fixture de Cerebros sin
+ACTIVE; corregido y repetida suite completa. Build overlay.py --out
+work/frontier/modos/base6/patch: ZO16828<=17248, script517=16036, shared5=22080;
+hashes exactos en build-hashes.json e informe. code.bin SHA-256
+8a4db924e603321bf96f58e7c04d23e340b61eff00b91a0a3e497696c0555849.
+Azahar24691 con copia paused73: reanuda inscritos73/41/7, tres rivales73;
+retirada real raw=3, guardado ACTIVE0/Libre0/7/legacy12/20/CONFIG149,
+equipo y Cajas idénticos a fuente y58 checksums válidos. retirement-gdb.log,
+retired73.sav/json (SHA2329feb4…13dcf), rival73.png. No es derrota KO; esa
+medición queda en hito4. Guard inactivo en Unicorn, no medido fuera de desafío
+en Azahar. Consola y otras instalaciones/historia no probadas en este hito.
+Commits: el de esta entrada (Agent: Codex); anterior64c6ad9 documentación.
+Decisiones: no extender ACTIVE a los bancos porque LOST ya lo ha limpiado.
+No abrir menús; regresión agrupada del13/11. Laboratorio24691 detenido con
+azahar_lab.py reap. Sin modificación de tasks.json ni turno de REPARTO.
+Siguiente paso: fijar L inicial frente a reanudación con inscrito100 (debe
+mantener73), auditar inscripción efectiva equipo/Caja y tres del Domo antes
+de dome_party. Informe hito6 detalla espacio y precauciones. BASE sigue
+en curso, estado del carril en work/lane-task.json.

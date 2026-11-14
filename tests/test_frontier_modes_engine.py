@@ -48,6 +48,9 @@ def machine(route, config=None, works=None):
     uc.mem_write(work_address(fp.WORK_ROUTE), struct.pack('<H', route))
     if config is not None and route in m.CONFIG:
         uc.mem_write(work_address(m.CONFIG[route]), struct.pack('<H', config))
+    if route in fp.STREAK_ROUTES:
+        active = fp.ACTIVE_WORK[fp.STREAK_ROUTES[route][0]]
+        uc.mem_write(work_address(active), struct.pack('<H', 1))
     for number, value in (works or {}).items():
         uc.mem_write(work_address(number), struct.pack('<H', value))
     uc.reg_write(A.UC_ARM_REG_SP, STACK - 0x100)
@@ -133,6 +136,53 @@ def test_old_saves_keep_their_level_50_streaks():
         uc, _ = machine(route, 0, {streak: 12, streak + 2: 34})
         assert call(uc, ENTRY['get'], r0=MAISON, r1=0, r2=0) == 12
         assert call(uc, ENTRY['record'], r0=MAISON, r1=0, r2=0) == 34
+
+
+def test_reclaimed_increment_has_only_the_redirected_table_reference():
+    """Fixed input: aligned pointers and direct ARM B/BL only; not a proof about arbitrary computed jumps."""
+    if not fp.REPOLISHED.exists():
+        pytest.skip('Local baseline required')
+    raw = fp.REPOLISHED.read_bytes()
+    start, end = fp.MODE_LIVE, fp.MODE_LIVE + 4 * len(fp.MODE_LIVE_BEFORE)
+    pointers, branches = [], []
+    for i, (word,) in enumerate(struct.iter_unpack('<I', raw)):
+        va = fp.BASE + 4 * i
+        if start <= word < end:
+            pointers.append((va, word))
+        if word >> 28 != 15 and word & 0x0E000000 == 0x0A000000:
+            delta = word & 0xFFFFFF
+            delta -= (delta & 0x800000) << 1
+            target = va + 8 + 4 * delta
+            if start <= target < end and not start <= va < end:
+                branches.append((va, target))
+    assert pointers == [(0x45CDB4, start)] and branches == []
+    code, symbols = built()
+    assert struct.unpack_from('<I', code, 0x45CDB4 - fp.BASE)[0] == symbols['streak_inc']
+    assert len(fp.mode_live_code(symbols)) == 40 <= end - start
+
+
+@pytest.mark.parametrize('route', range(1, 8))
+@pytest.mark.parametrize('active', (0, 1, 31, 65535))
+def test_level_hooks_require_active_but_loss_still_clears_its_bank(route, active):
+    config = m.pack_config(route, m.SINGLE_OPEN, 100 if route == 1 else 73)
+    streak, record = m.bank(route, m.SINGLE_OPEN)
+    legacy, legacy_record = m.bank(route, m.SINGLE_50)
+    active_work = fp.ACTIVE_WORK[fp.STREAK_ROUTES[route][0]]
+    uc, symbols = machine(route, config, {active_work: active, streak: 6, record: 12,
+                                          legacy: 9, legacy_record: 20})
+    assert call(uc, symbols['mode_level'], r0=WORK) == (config & 255 if active else 50)
+    call(uc, symbols['mode_cap'], r0=100, r6=WORK)
+    assert bool(uc.reg_read(A.UC_ARM_REG_CPSR) & (1 << 30)) == bool(active)
+    if not active:
+        assert struct.unpack('<H', uc.mem_read(work_address(m.CONFIG[route]), 2))[0] == config
+    # LOST clears ACTIVE before GetMyWinCount and ClearWinCount: these must still use the Open bank.
+    uc.mem_write(work_address(active_work), b'\0\0')
+    assert call(uc, ENTRY['get'], r0=MAISON, r1=0, r2=0) == 6
+    call(uc, ENTRY['clear'], r0=MAISON, r1=0, r2=0)
+    assert call(uc, ENTRY['get'], r0=MAISON, r1=0, r2=0) == 0
+    assert call(uc, ENTRY['record'], r0=MAISON, r1=0, r2=0) == 12
+    assert struct.unpack('<H', uc.mem_read(work_address(legacy), 2))[0] == 9
+    assert struct.unpack('<H', uc.mem_read(work_address(legacy_record), 2))[0] == 20
 
 
 @pytest.mark.parametrize('config, level', [
