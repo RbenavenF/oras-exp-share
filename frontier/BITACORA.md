@@ -4478,3 +4478,30 @@ No probado: aceptación Domo/Tubo todavía pendiente, consola y recorrido alfa.
 Siguiente paso: Tubo Libre (arrastre PS/PP/estado y salvaje L−4/L−5) y Domo Libre
 (cierre torneo, bancos y equipo). Laboratorio del carril sigue abierto en shell
 persistente durante esta ejecución; pararlo antes de terminar. lane-task in_progress.
+
+## 2026-11-14 — Codex — F9 especiales: Tubo Libre y arrastre
+Estado: en curso
+Hecho: combate Libre del Tubo ganado, pausa/recarga y medición de restauración
+PS/PP/estado tras recálculo. Sonda de reloj se apaga al consumir la cola; helper
+carry crea una copia validada con PS/estados explícitos, sin tocar la fuente.
+Evidencia: reports/modos-especiales.md y work/frontier/modos/especiales1/:
+- pike-battle1.log/pike-gdb.log: victoria raw1 normal43 pulsaciones, propios73/55/41,
+  Seviper69=L73−4. Reloj controlado únicamente para elegir sala salvaje.
+- pike-paused.sav/json: CONFIG149, ACTIVE1, Libre1/6, antiguo12/20, PB3,
+  PP9/10/15/30 del primero tras la pelea. SHA78769eeb474914d26913fa055166729e3b0809366fc3520d8b072aa5ec8d134b.
+- pike-carry.sav: fixture PS101/77/42, estados1/4/5, PP naturales conservados.
+  SHA4554f936cec0791bbd3d1410052fa5232fe4da8a4e208567bf89d151b2da9935.
+- pike-carry-gdb.log: después de recálculo RESTORE de esos PS/estados y PP,
+  Milotic69. pike-carry-pp.png:101/223 PS, parálisis y9/10 PP en pantalla.
+  Segunda pelea solo construida, no se declara una segunda victoria.
+- pike-carry-registered.sav/json SHA799cc9f3b9bd3718bac9ff81d6c821f10de99517a3f982a80b80b8c86f35945f,
+  58 bloques válidos; equipo/Cajas idénticos byte a byte a fuente (también pausa).
+- tests-final.log: suite completa3178 passed,4 skipped,62.88s; py_compile verde.
+  Build ba0580a sin cambios; fuentes/hashes exactos en informe/build-hashes.json.
+Commits: ba0580a,8d12312; el de esta entrada (frontier: verifica Tubo Libre y arrastre).
+Decisiones: PS/estados controlados en copia, PP obtenidos naturalmente; no simular
+que hubo daño/estados naturales. Regresión solo nueva según usuario2026-11-13.
+No probado: Domo Azahar aún pendiente, consola, recorrido alfa.
+Siguiente paso: Domo Libre, tres inscritos (máximo tercero), cierre torneo y bancos/PB;
+parar laboratorio24691 antes de terminar. lane-task in_progress. Sin push ni cambios
+a inputs, fuente original, turno REPARTO o tasks.json.

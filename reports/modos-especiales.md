@@ -85,3 +85,33 @@ Pendiente Azahar: Domo combate Libre y cierre torneo; Tubo PS/PP/estado tras
 recálculo y salvaje a nivel correcto; medir bancos/PB y equipo real de ambos.
 Regresión agrupada2026-11-13: solo lo nuevo/movido; otras instalaciones e historia
 quedan para el recorrido completo alfa. Consola no probada.
+
+Azahar, Tubo (mismo release, `especiales1/`):
+
+- `pike-battle1.log`, `pike-gdb.log`: victoria normal raw1 tras43 pulsaciones;
+  CAP73/55/41 force0, salvaje Seviper69 = L73−4. La sonda fuerza únicamente
+  el segundo de reloj para escoger una sala salvaje; no escribe resultados,
+  works ni Pokémon en RAM. `seconds.py` predice la sala a partir del banco Libre.
+- Pausa real y guardado `pike-paused.sav/json`, SHA256
+  78769eeb474914d26913fa055166729e3b0809366fc3520d8b072aa5ec8d134b:
+  CONFIG329, ACTIVE1, Libre1/6, antiguo12/20, PB3. PP del primero9/10/15/30
+  tras gastar un Puño Meteoro; los demás conservan sus PP. PS completos, estados0.
+- `especiales.py carry` crea otra copia validada, exclusivamente seis works
+  PS101/77/42 y estados1/4/5; conserva esos PP obtenidos en combate. Es una
+  fixture explícita para medir restauración, no daño ni estados sufridos de forma
+  natural. `pike-carry.sav` SHA256
+  4554f936cec0791bbd3d1410052fa5232fe4da8a4e208567bf89d151b2da9935.
+- Recarga y reanudación conservan L73 y Libre1/6. `pike-carry-gdb.log` mide
+  CAP73/55/41, restauración de PS101/77/42, estados1/4/5 y los cuatro PP de cada
+  copia después del recálculo. Milotic salvaje69; `pike-carry-pp.png` muestra
+  Milotic69, Metagross73 con101/223 PS, paralizado y Puño Meteoro9/10 PP.
+  Este segundo combate se detuvo tras construir/mostrar el primer turno.
+- `pike-carry-registered.sav/json`, SHA256
+  799cc9f3b9bd3718bac9ff81d6c821f10de99517a3f982a80b80b8c86f35945f:
+  58 bloques válidos, bancos y PB anteriores intactos, equipo y Cajas byte a byte
+  idénticos a la fuente, también en la pausa anterior; hashes iguales a Pirámide.
+- Helper: reloj de prueba se desactiva tras consumir su cola, sin breakpoint
+  permanente por fotograma; observación pasiva de restauración PS/estado.
+  `tests-final.log`: suite completa3178 passed,4 skipped,62.88s; py_compile verde.
+
+Queda pendiente únicamente la aceptación Azahar del Domo y el cierre del lab.

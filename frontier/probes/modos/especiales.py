@@ -4,6 +4,7 @@
 seed dome|pike|pyramid SOURCE SHA256 OUTPUT
 probe dome|pike|pyramid DIRECTORY
 snapshot SOURCE OUTPUT
+carry SOURCE SHA256 OUTPUT: separate paused Pike L73 fixture with reduced HP/status
 Never changes a source save or writes inferior memory.
 """
 from pathlib import Path
@@ -77,20 +78,54 @@ def snapshot(source, destination):
         box_sha256=hashlib.sha256(data[0x33000:0x67ad0]).hexdigest()))
 
 
+def carry(source, sha256, destination):
+    """Isolate restoration after recalculation; HP/status are fixture inputs."""
+    raw = source.read_bytes()
+    sf.blocks(raw)
+    if (hashlib.sha256(raw).hexdigest() != sha256
+            or modes.unpack_config(6, se.work(raw, modes.CONFIG[6])) != (1, 73)
+            or se.work(raw, patch.ACTIVE_WORK['pike']) != 1
+            or se.work(raw, modes.bank(6, 1)[0]) != 1):
+        raise ValueError('expected paused Pike Open L73 after one won room')
+    works = dict(zip((*patch.PIKE_HP, *patch.PIKE_ST), (101, 77, 42, 1, 4, 5)))
+    result = se.edit(raw, works=works.items())
+    return output(source, destination, result, dict(source_sha256=sha256, works=works,
+                  fixture='HP/status set offline; PP retained from actual first battle'))
+
+
 def script(facility, directory):
     route = patch.ROUTE[facility]
     result = probe(directory).replace('16573-0x4000', f'{modes.CONFIG[route]}-0x4000')
+    # Initial selector packet and native construction suffice here. Avoid a
+    # persistent CRO packet breakpoint while playing the facilities.
+    result = result.replace("            Hook(field_base+0x96b00,lambda: packet(rd(reg('r0')+4)))\n", '')
     if facility == 'pike':
         # Observe the existing HP/status/PP path as well. Room forcing, if wanted,
         # changes only the clock return; pk_want is empty by default.
         capture = io.StringIO()
         with contextlib.redirect_stdout(capture):
             runpy.run_path(str(Path(__file__).parents[1] / 'pike/lab_probe.py'))
-        extra = capture.getvalue().replace('work(16477)', 'work(16745)').replace(
+        extra = capture.getvalue().replace(
+            f"Hook({patch.battle_cro_runtime('arena_enter')},enter)\n", '').replace(
+            'work(16477)', 'work(16745)').replace(
             "super().__init__('*%#x'%addr, temporary=temporary)",
             "super().__init__('*%#x'%addr, temporary=temporary, "
             "type=gdb.BP_HARDWARE_BREAKPOINT if addr >= 0x600000 else gdb.BP_BREAKPOINT)")
-        result += extra
+        _, symbols = patch.assemble()
+        result += extra + f'''python
+special_clock = clock
+def clock():
+    special_clock()
+    if not pk_want:
+        for point in gdb.breakpoints():
+            if point.location == '*0x12fae4': point.enabled = False
+def restore_value(kind):
+    if {symbols['pike_build']} <= reg('lr') < {symbols['pike_iswin']}:
+        print('PIKE RESTORE %s=%u core=%x'%(kind,reg('r1'),reg('r0')))
+Hook(0x14f450,lambda: restore_value('hp'))
+Hook(0x14f814,lambda: restore_value('status'))
+end
+'''
     return result
 
 
@@ -99,6 +134,8 @@ if __name__ == '__main__':
         print(json.dumps(seed(sys.argv[2], Path(sys.argv[3]), sys.argv[4], Path(sys.argv[5])), indent=2))
     elif len(sys.argv) == 4 and sys.argv[1] == 'snapshot':
         print(json.dumps(snapshot(Path(sys.argv[2]), Path(sys.argv[3])), indent=2))
+    elif len(sys.argv) == 5 and sys.argv[1] == 'carry':
+        print(json.dumps(carry(Path(sys.argv[2]), sys.argv[3], Path(sys.argv[4])), indent=2))
     elif len(sys.argv) == 4 and sys.argv[1] == 'probe':
         print(script(sys.argv[2], sys.argv[3]), end='')
     else:
