@@ -258,3 +258,11 @@ BattleFrontier_BattleFactoryPreBattleRoom/scripts.inc:40 de la fuente 731ad5bf.
 Libre no se ofrece todavía. Fuente de disponibilidad: `python frontier/modes_audit.py`,
 `work/frontier/modos/fabrica/hito3/audit-before.json` (1157 scripts/147 ficheros);
 candidatos restantes 16673/16677/16678. Persistencia en Azahar pendiente.
+
+### Recepción F9-LIBRE-FABRICA (2026-11-14, Codex)
+
+Reserva previa al uso: caso GlobalCall **9779** del compartido 5 para preparar
+la inscripción/reanudación Individual 50/Libre de Fábrica; texto 637 líneas
+**1178–1185** para el menú de nivel, pausa, cancelación y aviso de configuración
+no soportada. 9770–9778 mantienen sus dueños; el bloque legendario termina en
+1177 (reports/modos-fabrica.md hito2). Sin works ni cuevas nuevos.

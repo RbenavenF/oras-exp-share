@@ -300,3 +300,86 @@ Suite final: `env -u ORCH_LANE python -m pytest -q tests` → **3540 passed,
 ORCH_LANE falló en nueve tests del supervisor por heredar el carril real
 (`hito3/tests.log`); 3531 pasaron. Sin cambios al supervisor; repetición con el
 entorno aislado usado en los hitos anteriores, verde. `git diff --check` correcto.
+
+## Hito 4 — recepción Individual 50/Libre y bancos (2026-11-14, en curso)
+
+Reserva previa en REPARTO: GlobalCall **9779** y texto637 **1178–1185**.
+`factory_reception.py` lleva el menú al compartido para respetar el límite ZO.
+Una inscripción nueva ofrece 50/Libre/cancelar y ejecuta el draft real; solo
+tras elegir tres se reinician racha y contador de la modalidad elegida. Los
+récords y otros tres bancos se conservan. Cancelar cualquiera de los menús
+restaura CONFIG, contador y WORK_STREAK; el draft conserva semilla, snapshot,
+alquileres, IV y marca. No se toma el máximo del equipo real.
+
+Con WORK_IV activo, CONFIG 0/50/0x164 permite reanudar/abandonar/cancelar.
+Reanudar o cancelar conserva todos los works; rechazar la confirmación retail
+al reanudar también. CONFIG pausado incompatible se rechaza conservándolo.
+Abandonar borra solo la racha/contador activos y los works temporales del
+desafío, nunca récords/símbolos. La limpieza retail de derrota conserva el
+enrutamiento hasta ClearWinCount: no se anticipa el borrado de la racha antes
+de actualizar el récord. Los caminos comunes limpian el contador activo.
+
+VM nueva `tests/test_frontier_factory_reception.py`: **41 casos**, usa el draft
+real en compartido y el adaptador de zona; cancelación de cada menú, bancos,
+configuración inválida, pausa, confirmación y limpieza del contador. Suite final
+`env -u ORCH_LANE python -m pytest -q tests`: **3581 passed, 4 skipped, 93.85 s**
+(`hito4/tests-final.log`; ejecución previa verde 66.23s en `tests.log`). Probe
+`frontier/probes/modos/fabrica.py`: fixtures nuevas en work/, origen con hash y
+checksum validados, snapshot y GDB pasivo. `py_compile` y comparación exacta con
+`hito4/probe.gdb` correctos. No escribe memoria del emulador.
+
+Build exacta `python frontier/overlay.py --out work/frontier/modos/fabrica/hito4/build`,
+`hito4/build.log`: script517 **16308**, ZO **17100** (148 bytes de margen hasta
+17248), compartido5 **31874**, ES637 **72360**, hook **2008**. Los 28 hashes en
+`hito4/build-hashes.json`. IPS y DllField idénticos a hito3; compartidos
+`1baa8e18b62959a9b1a024111f9288048c52b023fa11c8f53245c720f605f513`.
+Auditor `hito4/audit.json`: reserva Luma intacta, espacio de motor como hito3.
+`overlay.py` solo añade los ocho textos de recepción al final; no mueve líneas
+anteriores ni cambia la isla. Regresión agrupada 13nov: solo Fábrica nueva.
+
+Azahar parcial, laboratorio propio puerto24691. Fuente fixture
+`work/frontier/modos/base3/tower73.sav`, SHA256
+`7a8c2cc32aa3d084eac64ef087e8963f97b3640f9474c63afef508b2212cdd72`;
+`hito4/fresh.sav/json` conserva equipo 73/55/41 y cajas. Instalación de los
+28 archivos de la build anterior en el mod del laboratorio. Recepción Libre,
+draft y combate arrancan sin selector real (`draft-menu.png`, `battle100.png`).
+`registered.sav/json`, guardado retail de inscripción, valida 58 bloques:
+CONFIG=356, IV=3, marca=2, snapshot=0, contadorLibre=0/rachaLibre=0/récordLibre=6;
+50 conserva racha12/récord20/contador22 y los bancos Dobles también se conservan.
+Hashes de equipo y cajas idénticos a fresh.json.
+
+GDB (`probe.gdb`, registro de laboratorio que se preservará al cerrarlo) mide
+alquileres S283/S14/S309, especies346/671/437, **nivel100/IV3**, y rival ordinario
+N50/N20/N44 (Fletchinder/Pansage/Stunky), **nivel100/IV3**, entrenador N43.
+`ordinary-rival.json` documenta el archivo guardado por hash de data.load y el
+pool permitido del entrenador: N0–65 en esta ronda. Desviación explícita: el
+rival ordinario conserva rango e IV de la Mansión; no usa las copias fuertes
+Libre del draft ni el generador de Esmeralda. No extrapolar esta medición a
+rondas posteriores. Noland tiene su generador independiente del hito2.
+
+Primera victoria real sin asistencia: GDB `BRAINS RESULT raw=1` en
+`hito4/azahar-first.log`. Antes del intercambio: rachaLibre=1, contadorLibre=1,
+marca=0; los otros bancos conservan valores. Cambio Cradily por Fletchinder N50
+confirmado (`swap-done.png`); pausa retail y `paused.sav/json`: 58 bloques válidos,
+SHA256 `0d612535ec624e0c14cbe28024fc86315c8d2f9bf6ef0853064c186dbac4af10`,
+primer alquiler=50, contadorLibre=1, marca=2, rachaLibre=1/récordLibre=6,
+IV3, snapshot0. Equipo y cajas conservan sus hashes; PB3 sin premio entre rondas.
+Tras cerrar y arrancar Azahar de nuevo, carga retail del mismo guardado y menú
+Reanudar/Abandonar/Cancelar (`resume-menu.png`). Cancelar con B conserva los
+works medidos en `FACTORY RELOAD CANCEL` (`azahar-reload.log`): CONFIG356,
+racha1/récord6/contador1/marca2, alquileres50/33806/33077, IV3/semilla37001/
+snapshot0; contadores ajenos22/24/25 intactos.
+
+Reanudar acepta el guardado sin otro draft ni selector real: GDB carga N50 del
+archivo182 y S14/S309 del184 y crea los tres a **100/IV3**; rival ordinario
+N3/N13/N44 (Bunnelby/Swinub/Stunky), entrenador13, también **100/IV3**.
+`resume-level100.png` muestra Fletchinder100 contra Bunnelby100. Semilla37001,
+alquileres, marca pendiente y bancos siguen intactos hasta el combate.
+
+Pendiente de Azahar: cierre de ronda/PB y derrota con limpieza
+del banco activo y récord conservado. Pendiente mejorar presentación del
+intercambio incompatible (hito3). VM de PB: test_frontier_factory.py comprueba
+rondas7–700 y ausencia dentro de ronda; símbolo/bonus Noland una vez en
+test_frontier_factory_brain.py, dos callbacks consecutivos pagan solo10. Motor
+Libre100 en test_frontier_modes_engine.py; replay con snapshot en
+test_frontier_factory_open_vm.py. Todos incluidos en la suite anterior. Consola no probada. Estado de tarea in_progress.

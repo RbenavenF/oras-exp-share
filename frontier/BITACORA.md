@@ -4665,3 +4665,50 @@ récord intacto. MargenZO200bytes: mover menú/preparación a compartido si hace
 falta, reservando caso/textos antes (9779 aún libre/no reservado). No pisar
 WORK_STREAK al pausar: replay Noland lo usa. Luego VM/PB/símbolos y Azahar completo
 del brief. Estado lane-task in_progress; no declarar done sin esos criterios.
+
+## 2026-11-14 21:56 — Codex — F9-LIBRE-FABRICA hito 4: recepción y persistencia Libre
+Estado: en curso.
+Hecho: recepción Individual50/Libre sin selector real en factory_reception.py,
+caso9779/textos6371178–1185 reservados previamente en REPARTO. Menú nuevo,
+reanudar/abandonar/cancelar, rechazo CONFIG incompatible sin destruir desafío;
+cancelar draft restaura CONFIG/contador/WORK_STREAK. Reinicio y limpieza del banco
+activo, récords/otros bancos intactos. Menús en compartido por límite ZO.
+Evidencia: reports/modos-fabrica.md hito4 y work/frontier/modos/fabrica/hito4/:
+- tests-final.log: env -u ORCH_LANE python -m pytest -q tests →3581 passed,
+  4 skipped,93.85s; 41 VM nuevas recepción con draft real/adapter/cancelación,
+  pausa y limpieza. tests.log previo verde66.23s. py_compile/probe.gdb cmp y
+  git diff --check correctos. PB/símbolo Noland en VM existentes, no medidos
+  todavía en Azahar en este hito.
+- build.log: python frontier/overlay.py --out work/frontier/modos/fabrica/hito4/build.
+  Script51716308/ZO17100 (148bytes margen), compartido531874, ES63772360,
+  hook2008.28 hashes en build-hashes.json. IPS0368f52100d49dfe34809ddda710637a58b1055fb8f07b7de0a5337d2a4dbb2d;
+  Field eb70d036317eedf93cb36b8258c8cd496047cbe0b6e12462a88c46a3d9be2bb1;
+  compartidos1baa8e18b62959a9b1a024111f9288048c52b023fa11c8f53245c720f605f513.
+  audit.json: code36/Battle1148/FieldF9980 libres, Luma0x579604–0x579804 intacta.
+- Fixture nueva fresh.sav/json desde base3/tower73.sav con hash guardado:
+  7a8c2cc32aa3d084eac64ef087e8963f97b3640f9474c63afef508b2212cdd72.
+  Probe reproducible frontier/probes/modos/fabrica.py; GDB pasivo, sin RAM writes.
+  registered.sav/json:58bloques válidos, equipo real73/55/41/cajas intactos.
+- Azahar propia build exacta28archivos: draft tres de seis S283/S14/S309,
+  combate100/IV3, rival ordinario N50/N20/N44 a100/IV3 (trainer43, poolN0–65).
+  ordinary-rival.json + azahar-first.log y battle100.png. Victoria natural raw1;
+  rachaLibre1/contador1/marca0 antes de cambiar. Cambio Cradily→FletchinderN50,
+  pausa retail, paused.sav/json SHA256
+  0d612535ec624e0c14cbe28024fc86315c8d2f9bf6ef0853064c186dbac4af10:
+  contador1/marca2/racha1/récord6,IV3,snapshot0; 50racha12/récord20/contador22,
+  Dobles contadores24/25 intactos. PB3. Hashes equipo/cajas iguales a fresh.json.
+- Nuevo arranque/carga retail; cancelar reanudación conserva los works medidos
+  (FACTORY RELOAD CANCEL, azahar-reload.log). Reanudar reconstruye N50/S14/S309
+  a100/IV3; rival N3/N13/N44 a100/IV3, trainer13. resume-level100.png muestra
+  Fletchinder100/Bunnelby100. Sin draft nuevo ni selector de equipo real.
+Commits: 3543619 hito3; el de esta entrada (frontier: habilita recepción y bancos de Fabrica Libre).
+Decisiones: rival ordinario conserva rango/IV real de Mansión: desviación
+explícita documentada, no inferir rangos posteriores. Noland usa su generador.
+overlay.py solo añade textos al final; isla intacta. Regresión agrupada13nov:
+solo novedades Fábrica, sin combates de otras instalaciones/historia.
+No probado: cierre de ronda/PB y derrota con limpieza en Azahar, consola.
+Siguiente paso: completar esos dos casos Azahar; mejorar presentación del
+intercambio incompatible. paused.sav es un punto de continuación reproducible
+con alquiler N50 recién cambiado y marca pendiente2; no confundir con seis
+victorias: racha real1. Reservar cualquier nuevo recurso antes de escribirlo.
+Estado lane-task in_progress; recepción ya habilitada, aceptación aún parcial.

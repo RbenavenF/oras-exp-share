@@ -153,6 +153,10 @@ def texts(romfs, sets, table):
         if len(lines) != factory_open.LINE_BASE:
             raise ValueError("Factory Open labels would displace existing text")
         lines += factory_open.lines_for(lang, source(romfs, factory.GAMETEXT[lang]), sets)
+        import factory_reception
+        if len(lines) != factory_reception.LINE_BASE:
+            raise ValueError('Factory reception text allocation mismatch')
+        lines += factory_reception.TEXT[code]
         words = [text_to_words(line) for line in lines]
         out[path] = rebuild_garc(data, {}, append=[build_text(words, [0] * len(words))])
         game = factory.GAMETEXT[lang]

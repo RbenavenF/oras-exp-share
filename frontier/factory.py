@@ -18,7 +18,7 @@ script (ZO container 21428 bytes) hangs the field load in Azahar while 16.5 KB (
   zone 517 (0x1d8, 0x5d4, 0x618, 0x104c, 0x10b4).
 - Zone 517 (addresses of work/frontier/survey/zone517.lst, reports/frontier.md §1): a fifth reception menu
   entry «Battle Factory» (text 619 line LINE_OPTION, value 4) before «Nothing»; at 0x1634 value 4 calls
-  `factory_reception`: WORK_STREAK = max(GetMyWinCount(0, 0), 0), GlobalCall(GLOBAL_DRAFT); if chosen, works
+  `factory_reception`: shared preflight 9779 selects 50/Open or resumes/retires a paused challenge; then works
   0x800C-0x800E and the Maison challenge routine 0x18f8(rank 0, Singles, 0) without the mode
   selection app. Its result is the «back to the menu» local (-4) the info options also set: declined
   confirmation or cancelled draft -> back to the menu, Factory cleared; challenge played -> 0, Factory
@@ -457,7 +457,7 @@ def draft_routine(p, cells, levels, helpers):
     r.p.label(saved)
     fo.mark_rental(r)
     r.sysreq('GlobalSetParentParam', 0, 1)
-    r.op('ZERO_PRI', 0)
+    r.const(1)  # also consumed by the shared reception's internal call
     r.ret()
     r.p.label(cancel)
     r.call(helpers['msg_close'], 0)
@@ -605,6 +605,7 @@ def shared_program(shared, zone, cells, levels, extra=()):
     end = next(i for i in range(index + 1, len(p.items)) if not isinstance(p.items[i], tuple))
     p.items.insert(end, ('label', 'factory_case_end'))
     cases = [(GLOBAL_DRAFT, 'factory_case_draft', 'factory_draft'), (GLOBAL_SWAP, 'factory_case_swap', 'factory_swap'),
+             (9779, 'factory_case_prepare', 'factory_prepare'),
              *((value, f'case_{routine}', routine) for value, routine, _ in extra)]
     values = [v for v, _, _ in cases]
     if len(set(values)) != len(values) or not all(SHARED_PLACEHOLDER < v <= SHARED_PLACEHOLDER + 9 for v in values):
@@ -622,6 +623,8 @@ def shared_program(shared, zone, cells, levels, extra=()):
     import factory_brain
     factory_brain.routine(p)
     factory_brain.swap_dispatch(p)
+    import factory_reception
+    factory_reception.shared_routine(p, helpers)
     for _, _, builder in extra:
         builder(p, helpers)
     return p
@@ -652,26 +655,25 @@ def reception_routine(p):
     streak read and write (battle number, trainer brackets, BP, records, ClearWinCount after a loss) applies
     to the Factory. Cleared when the challenge returns, and at every reception (a save made during the
     challenge can hold it). Refused, with nothing changed, while another facility has a challenge in progress."""
-    r = Routine(p, 'factory_reception', [])
+    r = Routine(p, 'factory_reception', ['paused'])
     busy_check(r, 'factory', 'factory_refused')
     r.sysreq('SetRank', 0)                      # the streak route covers rank Normal only
     r.sysreq('WorkSet', patch.WORK_ROUTE, 1)
     r.sysreq('WorkGet', patch.WORK_IV)
-    r.op('JNZ', 'factory_resume')    # paused Factory challenge: keep the rentals and streak, as Emerald
-    r.sysreq('WorkSet', patch.WORK_FSTREAK, 0)  # a new challenge starts at round 1
-    r.sysreq('WorkSet', modes.FACTORY_RENTS[0], 0)
-    r.sysreq('WorkSet', fo.WORK_PENDING_RENT, 0)
-    r.sysreq('WorkSet', WORK_STREAK, 0)
-    r.sysreq('GlobalCall', GLOBAL_DRAFT)
+    r.store('paused')
+    r.sysreq('GlobalCall', 9779)
     r.sysreq('GlobalGetChildParam', 0)
-    r.op('JZER', 'factory_back')
-    r.p.label('factory_resume')
+    r.op('JZER', 'factory_cancelled')
     r.sysreq('WorkSet', WORK_SELECT_RESULT, 1)
     r.sysreq('WorkSet', WORK_SELECT_TYPE, 0)
     r.sysreq('WorkSet', WORK_SELECT_X, 0)
     r.call(CHALLENGE, 0, 0, 0)
     r.op('EQ_P_C_PRI', 1)
-    r.op('JNZ', 'factory_back')      # declined the confirmation
+    r.op('JZER', 'factory_played')
+    r.load('paused')
+    r.op('JNZ', 'factory_cancelled')  # declining a resume keeps the whole paused draft
+    r.op('JUMP', 'factory_back')
+    r.p.label('factory_played')
     r.sysreq('GetMyWinCount', 0, 0)  # the Factory streak (route still set)
     r.op('MOVE_ALT', 0)
     r.op('ZERO_PRI', 0)
@@ -684,7 +686,7 @@ def reception_routine(p):
     r.p.label('factory_back')
     r.sysreq('WorkSet', patch.WORK_IV, 0)
     r.sysreq('WorkSet', fo.WORK_PENDING_RENT, 0)
-    r.sysreq('WorkSet', patch.WORK_FSTREAK, 0)
+    r.p.label('factory_cancelled')
     r.sysreq('WorkSet', patch.WORK_ROUTE, 0)
     r.p.label('factory_refused')     # another facility's challenge in progress: nothing changed
     r.const(1)
@@ -771,8 +773,21 @@ def _clear(p, *also):
     """WorkSet(WORK_IV, 0) and WorkSet(w, 0) for each extra work."""
     body = Program(p.script)
     body.native_hashes = p.native_hashes
-    for work in (patch.WORK_IV, fo.WORK_PENDING_RENT, *also):
+    for work in (patch.WORK_IV, fo.WORK_PENDING_RENT):
         body.sysreq('WorkSet', work, 0)
+    for work in also:
+        if work == patch.WORK_FSTREAK:
+            body.sysreq('WorkGet', modes.CONFIG[1])
+            body.emit('EQ_P_C_PRI', 0x164)
+            body.emit('JZER', 'factory_abandon_50')
+            body.sysreq('WorkSet', modes.bank(1, 1)[0], 0)
+            body.emit('JUMP', 'factory_abandon_bank_done')
+            body.label('factory_abandon_50')
+            body.sysreq('WorkSet', work, 0)
+            body.label('factory_abandon_bank_done')
+        else:
+            body.sysreq('WorkSet', work, 0)
+    body.call('factory_clear_rents')
     return body.items
 
 
@@ -832,4 +847,15 @@ def reception(p):
     battle_points(p)
     reception_routine(p)
     after_win_routine(p)
+    clear = Routine(p, 'factory_clear_rents', [])
+    clear.sysreq('WorkGet', modes.CONFIG[1])
+    clear.op('EQ_P_C_PRI', 0x164)
+    clear.op('JNZ', 'factory_clear_open_rents')
+    clear.sysreq('WorkSet', modes.FACTORY_RENTS[0], 0)
+    clear.op('JUMP', 'factory_clear_rents_done')
+    clear.p.label('factory_clear_open_rents')
+    clear.sysreq('WorkSet', modes.FACTORY_RENTS[1], 0)
+    clear.p.label('factory_clear_rents_done')
+    clear.op('ZERO_PRI', 0)
+    clear.ret()
     battle_video.suppress(p, patch.ROUTE['factory'])

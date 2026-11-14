@@ -91,8 +91,10 @@ def test_texts_append_the_option_the_refusal_and_the_factory_entry(built):
         import factory_open as fo
         assert lines[pyramid.LINE_END:fo.LINE_BASE] == brains.lines(lang)
         sets, *_ = fbuild.rentals()
-        assert lines[fo.LINE_BASE:] == fo.lines_for(lang, (fbuild.ROMFS / factory.GAMETEXT[lang]).read_bytes(), sets)
-        assert len(lines) == fo.LINE_BASE + 44
+        import factory_reception as fr
+        assert lines[fo.LINE_BASE:fr.LINE_BASE] == fo.lines_for(lang, (fbuild.ROMFS / factory.GAMETEXT[lang]).read_bytes(), sets)
+        assert lines[fr.LINE_BASE:] == list(fr.TEXT[code])
+        assert len(lines) == fr.LINE_BASE + len(fr.TEXT[code])
 
 
 def test_game_texts_rename_only_the_pass(built):
