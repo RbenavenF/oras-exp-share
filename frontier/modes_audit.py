@@ -11,6 +11,7 @@ import json
 import brains
 from cro import Cro
 import ids
+import factory_open
 import modes
 import patch
 
@@ -32,6 +33,9 @@ EXCLUDED = set(range(0x4010, 0x4020)) | {16398, 16399, 16429, 16430}
 def check_allocation(used):
     candidates = set(ids.WORKS) - used.keys() - LEGACY - EXCLUDED
     allocated = modes.RESERVED
+    extra = {factory_open.WORK_DRAFT_RENTS}
+    if not extra <= candidates - set(allocated):
+        raise ValueError("Factory snapshot work collision")
     if len(allocated) != 35 or len(set(allocated)) != 35:
         raise ValueError('F9 must reserve exactly 35 distinct works')
     bad = set(allocated) - candidates
@@ -94,7 +98,8 @@ def main():
             saves[label] = {'sha256': hashlib.sha256(raw).hexdigest(),
                             'nonzero': {w: ids.se.work(raw, w) for w in modes.RESERVED if ids.se.work(raw, w)}}
     print(json.dumps({'scripts': scripts, 'code_files': code_files, 'candidates': sorted(candidates),
-                      'allocated': len(modes.RESERVED), 'remaining': sorted(candidates - set(modes.RESERVED)),
+                      'allocated': len(modes.RESERVED), 'factory_reserved': [factory_open.WORK_DRAFT_RENTS],
+                      'remaining': sorted(candidates - set(modes.RESERVED) - {factory_open.WORK_DRAFT_RENTS}),
                       'save_observations': saves, 'space': measure_space(),
                       'runtime_persistence': 'NOT TESTED'}, indent=2))
 

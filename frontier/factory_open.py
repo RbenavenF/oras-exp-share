@@ -1,4 +1,4 @@
-"""Measured Factory Open pools; this module does not enable the reception.
+"""Factory Open pools and Pawn range selection; reception is enabled separately.
 
 Adaptation: keep Maison's four strong copies, add only the eleven legendary
 species available in Emerald. Species/copy equivalence is not moveset equality.
@@ -25,7 +25,9 @@ EXCLUDED_LEGENDARIES = (638, 639, 640, 641, 642, 485, 488, 645, 486)
 # Keep the delivered tier adaptation; do not silently substitute an evolution.
 SOURCE_STRONG_EXCLUSIONS = (22, 36, 55, 85, 97, 112, 125, 126, 178, 200, 356, 362)
 STRONG_POOLS = tuple(tuple(fd.indices(tier)) for tier in fd.SUPER_TIERS)
-LEGENDARY_POOL = tuple(('S', index) for ids in LEGENDARY_SETS.values() for index in ids)
+LEGENDARY_POOL = tuple(('S', index) for index in sorted(i for ids in LEGENDARY_SETS.values() for i in ids))
+LINE_BASE = 1134  # appended AFTER all existing shared text (REPARTO)
+WORK_DRAFT_RENTS = 16471  # saved counter at the start of this round's draw
 OPEN_POOLS = (*STRONG_POOLS, tuple(x for pool in STRONG_POOLS for x in pool) + LEGENDARY_POOL)
 
 
@@ -62,3 +64,74 @@ def draft_pools(round_no, rents):
         raise ValueError('rents must fit its saved u16 work')
     better = fd.past_rentals_rank(rents)
     return tuple(pool(round_no, k < better) for k in range(fd.DRAFT_SIZE))
+
+
+def install_data(p, cells):
+    """Extend only the private Pawn slot table; legacy slots/ranges stay identical."""
+    import factory
+    sets = fd.check_tiers(fd.load())
+    check_mapping(sets)
+    table, _ = factory.slots()
+    if cells != factory.slot_cells(sets, table):
+        raise ValueError('Open draft requires the guarded legacy slot table')
+    complete = table + list(LEGENDARY_POOL)
+    ranges = []
+    for pool_ in OPEN_POOLS:
+        first = complete.index(pool_[0])
+        if tuple(complete[first:first + len(pool_)]) != pool_:
+            raise ValueError('Open pool is not contiguous in private slot table')
+        factory.check_draws(sets, complete, [(first, len(pool_))])
+        ranges += [first, len(pool_)]
+    p.data_block('factory_open_levels', ranges)
+    return cells + factory.slot_cells(sets, LEGENDARY_POOL)
+
+
+def select_range(r, position, rents):
+    """Override first/count only for CONFIG=0x164. PRI level stays the IV round.
+
+    `position` is 0..5 for replayed offers and 6..8 for Noland's own team. The
+    latter uses the unpromoted round pool, as the reference opponent generator.
+    `rents` names a local holding the snapshot, never the mutable live counter.
+    """
+    import modes
+    done, capped = r.new_label(r.name + '_open_range_done'), r.new_label(r.name + '_open_range_cap')
+    r.sysreq('WorkGet', modes.CONFIG[1])
+    r.op('EQ_P_C_PRI', modes.pack_config(1, 1, 100))
+    r.op('JZER', done)
+    r.load('level')
+    r.store('open_level')
+    if position < fd.DRAFT_SIZE:
+        promoted = r.new_label(r.name + '_open_promoted')
+        # At most five promotions; exact GetNumPastRentalsRank boundaries.
+        if position < 5:
+            r.load(rents)
+            r.const_alt((15, 22, 29, 36, 43)[position])
+            r.op('JSLESS', promoted)
+            r.load('open_level')
+            r.add(1)
+            r.store('open_level')
+            r.p.label(promoted)
+    r.load('open_level')
+    r.const_alt(4)
+    r.op('JSLEQ', capped)
+    r.const(4)
+    r.p.label(capped)
+    r.store('open_level')
+    for offset, name in ((0, 'first'), (1, 'count')):
+        r.load('open_level')
+        r.op('SMUL_P_C', 2)
+        r.add(offset)
+        r.cell(r.p.data_labels['factory_open_levels'])
+        r.store(name)
+    r.p.label(done)
+
+
+def lines_for(lang, gametext, sets):
+    from formats import garc_entries, text_lines, words_to_text
+    def names(entry):
+        _, _, at, size = next(e for e in garc_entries(gametext) if e[0] == entry)
+        return [words_to_text(w) for w in text_lines(gametext[at:at + size])[0]]
+    species, items = names(fd.TEXT_SPECIES), names(fd.TEXT_ITEMS)
+    return [f'{species[sets[r][i]["species"]]} ({items[sets[r][i]["item"]]})'
+            if sets[r][i]['item'] else species[sets[r][i]['species']]
+            for r, i in LEGENDARY_POOL]

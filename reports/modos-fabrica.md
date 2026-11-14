@@ -136,3 +136,90 @@ aceptación jugable de esta tarea. No se ha instalado en el laboratorio.
 Verificación del hito: `env -u ORCH_LANE python -m pytest -q tests` → **3313 passed,
 4 skipped**, 59,57 s (`tests-map-final.log`), con los 135 casos nuevos y el cotejo
 contra la fuente local fijada ejecutados. `git diff --check` correcto.
+
+## Hito 2: draft Libre y replay de las ofertas (sin habilitar recepción)
+
+Estado: **en curso**. El script compartido ya consume los rangos Libre cuando
+CONFIG[1] es exactamente `0x164`. La recepción todavía no ofrece Libre ni escribe
+esa configuración; por tanto esta build no entrega aún una modalidad jugable.
+No se ha iniciado laboratorio; Azahar y consola de F9 Fábrica siguen **no probados**.
+
+Reservas previas al uso registradas en REPARTO: snapshot **16471** del contador
+al generar las ofertas; etiquetas legendarias **1134–1177** del texto 637. El
+guard de la primera build rechazó la reserva prevista 1128–1171: las líneas
+1128–1133 ya las emite `brains.lines` como preview de Tucker/Domo. Se corrigió la
+reserva antes de construir y se preservaron esas seis líneas. Fuente:
+`brains.line_base() = 1072`, `len(brains.lines(7)) = 62`,
+`dome.brain_preview_lines`. Esta medida corrige la continuación del hito 1.
+
+Implementación:
+
+- `factory_open.install_data`: tabla privada de slots con los **926** anteriores
+  intactos y los 44 legendarios añadidos en orden creciente de ID ORAS. Mantiene
+  las ocho parejas (inicio, cantidad) Nivel 50 sin alterar y añade cinco parejas
+  Libre. Rechaza datos de entrada que no coincidan con el volcado validado.
+- `factory_open.select_range`: para cada oferta, toma el rango Libre de su ronda
+  y lo promociona al siguiente para las primeras 0–5 ofertas según 15/22/29/36/43
+  cambios. Tope en la unión final. CONFIG distintos de 0x164 conservan el camino
+  de Nivel 50; su rechazo en recepción está pendiente. Los IV se calculan antes,
+  con la ronda real limitada a ocho, sin depender del rango promocionado.
+- `factory_draft`: lee `FACTORY_RENTS[1]`, guarda su snapshot en 16471 solamente
+  tras elegir los tres y guarda semilla/IV/IDs. Cancelar cualquiera de los tres
+  menús conserva equipo, semilla y snapshot previos. El contador aún no se
+  incrementa ni se inicializa: conexión a inscripción/intercambios pendiente.
+- `factory_brain`: repite las seis ofertas con semilla y snapshot, aunque haya
+  cambiado el contador desde el draft. Genera después tres conjuntos de la ronda
+  sin promoción, distintos de los seis IDs ofrecidos, sin repetir especie/objeto
+  entre ellos (los objetos cero no restringen el trío, como antes). Se reutiliza
+  el constructor F8: en este hito no cambia ningún ARM/CRO.
+- Los nombres de los nuevos alquileres resuelven tanto en draft como en menú de
+  cambio, sin desplazar los textos de otras instalaciones. El intercambio aún
+  necesita filtro de duplicados y cómputo de cambios antes de habilitar Libre.
+
+Pruebas nuevas: `tests/test_frontier_factory_open_vm.py`, **177** casos. Ejecutan
+Pawn para 120 combinaciones de ronda/contador, IV, tope, tres de seis, ausencia de
+especie/objeto repetido, cancelación, aislamiento de bancos, replay con contador
+mutado, repetición de Noland estable, rechazo de CONFIG no soportados por esta
+rama, 44 etiquetas de intercambio y una selección real de legendario en VM.
+Los tests previos siguen comprobando draft Nivel 50 y replay antiguo.
+
+Build ejecutada con `python frontier/overlay.py --out
+work/frontier/modos/fabrica/hito2/build`; registro `hito2/build.log` y **28 hashes**
+completos en `hito2/build-hashes.json`. Script 517 **16036**, ZO **16828**;
+compartido 5 **24978**; texto ES 637 **71780**; hook **2008** bytes.
+IPS SHA-256 `0368f52100d49dfe34809ddda710637a58b1055fb8f07b7de0a5337d2a4dbb2d`;
+DllField `eb70d036317eedf93cb36b8258c8cd496047cbe0b6e12462a88c46a3d9be2bb1`;
+compartidos a/0/2/9 `be4a6e0937b89a450c8d64c4a5d8b78593acba481692cb626c393100f3838deb`.
+Build sin instalar. `hito2/audit.json`: code **36 libres**, Battle **1148 libres**,
+Field F9 **980 libres**; reserva Luma 0x579604–0x579804 intacta. El auditor incluye
+el snapshot como reserva adicional a los 35 works de BASE (no lo ofrece libre).
+
+Continuación desde este hito:
+
+1. Recepción sin selector del equipo real: elegir Individual 50/Libre, escribir
+   CONFIG=0/0x164, bancos propios, validar CONFIG pausado y preservar equipo/IV/
+   semilla/snapshot al cancelar una reanudación. Medir presupuesto ZO: margen
+   actual 420 bytes frente al máximo comprobado 17248; mover helpers al compartido
+   si hace falta, reservando cualquier caso/texto antes de usarlo.
+2. Conectar contador por modalidad y saturación; no contar tres por draft.
+   Fuente fijada: `battle_factory.c` 259–264 solo actualiza con
+   `sPerformedRentalSwap`; `BattleFactoryBattleRoom/scripts.inc` 91–98 y 175–180
+   intentan +1 tras victoria. Hará falta una marca persistente de alquiler/cambio
+   pendiente de victoria (reservar y comprobar antes de usar). Determinar marcado
+   inicial con scripts/screen de la fuente; no afirmar todavía que se reproduce.
+3. Intercambio: filtrar especie/objeto contra los dos conservados, no contar
+   «No cambiar»/B ni elección inválida; nueva racha limpia solo contador/banco
+   activo, derrota conserva récord y limpia transitorios. VM recepción/premios,
+   pausa/recarga y símbolos/bonus de Noland Libre.
+4. Suite, build final y aceptación Azahar del brief: draft/combate/cambio a 100,
+   rango/IV ordinario medido, ronda/PB, guardar/cargar y derrota. Regresión solo
+   novedades según usuario 2026-11-13; recorrido alfa y consola no probados aquí.
+
+Verificación final del hito 2: `env -u ORCH_LANE python -m pytest -q tests` →
+**3490 passed, 4 skipped**, 62,05 s (`hito2/tests-green.log`). La pasada inicial
+`hito2/tests.log` detectó la colisión del texto antes de corregir LINE_BASE; la
+siguiente `hito2/tests-final.log` detectó una aserción del test de overlay que
+presuponía que Cerebros era el último bloque. El test ahora comprueba por separado
+el bloque íntegro de Cerebros y los 44 nuevos textos en los ocho idiomas, sin
+relajar las comprobaciones de prefijos ni de otras entradas. Pasada final verde
+tras ambas correcciones y los 177 casos nuevos; `git diff --check` correcto.

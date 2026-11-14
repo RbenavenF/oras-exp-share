@@ -149,6 +149,10 @@ def texts(romfs, sets, table):
         if len(lines) != brains.line_base():
             raise ValueError(f'text {patch.TEXT_FACTORY}: {len(lines)} lines, the Brains expect {brains.line_base()}')
         lines += brains.lines(lang)
+        import factory_open
+        if len(lines) != factory_open.LINE_BASE:
+            raise ValueError("Factory Open labels would displace existing text")
+        lines += factory_open.lines_for(lang, source(romfs, factory.GAMETEXT[lang]), sets)
         words = [text_to_words(line) for line in lines]
         out[path] = rebuild_garc(data, {}, append=[build_text(words, [0] * len(words))])
         game = factory.GAMETEXT[lang]

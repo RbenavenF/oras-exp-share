@@ -2,20 +2,24 @@
 
 WORK_RNG stores the 16-bit seed at the start of the six-rental draw. Replaying
 that draw recovers all six offered set IDs, including the three not selected.
-No new saved works: GLOBAL_SWAP dispatches to this routine only while Noland is
+Open uses factory_open.WORK_DRAFT_RENTS to replay the promotion at draft time.
+GLOBAL_SWAP dispatches to this routine only while Noland is
 pending; WORK_RIVAL holds its three encoded sets until StartBattle consumes them.
 Old paused challenges predate this seed contract: finish them before testing it.
 """
 import data as fd
 import factory
+import factory_open as fo
 import patch
 
 
-def draw(sets, seed, level, size=6, excluded=()):
+def draw(sets, seed, level, size=6, excluded=(), open_mode=False, rents=0):
     """Reference for the Pawn LCG/rejection draw; return (encoded sets, state)."""
     pool = fd.indices(fd.RENTAL_LEVELS[min(level, 7)])
     state, selected, species, items = seed & 0xFFFFFFFF, [], set(), set()
-    for _ in range(size):
+    for position in range(size):
+        if open_mode:
+            pool = fo.pool(level + 1) if size != 6 else fo.draft_pools(level + 1, rents)[position]
         while True:
             state = (state * factory.LCG_MUL + factory.LCG_ADD) & 0xFFFFFFFF
             rank, index = pool[(((state >> 16) & 0x7FFF) * len(pool)) >> 15]
@@ -31,11 +35,11 @@ def draw(sets, seed, level, size=6, excluded=()):
     return selected, state
 
 
-def team(sets, seed, streak):
+def team(sets, seed, streak, open_mode=False, rents=0):
     """Replay this round's six rentals, then draw Noland's trio from its range."""
     level = min(streak // 7, 7)
-    rentals, state = draw(sets, seed & 0xFFFF, level)
-    rival, _ = draw(sets, state, level, 3, rentals)
+    rentals, state = draw(sets, seed & 0xFFFF, level, open_mode=open_mode, rents=rents)
+    rival, _ = draw(sets, state, level, 3, rentals, open_mode=open_mode)
     return rentals, rival
 
 
@@ -44,7 +48,7 @@ def routine(p):
     state = p.data_labels['factory_rng']
     table = p.data_labels['factory_slots']
     levels = p.data_labels['factory_levels']
-    r = factory.Routine(p, 'factory_brain', ['first', 'count', 'level', 'value',
+    r = factory.Routine(p, 'factory_brain', ['first', 'count', 'level', 'value', 'rents', 'open_level',
         *(f'{field}{k}' for field in ('cell', 'species', 'item', 'encoded') for k in range(9))])
     r.sysreq('WorkGet', factory.WORK_RNG)
     r.op('STOR_P_PRI', state)
@@ -64,7 +68,10 @@ def routine(p):
         r.add(offset)
         r.cell(levels)
         r.store(name)
+    r.sysreq('WorkGet', fo.WORK_DRAFT_RENTS)
+    r.store('rents')
     for k in range(9):
+        fo.select_range(r, k, 'rents')
         again = r.new_label(f'noland_draw{k}')
         r.p.label(again)
         r.call('factory_rand', 'count')

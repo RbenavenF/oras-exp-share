@@ -44,6 +44,8 @@ from formats import garc_entries, text_lines, words_to_text  # noqa: E402
 from pawn import ARGC, CASETBL, OP, PACKED, Op, Program  # noqa: E402
 import data as fd  # noqa: E402
 import battle_video  # noqa: E402
+import factory_open as fo  # noqa: E402
+import modes  # noqa: E402
 import patch  # noqa: E402
 
 WORK_RNG = 16490                 # 16-bit seed before the six offers (replayed by factory_brain)
@@ -142,6 +144,12 @@ def super_lines():
         for _, first, last in tier:
             out.append((first, last, line))
             line += last - first + 1
+    for k, (_, i) in enumerate(fo.LEGENDARY_POOL):
+        if out and out[-1][1] + 1 == i and out[-1][2] + i - out[-1][0] == fo.LINE_BASE + k:
+            first, _, line = out.pop()
+            out.append((first, i, line))
+        else:
+            out.append((i, i, fo.LINE_BASE + k))
     return out
 
 
@@ -231,6 +239,10 @@ class Routine:
     def line_of_slot(self, slot, first_super):
         """PRI = text line of draft slot `slot` (local): Normal slots are maisonpkN 66.. in order, then Super."""
         done, normal = self.new_label('line'), self.new_label('normal')
+        legendary = self.new_label("legendary_line")
+        self.load(slot)
+        self.const_alt(len(slots()[0]))
+        self.op("JSGEQ", legendary)
         self.load(slot)
         self.const_alt(first_super)
         self.op('JSLESS', normal)
@@ -240,6 +252,10 @@ class Routine:
         self.p.label(normal)
         self.load(slot)
         self.add(LINE_N + fd.NORMAL_TIERS[1][0][1])
+        self.op("JUMP", done)
+        self.p.label(legendary)
+        self.load(slot)
+        self.add(fo.LINE_BASE - len(slots()[0]))
         self.p.label(done)
 
     def line_of_value(self, value, tmp):
@@ -305,14 +321,14 @@ def rand_routine(p, state):
 def draft_routine(p, cells, levels, helpers):
     """factory_draft(): GlobalSetParentParam(0, 1) once the works are written, 0 if a menu was cancelled."""
     state = p.data_block('factory_rng', [0])
-    table = p.data_block('factory_slots', cells)
+    table = p.data_block('factory_slots', fo.install_data(p, cells))
     level_cells = []
     for first, count in levels:
         level_cells += [first, count]
     level_table = p.data_block('factory_levels', level_cells)
     ivs = p.data_block('factory_ivs', [fd.fixed_iv(n + 1) for n in range(len(levels))])
     rand_routine(p, state)
-    names = ['level', 'first', 'count', 'iv', 'sel', 'value', 'seed',
+    names = ['level', 'first', 'count', 'iv', 'sel', 'value', 'seed', 'rents', 'open_level',
              *(f'{f}{k}' for f in ('slot', 'cell', 'species', 'item', 'picked') for k in range(fd.DRAFT_SIZE)),
              *(f'chosen{k}' for k in range(fd.PARTY_SIZE))]
     r = Routine(p, 'factory_draft', names)
@@ -352,8 +368,11 @@ def draft_routine(p, cells, levels, helpers):
     r.cell(ivs)
     r.store('iv')
 
+    r.sysreq('WorkGet', modes.FACTORY_RENTS[1])
+    r.store('rents')
     # Draw 6: species and items all different.
     for k in range(fd.DRAFT_SIZE):
+        fo.select_range(r, k, 'rents')
         again = r.new_label(f'draw{k}')
         r.p.label(again)
         r.call('factory_rand', 'count')
@@ -430,6 +449,12 @@ def draft_routine(p, cells, levels, helpers):
         r.sysreq('WorkSet', work, 'value')
     r.sysreq('WorkSet', patch.WORK_IV, 'iv')
     r.sysreq('WorkSet', WORK_RNG, 'seed')
+    saved = r.new_label('snapshot_done')
+    r.sysreq('WorkGet', modes.CONFIG[1])
+    r.op('EQ_P_C_PRI', modes.pack_config(1, 1, 100))
+    r.op('JZER', saved)
+    r.sysreq('WorkSet', fo.WORK_DRAFT_RENTS, 'rents')
+    r.p.label(saved)
     r.sysreq('GlobalSetParentParam', 0, 1)
     r.op('ZERO_PRI', 0)
     r.ret()

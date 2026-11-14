@@ -225,3 +225,25 @@ Texto 619, líneas **191–196** (tras Símbolos 190): Nivel 50, Nivel Libre,
 aviso de nivel/formato y rango Normal, Reanudar, Abandonar y aviso de pausa.
 ES/EN; resto de idiomas usa EN como los textos del Frente. Sin nuevos works,
 casos ni cuevas: CONFIG y bancos M=1 de rutas 2/3/4 reservados por BASE.
+
+### Reserva F9-LIBRE-FABRICA (2026-11-14, Codex)
+
+Reserva previa al uso, sin cambiar el turno: texto 637 líneas **1128–1171**,
+44 etiquetas de conjuntos legendarios, orden de IDs ORAS creciente. Se añaden
+tras Cerebros; no desplazan ninguna línea existente. Work **16471** reservado
+como snapshot del contador de cambios al generar las seis ofertas de Fábrica
+Libre (no el contador actualizado durante la ronda). Fuente previa al uso:
+`work/frontier/modos/fabrica/audit-resume.json`, `python frontier/modes_audit.py`:
+1157 scripts/147 ficheros, candidato libre fuera de los 35 works F9 y de rangos
+excluidos. Persistencia de este nuevo uso y CONFIG[1] en Azahar: pendiente.
+No se reservan nuevos casos GlobalCall ni cuevas.
+
+### Corrección de reserva F9-LIBRE-FABRICA (2026-11-14, Codex)
+
+Sustituye **antes de generar una build válida** las líneas 1128–1171 solicitadas
+arriba por **1134–1177**. El guard de build detecta seis etiquetas ya emitidas por
+`brains.lines` para los conjuntos de Tucker/Domo (1128–1133), ausentes de la foto
+anterior de REPARTO/informe Fábrica. Fuente: `brains.line_base()=1072` y
+`len(brains.lines(7))=62`; se preservan esas seis etiquetas y todos los IDs previos.
+El work snapshot 16471 no cambia. Las líneas 1128–1133 quedan documentadas como
+reserva de Cerebros/Domo ya en uso; no pertenecen a Fábrica Libre.

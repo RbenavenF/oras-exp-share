@@ -88,7 +88,11 @@ def test_texts_append_the_option_the_refusal_and_the_factory_entry(built):
         assert lines[pyramid.LINE_BASE:pyramid.LINE_END] == pyramid.lines(lang)   # the Pyramid's, after the Pike's
         import brains
         assert brains.line_base() == pyramid.LINE_END
-        assert lines[pyramid.LINE_END:] == brains.lines(lang)              # the Brains', after the Pyramid's
+        import factory_open as fo
+        assert lines[pyramid.LINE_END:fo.LINE_BASE] == brains.lines(lang)
+        sets, *_ = fbuild.rentals()
+        assert lines[fo.LINE_BASE:] == fo.lines_for(lang, (fbuild.ROMFS / factory.GAMETEXT[lang]).read_bytes(), sets)
+        assert len(lines) == fo.LINE_BASE + 44
 
 
 def test_game_texts_rename_only_the_pass(built):

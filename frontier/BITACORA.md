@@ -4582,3 +4582,47 @@ sin desplazar IDs existentes; conectar CONFIG[1], banco M=1, draft/pools/IV y
 contador de cambios; Noland necesita snapshot del contador al generar ofertas
 para repetir exactamente las seis, no el contador tras cambios. Después suite,
 build exacta y aceptación Azahar de nuevas funciones. lane-task in_progress.
+
+## 2026-11-14 — Codex — F9-LIBRE-FABRICA hito 2: draft y replay Libre
+Estado: en curso
+Hecho: retomados git status limpio, log3072ab9/56b13e8, bitácora y diseño.
+Conectados rangos Libre al Pawn compartido con CONFIG[1]=0x164 exacto; promoción
+por posición según contador, IV por ronda real y tope final. Snapshot del contador
+al completar draft; cancelación conserva datos previos. Noland repite las seis
+ofertas con semilla/snapshot aunque cambie el contador durante la ronda, y genera
+su trío. Sin habilitar menú Libre ni incrementar contador todavía.
+Reservados antes de uso work16471 y texto637; el guard de build detectó que
+1128–1133 ya eran preview Tucker/Domo (brains.lines=62 desde1072), no estaban en
+la foto anterior de REPARTO. Reserva corregida a1134–1177 antes de build válida;
+44 etiquetas en orden ORAS creciente, sin desplazar las anteriores. REPARTO sin
+cambio de turno; tasks.json intacto. Auditor informa snapshot como reserva extra.
+Evidencia: reports/modos-fabrica.md hito2 y work/frontier/modos/fabrica/hito2/:
+- tests-green.log: env -u ORCH_LANE python -m pytest -q tests →3490 passed,
+  4 skipped,62.05s.177 casos nuevos VM:120 combinaciones ronda/contador, IV,
+  promoción/tope, cancelación, bancos intactos, replay con contador mutado y
+  repetición estable;44 etiquetas de cambio y selección de legendario.
+  Overlay comprueba preservación Cerebros y etiquetas nuevas en8 idiomas.
+- tests.log: primera pasada detectó guard de colisión de texto (6 errores);
+  tests-final.log:3444 passed/4 skipped/1fallo por expectativa antigua «Cerebros
+  último bloque». Corregida por comparación de ambos bloques, final verde.
+- build.log: python frontier/overlay.py --out work/frontier/modos/fabrica/hito2/build.
+  28 archivos en build-hashes.json. Script51716036/ZO16828, compartido524978,
+  texto637ES71780, hook2008. IPS0368f52100d49dfe34809ddda710637a58b1055fb8f07b7de0a5337d2a4dbb2d;
+  Field eb70d036317eedf93cb36b8258c8cd496047cbe0b6e12462a88c46a3d9be2bb1;
+  compartidos be4a6e0937b89a450c8d64c4a5d8b78593acba481692cb626c393100f3838deb.
+- audit.json: code36libres,Battle1148libres,F9Field980libres. Reserva Luma
+  0x579604–0x579804 intacta. Ningún motor modificado. git diff--check correcto.
+Commits: el de esta entrada (frontier: conecta draft y replay de Fabrica Libre).
+Decisiones: preservar draft Nivel50 y no habilitar una recepción sin contador,
+intercambio validado ni aceptación. El rango de Noland usa ronda sin promoción;
+solo replay de seis ofertas usa snapshot. Datos comerciales generados localmente,
+no versionados. No push, inputs ni partida original modificados.
+No probado: Azahar, persistencia del snapshot y consola. Laboratorio no iniciado;
+build no instalada. No se declara aceptación jugable con pruebas VM.
+Siguiente paso: reports/modos-fabrica.md continuación hito2: inscripción 50/Libre
+sin selector real y bancos, pausado CONFIG válido, contador por modalidad y marca
+pendiente de victoria (reservar antes), filtro especie/objeto en intercambio.
+ZO margen420bytes; si no cabe, mover helpers a compartido con reservas previas.
+Fuente fija indica +1 condicionado a sPerformedRentalSwap tras victoria, nunca
++3 por elegir tres. Después build/suite/Azahar del brief (solo novedades).
+work/lane-task.json in_progress; no marcar done hasta completar Azahar y criterios.

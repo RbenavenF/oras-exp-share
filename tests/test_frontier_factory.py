@@ -41,9 +41,10 @@ def game():
     return sets, table, levels, script, labels, reception.build_script(f'L{zone.main:x}'), reception.layout()
 
 
-def draft(game, choices, streak=0, seconds=1234567, rng=0):
+def draft(game, choices, streak=0, seconds=1234567, rng=0, extra=None):
     sets, table, levels, script, labels, _, _ = game
     works, menus, log = {factory.WORK_RNG: rng, factory.WORK_STREAK: streak}, [], []
+    works.update(extra or {})
     state = {'menu': None}
 
     def run_menu(vm, args):
