@@ -4167,3 +4167,19 @@ Evidencia:
 Commits: este.
 Decisiones: no se repite Azahar porque los hashes son idénticos. Consola: no probada; la prueba la hace el usuario.
 Siguiente paso: el usuario prueba la v0.3 en la 3DS. El orquestador sigue con F9-LIBRE-PROPIOS.
+
+## 2026-11-14 14:00 — Claude Code (Opus 5.5) — Tarea de acabado de la isla para Codex
+Estado: hecho
+Hecho: encolada F11-ISLA-ACABADO (owner codex) a petición del usuario. Cuadra con piezas de ORAS el paisaje de la
+isla de F11:
+- escaleras blancas;
+- árboles, vallas, parterres y banderines;
+- canales de agua;
+- bloques grises.
+Sin recursos propios ni edificios nuevos: eso sigue al final, en F10. Va a Codex porque Claude va corto de cuota y
+lleva F9-LIBRE-PROPIOS.
+Evidencia: vista cenital `work/orch/lanes/claude/work/f11/proto/c2/topview_vs_reference.png` y captura
+`tower_out.png` del mismo directorio.
+Commits: este.
+Decisiones: no se empaqueta en la tarea; lo recogerá la alfa siguiente.
+Siguiente paso: Codex toma F11-ISLA-ACABADO en el siguiente sondeo del orquestador.
