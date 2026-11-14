@@ -4083,3 +4083,18 @@ no como aceptación ni como fallos del paquete. No hace falta reentrar al puerto
 resolvió el diálogo en el Checkpoint original. La política d sigue pendiente más allá del acceso a la isla.
 Siguiente paso: continuar circuito-pass.out (Fábrica→Torre→Arena→Palacio→Tubo→Domo→Pirámide); luego guardar/cargar,
 ferry de regreso, Mansión original y historia/Repartir Exp./DexNav. No declarar validación completa aún.
+
+## 2026-11-14 — Codex — F7-PAQUETE-V03 hito 3: siete instalaciones del paquete exacto
+Estado: en curso
+Hecho: recorrido completo Fábrica→Torre→Arena→Palacio→Tubo→Domo→Pirámide, cada una con combate y salida a la plaza.
+Guardado UI al terminar en la terraza de la Pirámide. reports/frontier.md §52 recoge rutas, horas y coordenadas.
+Evidencia: work/frontier/pkg03/circuit-pass.out y circuit-pass.gdb.log; capturas circuit-shots/c_*.png.
+Siete FRONT START (rutas 1,2,4,3,6,5,7), siete FRONT RESULT raw=0; circuit done 11:26:14.
+Pirámide: planta (12,16), regreso al vestíbulo (23,25), salida (129,21). Partida UI v03-island.sav,
+SHA256 53eab46215af5a94f1bc6adb16557c4135435305ceef83b0792aa854d0fa9eca, zona209 (129.5,21.5),
+58 bloques válidos (checkpoint.py, v03-island.json). Paquete e IPS Luma idénticos a los del hito 1.
+Tests: sin cambios de código desde 29988e9; suite obligatoria ya ejecutada: 2928 passed, 4 skipped (tests-final.log).
+Commits: bd828f7, 29988e9 y el de esta entrada (Agent: Codex).
+Decisiones: derrotas controladas para cerrar cada desafío; no se atribuye esta prueba a consola.
+No probado todavía: recarga/ferry de regreso, Mansión original, historia/Repartir Exp./DexNav; consola real.
+Siguiente paso: reload-return.out en el mismo conductor persistente; después Mansión original y partida de historia.

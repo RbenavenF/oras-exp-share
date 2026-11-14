@@ -3855,6 +3855,23 @@ Primeros intentos conservados en `circuit-first.out`, `circuit-final.out`, `circ
 no se cuentan como aceptación. Reentrar al puerto no solucionó la aproximación y no se considera requisito del juego.
 Pase realmente entregado: `work/frontier/pkg03/shots/c_moving_sailor_3.png`, con «Ruben ha obtenido un Pase del Frente».
 
-Regresión caso d del paquete exacto + Luma: pendiente de completar y registrar aquí (siete instalaciones,
-Mansión original, combate normal, Repartir Exp., DexNav, guardar/cargar y regreso a Calagua). El texto anticipado
+Regresión caso d del paquete exacto + Luma, evidencia en `work/frontier/pkg03/`:
+
+| Instalación | Ruta | Inicio → resultado (hora del laboratorio) | Salida a la plaza |
+| --- | --- | --- | --- |
+| Fábrica | 1 | 10:54:16 → 10:55:43 | (26,45) |
+| Torre | 2 | 10:59:43 → 11:00:57 | (87,21) |
+| Arena | 4 | 11:04:37 → 11:05:34 | (110,36) |
+| Palacio | 3 | 11:09:19 → 11:09:46 | (116,63) |
+| Tubo | 6 | 11:14:27 → 11:15:24 | (57,34) |
+| Domo | 5 | 11:19:06 → 11:19:46 | (34,24) |
+| Pirámide | 7 | 11:24:41 → 11:25:38 | (129,21) |
+
+`circuit-pass.out`, `circuit-pass.gdb.log`, capturas `circuit-shots/c_*.png`: todos los resultados raw=0
+(derrotas controladas para salir del desafío); Pirámide entra a planta (12,16) y retorna al vestíbulo (23,25).
+`circuit done` a las 11:26:14. Guardado UI con `frontier/probes/island/checkpoint.py`: `v03-island.sav`,
+SHA256 `53eab46215af5a94f1bc6adb16557c4135435305ceef83b0792aa854d0fa9eca`, zona 209,
+(129.5,21.5), altura 56, 58 bloques válidos (`v03-island.json`). No se escribe RAM.
+
+Pendiente: recargar y volver en ferry, Mansión original, combate normal, Repartir Exp. y DexNav. El texto anticipado
 del LEEME heredado no constituye evidencia de estas pruebas hasta su cierre.
