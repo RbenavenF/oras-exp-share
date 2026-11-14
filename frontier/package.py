@@ -2,8 +2,8 @@
 """Battle Frontier alpha package for Luma: Repolished 1.7.6 + v0.5 (held Exp. Share, DexNav streak) + the Frontier,
 without the Mew event (user decision, 2026-11-11). Laid out as SD:/luma/titles/<title>/.
 
-  python frontier/package.py [--output dist/oras-frontier-alpha-v0.2] [--replace] [--allow-dirty]
-  python frontier/package.py checkpoint SAVE [--output dist/oras-frontier-checkpoint-test-v0.2] [--replace]
+  python frontier/package.py [--output dist/oras-frontier-alpha-v0.3] [--replace] [--allow-dirty]
+  python frontier/package.py checkpoint SAVE [--output dist/oras-frontier-checkpoint-test-v0.3] [--replace]
 
 Steps (the first fails with any other dump, mod or base package):
 1. Inputs: the ROM and Repolished files of reports/source-lock.json, the clean and Repolished code.bin
@@ -27,7 +27,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 TITLE = '000400000011C400'
-VERSION = 'oras-frontier-alpha-v0.2'
+VERSION = 'oras-frontier-alpha-v0.3'
 BASE_DIR = ROOT / 'dist/held-exp-share-v0.5'
 SOURCE_LOCK = ROOT / 'reports/source-lock.json'
 BUILD = ROOT / 'work/frontier/package/build'
@@ -37,31 +37,36 @@ BUILD = ROOT / 'work/frontier/package/build'
 BUILD_FILES = {'a/0/1/3', 'a/0/1/4', 'a/0/2/9', 'a/0/3/9', 'a/0/4/0', 'a/1/3/7', 'a/1/8/2', 'a/1/8/3', 'DllBattle.cro',
                'DllField.cro', '.crr/static.crr', *(f'a/0/7/{k}' for k in range(1, 10)),
                *(f'a/0/8/{k}' for k in range(7))}
-CHECKPOINT = 'oras-frontier-checkpoint-test-v0.2'
+CHECKPOINT = 'oras-frontier-checkpoint-test-v0.3'
 CHECKPOINT_FOLDER = 'FrenteTest-puerto-Calagua'
 # work/frontier/pkg/saves/checkpoint_harbor.sav: saved by the game with the package at the Lilycove harbor (§38)
 CHECKPOINT_SAVE_SHA256 = '5ddaa992c5aea98a3da1af80c1f2486b6d2db1690da0ae8be84abf2397edeffa'
 
-README = """Omega Ruby Repolished + Repartir Exp. + racha DexNav + Frente de Batalla (alfa v0.2)
+README = """Omega Ruby Repolished + Repartir Exp. + racha DexNav + Frente de Batalla (alfa v0.3)
+
+*** AVISO ANTES DE ACTUALIZAR DESDE LA v0.1 O LA v0.2 ***
+La isla del Frente es un mapa NUEVO. Si tu partida está guardada en la isla o
+dentro de un edificio del Frente, con la alfa anterior instalada vuelve a Calagua en
+el ferry y GUARDA ALLÍ antes de instalar la v0.3. Una partida guardada en la isla
+vieja aparece en la misma casilla del mapa nuevo, que puede ser mar o muro y
+dejarte atrapado. Haz además copia con Checkpoint.
 
 ESTADO
 Alfa de prueba. Las siete instalaciones y sus Cerebros tienen pruebas en Azahar
-(el emulador), con límites pendientes. En una 3DS real solo se ha probado la v0.1,
-que se colgaba (ver abajo); la v0.2 NO está probada aún en consola. Haz copia de tu
-partida antes de jugar (Checkpoint). No incluye el evento de Mew.
+(el emulador), con límites pendientes. El usuario confirmó que la v0.2 funciona en
+su 3DS; la v0.3 NO está probada aún en consola. Haz copia de tu partida antes de
+jugar (Checkpoint). No incluye el evento de Mew.
 
-NUEVO EN LA v0.2
-- Arreglado el cuelgue de la v0.1 en consola: con Luma, TODO combate de tipo
-  Mansión (la Mansión Batalla original del Resort y las instalaciones del Frente)
-  se colgaba al empezar. Luma escribe su propio código de LayeredFS (276 bytes) en
-  0x579604, el final del código del juego, y la v0.1 tenía ahí el suyo. La v0.2 deja
-  libres 0x579604-0x579803 para Luma y empieza en 0x579804; parte del código de
-  combate de la Arena y el Palacio pasa a DllBattle.cro. En Azahar no se veía porque
-  el emulador no escribe nada ahí (se ha probado simulando lo que escribe Luma).
-- Los siete Cerebros (jefes) con su símbolo de plata y de oro, y la opción
-  «Símbolos» en cada recepción para ver los que tienes.
-- Ya no aparece «Guardar vídeo» en ninguna instalación del Frente (la Mansión
-  Batalla original no cambia).
+NUEVO EN LA v0.3
+- La Isla del Frente tiene ahora la distribución del Frente de Batalla de
+  Pokémon Esmeralda: el mismo contorno, caminos y escaleras, y cada instalación en
+  el sitio de su edificio de Esmeralda, con la puerta en su casilla. El ferry llega
+  al muelle del suroeste.
+- Los edificios son AÚN PROVISIONALES: las mismas casas de la v0.2, colocadas en el
+  hueco de su edificio de Esmeralda. Los árboles, vallas y adornos de Esmeralda se
+  ven todavía como hierba o roca, y la escalera puede verse blanca.
+- Nada más cambia: interiores, combates, reglas, Cerebros y textos son los de la
+  v0.2. Sin Doble ni Nivel Libre (los menús siguen cerrados).
 
 BASE EXACTA (no funciona con otra)
 - Pokémon Rubí Omega europeo, versión 1.0, SIN la actualización 1.4. Si la tienes
@@ -71,17 +76,17 @@ BASE EXACTA (no funciona con otra)
 - Incluye la v0.5 de Repartir Exp. equipable y la racha de DexNav, sin cambios.
 
 INSTALACIÓN CON LUMA
-1. Copia tu partida con Checkpoint. Apaga la consola y guarda una copia de la
-   carpeta SD:/luma/titles/000400000011C400/ si ya tienes una (Repolished, v0.5 o
-   la alfa v0.1).
+1. Lee el AVISO de arriba. Copia tu partida con Checkpoint. Apaga la consola y
+   guarda una copia de la carpeta SD:/luma/titles/000400000011C400/ si ya tienes
+   una (Repolished, v0.5, v0.2...).
 2. Borra esa carpeta y copia en su lugar la de este paquete:
    SD:/luma/titles/000400000011C400/  (dentro: code.ips y romfs/).
    romfs/ incluye DllBattle.cro, DllField.cro y .crr/static.crr actualizados:
-   no mezcles estos tres con los de otro mod ni con los de la v0.1.
+   no mezcles estos tres con los de otro mod ni con los de otra alfa.
 3. Activa «Enable game patching» en Luma (SELECT al encender; START para guardar).
 4. Inicia Rubí Omega. No hay que instalar una CIA ni editar la partida.
-Para volver a la v0.5 o a Repolished: apaga, borra la carpeta y vuelve a copiar la
-que guardaste en el paso 1.
+Para volver a la v0.2, la v0.5 o Repolished: guarda FUERA de la isla, apaga,
+borra la carpeta y vuelve a copiar la que guardaste en el paso 1.
 
 CÓMO LLEGAR AL FRENTE
 1. Gana la Liga Pokémon (entrar en el Salón de la Fama).
@@ -89,58 +94,60 @@ CÓMO LLEGAR AL FRENTE
    Pase del Frente (objeto clave). Solo lo da tras ganar la Liga, y una vez.
 3. Habla con el empleado del ferry S.S. Marea (Calagua o Portual; pide el Ticket
    del Barco como siempre) y elige «Isla del Frente».
-4. En la isla, el muelle lleva a una plaza con los siete edificios. El empleado
-   del muelle te devuelve a Calagua. Se puede guardar en la isla.
+4. Llegas al muelle del suroeste. Sube hacia el norte para llegar a los
+   edificios. El empleado del muelle te devuelve a Calagua. Se puede guardar en
+   la isla.
 
 LAS SIETE INSTALACIONES (Individual; base Nivel 50 y rango Normal, salvo lo indicado)
 Solo se puede tener un desafío a medias a la vez: si dejas uno pausado, las demás
 recepciones te piden terminarlo primero. Los alquileres no sustituyen tu equipo
 guardado ni tu caja. Puede haber cambios normales del juego: curación, amistad,
 recuerdos o cintas; los Pokémon por debajo del nivel 50 no suben hasta él.
-- Fábrica Batalla (gimnasio del centro): eliges 3 Pokémon de alquiler de 6, rondas
+Situación en la isla (la de Esmeralda) y edificio provisional entre paréntesis.
+- Fábrica Batalla (oeste; gimnasio): eliges 3 Pokémon de alquiler de 6, rondas
   de 7 combates y tras cada victoria, salvo la séptima, puedes cambiar uno por uno
   del rival. PB de Esmeralda. Cerebro: Noland (combates 21 y 42). Sin Doble ni
   Nivel Libre ni cartel de récords.
-- Torre Batalla (casa de tejado plano, al norte): tu equipo, combates seguidos como
-  en la Mansión Batalla, con racha y PB propios. Cerebro: Anabel (combates 35 y 70).
-  Textos y reglas de la Mansión.
-- Palacio Batalla (casa de dos plantas, sureste): tus Pokémon eligen solos el
+- Torre Batalla (norte, en el centro; casa de tejado plano): tu equipo, combates
+  seguidos como en la Mansión Batalla, con racha y PB propios. Cerebro: Anabel
+  (combates 35 y 70). Textos y reglas de la Mansión.
+- Palacio Batalla (sureste; casa de dos plantas): tus Pokémon eligen solos el
   movimiento según su naturaleza y sus PS. Cerebro: Spenser (combates 21 y 42).
   Límites: no hay «no obedece»; el rival no sigue su naturaleza; la presentación y
   la frase de derrota del entrenador esperan que pulses A.
-- Arena Batalla (casa de paja, sur): combates de 3 turnos; si los dos siguen en
+- Arena Batalla (este; casa de paja): combates de 3 turnos; si los dos siguen en
   pie, juicio solo por Cuerpo. Mente y Técnica aún no están implementadas.
   Cambio prohibido mientras el Pokémon siga en pie. Cerebro: Greta (combates 28 y
-  56). Textos de la Mansión.
-- Domo Batalla (casa del oeste): torneos de 4 combates; inscribes 3 y eliges 2
-  antes de cada combate. Cerebro: Tucker (final de los torneos 5 y 10). Sin cuadro
-  de torneo.
-- Tubo Batalla (cabaña del suroeste): salas con curas, estados, entrenadores y
+  56). Textos de la Mansión. Su puerta está en lo alto de una escalera.
+- Domo Batalla (noroeste; casa de Pueblo Pardal): torneos de 4 combates;
+  inscribes 3 y eliges 2 antes de cada combate. Cerebro: Tucker (final de los
+  torneos 5 y 10). Sin cuadro de torneo.
+- Tubo Batalla (centro oeste; cabaña): salas con curas, estados, entrenadores y
   Pokémon salvajes; PS, estado y PP se arrastran entre salas. El veneno grave se
   guarda como veneno normal. Los combates fuertes usan rango Súper y los salvajes
   pueden estar por debajo del nivel 50; conservan la presentación de entrenador.
   Cerebro: Lucy (salas 28 y 140). Hay una incidencia de reanudación pendiente de
   reproducir: un desafío volvió a empezar de cero tras regresar al vestíbulo.
-- Pirámide Batalla (casa de tejado azul, este): siete pisos de cueva con
+- Pirámide Batalla (noreste; casa de tejado azul): siete pisos de cueva con
   entrenadores. Cerebro: Brandon en la cima (tras los pisos 21 y 70). Sin
   oscuridad, objetos ni salvajes todavía.
 Cerebros: el primero da el símbolo de plata y el segundo el de oro; con los dos,
 vuelven a aparecer en las mismas rachas. Ganarle suma PB extra.
 Comunes: sin Doble/Multi ni Nivel Libre; textos en español (los demás idiomas, en
 inglés y sin revisar).
-El paquete exacto se probó en Azahar con combates en las siete instalaciones y en
-la Mansión Batalla original, también simulando lo que Luma escribe en el código;
-guardado y recarga en la plaza y regreso a Calagua. No se probaron con ese paquete
-las rondas completas ni los Cerebros (cada uno se probó al hacerlo, con partidas
-editadas), el juicio de la Arena, el ferry de Portual ni otros idiomas
-(reports/frontier.md).
+El paquete exacto se probó en Azahar simulando lo que Luma escribe en el código:
+marinero, ferry, la isla nueva, un combate en cada una de las siete instalaciones
+entrando y saliendo por su puerta, la Mansión Batalla original, un combate
+salvaje con Repartir Exp. y DexNav, guardado y recarga en la isla y regreso a
+Calagua. No se probaron con ese paquete las rondas completas ni los Cerebros (cada
+uno se probó al hacerlo, con partidas editadas), el juicio de la Arena, el ferry
+de Portual ni otros idiomas (reports/frontier.md).
 
 NO PROBADO EN CONSOLA (solo en Azahar)
-- La v0.2 entera: el código nuevo de code.ips (cueva al final del código, desde
-  0x579804), el relleno de DllBattle.cro (Palacio y Arena), el puente de
-  DllField.cro (Tubo y Cerebros), la isla y sus edificios (memoria de la consola).
-- Probado en consola: v0.5 (Repartir Exp. y DexNav); la alfa v0.1 (se colgaba en
-  todo combate de tipo Mansión, arreglado arriba).
+- La isla nueva de la v0.3: memoria de la consola con el mapa nuevo cargado (en
+  el emulador no hay límite real), sus puertas y la llegada del ferry.
+- Probado en consola: v0.5 (Repartir Exp. y DexNav); la v0.2 (confirmación
+  general del usuario, sin una lista de pruebas completa); la v0.1 se colgaba.
 Si algo se cuelga, apaga manteniendo POWER, restaura tu copia y anota dónde fue.
 reports/consola-frente.md (en el repositorio) tiene el orden de pruebas y cómo
 comprobar con el depurador de Luma que el código está en su sitio (manifest.json,
@@ -340,9 +347,11 @@ def package(args, parser):
     files['LEEME.txt'] = sha(out / 'LEEME.txt')
     manifest = {
         'title_id': TITLE, 'version': VERSION,
-        'status': 'alpha; validated in Azahar only, also with Luma\'s payload simulated (reports/frontier.md §49-§50); '
-                  'v0.1 hung on the console (Luma), v0.2 not yet run on a console',
+        'status': 'alpha; validated in Azahar only, also with Luma\'s payload simulated (reports/frontier.md §49, §50, '
+                  '§52); v0.3 not yet run on a console (the user confirmed v0.2 runs on their 3DS)',
         'base': 'Omega Ruby EUR 1.0 without update + Repolished 1.7.6 + held-exp-share v0.5; no Mew event',
+        'island': 'Emerald Battle Frontier layout (F11), provisional buildings; save outside the island before '
+                  'updating',
         'git_commit': head, 'git_dirty': dirty,
         'inputs_sha256': inputs,
         'base_manifest_sha256': sha(BASE_DIR / 'manifest.json'),

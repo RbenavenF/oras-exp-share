@@ -125,17 +125,35 @@ def test_local_inputs_match_the_locks():
         'inputs/repolished/Omega Ruby Repolished (ver. 1.7.6)/code.ips']
 
 
-def test_v02_readme_explains_the_console_hang_brains_and_video():
+def test_v03_readme_warns_to_save_outside_the_island_and_says_what_is_new():
     text = ' '.join(package.README.split())
-    assert package.VERSION == 'oras-frontier-alpha-v0.2' and '(alfa v0.2)' in text
-    new = text.split('NUEVO EN LA v0.2', 1)[1].split('BASE EXACTA', 1)[0]
-    for needed in ('TODO combate de tipo Mansión', 'la Mansión Batalla original', 'Luma', '0x579604', '0x579804',
-                   'DllBattle.cro', 'Cerebros', 'Símbolos', 'Ya no aparece «Guardar vídeo»'):
+    assert package.VERSION == 'oras-frontier-alpha-v0.3' and '(alfa v0.3)' in text
+    assert package.CHECKPOINT == 'oras-frontier-checkpoint-test-v0.3'
+    warning = text.split('*** AVISO', 1)[1].split('ESTADO', 1)[0]
+    assert text.index('*** AVISO') < text.index('ESTADO')                     # before anything else
+    for needed in ('GUARDA ALLÍ antes de instalar la v0.3', 'mar o muro', 'Calagua', 'Checkpoint'):
+        assert needed in warning, needed
+    new = text.split('NUEVO EN LA v0.3', 1)[1].split('BASE EXACTA', 1)[0]
+    for needed in ('distribución del Frente de Batalla de Pokémon Esmeralda', 'AÚN PROVISIONALES',
+                   'Sin Doble ni Nivel Libre (los menús siguen cerrados)'):
         assert needed in new, needed
     for brain in ('Noland', 'Anabel', 'Spenser', 'Greta', 'Tucker', 'Lucy', 'Brandon'):
         assert brain in text, brain
-    assert 'sin el jefe' not in text and 'ni jefe' not in text and 'sin jefes' not in text
-    assert 'la v0.2 NO está probada aún en consola' in text
+    assert 'la v0.3 NO está probada aún en consola' in text
+    assert 'guarda FUERA de la isla' in text                                  # also before going back
+
+
+def test_v03_readme_places_each_facility_where_its_emerald_building_is():
+    text = ' '.join(package.README.split())
+    for facility, where in (('Fábrica', 'oeste;'), ('Torre', 'norte, en el centro;'), ('Palacio', 'sureste;'), ('Arena', 'este;'),
+                            ('Domo', 'noroeste;'), ('Tubo', 'centro oeste;'), ('Pirámide', 'noreste;')):
+        assert f'- {facility} Batalla ({where}' in text, facility
+    assert 'muelle del suroeste' in text
+
+
+def test_v03_manifest_status_keeps_azahar_only():
+    source = Path(package.__file__).read_text()
+    assert 'validated in Azahar only' in source and 'v0.3 not yet run on a console' in source
 
 
 def test_v02_build_files_include_the_brains_trainers():
