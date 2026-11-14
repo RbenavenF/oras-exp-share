@@ -347,3 +347,81 @@ Hay 16 bytes principales y 12 del cuerpo retirado, no contar Luma como libre;
 si hace falta más, auditar otro cuerpo retirado con sus referencias y guards
 antes de reservarlo. Después medir Caja efectiva y máximo de tres del Domo.
 Estado de BASE: **en curso**, sin decisión externa pendiente.
+
+
+## Hito 7 — L de reanudación inmutable (2026-11-14, Codex)
+
+`mode_cap` solo decide si se conserva el nivel del Pokémon; ya no escribe
+CONFIG. La inscripción debe calcular L **antes** de guardar/arrancar, sobre toda
+la selección efectiva. La cola por miembro no conoce el conjunto original de
+inscritos del Domo, por lo que no es un lugar correcto para inicializar L.
+Se mantiene el guard ACTIVE y el orden retail de copias/normalización/PS.
+No se habilitan menús. Ninguna recepción actual inicia Libre; la Torre solo
+reanuda un CONFIG Libre ya válido, como en los hitos anteriores.
+
+`modes.selection_config` es una API **Python de contrato**, aún sin conexión con
+la VM/nativa del juego: valida tres niveles (cuatro en Dobles), fija el máximo
+con mínimo60, Fábrica100 sin consultar al equipo, y devuelve literalmente el
+CONFIG validado al reanudar. No escribir works ni PB antes de que el llamador
+haya aceptado la inscripción completa. Los tests incluyen el tercer inscrito
+del Domo como máximo99 y un reintento100 sin cambiar L. Esto no prueba Caja ni
+la integración de la inscripción del Domo. Esa conexión sigue pendiente y
+bloquea cerrar BASE. La utilidad vertical ahora siembra explícitamente L73;
+su antigua semilla L60 dependía del max retirado. La evidencia histórica no se
+reescribe. La sonda nueva informa flags, no un supuesto valor de retorno de cap.
+
+Espacio y bytes: `base7/audit.json`, `symbols.json`, `cap-bytes.json` en
+`work/frontier/modos/`. `mode_cap` VA **0x579e98**, 48 bytes:
+`10402de90040a0e10600a0e1d1ffffebd38bfbeb0300002a010c1ce30100000a000050e11080bde8320054e31080bde8`.
+La llamada 0x1e3e00 conserva `24580eeb`; los guards/hashes de patch.build se
+mantienen. Cave principal 2008 bytes, final **0x579fdc**, **36 libres**;
+mode_live40/52 sin cambios. Luma0x579604–0x579804 intacta. DllField y CRR
+idénticos al hito6: no se mueve mode_level ni se ocupa F9 Field.
+
+Build ejecutada: `python frontier/overlay.py --out
+work/frontier/modos/base7/patch`; ZO **16828 <=17248**, script51716036,
+shared522080 (`build.log`). SHA-256 exactos (`build-hashes.json`):
+
+- code.bin: `5f44dfab56c680202643630276d9b78fc9b1eb688f5c7519d568d12df55c76d6`
+- DllField.cro: `04599b9884fb44f70b44998cb7b7b008da963762c0c67192f9f3c092e0def785`
+- DllBattle.cro: `5cde67f65c9692c7b710956689a1ca5e6128d01f22d5a61eca5bb4ec83d51754`
+- static.crr: `b4b95582decc2236e20c9c6b635f68f14996046d0f924a8d3d341ec1ae92c31d`
+
+Azahar propio24691: fixture `lab_tower.py base3/paused73.sav
+base7/resume100.sav`, fuente SHA
+`0fdaa4520177ac1e561a4b140fdf6f3450bb7c36a703a85442484b8327150eeb`.
+Modifica solo una copia bajo work; conserva CONFIG149, rachaLibre7/7 y
+legacy12/20. Probe pasiva `base7/passive.gdb`, sin escrituras RAM ni asistencia.
+`resume-gdb.log`: selección efectiva [0,2,4], Caja0, tipo0/rango0; cap recibe
+**100/100/7**, CONFIG149 antes y después, Z=1; los tres MakeParam reciben73.
+`player100-rival73.png` muestra Metagross (mote Torchic)100 y Carvanha73.
+Retirada raw3, sin combatir turnos. Se guarda al volver al vestíbulo.
+`retired100.sav` SHA
+`620882dbb10b4f1c0fd57cc9880415cd3e5762112fb2f981c9fd3ea3205b1b0f`,
+58 checksums válidos: CONFIG149, ACTIVE0, Libre0/7, legacy12/20.
+Cajas idénticas byte a byte; **equipo no idéntico**: solo primer Pokémon,
+offsets desencriptados0xcc–0xd0 y checksum0x6–0x7; otros cinco sin cambios.
+`party-diff.json` y `retired100.json` conservan la discrepancia. Causa no
+establecida: no atribuirla al hook ni descartarla como cambio retail sin medir.
+Datos de especie/EXP/nivel/movimientos/objeto/PS no cambian en el diff.
+Primer arranque quedó sin procesos al terminar su comando; se relanzó con
+sesión persistente (`boot-live.log`). Laboratorio detenido con
+`python scripts/azahar_lab.py reap`. Consola no probada; sin regresión en otras
+instalaciones/historia conforme a la política agrupada del13/11.
+
+Pruebas ejecutadas: `env -u ORCH_LANE python -m pytest -q tests` →
+**2335 passed, 3 skipped**, 58,36s (`base7/tests-full-final.log`, después de
+actualizar la utilidad vertical). Primera suite antes de ese ajuste:
+2335/3 en53,59s (`tests-full.log`); dirigida modos924 passed (`tests-targeted.log`).
+`git diff --check` correcto.
+
+Siguiente paso: conectar fijación inicial de L con inscripción aceptada y
+selección efectiva, antes del primer guardado. Medir Caja y tercer inscrito
+Domo (dome.TEAM16493–16495) antes de dome_party. `BUILD_PARTY` retail0x1e3d2c
+lee selector+0x0 (Caja), +0x4 índices, +0x1c cuenta; Caja por work+0xb84,
+equipo por [[[work+0xb78]+0x1c]+0x14]. Fuente: disasm_code.py sobre base fijada.
+Los slots virtuales256–258 de pike_param siguen **solo Tubo**, no ampliados.
+No usar la API Python como evidencia de ejecución de esa conexión. Investigar
+la diferencia0xcc–0xd0 comparando la party ya cargada antes del combate con la
+que vuelve; la fixture retocada puede actualizar metadatos al cargar (hipótesis,
+no probada). BASE sigue en curso, sin decisión externa necesaria.

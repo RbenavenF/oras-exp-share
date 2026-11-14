@@ -3637,3 +3637,38 @@ Siguiente paso: fijar L inicial frente a reanudación con inscrito100 (debe
 mantener73), auditar inscripción efectiva equipo/Caja y tres del Domo antes
 de dome_party. Informe hito6 detalla espacio y precauciones. BASE sigue
 en curso, estado del carril en work/lane-task.json.
+
+
+## 2026-11-14 — Codex — F9-MODOS-BASE hito 7: L inmutable al reanudar100
+Estado: en curso
+Hecho: retiradas las escrituras de CONFIG en mode_cap; el nivel guardado ya no
+sube ante otro inscrito superior. Añadida API Python selection_config que
+separa inscripción completa y reanudación; aún sin conectar con VM/nativa.
+Tests de tres inscritos (incluido tercero máximo del Domo), Dobles4, Fábrica100,
+inválidos y reanudación. Utilidad vertical siembra L73 explícito e informa
+flags de cap; no presenta su registro simulado como recepción real.
+Evidencia: reports/modos-base.md hito7; work/frontier/modos/base7/.
+Suite obligatoria final env -u ORCH_LANE python -m pytest -q tests:2335 passed,
+3 skipped,58,36s (tests-full-final.log). Dirigida924 passed. Build overlay.py
+--out work/frontier/modos/base7/patch:ZO16828<=17248,script51716036,shared522080,
+hook2008,36bytes libres. audit.json/symbols.json/cap-bytes.json y hashes exactos
+en build-hashes.json e informe; code SHA5f44dfab56c680202643630276d9b78fc9b1eb688f5c7519d568d12df55c76d6.
+Azahar24691 con copia resume100.sav: inscripción[0,2,4],niveles100/100/7,
+Caja0/tipo0/rango0; CONFIG149 fijo y tres rivales73. Captura player100-rival73.png
+y resume-gdb.log. Retirada raw3, guardado58checksums:ACTIVE0,Libre0/7,
+legacy12/20,CONFIG149. Cajas idénticas; equipo NO idéntico: primer Pokémon
+cambia offsets desencriptados0xcc–0xd0 y checksum; los otros cinco idénticos.
+Causa no establecida, party-diff.json/retired100.json; no declarar invariancia
+total del equipo en este caso. Retired SHA620882dbb10b4f1c0fd57cc9880415cd3e5762112fb2f981c9fd3ea3205b1b0f.
+Commits: el de esta entrada (Agent: Codex); anterior edc6894 guard ACTIVE.
+Decisiones: L se fija antes de guardar/arrancar sobre toda la inscripción,
+no en la cola por miembro. No usar bits/works nuevos, no ampliar slots Tubo,
+no habilitar menús incompletos. Luma intacta, DllField/CRR idénticos al hito6.
+Regresión agrupada: solo caso nuevo Torre, sin historia/otras instalaciones.
+Consola/Caja efectiva/Domo Libre no probados. Laboratorio detenido con
+azahar_lab.py reap; no editar tasks.json ni turno de REPARTO.
+Siguiente paso: conectar cálculo inicial con inscripción efectiva equipo/Caja
+antes del guardado (API Python aún solo contrato), medir tres inscritos del
+Domo antes de reducirlos a dos, e investigar diff0xcc–0xd0 comparando party
+ya cargada antes/después del combate. BASE sigue in_progress, no blocked;
+no requiere decisión externa. Estado y evidencia del carril:work/lane-task.json.

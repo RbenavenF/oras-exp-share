@@ -214,10 +214,11 @@ def cap(route, config, levels, r7=0):
 
 @pytest.mark.parametrize('levels, fixed', [((73, 55, 41), 73), ((41, 30, 12), 60), ((100, 99, 5), 100),
                                            ((60,), 60), ((61, 50), 61)])
-def test_open_level_keeps_levels_and_fixes_l_from_the_selection(levels, fixed):
-    skips, config = cap(2, m.pack_config(2, 1, 60), levels)
+def test_open_level_keeps_levels_without_mutating_the_registered_l(levels, fixed):
+    # Registration fixes L before any per-member tail executes.
+    skips, config = cap(2, m.pack_config(2, 1, fixed), levels)
     assert skips == [True] * len(levels) and m.unpack_config(2, config) == (1, fixed)
-    again, config2 = cap(2, config, (12, 13, 14))          # a later battle never lowers L
+    again, config2 = cap(2, config, (100, 13, 14))         # resume cannot raise L either
     assert again == [True] * 3 and config2 == config
     uc, symbols = machine(2, config)
     assert call(uc, symbols['mode_level'], r0=WORK) == fixed

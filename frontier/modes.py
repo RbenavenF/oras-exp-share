@@ -82,3 +82,28 @@ def battle_points(route, mode, round_no, brain=False):
     facility = patch.STREAK_ROUTES[route][0]
     columns = fd.FRONTIER_BP_DOUBLES if mode >= DOUBLE_50 else fd.FRONTIER_BP
     return columns[facility][min(round_no, 30) - 1] + (fd.BRAIN_BONUS if brain else 0)
+
+
+def selection_config(route, mode, levels, *, persisted=None):
+    """Registration API: CONFIG after an accepted, complete inscription.
+
+    `levels` describes the effective selection (Battle Box when selected), not
+    the whole party or only the Dome's two fighters. Call before save/start.
+    On resume the validated saved CONFIG is authoritative. The caller leaves
+    works/PB untouched on ValueError or cancellation; this has no side effects.
+    This API neither enables a reception menu nor queries the game's selection.
+    """
+    if not valid(route, mode):
+        raise ValueError('invalid route/mode')
+    if persisted is not None:
+        config = unpack_config(route, persisted)
+        if config is None or config[0] != mode:
+            raise ValueError('invalid resumed configuration')
+        return persisted
+    if route == 1:
+        return pack_config(route, mode, 100 if mode & 1 else 50)
+    levels = tuple(levels)
+    if len(levels) != (4 if mode >= DOUBLE_50 else 3) or any(
+            type(level) is not int or not 1 <= level <= 100 for level in levels):
+        raise ValueError('incomplete or invalid effective selection')
+    return pack_config(route, mode, max(60, *levels) if mode & 1 else 50)

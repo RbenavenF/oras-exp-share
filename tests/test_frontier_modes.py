@@ -251,3 +251,35 @@ def test_selector_callback_packets_and_auxiliary_x(retail, kind, selector_rank, 
         assert initializations[-1][1:] == (0x1234, 0x1234, facility + 0x840, 0x1234)
     else:
         assert initializations == []
+
+
+@pytest.mark.parametrize('route', range(2, 8))
+@pytest.mark.parametrize('levels, expected', [((73, 41, 7), 73), ((41, 7, 99), 99),
+                                            ((5, 6, 7), 60), ((100, 1, 60), 100)])
+def test_registration_uses_all_three_inscribed_members(route, levels, expected):
+    # The Dome's third inscription counts even when it will not fight.
+    config = m.selection_config(route, m.SINGLE_OPEN, levels)
+    assert m.unpack_config(route, config) == (m.SINGLE_OPEN, expected)
+    assert m.selection_config(route, m.SINGLE_OPEN, (100, 100, 100), persisted=config) == config
+
+
+def test_registration_formats_and_factory_do_not_consult_the_real_party():
+    for mode in range(4):
+        assert m.unpack_config(1, m.selection_config(1, mode, ())) == (mode, 100 if mode & 1 else 50)
+    assert m.unpack_config(2, m.selection_config(2, m.DOUBLE_OPEN, (1, 5, 60, 100))) == (m.DOUBLE_OPEN, 100)
+    assert m.selection_config(2, m.SINGLE_50, (100, 7, 41)) == 50
+    assert m.selection_config(2, m.SINGLE_50, (), persisted=0) == 0
+
+
+@pytest.mark.parametrize('levels', [(), (73,), (73, 41), (73, 41, 7, 100), (73, 0, 7),
+                                   (73, 101, 7), (73, True, 7)])
+def test_registration_rejects_partial_or_invalid_selection(levels):
+    with pytest.raises(ValueError):
+        m.selection_config(2, m.SINGLE_OPEN, levels)
+
+
+@pytest.mark.parametrize('route, mode, persisted', [(0, 1, None), (8, 1, None), (5, 2, None),
+                                                   (2, 1, 0xffff), (2, 1, 0), (1, 1, 0x149)])
+def test_registration_rejects_invalid_resume_without_any_writes(route, mode, persisted):
+    with pytest.raises(ValueError):
+        m.selection_config(route, mode, (73, 41, 7), persisted=persisted)

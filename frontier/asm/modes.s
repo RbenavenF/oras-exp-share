@@ -71,8 +71,9 @@ mode_level:
 
 @ Player party tail 0x1e3ddc, per member (r0 = its level, r6 = facility work, r7 = StartBattle's second argument):
 @ replaces `cmp r0, #50` at 0x1e3e00, followed by `cmple r7, #0; beq keep`. In an Open Level mode the member keeps
-@ its level (Z set, so `cmple r7, #0` decides as retail) and CONFIG's L becomes max(L, 60, its level):
-@ the first battle fixes L = max(60, highest selected level), and later battles of the same selection keep it.
+@ its level (Z set, so `cmple r7, #0` decides as retail). CONFIG is read-only here:
+@ registration must fix L from the entire effective selection before saving/starting the challenge.
+@ A new selection on resume must never raise the persisted L.
 @ Otherwise the retail comparison. Uses r0-r3, ip (none live at the site: 0x1e3e0c and 0x1e3e44 reload them).
     .global mode_cap
 mode_cap:
@@ -84,11 +85,6 @@ mode_cap:
     bhs     1f
     tst     ip, #0x100
     beq     1f                      @ a Level 50 mode
-    and     r0, ip, #0xff
-    cmp     r0, r4
-    biclo   ip, ip, #0xff
-    orrlo   ip, ip, r4
-    strhlo  ip, [r3]
     cmp     r0, r0                  @ Z: keep the level
     pop     {r4, pc}
 1:  cmp     r4, #50

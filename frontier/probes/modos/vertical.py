@@ -58,7 +58,9 @@ def seed(source, sha256, destination):
     legacy, legacy_record = modes.bank(2, modes.SINGLE_50)
     works = {w: 0 for w in patch.ACTIVE_WORK.values()}
     works.update({patch.WORK_ROUTE: 0, patch.ACTIVE_WORK['tower']: 1,
-                  modes.CONFIG[2]: modes.pack_config(2, 1, 60), streak: 6, record: 6,
+                  # This fixture emulates a registered challenge, not a new-mode menu.
+                  # The live probe verifies which slots are actually selected.
+                  modes.CONFIG[2]: modes.selection_config(2, 1, (73, 55, 41)), streak: 6, record: 6,
                   legacy: 12, legacy_record: 20})
     result = se.edit(bytes(result), works=works.items())
     info = dict(source=str(source), source_sha256=sha256, sha256=digest(result), works=works,
@@ -92,7 +94,7 @@ def level_config():
 def cap_in():
     print('OPEN CAP input=%u force=%u config=%x' %(reg('r0'),reg('r7'),level_config()))
 def cap_out():
-    print('OPEN CAP output=%u force=%u config=%x cpsr=%x' %(reg('r0'),reg('r7'),level_config(),reg('cpsr')))
+    print('OPEN CAP flags=%x force=%u config=%x' %(reg('cpsr'),reg('r7'),level_config()))
 def make_level():
     print('OPEN MAKE level=%u lr=%x config=%x' %(reg('r1'),reg('lr'),level_config()))
 Hook(0x1e3e00,cap_in)
