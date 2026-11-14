@@ -3974,6 +3974,11 @@ Guardado final por UI en(85,52), 58 bloques, SHA25639b80c79… y recarga (`final
 Suite completa: 2931 passed, 4 skipped (`tests-close.log`). Detalle de identidades y evidencias en el diseño.
 
 Pendiente para cerrar: integrar helpers con brochas visuales separadas de colisiones y validar resultado común;
-la cenital del propio emulador, si se exige en lugar del método usado en F11, no está probada.
+la cenital del propio Azahar exigida por el brief sigue pendiente; la comparación de modelos no la sustituye.
+Adaptación aislada sin snapshots ejecutada con `landscape.py --name integration-fresh --fresh-movement`:
+`work/f11/finish/integration-fresh/integration.diff` conserva las brochas originales para movimiento y sustituye
+solo `bc.model` por el pintado visual. No llama a remember/preserve. `equivalence.json`: los seis GARCs completos
+idénticos byte a byte a `final`, con el mismo presupuesto; no requiere repetir Azahar. Este diff sustituye al de
+`final` como propuesta para quien integra; los ficheros comunes siguen sin modificar.
 No se tocan motor, CRO, asm, reserva Luma 0x579604–0x579804, inputs, partida original, REPARTO ni tasks.json.
 Sin paquete, consola ni subagentes. Laboratorio cerrado: cleanup.log, remaining=[], session_metadata=false.

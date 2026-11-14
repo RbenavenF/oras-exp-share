@@ -11,8 +11,8 @@ y un diff generado de los cuatro puntos de integración; no modifica esos ficher
 source scripts/env.sh
 python frontier/overlay.py --out work/f11/finish/base/out \
   --romfs dist/held-exp-share-v0.5/mods/000400000011C400/romfs
-python frontier/probes/island/landscape.py --name final
-python frontier/probes/island/lab_mod.py work/f11/finish/final
+python frontier/probes/island/landscape.py --name review --fresh-movement
+python frontier/probes/island/lab_mod.py work/f11/finish/review
 env -u ORCH_LANE python -m pytest -q tests
 ```
 
@@ -20,7 +20,7 @@ El primer comando genera la isla vigente; el segundo copia su game/workspace,
 compila una copia de `FrontierIsland.java` con las funciones de `IslandLandscape`,
 y reconstruye solo su exterior. Los originales se leen. Las cuatro sustituciones
 exigen coincidencia única para detenerse si cambia el constructor.
-`work/f11/finish/final/integration.diff` es el diff revisable. `sources.json`
+`work/f11/finish/review/integration.diff` es el diff revisable. `sources.json`
 registra revisión, hashes de constructor, plan y archivos de entrada.
 El corredor reemplaza únicamente su subdirectorio de ensayo; `base` está reservado.
 
@@ -130,8 +130,27 @@ probada; las vistas de suelo sí son capturas del emulador.
 
 ### Integración pendiente, responsabilidad del integrador
 
-Trasladar `IslandLandscape` al paquete Java común y aplicar los cuatro hooks de
-`final/integration.diff`. El ensayo `LandscapeTrial` toma los datos de movimiento
+**Adaptación sin snapshots ya ejecutada:**
+`python frontier/probes/island/landscape.py --name integration-fresh --fresh-movement`.
+`integration-fresh/integration.diff` reemplaza al diff de `final` como propuesta
+para producción. Mantiene `brush`, el donante y la construcción originales;
+construye las brochas visuales por separado y asigna únicamente `bc.model` antes
+de compactar y estampar los edificios. El runner generado no llama a `remember`
+y el constructor no llama a `preserve`. No reutiliza tilemaps ni colisiones de
+regiones de un build anterior. La matriz anterior solo se lee para verificar
+el resultado del ensayo, no para construir el movimiento.
+
+`work/f11/finish/integration-fresh/equivalence.json` verifica igualdad byte a
+byte con `final` de los seis GARCs completos de `island_build.ZONE_ARCHIVES`,
+incluidos los modelos, mundo, zonas y colisiones. Presupuesto y placements
+idénticos (`build.log`, `movement-proof.json`): 4.151.040 bytes, WorldTextures
+vacía, ZO209 de 11.288 y 361 piezas. No se repite Azahar para archivos idénticos,
+conforme a la política de regresión. Esta equivalencia valida la adaptación
+aislada, no la construcción común que aún debe integrar su dueño.
+
+Trasladar `IslandLandscape` al paquete Java común **sin** `remember`, `preserve`
+ni el mapa estático `movement`; cargar los placements desde Python o el plan y
+aplicar `integration-fresh/integration.diff`. El antiguo ensayo `LandscapeTrial` toma los datos de movimiento
 de la isla anterior antes de repintar. **No copiar esa dependencia a producción**:
 conservar tilemap/colisión de las brochas originales, pintar las nuevas brochas
 visuales por separado y sustituir solo `bc.model`; mantener el tratamiento de
@@ -148,7 +167,8 @@ de la revisión base a9fa187; `final/installed-hashes.json` fija los 39 ficheros
 instalados. Los recursos comerciales, capturas y partidas quedan en work, fuera
 de Git. Código, pruebas y documentación sí quedan en Git.
 
-Pendiente: integración común, aceptación del resultado integrado y, si se exige
-una cenital del propio emulador en vez del método de F11, esa toma específica.
+Pendiente: integración común, aceptación del resultado integrado y la captura
+cenital del propio Azahar exigida por el brief; la comparación de modelos no
+sustituye ese criterio.
 No empaquetar. Consola y combates: no probados; no corresponden a esta regresión
 de exterior (política del usuario, caso c). Laboratorio cerrado: `work/f11/finish/cleanup.log`, remaining=[], session_metadata=false.

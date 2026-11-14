@@ -4252,3 +4252,30 @@ Siguiente paso: integrador, trasladar helper/selección según reports/diseno/is
   (final contiene checkpoints), verificar presupuesto, zonas y GR contra F11, pasar suite y comparar hashes.
   Si la integración reproduce los ficheros probados, reutilizar evidencia; si cambia juego, aplicar caso(c).
   Si el criterio exige cenital del emulador, falta esa toma; la comparación disponible sigue el método de F11.
+
+## 2026-11-14 14:46 — Codex — F11 acabado: adaptación para integrar sin snapshots
+Estado: en curso
+Hecho: revisados AGENTS, PLAN, REPARTO, diseño, git log/status y última entrada de esta tarea.
+landscape.py incorpora --fresh-movement: genera fuera de faraway/java un constructor con las brochas
+originales para tilemap/colisión y un pintado visual separado que sustituye solo bc.model. El runner
+generado no llama a remember y el constructor no llama a preserve. Los edificios se estampan como antes.
+Evidencia:
+- source scripts/env.sh; python frontier/probes/island/landscape.py --name integration-fresh --fresh-movement;
+  work/f11/finish/integration-fresh/{build.log,movement-proof.json,integration.diff,FrontierIsland.java}.
+  Presupuesto 4151040 <=4192384, WorldTextures {}, ZO20911288 <=17248, 361 piezas retail.
+- Comparación byte a byte de los seis archivos de island_build.ZONE_ARCHIVES contra final:
+  integration-fresh/equivalence.json, todos iguales (incluido a/0/3/9 SHA25683617355… y zonas10a6c1c7…).
+  Los GR de movimiento siguen idénticos a F11 según movement-proof.json. La lectura de la matriz
+  anterior solo sirve para comparar el ensayo; la construcción no toma sus datos de movimiento.
+- env -u ORCH_LANE python -m pytest -q tests: 2931 passed, 4 skipped, 56.69s;
+  work/f11/finish/tests-integration-fresh.log. git diff --check limpio.
+- No se abre Azahar: los archivos de isla son idénticos a los ya probados (política de regresión).
+  work/azahar-lab/session.json ausente; el cierre previo permanece en cleanup.log.
+Commits: 28a3b7a (candidato validado); el de esta entrada (frontier: prepara integración visual sin snapshots).
+Decisiones: el nuevo integration-fresh/integration.diff sustituye al de final como propuesta al integrador.
+Se conservan final y sus checkpoints. Sin cambios a ficheros comunes, motor, Luma, inputs, REPARTO ni tasks.json.
+No probado: constructor común integrado, cenital del propio Azahar (obligatoria según brief), consola.
+Siguiente paso: integrador, trasladar helper sin remember/preserve/movement, cargar placements desde el plan
+  y aplicar integration-fresh/integration.diff siguiendo reports/diseno/isla-esmeralda-acabado.md. Validar
+  construcción común y hashes contra final, suite y cenital de Azahar; si cambian archivos de juego,
+  aplicar caso(c). work/lane-task.json in_progress; no empaquetar ni declarar done antes de esos criterios.
