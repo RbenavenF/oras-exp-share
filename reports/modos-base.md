@@ -425,3 +425,86 @@ No usar la API Python como evidencia de ejecución de esa conexión. Investigar
 la diferencia0xcc–0xd0 comparando la party ya cargada antes del combate con la
 que vuelve; la fixture retocada puede actualizar metadatos al cargar (hipótesis,
 no probada). BASE sigue en curso, sin decisión externa necesaria.
+
+## Hito 8 — inscripción efectiva y callback previo al guardado (2026-11-14)
+
+Estado: en curso. Solo sondas/fixture/documentación; **sin nueva modificación
+al motor ni menús**. Build utilizada en ambos arranques: exactamente
+`work/frontier/modos/base7/patch`, hashes del hito7 (`build-hashes.json`),
+code SHA `5f44dfab56c680202643630276d9b78fc9b1eb688f5c7519d568d12df55c76d6`,
+DllField `04599b9884fb44f70b44998cb7b7b008da963762c0c67192f9f3c092e0def785`,
+DllBattle `5cde67f65c9692c7b710956689a1ca5e6128d01f22d5a61eca5bb4ec83d51754`,
+CRR `b4b95582decc2236e20c9c6b635f68f14996046d0f924a8d3d341ec1ae92c31d`.
+No rebuild necesario: ZO16828/17248, script51716036, shared522080; cave36 libres,
+Field F9 libre, reserva Luma intacta. No nuevos works/textos/casos persistentes.
+
+Fuente estática reproducible: `python frontier/probes/modos/measure.py` →
+`work/frontier/modos/base8/static.txt`, baseline validada por sus hashes.
+`registration-bytes.json` conserva bytes de la build utilizada. Callback de
+la app de equipo **code.bin0x1d88fc**: compara paquete[0] con4 en0x1d8924
+(`040052e3`); cancelación salta el copiado en0x1d8930 (`0d00001a`). El bucle
+recoge índices no negativos de paquete+6, escribe work+0x30 y cuenta+0x48.
+**0x1d8968** solo se alcanza al aceptar y terminar esa copia, antes del WorkSet
+que devuelve1 al script y de su guardado; bytes allí
+`0120a0e3bc10d4e10c00a0e1129608eb` (mov r2,#1, salida y WorkSet).
+Punto candidato para fijar L inicial, **aún no parcheado ni reservado**.
+En0x1e6b4c, paquete[1]==1 selecciona Caja y2 equipo; escribe byte work+0x2c.
+Accessor0x3b6150 (`060051e3010190371eff2f31`) devuelve owner[slot] si slot<6.
+El puntero estático de tarea Field0x95d20 referencia vtable code.bin0x5d4530,
+no una dirección interna de DllField; método0x1e6a2c. BUILD_PARTY0x1e3d2c
+usa las fuentes/índices descritos en hito7. No confundir selector inicial de
+formato con esta app de inscripción.
+
+Nueva utilidad `frontier/probes/modos/enrollment.py`: subcomando `box` exige
+los dos hashes y58 checksums válidos, block13=(0x4a00,0x574), destino nuevo
+bajo work. Copia tres cores PK6 almacenados, limpia los otros tres y flags
+lock; verifica que party no cambia. Layout fuente:
+[SaveBlockAccessor6AO](https://github.com/kwsch/PKHeX/blob/master/PKHeX.Core/Saves/Access/SaveBlockAccessor6AO.cs),
+[BattleBox6](https://github.com/kwsch/PKHeX/blob/master/PKHeX.Core/Saves/Substructures/Gen6/BattleBox6.cs).
+`probe` añade breakpoints pasivos al callback, exportación retail0x3b2444/
+0x3b245c (buffer en literal0x3b246c) y entrada PokeMemorySet Field0x4cab4;
+no llama al juego ni escribe su RAM. El hook de memoria **no disparó** en
+estas pruebas: no permite atribuir la diferencia del hito7 a esa función.
+
+Fixture `base8/box73.sav` SHA
+`cb60d857f4a536ccfc973748a448fd4920dbbd12312945b590ada2d79a83ea0f`:
+party fuente `base7/resume100.sav` SHA0fdaa452…150eeb y Box fuente
+`base3/paused73.sav` SHA9490d592…eaf79b2 (hashes completos en box73.json).
+Equipo100/100/100/6/7/6, Caja73/55/41. CONFIG0x149 (329) y bancoLibre7/7 ya sembrados:
+**esto mide fuentes y reanudación, no cálculo inicial de L**.
+Azahar24691 primer arranque: Caja1, índices[0,1,2], cap73/55/41, tres rivales73.
+Exports `base8/source-001..003.pk6`: los232 bytes de cada core coinciden con
+su slot de Caja (`box-exports.json`); captura `box73-party100.png`.
+La traza completa del primer arranque se perdió al reiniciar el laboratorio;
+no se aporta como fichero conservado. Se mantienen exports y captura.
+
+Segundo arranque con misma fixture/build: B en app vuelve al selector con
+WorkSet0; después se acepta equipo. `base8/party/gdb.log` conserva callback
+work=0x8822544, Caja0, count3, índices[0,1,4], exports niveles100/100/7 y
+rival73 tres veces, CONFIG0x149 (329) fijo. `source-diff.json`: todos los260 bytes
+de cada export coinciden con la fixture, también con el guardado inicial
+`accepted-before-battle.sav`. Captura `party/player100-rival73.png`.
+Retirada raw3 y guardado posterior `party/retired.sav` SHA
+`03ba3a3e9b920515187c871adb50408fcf61c00086738665563643bf1fc4d8bb`:
+58 checksums, ACTIVE16442=0, Libre16695=0 (era7), récord16719=7,
+CONFIG16573=0x149 (329), banco5012/20. Esta vez **seis Pokémon, Caja de Combate y
+almacenamiento idénticos** a la fixture (`party/retired.json`). La diferencia
+0xcc–0xd0 del hito7 **no se reproduce**: causa sigue sin establecerse. No
+corregir retroactivamente esa evidencia ni afirmar invariancia universal.
+Laboratorio propio detenido con `azahar_lab.py reap`. Consola y otras
+instalaciones/historia no probadas, conforme a regresión agrupada13/11.
+
+Siguiente paso concreto: implementar fijación inicial sobre inscripción
+aceptada (posible callback0x1d8968), validando fuente, ruta, formato, cuenta e
+índices antes de cambiar CONFIG, y distinguir reanudación sin volver a medir
+máximos. Auditar/guardar reserva con guard/hash antes de ocupar bytes. Para
+Domo medir TEAM16493–16495 **antes** de reducir a dos; no reutilizar solo el
+par del combate. Caja efectiva ya medida; Domo y conexión inicial siguen
+pendientes. No habilitar menús hasta completar API nativa/VM y matriz.
+
+Pruebas finales: `env -u ORCH_LANE python -m pytest -q tests` → **2335 passed,
+3 skipped**,58,81s (`base8/tests-full-final.log`), después del ajuste del título
+de disasm. Suite anterior2335/3 en65,00s. `git diff --check` correcto.
+Aclaración numérica de hitos anteriores: la sonda imprime CONFIG con `%x`;
+«149» en esas trazas y notas significa **0x149=329 decimal**, no149 decimal.
+El JSON de guardado del hito8 registra el entero329 y elimina la ambigüedad.

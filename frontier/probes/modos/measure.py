@@ -37,6 +37,9 @@ def main():
         ('increment dispatch and bodies', 0x45CD98, 78), ('read/clear/record', 0x45CEE8, 112),
         ('AddWinCount consumers', 0x1E2FB0, 65), ('SetRank and selector configuration', 0x1E567C, 65),
         ('private selection and level tail', 0x1E3D2C, 95), ('rival level', 0x1E4E60, 17),
+        ('accepted party indices before script save (cancel skips copy)', 0x1D88FC, 38),
+        ('party/Box source chosen by the app', 0x1E6B40, 20),
+        ('effective party slot accessor', 0x3B6150, 10),
     ):
         print(f'\n== {label}')
         print('\n'.join(disasm(code, va, count, stop=False)))
@@ -44,6 +47,8 @@ def main():
         ('GetMyWinCount: script argument order', 0x951A0, 17),
         ('SetTrainer: Singles and Doubles', 0x94EDC, 46),
         ('selector launch', 0x957FC, 77), ('selector callback', 0x96B00, 49),
+        ('party-selection task launch', 0x95C40, 57),
+        ('retail memory native entry', 0x4CAB4, 92),
     ):
         print(f'\n== DllField {label}')
         print('\n'.join(disasm_cro(field, at, count)))

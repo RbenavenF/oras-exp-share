@@ -3672,3 +3672,38 @@ antes del guardado (API Python aún solo contrato), medir tres inscritos del
 Domo antes de reducirlos a dos, e investigar diff0xcc–0xd0 comparando party
 ya cargada antes/después del combate. BASE sigue in_progress, no blocked;
 no requiere decisión externa. Estado y evidencia del carril:work/lane-task.json.
+
+## 2026-11-14 — Codex — F9-MODOS-BASE hito 8: fuentes de inscripción equipo/Caja
+Estado: en curso
+Hecho: sonda pasiva enrollment.py y fixture Caja con hashes/checksums; ampliada
+measure.py para callback aceptado, elección de fuente y accessor de slot.
+Callback code0x1d8968 medido tras aceptar índices y antes de WorkSet1/guardado;
+no parcheado ni reservado aún. Cancelación devuelve0 sin aceptar inscripción.
+Evidencia: reports/modos-base.md hito8; work/frontier/modos/base8/static.txt,
+registration-bytes.json y exports. Azahar24691: Caja[0,1,2]73/55/41 frente a
+party100/100/100/6/7/6; cores232 bytes idénticos a Caja. Primer log completo
+perdido al reiniciar lab; quedan exports/captura/box-exports.json. Segunda
+prueba conserva party/gdb.log: acepta equipo[0,1,4]100/100/7, copias260 bytes
+idénticas antes de cap y guardado inicial idéntico. Rivales73, CONFIG0x149 fijo.
+Retirada raw3 y guardado58checksums: ACTIVE0, Libre0/7, banco5012/20; equipo,
+Caja Combate y almacenamiento idénticos. retired.sav SHA
+03ba3a3e9b920515187c871adb50408fcf61c00086738665563643bf1fc4d8bb,
+party/retired.json. Diff0xcc–0xd0 hito7 no reproducido; causa sigue desconocida.
+Sonda PokeMemorySet no disparó: no atribuirle ese diff. Aclaración de notas
+anteriores: CONFIG«149» era hexadecimal (%x):0x149=329 decimal, no149 decimal.
+Pruebas: env -u ORCH_LANE python -m pytest -q tests:2335 passed,3 skipped,
+58,81s (tests-full-final.log), git diff --check correcto. Build exacta reutilizada
+base7/patch, sin cambios motor: code5f44dfab56c680202643630276d9b78fc9b1eb688f5c7519d568d12df55c76d6;
+los cuatro hashes completos en informe/base7/build-hashes.json. ZO16828<=17248,
+script51716036,shared522080,cave36 libres,Field F9 sin ocupar,Luma intacta.
+Commits: el de esta entrada (Agent: Codex); anterior b3649eb hito7.
+Decisiones: no menus nuevos ni reserva nueva de works/textos; solo fixture bajo
+work. Regresión agrupada13/11: solo nuevo caso Torre. Consola/Domo Libre/otras
+instalaciones/historia no probados. Lab propio detenido con azahar_lab.py reap.
+No editar tasks.json ni turno REPARTO; estado en work/lane-task.json.
+Siguiente paso: integrar fijación inicial de L antes de guardar, distinguiendo
+inscripción nueva/reanudación, con guard/hash/reserva del código que se ocupe.
+Callback0x1d8968 es candidato medido; todavía sin hook. Medir TEAM16493–16495
+Domo antes de reducir a dos y completar API/matriz nativa/VM. No declarar cálculo
+inicial probado: ambos ensayos parten de CONFIG ya sembrado. BASE in_progress,
+sin decisión externa necesaria.
