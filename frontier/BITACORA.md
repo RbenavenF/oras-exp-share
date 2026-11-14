@@ -4547,3 +4547,38 @@ inputs/partida original, turno REPARTO ni tasks.json modificados. No probado:
 consola y recorrido completo alfa (fuera de esta aceptación).
 Siguiente paso: orquestador integra el carril y pasa aceptación; F10 después de F9.
 work/lane-task.json pasa a done con commits y pruebas. Laboratorio cerrado.
+
+## 2026-11-14 21:02 — Codex — F9-LIBRE-FABRICA hito 1: mapa de rangos
+Estado: en curso
+Hecho: leídos AGENTS (sin CLAUDE.md), PLAN, últimas entradas, REPARTO y modos.md.
+Creado factory_open.py con rangos Libre separados, once legendarios compatibles
+por IDs explícitos y tope de promoción. Sin conectar draft ni habilitar menú.
+Auditor factory_reference.py lee objetos Git 731ad5bfd6e6f265508d0efcca0ba42f9dcf5881,
+no HEAD; coteja 510 IDs 372–881 y cuatro archivos Maison validados por hash.
+Corrección de fuente al diseño: 850–869 Dragonite/Tyranitar, 870–881 variantes
+legendarias. Cuatro copias fuertes 196; quinta+828 conjuntos/207 especies.
+44 conjuntos legendarios compatibles, 36 excluidos (nueve especies posteriores);
+12 especies fuertes de Esmeralda sin equivalente en las copias ORAS (48 IDs).
+Equivalencia por especie/copia, sin prometer igualdad de movimientos/EV/objeto.
+Evidencia: reports/modos-fabrica.md y work/frontier/modos/fabrica/:
+- reference.json: hashes de cuatro fuentes fijas y cuatro GARC, 510 equivalencias,
+  exclusiones, tabla explícita de los 32 IDs 850–881; comando en informe.
+- tests-map-final.log: env -u ORCH_LANE python -m pytest -q tests →3313 passed,
+  4 skipped,59.57s. test_frontier_factory_open.py:135 casos; rangos, promoción
+  por posición y tope, guards de especie/forma/movimientos y cotejo de fuente.
+  Primer pase previo al último ajuste:3313/4, sin fallo.
+- build-map.log: python frontier/overlay.py --out work/frontier/modos/fabrica/build-map;
+  28 archivos/hash completos en build-map-hashes.json. IPS0368f52100d49dfe…4dbb2d;
+  DllFieldeb70d036317eedf9…2bb1 (hashes completos en informe). Script51716036,
+  ZO16828, compartido522147, texto637ES69544, hook2008 bytes.
+- space-map.json: code2008/36libres; Battle1148libres; F9Field556/980libres.
+  Reserva Luma0x579604–0x579804 intacta. git diff --check correcto.
+Commits: el de esta entrada (frontier: coteja rangos y equivalencias de Fabrica Libre).
+Decisiones: primero mapa verificable antes de habilitar. Sin nuevos works/textos/
+casos usados, sin tocar REPARTO/turno/tasks.json/inputs/partida original. Sin push.
+Build no instalada; no se inició laboratorio; Azahar/consola no probados.
+Siguiente paso: reports/modos-fabrica.md «Continuación concreta»: reservar textos
+sin desplazar IDs existentes; conectar CONFIG[1], banco M=1, draft/pools/IV y
+contador de cambios; Noland necesita snapshot del contador al generar ofertas
+para repetir exactamente las seis, no el contador tras cambios. Después suite,
+build exacta y aceptación Azahar de nuevas funciones. lane-task in_progress.

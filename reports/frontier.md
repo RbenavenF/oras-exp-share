@@ -4006,3 +4006,18 @@ a `final` (`work/f11/finish/integration-stripped/equivalence.json`), mismo presu
 4 skipped,56.46s (`tests-integration-stripped.log`). Guía de lectura del plan en el diseño de acabado.
 El carril queda bloqueado por la integración común reservada a su dueño; no implica aceptación final ni
 resuelve la cenital única. Laboratorio no abierto, sin sesión activa.
+
+## F9 Fábrica Libre — mapa previo a habilitar (2026-11-14, Codex)
+
+Medida reproducible y decisiones en `reports/modos-fabrica.md`: auditor
+`frontier/probes/modos/factory_reference.py`, objetos Git de pokeemerald
+731ad5bfd6e6f265508d0efcca0ba42f9dcf5881 y cuatro GARC ORAS con hash validado.
+850–869 son Dragonite/Tyranitar; 870–881 variantes de seis legendarios. Los once
+legendarios fuente se corresponden con 44 conjuntos ORAS **no contiguos**;
+no usar S908–987 entero (incluiría nueve especies posteriores). Rangos Libre
+propuestos y validados: cuatro copias de 196, quinta+ unión de 828 conjuntos y
+207 especies. Las doce exclusiones fuertes de la fuente y la adaptación por
+especie/copia se documentan en el informe, sin prometer igualdad de movesets.
+Mapa de 510 IDs y hashes en `work/frontier/modos/fabrica/reference.json`.
+Todavía sin conexión al draft/recepción ni habilitación Libre de Fábrica; Nivel
+50 intacto. Build y espacio exactos en el informe. Azahar/consola no probados.
