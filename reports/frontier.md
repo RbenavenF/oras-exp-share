@@ -3504,3 +3504,71 @@ Evidencia: work/frontier/modos/base/{audit.json,static.txt,reference-bp.json,bui
 Suite env -u ORCH_LANE python -m pytest -q tests: 1512 passed, 3 skipped, 48.80s.
 No probado: UI/cancelación real, cuatro inscritos, persistencia Azahar, Libre L=73,
 nativos nuevos ni consola. Binarios reconstruidos sin cambios respecto al inicio.
+
+## F11 — Trazado, materiales y cota retail (2026-11-14, Codex; hito 2)
+
+Relevo de `7d089eb`: `git status --short` y `git diff` vacíos al empezar; no había cambios cortados.
+El calco y sus tests ya estaban en ese commit. Su imagen de trabajo no estaba en este carril: ahora se regenera
+con `/usr/bin/python3 frontier/island_render.py`, [comparación cenital](../work/f11/calco.png).
+El renderizador queda versionado; las líneas rojas son fronteras de celda ORAS, no límites del mapa de Esmeralda.
+
+### Cota con la misma métrica de Plaza
+
+Reproducir: `frontier/probes/island/survey.sh`. Usa `faraway.build.stage`, comprobando el manifiesto del baseline
+Repolished, y llama al **mismo** `faraway.WorldTextures` / `FrontierPlaza.loadBudget` de Plaza. No modifica el
+baseline ni los inputs. Fuentes: `work/f11/retail/zones.txt`, `zone{210,211,212,14,16,18}.txt`; hashes de entrada
+fijados en `baseline/oras/manifest.json`. Bytes descomprimidos: AD[11] + AD[1] + GR[1] de cada región distinta de
+la matriz completa, exactamente como §23; **no** es memoria máxima residente ni RAM libre.
+
+| Zona retail | Área / matriz | Mundo | Props | Modelos | Total |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Resort 210 | 99 / 155 | 536064 | 186368 | 2785152 | 3507584 |
+| Resort 211 | 100 / 156 | 691328 | 186368 | 3314688 | **4192384** |
+| Puerto Resort 212 | 101 / 157 | 342272 | 186368 | 1320832 | 1849472 |
+| Portual 14 | 20 / 13 | 728832 | 43776 | 2492544 | 3265152 |
+| Férrica 16 | 11 / 4 | 1418112 | 52608 | 6885376 | **8356096** |
+| Calagua 18 | 23 / 16 | 496384 | 49280 | 2783872 | 3329536 |
+
+Las seis responden `outside the world pack: {}`. La matriz 4 de Férrica también contiene rutas vecinas; se cuentan
+sus 19 regiones porque así cuenta Plaza. No se afirma que sus 8.356.096 bytes se carguen simultáneamente al
+caminar por Férrica. La referencia más comparable para 8 celdas es Resort 211 (9 regiones): **4.192.384 bytes**.
+El LOAD_BUDGET de producción sigue sin cambios; esta medición justifica ensayar A con esa cota de referencia.
+El máximo observado retail no demuestra que cualquier composición menor vaya a cargar (ya hubo cuelgues por
+texturas ausentes, §23). Azahar de este hito: **no ejecutado**, solo medición estática.
+
+### Materiales ORAS por clase
+
+Fuente reproducible: `frontier/probes/island/Materials.java`, compilado y ejecutado por `survey.sh`, salida
+`work/f11/retail/materials.tsv`. Primero lista todos los meshes/materiales de las regiones 489–492 del puerto.
+`texels` = bytes codificados de las texturas únicas referidas; `Δmundo` = diferencia de AD[11] al importar al
+pack retail 101 con `BchTexturePack.importTextures` (incluye cabeceras/alineación). **No** es coste final de la
+geometría BCH generada. En prefabs se mide además vértices + índices u16 del recorte; el BCH final se mide al
+construirlo. Compartir textura entre instancias no multiplica su coste.
+
+| Clase del calco | Pieza propuesta / procedencia | Texels | Δmundo sobre 101 | Aproximación o límite |
+| --- | --- | ---: | ---: | --- |
+| `.` baldosa | región 489 mesh 1, `tokusane_miti` / `tokusane_isi`, área 101 | 8192 | 0 | pavimento del Resort; patrón distinto al ajedrezado de Esmeralda |
+| `:` camino | PATH catálogo, región 208 mesh 2, área 31, `chip_soil_a` | 8192 | 8448 | tierra clara en vez de baldosa oscura |
+| `,` hierba | región 489 mesh 4, `ChipRef_chip_kusa`, área 101 | 8192 | 0 | césped sin encuentros |
+| `#` terrazas | CLIFF catálogo, región 364 mesh 5, área 69, `d112r0103_gake2` | 16384 | 16640 | tierra marrón; alternativa ya cargada: 489 mesh 3, `gake_01_01`, 16384/0 |
+| `~`, `w` agua | región 489 mesh 13, área 101, `chip_sea_b` + `chip_sea_a` | 32768 | 0 | agua marina para ambos; estanques conservan su altura |
+| `=` escalera | región 489 mesh 9, área 101, `chip_steps01` | 8192 | 0 | escaleras de piedra; alternativa catálogo STAIR_Z 303/53: 8192/8448 |
+| `m` muelle | WALKWAY catálogo 619 mesh 2, área 158, `kag_08` | 8192 | 8448 | tablones en vez del muelle blanco; modelo provisional |
+| `s` arena | región 489 mesh 2, área 101, `sand` | 2048 | 0 | arena del Resort; alternativa SAND 44/12: 2048/2304 |
+| `T` árbol | Palm tree 465/85, **sin passengers** | 8192 | 0 | palmera en vez del árbol redondo; vértices/índices 4896 bytes |
+| `T` seto | Bush catálogo 5/8, completo | 143360 | 135552 | 460 bytes vértices/índices; comparte atlas con árboles del área 8 |
+| `p` parterre | Pokémon League structure (flower01), 621/159 | 84992 | 86912 | recorte completo 8718 bytes vértices/índices; jardinera con flores, forma distinta |
+| `f` valla/banderín | Iron fence (4-tile run), 38/11 | 18432 | 19072 | 4064 bytes vértices/índices; valla como sustituto del banderín, sin omitir sus casillas |
+| `o` roca | región 489 mesh 5 `r124_2_chip_rock_c`, área 101 | pendiente geometría | 0 texturas nuevas | pieza retail del puerto; tamaño final no medido |
+| `x` decoración | piezas del puerto 490, área 101 | según pieza | 0 texturas nuevas | selección final por casilla en construcción; aún no medida |
+| `B`, `+` hueco/puerta | reserva lógica del calco; edificios actuales de FACILITIES | — | — | no son material de terreno; costes edificios en §24 |
+
+Control de alternativas: Roadside tree completo (5/8) mide 159744 texels, Δ152192, recorte 1698 bytes;
+el Bush sin passengers queda **vacío** y no sirve. Palm tree completo incorpora `chip_kusa` de otra imagen y el
+importador lo rechaza por conflicto de nombre: usar la palmera sin passengers (solo `yashi`) evita el conflicto.
+No se ocultan estos costes asignando 0 a un recorte vacío. Las piezas se eligen aquí; su estampado final y
+apariencia en Azahar aún no están probados.
+
+Espacio actual (`work/f11/space.json`, `modes_audit.measure_space()`): code.bin 0x579804–0x579fdc, **36 bytes**
+libres hasta 0x57a000; Luma **0x579604–0x579804** reservada y no utilizada. DllBattle libre 1148 bytes;
+Cerebros termina 0xf0a00; F9 Field ocupa 472/1536 (1064 libres). Este hito no escribe motor.

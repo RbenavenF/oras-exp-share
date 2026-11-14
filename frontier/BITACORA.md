@@ -3805,3 +3805,28 @@ Decisiones:
 - La recepción separa el muelle de la plaza, como en Esmeralda: F11-ISLA-CONSTRUCCION tiene que darle paso
   (interior o pasillo).
 Siguiente paso: techo de carga retail (Resort y ciudades) y tabla de materiales; después, el prototipo de 8 celdas.
+
+## 2026-11-14 — Codex — F11-ISLA-TRAZADO hito 2: relevo, cota retail y materiales
+Estado: en curso
+Hecho:
+- Revisados status, diff y último commit `7d089eb`: árbol limpio, calco completo, sin cambios cortados que deshacer.
+- Añadidos `frontier/probes/island/survey.sh` y `Materials.java`: staging con hashes del baseline, medición con el
+  mismo `FrontierPlaza.loadBudget` y costes de texturas/prefabs sin tocar fuentes comerciales.
+- Render versionado `frontier/island_render.py`, regenerado e inspeccionado: [referencia y calco](../work/f11/calco.png).
+- Resultados y tabla de materiales por clase en reports/frontier.md, apartado F11. Detectado conflicto de textura
+  en palmera completa; la variante sin passengers usa `yashi` ya cargada y evita el conflicto.
+Evidencia:
+- `frontier/probes/island/survey.sh` → `work/f11/retail/{zones.txt,zone*.txt,materials.tsv}`; Resort 211 = 4192384
+  bytes (9 regiones), Calagua = 3329536; máximo de matriz completa Férrica = 8356096 (incluye rutas vecinas).
+- `work/f11/space.json`: code.bin libre 36 bytes; reserva Luma intacta. No se escribe código del motor.
+- Primera suite con ORCH_LANE heredado: 9 fallos de fixtures del orquestador, 2892 passed, 3 skipped
+  (`work/f11/tests-m2.log`). Repetida sin esa variable como las sesiones anteriores: resultado en
+  `work/f11/tests-m2-clean-env.log`: **2901 passed, 3 skipped**, 55,72 s.
+Commits: el de esta entrada; previo del calco `7d089eb`.
+Decisiones:
+- Cota comparable provisional para ensayar A: Resort 211, sin subir LOAD_BUDGET de producción. La suma estática
+  de modelos no demuestra memoria residente ni carga de cualquier composición.
+- Sin cambios a ficheros comunes del integrador, tasks.json ni turno. Estado del carril en work/lane-task.json.
+No probado: prototipo 8 celdas en Azahar, ferry, cruces, guardar/cargar fuera de llegada, decisión A/B ni consola.
+Siguiente paso: generador de prototipo separado, 209/una área/4×2, texturas compartidas; probar A en el laboratorio
+24691, llegar por ferry y recorrer cruces de celda antes de decidir A/B.
