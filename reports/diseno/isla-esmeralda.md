@@ -105,7 +105,7 @@ introduce un conflicto de imagen con `chip_kusa` y no se propone importarla así
 
 ### 2.3 Decisión A/B de F11-ISLA-TRAZADO (2026-11-14)
 
-**A: una zona (209), una sola área privada y 4×2 celdas, a escala 1:1, sin cortes.** El prototipo de terreno
+**A provisional: una zona (209), una sola área privada y 4×2 celdas, a escala 1:1, sin cortes.** El prototipo de terreno
 comparte texturas en AD[11], no tiene referencias fuera del world pack y mide **4028928 bytes**, 163456 menos
 que Resort 211. Ha cargado por ferry en Azahar y se han cruzado fronteras horizontales y verticales leyendo la
 posición, sin modificarla. Fuentes: `work/f11/prototype/{build.log,ferry5.log,route-walk.log}` y generador aislado
@@ -118,7 +118,11 @@ de 6 subficheros dio pantalla blanca con el mismo presupuesto: no era prueba de 
 de recepción funciona con andar normal; el comportamiento de escalera `0x6c` del catálogo la bloqueaba en
 este ensayo. Solo el exportador del prototipo abre el pasillo temporal por recepción (26,61–65); el calco no cambia.
 
-Esta decisión valida el **terreno**. La carga con los siete edificios recolocados y su decoración definitiva,
+La aceptación queda pendiente del regreso al muelle tras recargar: hay un bloqueo reproducible cerca de x=99,
+también sin GDB. Limpiar texturas/props y compactar suelo no lo resuelve; diagnóstico y presupuestos de
+variantes en reports/frontier.md (F11). No se declara A cerrada ni se justifica B todavía.
+
+Se ha validado el recorrido inicial del **terreno**. La carga con los siete edificios recolocados y su decoración definitiva,
 los retornos de interiores y la consola siguen **no probados**: F11-ISLA-CONSTRUCCION medirá su composición,
 compartirá texturas, retirará lo que no use y elegirá piezas ligeras antes de plantear B. Los builders comunes,
 el motor y la reserva Luma 0x579604–0x579804 no se modifican en este hito.

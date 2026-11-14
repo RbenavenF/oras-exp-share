@@ -45,3 +45,25 @@ para comprobar persistencia fuera de la celda de llegada. Los scripts se deben
 ejecutar secuencialmente: no compartir el FIFO GDB entre dos drivers.
 Después de recargar, `route.py --pier` vuelve andando de la plaza al muelle.
 No hay puertas de instalaciones en este prototipo; las prueba F11-ISLA-CONSTRUCCION.
+
+Diagnóstico del regreso tras recargar (todavía no es una aceptación):
+
+- `F11_GDB=0 bash frontier/probes/island/boot.sh SAVE` desactiva el stub. El arranque
+  fija también su marca `default` para que Azahar respete el valor explícito.
+- Desde el checkpoint `terrain-saved.sav` en (119,45),
+  `python frontier/probes/island/return_ui.py NOMBRE` mantiene izquierda y exige un
+  **nuevo** guardado UI al oeste de x=99. Usa `checkpoint.py --ui-only`: no lee GDB.
+  El hash sin cambiar es fallo; los CRC del guardado anterior no prueban respuesta.
+- `build.py --trial world --trial props --trial lod --trial compact --trial names`
+  reproduce las variantes acumuladas, con sus presupuestos en build.log y orden en
+  config.json. No ejecutar sobre un prototipo existente: conservar su game/ws y
+  regenerar con build.py. Estos ensayos no modifican los builders de producción.
+- `world` conserva solo las texturas referenciadas por los modelos (también las
+  de sus mallas degeneradas); `props` exige ausencia de props y vacía su registro,
+  dejando un BCH válido de una textura. `lod` asigna todos los cuartos a 209, sin
+  modelos LOD. `compact` une rectángulos de suelo plano con UV de mundo 1/72;
+  conserva escaleras, paredes, tilemap y colisión. La iluminación AO se interpola
+  entre las esquinas del rectángulo; no usarlo como aprobación del aspecto final.
+- `names` da a cada celda un nombre BCH propio, como los nombres retail de 489–492.
+  Sustituye el prefijo de igual longitud dentro de la sección de strings; conserva
+  todos los offsets. Es una hipótesis en ensayo, no una causa demostrada del bloqueo.

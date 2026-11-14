@@ -3618,3 +3618,47 @@ Incidencia pendiente del regreso: el primer `route.py --pier` tras recargar qued
 principal en el bucle 0x110a5c y un hilo en IPC 0x2c5c00; **no demuestra falta de memoria ni una colisión**.
 Se guardan `return-{threads,bt,regs,io-regs,io-stack,flags}.txt`. Un segundo arranque y desvío por (104,44)
 está en ensayo (`return-retry.log`, `return-pier2.log`); no declarar todavía probado el regreso.
+
+### F11: diagnóstico del regreso, sin dar A por cerrada
+
+El segundo recorrido también se bloquea cerca de (99,44), tras rodear por (104,44):
+`return-pier2.log`. Con el stub **desactivado** (`use_gdbstub=false`) se reproduce el bloqueo,
+0 FPS y ausencia de respuesta al menú: `boot-nogdb.log`, `nogdb-return.log`. La copia
+`nogdb-west40.sav` conserva exactamente el hash de terrain-saved: **no es un nuevo guardado**,
+aunque conserve sus 58 CRC válidos. `checkpoint.py --ui-only` y `return_ui.py` exigen ahora
+un cambio de hash y rechazan esa falsa evidencia. No se modificó RAM ni la partida fuente.
+
+Ensayos acumulados sobre la misma matriz y geometría, reproducibles mediante los `--trial`
+de build.py y AreaTrial.java (todos con `outside world pack {}`):
+
+| Variante | Mundo | Props | Modelos | Load budget | Regreso desde (119,45), sin GDB |
+|---|---:|---:|---:|---:|---|
+| Inicial | 654336 | 209152 | 3165440 | 4028928 | Bloqueo |
+| `world`: solo texturas referenciadas | 195840 | 209152 | 3165440 | 3570432 | Bloqueo |
+| + `props`: sin registro, un BCH de textura testigo | 195840 | 1792 | 3165440 | 3363072 | Bloqueo |
+| + `lod`: pertenencia explícita 209, sin LOD | 195840 | 1792 | 3165440 | 3363072 | Bloqueo |
+| + `compact`: rectángulos de suelo plano | 195840 | 1792 | 1936128 | 2133760 | Bloqueo; el menú no guarda |
+
+Fuentes locales: `work/f11/prototype/{prune-trial,prune-props-trial,lod-trial,compact-trial}.log`,
+`{pruned-return,pruned-props-return,lod-return,compact-return}.log`. La recreación de world/props/lod
+con el helper versionado produce los mismos hashes de los GARCs que el primer ensayo Java:
+`trial-before.sha256`, `trial-reproduce-*.log`. CompactFloors exige quads con posiciones/UV del suelo
+generado, cubre las mismas casillas por altura/material y valida la estructura BCH; deja escaleras y
+paredes. No escribe la colisión ni el tilemap. Cambia la interpolación de AO entre esquinas: aspecto
+final no aprobado. B no se justifica solo por estos presupuestos: ninguna medición demuestra aún OOM.
+
+Un control sin cruzar x=99 envía tres idas/vueltas de 10 impulsos de dirección
+(objetivo entre (119,45) y (109,45); sin medición intermedia) y guarda por UI en (119.5,45.5): `step-counter.log`, `step-counter.json`, hash
+dfb79520c0c73ebb0a241e23ceb56411ba1326e3898f72e7f77202a78752e64c, 58 CRC válidos.
+Esto acota el fallo respecto a caminar sin cambiar de conjunto de celdas; no basta con atribuirlo a
+un evento periódico de pasos. La traza Service.FS confirma el LayeredFS usado (`return-fs-trace.txt`),
+pero no identifica el motivo del bloqueo. Un intento de reconectar GDB no tuvo stub: se detectó que
+su marca `default=true` anulaba el valor editado; boot.sh corrige esa marca. Ese intento no es evidencia.
+
+`model-names.txt` mide retail 489–492: `battle03_00_00`, `battle03_01_00`, `battle03_00_01`,
+`battle03_01_01`. En el prototipo las ocho regiones comparten `battle03_00_00`.
+La variante `names` asigna un nombre propio por celda, sin cambiar offsets ni geometría.
+`names-trial.log` registra 22 sustituciones de strings por modelo y presupuesto 2133760.
+El regreso también falla con nombres únicos (`names-return.log`: el menú no guarda). No queda
+demostrado que los nombres duplicados causasen el bloqueo. Suite completa: **2904 passed, 3 skipped**,
+58,78 s (`work/f11/tests-m5-final.log`). A sigue provisional y el regreso pendiente.

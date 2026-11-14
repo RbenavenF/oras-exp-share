@@ -3896,3 +3896,35 @@ rodeo por (104,44) en curso en el shell vivo 62609 (mismo namespace del laborato
 return-retry.log / return-pier2.log. No confundir la incidencia con un retorno superado.
 Siguiente paso: terminar/diagnosticar retorno, anotar resultado, ejecutar suite y commit de cierre; reap del
 laboratorio del carril. Mantener work/lane-task.json in_progress hasta completar, sin editar tasks.json.
+
+## 2026-11-14 — Codex — F11-ISLA-TRAZADO hito 5: aislamiento del bloqueo de regreso
+Estado: en curso
+Hecho:
+- Relevo del hito 4: el segundo desvío también falla a (99,44). Se reproduce sin stub GDB y sin leer RAM.
+  El guardado anterior conserva CRC/hash: no demuestra un nuevo guardado. checkpoint --ui-only y return_ui
+  exigen ahora cambio de hash. boot.sh permite F11_GDB=0 y fija la marca default para respetar la opción.
+- AreaTrial.java y build.py --trial versionan los ensayos acumulados: world (texturas referenciadas), props
+  (registro vacío y un BCH testigo válido), lod (propiedad209), compact (rectángulos de suelo) y names.
+  Ninguno elimina el bloqueo. No atribuir la incidencia a OOM ni dar A por cerrada.
+- CompactFloors conserva casillas por altura/material y UV de mundo; no toca colisión, escaleras o paredes;
+  interpola AO entre esquinas. Nombres BCH únicos por celda siguen la forma retail, sin cambiar offsets.
+  Ambos son variantes diagnósticas, no cambios de producción aprobados. Diseño §2.3 corregido a A provisional.
+Evidencia:
+- work/f11/prototype/{nogdb-return,pruned-return,pruned-props-return,lod-return,compact-return,names-return}.log;
+  el stub desactivado y 0 FPS descartan que se necesite GDB para reproducir el bloqueo.
+- Presupuestos inicial4028928 → world3570432 → props/lod3363072 → compact/names2133760. WorldTextures {}.
+  Logs *-trial.log; helper versionado recrea exactamente hashes AD/MM del ensayo inicial (trial-before.sha256).
+- step-counter.log: 60 impulsos alternos de dirección sin pasar por x=99 y guardado UI responsive, posición final
+  209/(119.5,45.5), 58 CRC, SHA dfb79520c0c73ebb0a241e23ceb56411ba1326e3898f72e7f77202a78752e64c.
+  No se leyeron posiciones intermedias: el número de pasos reales no está medido.
+- model-names.txt: retail489–492 nombres distintos; prototipo ocho veces battle03_00_00. Renombrar no corrige
+  el fallo (names-return.log). Traza FS confirma LayeredFS, no causa. Un arranque GDB sin stub fue inválido,
+  detectado y corregido en boot.sh; no se cuenta como ensayo de terreno.
+- Suite completa tras fuentes finales: env -u ORCH_LANE python -m pytest -q tests → **2904 passed, 3 skipped**,
+  58,78 s (work/f11/tests-m5-final.log). javac de AreaTrial/CompactFloors y bash -n boot.sh pasan.
+Commits: el de esta entrada; anteriores 7d089eb,99b9cff,3879a67,0d204e1.
+Decisiones: A sigue provisional; limpiar/compactar no prueba un límite de memoria. No se han cambiado motor,
+builders comunes, tareas, REPARTO ni reserva Luma. Sin consola ni pruebas de instalaciones: regresión caso(c).
+Siguiente paso: capturar el buffer IPC y la ruta del cargador al bloquearse con stub ya corregido; comprobar
+animaciones de área y carga de regiones antes de decidir B. Laboratorio parado al cierre del hito; puede arrancar
+con boot.sh y terreno-saved.sav en un shell persistente. Fuentes de work siguen en este carril.

@@ -3,6 +3,7 @@
 
 No production builder changes. Run from repo: python frontier/probes/island/build.py
 """
+import argparse
 import hashlib
 import json
 from pathlib import Path
@@ -68,10 +69,15 @@ def grids():
 
 
 def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--trial', action='append', default=[], choices=('world','props','lod','compact','names'),
+                        help='apply an isolated diagnostic variant, in this order; repeat for cumulative trials')
+    args=parser.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     if (OUT / 'game').exists():
         raise SystemExit('Existing prototype; keep its evidence or remove only work/f11/prototype/game and ws before rebuild')
     sources = verify_sources()
+    (OUT / 'config.json').write_text(json.dumps({'trials': args.trial}, indent=2)+'\n')
     (OUT / 'sources.json').write_text(json.dumps(sources, indent=2) + '\n')
     shutil.copytree(STAGE, OUT / 'game')
     # The staging predates the package overlay (notably harbor NPCs/scripts).
@@ -83,10 +89,15 @@ def main():
     subprocess.run(['faraway/run.sh', 'Probe', str(OUT / 'game'), str(OUT / 'ws'), 'zones'],
                    cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
     subprocess.run(['javac', '--release', '8', '-nowarn', '-cp', CP, '-d', str(ROOT / 'work/faraway/classes'),
-                    str(ROOT / 'frontier/probes/island/TerrainPrototype.java')], check=True)
+                    *[str(ROOT / 'frontier/probes/island' / name) for name in ('TerrainPrototype.java','AreaTrial.java','CompactFloors.java')]], check=True)
     with (OUT / 'build.log').open('w') as log:
         subprocess.run(['java', '-Xmx4g', '-Djava.awt.headless=true', '-cp', CP, 'faraway.TerrainPrototype',
                         str(OUT / 'game'), str(OUT / 'ws'), str(OUT / 'grid.txt')], check=True, stdout=log, stderr=log)
+    for trial in args.trial:
+        with (OUT / 'build.log').open('a') as log:
+            log.write('TRIAL '+trial+'\n'); log.flush()
+            subprocess.run(['java', '-Xmx4g', '-Djava.awt.headless=true', '-cp', CP, 'faraway.AreaTrial',
+                            str(OUT / 'game'), str(OUT / 'ws'), trial], check=True, stdout=log, stderr=log)
     for rel in ('a/0/1/3', 'a/0/1/4', 'a/0/3/9', 'a/0/4/0'):
         shutil.copyfile(OUT / 'game' / rel, OUT / 'mod/romfs' / rel)
     # Rebuild only ferry 79, preserving all other v0.2 shared scripts and its texts.
