@@ -218,3 +218,10 @@ nivel, sin modificar accesores tras LOST), con hash global y guard de las 13
 instrucciones originales. No requiere CRR al residir en code.bin; no consume
 DllField reservado ni la reserva Luma. Evidencia y límites del barrido:
 `reports/modos-base.md` hito 6 y pruebas de modos.
+
+### Reserva F9-LIBRE-PROPIOS (2026-11-14, Codex)
+
+Texto 619, líneas **191–196** (tras Símbolos 190): Nivel 50, Nivel Libre,
+aviso de nivel/formato y rango Normal, Reanudar, Abandonar y aviso de pausa.
+ES/EN; resto de idiomas usa EN como los textos del Frente. Sin nuevos works,
+casos ni cuevas: CONFIG y bancos M=1 de rutas 2/3/4 reservados por BASE.

@@ -12,7 +12,7 @@ Stage B: bit31 marks Arena battles, with switching forbidden and Body judgement 
 
 Greta (F8-CEREBRO-ARENA): battles 28/56, then every 28 after both symbols, using brains.py's private teams,
 identity, texts and persistent Guts symbols. Her battles keep the Arena rules. Reception offers «Symbols».
-Doubles and Open Level remain outside this implementation.
+Doubles remains outside this implementation. F9 enables Open Level (reports/modos-propios.md).
 """
 import sys
 from pathlib import Path

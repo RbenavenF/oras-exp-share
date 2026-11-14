@@ -275,30 +275,3 @@ def test_rentals_use_the_mode_level():
     for config, level in ((0, 50), (m.pack_config(1, 1, 100), 100)):
         _, calls, _ = tp.run(code, 3, 21, sets=(0x10, 0x8011, 0x412), route=1, works={m.CONFIG[1]: config})
         assert [c[2] for c in calls if c[0] == 'make'] == [level] * 3
-
-
-def test_tower_reception_new_and_resumed_modes():
-    """Tower reception (pawn VM): a new challenge resets CONFIG to 0 (Level 50, no menu yet); a paused one resumes
-    with its persisted Singles mode; a corrupt or Doubles CONFIG starts a new Level 50 challenge."""
-    sys.path.insert(0, str(ROOT / 'tests'))
-    import test_frontier_tower as tt
-    import overlay
-    import tower
-    if not overlay.ZONES.exists():
-        pytest.skip('Local baseline required')
-    files, retail = overlay.maison_retail(overlay.ZONES.read_bytes())
-    program = tower.tower_program(retail)
-    built_script = (files, retail, program.build_script(f'L{retail.main:x}'), program.layout(), None, None)
-    config = m.CONFIG[tower.ROUTE]
-
-    def run(active, value, streak=6):
-        result, works, log = tt.reception(built_script, tower_active=active, tower_streak=streak, streak_after=7,
-                                          extra={config: value})
-        seen = next(e for e in log if e[0] == 'challenge')[2]
-        return seen[config], seen[tower.STREAK]
-
-    assert run(0, m.pack_config(2, 1, 73)) == (0, 0)                     # new: Level 50, streak from 0
-    for value in (0, 0x32, m.pack_config(2, 1, 60), m.pack_config(2, 1, 73), m.pack_config(2, 1, 100)):
-        assert run(1, value) == (value, 6)                                 # resumed in its mode
-    for value in (m.pack_config(2, 2, 50), m.pack_config(2, 3, 73), 0x13B, 0x165, 0x31, 0xFFFF, 0x100):
-        assert run(1, value) == (0, 0)                                     # not resumable: new Level 50

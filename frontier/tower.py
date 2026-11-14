@@ -24,7 +24,7 @@ The Factory's reception refuses as well while the Tower's ACTIVE is not 0 (facto
 Frontier Brains (frontier/brains.install): Anabel at battles 35/70 and every 35 after both symbols
 (brains.APPEARANCES), symbols, no Maison boss on any Frontier route, and «Symbols» in the reception menu (value
 brains.MENU_SYMBOLS) to consult Anabel's. Known deviations (design §1, §6): the Maison's texts («Mansión Batalla»); its party
-rules (level capped to 50 instead of refused, its banned list); no Doubles or Open Level.
+rules (level capped to 50 instead of refused, its banned list); no Doubles. Open Level is offered by F9 (reports/modos-propios.md).
 """
 import sys
 from pathlib import Path
@@ -55,8 +55,37 @@ def reception_routine(p, facility=FACILITY):
     in a 517 clone (route patch.ROUTE[facility], its streak and patch.ACTIVE_WORK); labels prefixed by its name."""
     route = patch.ROUTE[facility]
     streak, active, t = patch.STREAK_ROUTES[route][1], patch.ACTIVE_WORK[facility], facility
-    r = factory.Routine(p, f'{t}_reception', [f'flag{f}' for f in SUPER_FLAGS] + ['x'])
+    r = factory.Routine(p, f'{t}_reception', [f'flag{f}' for f in SUPER_FLAGS] + ['x']
+                        + (['level'] if facility in MODE_FACILITIES else []))
     factory.busy_check(r, facility, f'{t}_refused')
+    if facility in MODE_FACILITIES:
+        # Paused challenges choose resume/abandon before any new level selection.
+        r.sysreq('WorkGet', active)
+        r.op('JZER', f'{t}_choose_level')
+        config_check(r, route, f'{t}_refused', f'{t}_pause_menu')
+        r.p.label(f'{t}_pause_menu')
+        level_menu(r, LINE_PAUSED, ((LINE_RESUME, 0), (LINE_ABANDON, 1), (55, 2)))
+        r.op('JZER', f'{t}_selector')
+        r.op('EQ_P_C_PRI', 1)
+        r.op('JZER', f'{t}_refused')
+        r.p.label(f'{t}_abandon')
+        r.sysreq('WorkGet', modes.CONFIG[route])
+        r.op('SHR_P_C_PRI', 8)
+        r.op('JZER', f'{t}_abandon_50')
+        r.sysreq('WorkSet', modes.bank(route, 1)[0], 0)
+        r.op('JUMP', f'{t}_abandoned')
+        r.p.label(f'{t}_abandon_50')
+        r.sysreq('WorkSet', streak, 0)
+        r.p.label(f'{t}_abandoned')
+        r.sysreq('WorkSet', active, 0)
+        r.op('JUMP', f'{t}_refused')
+        r.p.label(f'{t}_choose_level')
+        level_menu(r, LINE_LEVEL, ((LINE_50, 0), (LINE_OPEN, 1), (55, 2)))
+        r.store('level')
+        r.op('JZER', f'{t}_selector')
+        r.op('EQ_P_C_PRI', 1)
+        r.op('JZER', f'{t}_refused')
+        r.p.label(f'{t}_selector')
     # The Maison's own mode selection, as 0x1640-0x1704: message 6, then the app (0x12a0, _CallTrialDownloadApp).
     # The party selection screen needs it: without it every Pokémon is refused (seen in Azahar, §25).
     r.call(f'L{factory.MSG:x}', MSG_MODE, 1, 0, 256, 0)
@@ -79,14 +108,19 @@ def reception_routine(p, facility=FACILITY):
     r.op('JNZ', f'{t}_resume')                 # paused challenge: keep the streak, as Emerald
     r.p.label(f'{t}_new')
     if facility in MODE_FACILITIES:
-        r.sysreq('WorkSet', modes.CONFIG[route], 0)   # F9: a new challenge is Level 50 Singles (no mode menu yet)
+        r.load('level')
+        r.op('JZER', f'{t}_reset_50')
+        r.sysreq('WorkSet', modes.CONFIG[route], modes.pack_config(route, 1, 60))
+        r.sysreq('WorkSet', modes.bank(route, 1)[0], 0)
+        r.op('JUMP', f'{t}_reset_done')
+        r.p.label(f'{t}_reset_50')
+        r.sysreq('WorkSet', modes.CONFIG[route], 0)
     r.sysreq('WorkSet', streak, 0)              # a new challenge starts at battle 1
     if facility in MODE_FACILITIES:
+        r.p.label(f'{t}_reset_done')
         r.sysreq('WorkSet', active, NEW_ACTIVE)  # F9: «new, mode not registered yet» until registration()
         r.op('JUMP', f'{t}_challenge')
     r.p.label(f'{t}_resume')
-    if facility in MODE_FACILITIES:              # F9: resume in the persisted mode, if it is one this reception runs
-        config_check(r, route, f'{t}_new', f'{t}_start')
     r.p.label(f'{t}_start')
     r.sysreq('WorkSet', active, 1)
     r.p.label(f'{t}_challenge')
@@ -120,10 +154,32 @@ def reception_routine(p, facility=FACILITY):
     r.ret()
 
 
-# F9 (reports/diseno/modos.md §2-§3, frontier/modes.py): receptions that keep the mode of a paused challenge in
-# modes.CONFIG[route]. BASE runs Singles only (the selector refuses Doubles), so it resumes M 0 (CONFIG 0 or Level 50)
-# and M 1 (Singles Open Level, L 60-100); anything else is not resumed: a new Level 50 challenge instead.
-MODE_FACILITIES = ('tower',)
+# F9 own-team Singles: a new challenge chooses 50/Open before the retail selector.
+# A paused challenge offers resume/retire and retains its validated CONFIG.
+MODE_FACILITIES = ('tower', 'palace', 'arena')
+LINE_50, LINE_OPEN, LINE_LEVEL, LINE_RESUME, LINE_ABANDON, LINE_PAUSED = range(191, 197)
+LEVEL_TEXT = {
+    'es': ('Nivel 50', 'Nivel Libre',
+           'Elige el nivel del desafío.\nDespués elige Individual. El rango será Normal.',
+           'Reanudar', 'Abandonar', 'Hay un desafío en pausa.\nSe conservarán su modalidad y su nivel.'),
+    'en': ('Level 50', 'Open Level',
+           'Choose the challenge level.\nThen choose Single Battle. The rank will be Normal.',
+           'Resume', 'Retire', 'A challenge is paused.\nIts format and level will be kept.'),
+}
+
+
+def level_menu(r, prompt, entries):
+    r.call(f'L{factory.MSG:x}', prompt, 1, 0, 256, 0)
+    r.call(f'L{factory.MSG_WAIT:x}')
+    r.call(f'L{factory.MENU_INIT:x}', 180, 112, 0, 1, 0, 0)
+    for line, value in entries:
+        r.sysreq('ListMenuAdd', line, value, 0)
+    r.call(f'L{factory.MENU_RUN:x}')
+    r.store('x')
+    r.call(f'L{factory.MSG_CLOSE:x}', 0)
+    r.load('x')
+
+
 NEW_ACTIVE = 2                   # ACTIVE of a new challenge between the reception and its registration (registration)
 REGISTERED = 'L1a38'             # challenge 0x18f8: the party app accepted the selection, before the save (0x13d4)
 
@@ -167,19 +223,13 @@ def config_check(r, route, invalid, valid):
     low, high = (modes.pack_config(route, modes.SINGLE_OPEN, level) for level in (60, 100))
     r.sysreq('WorkGet', work)
     r.op('JZER', valid)
+    r.op('ADD_P_C', -singles_50)
+    r.op('JZER', valid)
     r.sysreq('WorkGet', work)
-    r.op('EQ_P_C_PRI', singles_50)
-    r.op('JNZ', valid)
-    r.sysreq('WorkGet', work)
-    r.op('ADD_P_C', -low)
-    r.op('MOVE_ALT', 0)
-    r.op('ZERO_PRI', 0)
-    r.op('JSGRTR', invalid)                    # below Open Level 60
-    r.sysreq('WorkGet', work)
-    r.op('ADD_P_C', -high)
-    r.op('MOVE_ALT', 0)
-    r.op('ZERO_PRI', 0)
-    r.op('JSLESS', invalid)                    # above Open Level 100, or another mode
+    r.const_alt(low)
+    r.op('JSLESS', invalid)
+    r.const_alt(high)
+    r.op('JSGRTR', invalid)
     r.op('JUMP', valid)
 
 

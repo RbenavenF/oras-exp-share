@@ -58,6 +58,7 @@ def test_texts_append_the_option_the_refusal_and_the_factory_entry(built):
     import factory
     import island
     import brains
+    import tower
     _, (archives, _) = built
     assert fbuild.harbor_lines(fbuild.ROMFS) == (30, 31)
     for lang, path in factory.STORYTEXT.items():
@@ -68,7 +69,7 @@ def test_texts_append_the_option_the_refusal_and_the_factory_entry(built):
         assert len(b) == len(a) + 1 == fp.TEXT_FACTORY + 1
         for x, y in zip(a, b):
             old, new = before[x[2]:x[2] + x[3]], after[y[2]:y[2] + y[3]]
-            appended = {factory.TEXT_ZONE: [factory.OPTION[code], factory.BUSY[code], brains.LINE_SYMBOLS_OPTION[code]],
+            appended = {factory.TEXT_ZONE: [factory.OPTION[code], factory.BUSY[code], brains.LINE_SYMBOLS_OPTION[code]] + list(tower.LEVEL_TEXT[code]),
                         island.TEXT_HARBOR: island.SAILOR[code],
                         island.FERRY_TEXT: island.FERRY[code]}.get(x[0])
             if appended is None:

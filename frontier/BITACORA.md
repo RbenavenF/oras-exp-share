@@ -4344,3 +4344,31 @@ Siguiente paso: integrador, generar un kit con integration_bundle.py, copiar hel
 claves al plan y lectura en faraway.Island como documenta el diseño. Construir en nombre nuevo, comparar
 con final y ejecutar suite; si cambia juego, regresión caso c. Resolver después la cobertura de cámara
 para cenital única o solicitar criterio explícito del usuario; no declarar done con esos puntos pendientes.
+
+## 2026-11-14 15:54 — Codex — F9 propios: recepción Libre y pruebas de frontera
+Estado: en curso
+Hecho: relevo auditado: git status/diff limpios, HEAD ba41d51, sin cambios Claude
+interrumpidos. Leídos AGENTS, PLAN, REPARTO, diseño y bitácora; CLAUDE.md ausente.
+Reservados textos619/191–196 antes de usarlos, sin cambiar turno. Menú50/Libre
+y pausa Reanudar/Abandonar en Torre/Palacio/Arena; registro BASE tras selección
+efectiva, bancos aislados y validación conservadora de pausa. Sin cambios de motor.
+Evidencia: env -u ORCH_LANE python -m pytest -q tests:3090 passed,4 skipped,78.29s
+(work/frontier/modos/propios1/tests-release.log). Incluye144 VM propios y Cerebros
+L60/73/100 en las tres rutas; fronteras de premios/jefes. Primera suite heredando
+ORCH_LANE tuvo9 fallos de tests del orquestador, repetida con entorno limpio.
+python frontier/overlay.py --out work/frontier/modos/propios1/release: build correcto;
+ZO17136<=17248 en las tres rutas; build-release.log y build-hashes.json.
+python frontier/modes_audit.py: code2008/36 libres, Battle788/1148 libres,
+Field F9 472/1064 libres, Luma0x579604–0x579804 intacta. reports/modos-propios.md
+recoge hashes exactos y reproducción. target-equivalence.json: zonas329/340/457
+del build instalado final idénticas a release. git diff --check correcto.
+Commits: el de esta entrada (frontier: habilita recepción Individual Libre en instalaciones propias).
+Decisiones: conservar inicialización retail, rango0/tipo0; CONFIG provisional0x13c
+evita lectura retail al cancelar inscripción Libre. No repetir Torre BASE ni
+regresión ajena (política agrupada2026-11-13). No inputs, partida original, push
+ni tasks.json; estado del carril en work/lane-task.json.
+No probado aún: combates Libre Palacio/Arena, cierre/PB y guardar/cargar con
+la nueva recepción, consola. Laboratorio24691 en curso, aún no aceptación.
+Siguiente paso: terminar selección en Palacio pausadoL73/racha6, medir reglas/niveles,
+cierre7 y PB, guardar/cargar; luego Arena nuevo Libre y juicio/cambio prohibido.
+Usar propios.py pasivo: hooks de naturaleza/divisor solo tras StartBattle.

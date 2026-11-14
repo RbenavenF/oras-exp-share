@@ -12,7 +12,7 @@ Stage B (reports/frontier.md §32): in its battles the game's AI decides for the
 palace.s, frontier/palace_engine.py; nature table in stage C). The battle video does not record
 those decisions, so the Palace's «next battle» menu drops «Guardar vídeo» (VIDEO_ITEM, `hide_video`) and the
 record routine offered after a loss or at the end (VIDEO_RECORD: SaveBattleRecord + wait) returns at once. Same known deviations as the Tower: the Maison's texts
-(«Mansión Batalla»), its party rules; no Doubles or Open Level.
+(«Mansión Batalla»), its party rules; no Doubles. F9 enables Open Level (reports/modos-propios.md).
 
 Frontier Brain (F8-CEREBRO-PALACIO, frontier/brains.py): Spenser at battles 21/42 and every 21 after both symbols
 (brains.APPEARANCES), with his fixed teams (reports/diseno/cerebros.md §7), no Maison boss on route 3, and «Symbols»

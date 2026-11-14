@@ -129,6 +129,8 @@ def texts(romfs, sets, table):
                                          'after': factory.BUSY[code]},
                                         {'entry': factory.TEXT_ZONE, 'line': factory.LINE_SYMBOLS, 'append': True,
                                          'after': brains.LINE_SYMBOLS_OPTION[code]}]}
+        spec['texts'] += [{'entry': factory.TEXT_ZONE, 'line': tower.LINE_50 + k, 'append': True,
+                           'after': text} for k, text in enumerate(tower.LEVEL_TEXT[code])]
         spec['texts'] += [{'entry': island.TEXT_HARBOR, 'line': line, 'append': True, 'after': text}
                           for line, text in zip(sailor, island.SAILOR[code])]
         spec['texts'] += [{'entry': island.FERRY_TEXT, 'line': island.FERRY_TEXT_LINES + k, 'append': True,

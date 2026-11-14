@@ -90,6 +90,7 @@ def reception(built, active=None, declined=False, streak_after=0, tower_active=0
     stubs = natives({
         'WorkGet': lambda vm, a: works.get(a[0], 0),
         'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
+        'ListMenuAdd': lambda vm, a: 0,
         'FlagGet': lambda vm, a: a[0] - 380,
         'SetRank': lambda vm, a: log.append(('rank', a)),
         'GetMyWinCount': lambda vm, a: log.append(('wins', dict(works))) or wins[0],
@@ -97,6 +98,8 @@ def reception(built, active=None, declined=False, streak_after=0, tower_active=0
     calls = {labels[factory.CHALLENGE]: challenge, labels[f'L{factory.MSG:x}']: lambda vm, a: log.append(('msg', a)),
              labels[tower.MODE_APP]: app}
     calls.update({labels[m]: (lambda vm, a: 0) for m in MSG - {f'L{factory.MSG:x}'}})
+    calls[labels[f'L{factory.MENU_INIT:x}']] = lambda vm, a: 0
+    calls[labels[f'L{factory.MENU_RUN:x}']] = lambda vm, a: 0
     result = VM(script, stubs, calls).run(labels['tower_reception'])
     return result, works, log
 
