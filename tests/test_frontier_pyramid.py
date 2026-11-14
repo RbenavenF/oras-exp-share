@@ -17,6 +17,7 @@ import island_build  # noqa: E402
 import overlay  # noqa: E402
 import patch as fp  # noqa: E402
 import pike  # noqa: E402
+import modes
 import pyramid as py  # noqa: E402
 from formats import garc_entries  # noqa: E402
 from pawn import Script, gf_hash, s32  # noqa: E402
@@ -98,7 +99,8 @@ def test_scripts_round_trip_and_fit(retail):
 
 # --- lobby ----------------------------------------------------------------------------------------------------------
 
-def run_lobby(lobby, works=None, answers=(YES,), mode=(1, 0, 7), selected=1, saved=0, count_after=3):
+def run_lobby(lobby, works=None, answers=(YES,), mode=(1, 0, 7), selected=1, saved=0, count_after=3,
+              choice=0, levels=(73, 55, 41)):
     script, labels = lobby
     works = dict(works or {})
     log, answers = [], list(answers)
@@ -117,6 +119,11 @@ def run_lobby(lobby, works=None, answers=(YES,), mode=(1, 0, 7), selected=1, sav
         if works.get(fp.WORK_ROUTE) == py.ROUTE and selected:
             works[fp.PYRAMID_COUNT] = count_after        # what pyramid_save does (Unicorn tests below)
 
+    def rank(vm, a):
+        log.append(('rank', a[0]))
+        if a[0] >= modes.REGISTER:
+            works[modes.CONFIG[7]] = modes.selection_config(7, a[0] - modes.REGISTER, levels)
+
     stubs = natives({
         'WorkGet': lambda vm, a: works.get(a[0], 0),
         'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
@@ -125,7 +132,8 @@ def run_lobby(lobby, works=None, answers=(YES,), mode=(1, 0, 7), selected=1, sav
         'BattleInstWorkCreate': lambda vm, a: log.append(('create',)),
         'BattleInstWorkDelete': delete,
         'BattleHouse_End': lambda vm, a: log.append(('end',)),
-        'SetRank': lambda vm, a: log.append(('rank', a[0])),
+        'SetRank': rank,
+        'ListMenuAdd': lambda vm, a: 0,
         '_MapChangeCore': lambda vm, a: log.append(('map', *a)),
     })
 
@@ -135,6 +143,8 @@ def run_lobby(lobby, works=None, answers=(YES,), mode=(1, 0, 7), selected=1, sav
     calls = {labels[n]: (lambda vm, a: 0) for n in (py.TALK_START, py.TALK_END, f'L{factory.MSG:x}',
                                                     f'L{factory.MSG_WAIT:x}', f'L{factory.MSG_CLOSE:x}')}
     calls[labels['L12a0']] = app
+    calls[labels[f'L{factory.MENU_INIT:x}']] = lambda vm, a: 0
+    calls[labels[f'L{factory.MENU_RUN:x}']] = lambda vm, a: choice
     calls[labels[py.PARTY_SELECT]] = lambda vm, a: (log.append(('select', a[0])), selected)[1]
     calls[labels[py.SAVE]] = lambda vm, a: (log.append(('save',)), saved)[1]
     VM(script, stubs, calls).run(labels['pyramid_reception'])
@@ -143,6 +153,27 @@ def run_lobby(lobby, works=None, answers=(YES,), mode=(1, 0, 7), selected=1, sav
 
 def maps(log):
     return [x[1:] for x in log if x[0] == 'map']
+
+
+def test_open_registration_is_before_delete_and_resume_never_selects_again(lobby):
+    works, log = run_lobby(lobby, choice=1)
+    config = modes.pack_config(7, 1, 73)
+    assert works[modes.CONFIG[7]] == config
+    assert log.index(('rank', modes.REGISTER + 1)) < log.index(('delete',))
+    for floor_number in range(1, 8):
+        works[py.ACTIVE] = floor_number
+        reloaded, resumed = run_lobby(lobby, works, levels=(100, 100, 100))
+        assert reloaded[modes.CONFIG[7]] == config
+        assert not any(e[0] in ('select', 'create', 'delete') for e in resumed)
+        assert maps(resumed)
+
+
+@pytest.mark.parametrize('choice', [-1, 2, 65535])
+def test_cancelled_level_menu_does_not_create_or_change_any_bank(lobby, choice):
+    before = {modes.CONFIG[7]: modes.pack_config(7, 1, 99), modes.bank(7, 1)[0]: 12}
+    works, log = run_lobby(lobby, before, choice=choice)
+    assert all(works[w] == v for w, v in before.items())
+    assert not any(e[0] in ('create', 'delete', 'select', 'save', 'map') for e in log)
 
 
 def test_new_challenge_selects_saves_and_goes_to_floor_1(lobby):

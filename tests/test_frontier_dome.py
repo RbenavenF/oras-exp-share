@@ -15,6 +15,7 @@ import dome  # noqa: E402
 import factory  # noqa: E402
 import overlay  # noqa: E402
 import patch as fp  # noqa: E402
+import modes
 from formats import garc_entries, zo_build  # noqa: E402
 from pawn import OP, Op, Program, Script, decode, gf_hash, s32  # noqa: E402
 from pawn_vm import VM  # noqa: E402
@@ -70,11 +71,19 @@ def test_dome_works_are_distinct_and_outside_the_cleared_block():
     assert (dome.STREAK, dome.ACTIVE) == (16473, fp.ACTIVE_WORK['dome'])
 
 
-def reception(zone, active=None, entered=1, declined=False, streak_after=0, dome_active=0, dome_streak=0):
+def reception(zone, active=None, entered=1, declined=False, streak_after=0, dome_active=0, dome_streak=0,
+              config=0, choice=0, registration=False):
     _, _, script, labels = zone
     works = {fp.ACTIVE_WORK[f]: v for f, v in (active or {}).items()}
     works.update({dome.ACTIVE: dome_active, dome.STREAK: dome_streak})
+    works.update({modes.CONFIG[5]: config, modes.bank(5, 1)[0]: 6, modes.bank(5, 1)[1]: 9})
     log = []
+    def rank(vm, args):
+        log.append(('rank', args))
+        if registration and args[0] >= modes.REGISTER:
+            arg = args[0] - modes.REGISTER
+            works[modes.CONFIG[5]] = modes.selection_config(
+                5, arg & 3, (73, 55, 41), persisted=config if arg & 4 else None)
 
     def challenge(vm, args):
         log.append(('challenge', args, dict(works)))
@@ -83,13 +92,16 @@ def reception(zone, active=None, entered=1, declined=False, streak_after=0, dome
     stubs = natives({
         'WorkGet': lambda vm, a: works.get(a[0], 0),
         'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
-        'SetRank': lambda vm, a: log.append(('rank', a)),
+        'SetRank': rank,
+        'ListMenuAdd': lambda vm, a: 0,
         'GlobalCall': lambda vm, a: log.append(('global', a[0], dict(works))),
         'GlobalGetChildParam': lambda vm, a: entered,
         'GetMyWinCount': lambda vm, a: log.append(('wins', dict(works))) or streak_after,
     })
     calls = {labels[factory.CHALLENGE]: challenge, labels[f'L{factory.MSG:x}']: lambda vm, a: log.append(('msg', a))}
     calls.update({labels[m]: (lambda vm, a: 0) for m in MSG - {f'L{factory.MSG:x}'}})
+    calls[labels[f'L{factory.MENU_INIT:x}']] = lambda vm, a: 0
+    calls[labels[f'L{factory.MENU_RUN:x}']] = lambda vm, a: choice
     result = VM(script, stubs, calls).run(labels['dome_reception'])
     return result, works, log
 
@@ -98,12 +110,35 @@ def test_a_new_dome_challenge(zone):
     result, works, log = reception(zone, dome_streak=9)
     assert result == 0 and ('rank', [0]) in log
     entry = next(e for e in log if e[0] == 'global')
-    assert entry[1] == dome.GLOBAL_ENTRY and entry[2][fp.WORK_ROUTE] == dome.ROUTE == 5 and entry[2][dome.STREAK] == 0
+    assert entry[1] == dome.GLOBAL_ENTRY and entry[2][fp.WORK_ROUTE] == dome.ROUTE == 5
+    assert entry[2][dome.STREAK] == 9     # preserve until all three inscriptions are accepted
     _, args, seen = next(e for e in log if e[0] == 'challenge')
-    assert args == [0, 0, 0] and seen[dome.ACTIVE] == 1 and seen[fp.WORK_ROUTE] == 5
+    assert args == [0, 0, 0] and seen[dome.ACTIVE] == 1 and seen[fp.WORK_ROUTE] == 5 and seen[dome.STREAK] == 0
     assert (seen[0x800C], seen[0x800D], seen[0x800E]) == (1, 0, 0)
     assert works[fp.WORK_ROUTE] == 0 and works[dome.ACTIVE] == 0      # lost: no challenge in progress
     assert all(e[1][fp.WORK_ROUTE] == 5 for e in log if e[0] == 'wins')
+
+
+def test_open_registration_precedes_round_and_resets_only_its_bank(zone):
+    _, works, log = reception(zone, choice=1, registration=True, dome_streak=12, streak_after=1)
+    challenge = next(e[2] for e in log if e[0] == 'challenge')
+    assert challenge[modes.CONFIG[5]] == modes.pack_config(5, 1, 73)
+    assert challenge[modes.bank(5, 1)[0]] == 0 and challenge[modes.bank(5, 1)[1]] == 9
+    assert challenge[dome.STREAK] == 12
+    assert log.index(('rank', [modes.REGISTER + 1])) < next(i for i, e in enumerate(log) if e[0] == 'challenge')
+
+
+def test_open_pause_keeps_level_and_streak_and_abandon_keeps_record(zone):
+    config = modes.pack_config(5, 1, 99)
+    _, works, log = reception(zone, config=config, dome_active=1, registration=True, streak_after=6)
+    challenge = next(e[2] for e in log if e[0] == 'challenge')
+    assert challenge[modes.CONFIG[5]] == config
+    assert challenge[modes.bank(5, 1)[0]] == 6
+    assert ('rank', [modes.REGISTER + 5]) in log
+    _, works, log = reception(zone, config=config, dome_active=1, choice=1, dome_streak=12)
+    assert works[modes.bank(5, 1)[0]] == 0 and works[modes.bank(5, 1)[1]] == 9
+    assert works[dome.STREAK] == 12 and works[dome.ACTIVE] == 0
+    assert not any(e[0] == 'challenge' for e in log)
 
 
 def test_a_paused_dome_challenge_stays_active_and_resumes_with_a_new_entry(zone):

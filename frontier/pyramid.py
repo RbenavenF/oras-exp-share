@@ -58,6 +58,7 @@ import battle_video  # noqa: E402
 import brains  # noqa: E402
 import patch  # noqa: E402
 import pike  # noqa: E402
+import modes
 import tower  # noqa: E402
 
 FACILITY = 'pyramid'
@@ -237,14 +238,15 @@ def end_challenge(r):
     pending (the symbols and the record stay)."""
     r.sysreq('WorkSet', ACTIVE, 0)
     r.sysreq('WorkSet', patch.WORK_ROUTE, 0)
-    r.sysreq('WorkSet', STREAK, 0)
+    modes.script_set(r, ROUTE, 0)
     r.sysreq('WorkSet', WORK_BEATEN, 0)
     r.sysreq('WorkSet', WORK_SUMMIT, 0)
 
 
 def reception_routine(p):
     """pyramid_reception(): the lobby's receptionist (module docstring)."""
-    r = factory.Routine(p, 'pyramid_reception', [f'flag{f}' for f in tower.SUPER_FLAGS] + ['x', 'floor'])
+    r = factory.Routine(p, 'pyramid_reception', [f'flag{f}' for f in tower.SUPER_FLAGS]
+                        + ['x', 'floor', 'level', 'old_config'])
     t, end = 'pyramid_reception', 'pyramid_reception_end'
     r.call(TALK_START, -1)
     factory.busy_check(r, FACILITY, end)
@@ -256,6 +258,14 @@ def reception_routine(p):
     _ask(r, 'enter')
     r.op('EQ_P_C_PRI', YES)
     r.op('JZER', end)
+    tower.level_menu(r, tower.LINE_LEVEL, ((tower.LINE_50, 0), (tower.LINE_OPEN, 1), (55, 2)))
+    r.store('level')
+    r.const_alt(1)
+    r.op('JSGRTR', end)
+    r.const_alt(0)
+    r.op('JSLESS', end)
+    r.sysreq('WorkGet', modes.CONFIG[ROUTE])
+    r.store('old_config')
     r.sysreq('BattleInstWorkCreate')
     r.sysreq('WorkSet', patch.WORK_ROUTE, 0)
     # The Maison's mode selection, as the Tower (tower.reception_routine): the party screen needs it.
@@ -278,11 +288,18 @@ def reception_routine(p):
     r.sysreq('WorkSet', patch.WORK_ROUTE, ROUTE)   # pyramid_save acts on the delete below
     r.call(PARTY_SELECT, 'x')
     r.op('JZER', f'{t}_cancel')
+    # Register while the live selection still exists. Floor battles reuse its
+    # saved slots and CONFIG; no new registration on each floor or reload.
+    r.load('level')
+    r.add(modes.REGISTER)
+    r.op('PUSH_PRI', 0)
+    r.p.emit('SYSREQ_N', 'SetRank', 4)
     r.sysreq('BattleHouse_End')
     r.sysreq('BattleInstWorkDelete')            # pyramid_save: the three in PYRAMID_SEL, PYRAMID_COUNT = 3
     r.sysreq('WorkGet', patch.PYRAMID_COUNT)
     r.op('EQ_P_C_PRI', len(patch.PYRAMID_SEL))
     r.op('JNZ', f'{t}_chosen')
+    r.sysreq('WorkSet', modes.CONFIG[ROUTE], 'old_config')
     r.sysreq('WorkSet', patch.WORK_ROUTE, 0)
     _say(r, 'box')
     r.op('JUMP', end)
@@ -292,10 +309,13 @@ def reception_routine(p):
     r.call(SAVE)                                # the save holds the challenge on floor 1
     r.op('JZER', f'{t}_go')                     # 0 = saved
     r.sysreq('WorkSet', ACTIVE, 0)              # not saved: nothing kept
+    r.sysreq('WorkSet', modes.CONFIG[ROUTE], 'old_config')
     r.sysreq('WorkSet', patch.WORK_ROUTE, 0)
     r.op('JUMP', end)
 
     r.p.label(f'{t}_resume')
+    tower.config_check(r, ROUTE, end, f'{t}_resume_valid')
+    r.p.label(f'{t}_resume_valid')
     _ask(r, 'resume', 'floor')
     r.op('EQ_P_C_PRI', YES)
     r.op('JZER', f'{t}_retire')
@@ -413,14 +433,18 @@ def stairs_routine(p):
     _say(r, 'not_yet')
     r.op('JUMP', end)
     r.p.label(f'{t}_cleared')
-    r.sysreq('WorkGet', STREAK)                   # one more floor on the streak and its record
+    modes.script_get(r, ROUTE)                   # one more floor on the streak and its record
     r.add(1)
+    r.const_alt(9999)
+    r.op('JSLEQ', f'{t}_counted')
+    r.const(9999)
+    r.p.label(f'{t}_counted')
     r.store('streak')
-    r.sysreq('WorkSet', STREAK, 'streak')
-    r.sysreq('WorkGet', RECORD)
+    modes.script_set(r, ROUTE, 'streak')
+    modes.script_get(r, ROUTE, record=True)
     r.load_alt('streak')
     r.op('JSGEQ', f'{t}_record')                 # record >= streak
-    r.sysreq('WorkSet', RECORD, 'streak')
+    modes.script_set(r, ROUTE, 'streak', record=True)
     r.p.label(f'{t}_record')
     r.load('floor')
     r.const_alt(FLOORS_PER_CHALLENGE)
@@ -457,7 +481,7 @@ def stairs_routine(p):
     r.op('JZER', f'{t}_brain_lost')
     r.call('brains_won')                         # symbol, BRAIN_BONUS BP, line; WORK_BRAIN = 0
     r.sysreq('WorkSet', WORK_SUMMIT, 0)
-    r.sysreq('WorkGet', STREAK)
+    modes.script_get(r, ROUTE)
     r.store('streak')
 
     r.p.label(f'{t}_close')                      # BP of challenge streak / 7 (1-based), last value repeated
@@ -521,7 +545,7 @@ def floor_program(retail):
     battle_routine(p)
     stairs_routine(p)
     goto_floor_routine(p)
-    brains.check_routine(p, STREAK, 0)
+    brains.check_routine(p, offset=0, streak_route=ROUTE)
     brains.intro_routine(p)
     brains.won_routine(p)
     brains.lost_routine(p)

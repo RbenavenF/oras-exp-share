@@ -24,7 +24,7 @@ def field():
 
 def enrollment(route=2, mode=1, flags=1, box=0, levels=(73, 41, 7),
                slots=None, count=None, config=0x149, rank=0, kind=None, descriptor=DESCRIPTOR,
-               null_slot=None):
+               null_slot=None, setrank=None):
     uc, _ = machine(route, config)
     data, symbols = field()
     uc.mem_map(FIELD, (len(data) + 0xFFF) & ~0xFFF)
@@ -42,6 +42,12 @@ def enrollment(route=2, mode=1, flags=1, box=0, levels=(73, 41, 7),
     put(DESCRIPTOR + 0x1C, len(slots) if count is None else count)
     for i, slot in enumerate(slots):
         put(DESCRIPTOR + 4 + 4 * i, slot & 0xFFFFFFFF)
+    if setrank is not None:
+        for work, slot in zip(m.DOME_ENTRANTS, slots):
+            uc.mem_write(work_address(work), struct.pack('<H', slot & 0xFFFF))
+        # The previous Dome battle has reduced the live descriptor to two.
+        put(DESCRIPTOR + 0x1C, 2)
+        uc.mem_write(DESCRIPTOR, b'\x01')
     source = BOX if box == 1 else PARTY
     for owner in (PARTY, BOX):
         for i in range(6):
@@ -67,7 +73,9 @@ def enrollment(route=2, mode=1, flags=1, box=0, levels=(73, 41, 7),
 
     uc.hook_add(UC_HOOK_MEM_WRITE, observe_write)
     uc.hook_add(UC_HOOK_CODE, level_getter)
-    result = call(uc, FIELD + symbols['mode_register'], r0=WORK, r1=mode, r2=descriptor, r3=flags)
+    result = (call(uc, FIELD + symbols['mode_setrank'], r0=WORK, r1=0, r4=setrank)
+              if setrank is not None else
+              call(uc, FIELD + symbols['mode_register'], r0=WORK, r1=mode, r2=descriptor, r3=flags))
     return result, writes, getters
 
 
@@ -124,6 +132,23 @@ def test_nonconsecutive_selection_ignores_high_unselected_members():
 def test_dome_descriptor_includes_third_entrant_before_two_fighter_reduction():
     assert enrollment(route=5, levels=(41, 7, 99))[0] == 0x163
     assert enrollment(route=5, levels=(41, 7), count=2)[:2] == (0xFFFFFFFF, [])
+
+
+@pytest.mark.parametrize('levels,expected', [((41, 7, 99), 0x163), ((41, 7, 50), 0x13C),
+                                          ((73, 55, 41), 0x149), ((41, 7, 100), 0x164)])
+def test_dome_setrank_builds_three_entrant_descriptor_without_live_work_write(levels, expected):
+    result, writes, getters = enrollment(route=5, levels=levels, setrank=m.REGISTER + 1)
+    assert result == expected and len(getters) == 3
+    assert writes == [(work_address(m.CONFIG[5]), 2, expected)]
+
+
+def test_dome_setrank_resume_keeps_l_without_reading_replacement_entry():
+    assert enrollment(route=5, levels=(100, 99, 98), setrank=m.REGISTER + 5)[0:3] == (0x149, [], [])
+
+
+@pytest.mark.parametrize('slots', ((0, 0, 2), (0, 1, 6)))
+def test_dome_setrank_invalid_third_entrant_cannot_commit(slots):
+    assert enrollment(route=5, slots=slots, setrank=m.REGISTER + 1)[:2] == (0xFFFFFFFF, [])
 
 
 def test_factory_never_reads_descriptor_or_real_party():

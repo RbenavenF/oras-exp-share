@@ -1,7 +1,7 @@
 """F9 shared mode keys and saved-work allocation (REPARTO, 2026-11-13).
 
-The native engine (frontier/asm/modes.s, linked by patch.mode_constants) and the Tower reception
-(tower.config_check) use these tables; no mode menu is enabled yet (F9-LIBRE-*).
+The native engine (frontier/asm/modes.s, linked by patch.mode_constants) and the receptions
+(tower.config_check) use these tables. F9-LIBRE-* enables the corresponding mode menus.
 New banks have explicit record addresses: there was insufficient space for the
 eleven unused S+1 holes proposed in modos.md. MODE/LEVEL share one CONFIG u16 per
 route after the laboratory found three additional unsafe works. Legacy M=0
@@ -32,6 +32,7 @@ SELECTION_HEADS = {0x3B6150: 0xE3510006, 0x14FD1C: 0xE92D4070}
 # by script argument 0x100 + M + 4*resume; below 0x100 the retail call). Guarded by its bytes in cro_writes.
 SETRANK_SITE, SETRANK_THUNK = 0x95E60, 0x37A8
 REGISTER = 0x100                    # SetRank(REGISTER + M + 4*resume): see frontier/asm/modes_selection.s
+DOME_ENTRANTS = (16493, 16494, 16495)  # existing TEAM reservation, REPARTO (Dome)
 
 
 def valid(route, mode):
@@ -75,6 +76,53 @@ def bank(route, mode):
         streak = patch.STREAK_ROUTES[route][1]
         return streak, streak + 2
     return NEW_BANKS[route, mode]
+
+
+def script_bank(r, route, record=False):
+    """PRI = Singles bank work address, for scripts which cannot call Maison accessors.
+
+    Only a validated Open CONFIG selects M=1; legacy 0/50 and unsupported
+    words keep the old bank. The reception must reject a corrupt paused CONFIG.
+    Does not depend on WORK_ROUTE: Pyramid floors destroy the facility work.
+    """
+    import factory
+    name = f'mode_script_bank_{route}'
+    # Emit once, behind a jump, even when called from several routines.
+    if not any(isinstance(x, tuple) and x == ('label', name) for x in r.p.items):
+        skip = r.new_label('bank_definition')
+        r.op('JUMP', skip)
+        body = factory.Routine(r.p, name, [])
+        legacy, ready = body.new_label('legacy'), body.new_label('ready')
+        table = r.p.data_block(name + '_works', [*bank(route, 0), *bank(route, 1)])
+        body.sysreq('WorkGet', CONFIG[route])
+        body.const_alt(pack_config(route, SINGLE_OPEN, 60))
+        body.op('JSLESS', legacy)
+        body.const_alt(pack_config(route, SINGLE_OPEN, 100))
+        body.op('JSGRTR', legacy)
+        body.const(2)
+        body.op('JUMP', ready)
+        body.p.label(legacy)
+        body.const(0)
+        body.p.label(ready)
+        body.op('LOAD_P_S_ALT', 12)  # record (0/1), supplied only by this builder
+        body.op('ADD', 0)
+        body.cell(table)
+        body.ret()
+        r.p.label(skip)
+    r.call(name, int(record))
+
+
+def script_get(r, route, record=False):
+    script_bank(r, route, record)
+    r.op('PUSH_PRI', 0)
+    r.p.emit('SYSREQ_N', 'WorkGet', 4)
+
+
+def script_set(r, route, value, record=False):
+    r.p.push(r.arg(value))
+    script_bank(r, route, record)
+    r.op('PUSH_PRI', 0)
+    r.p.emit('SYSREQ_N', 'WorkSet', 8)
 
 
 def battle_points(route, mode, round_no, brain=False):
@@ -121,7 +169,8 @@ def assemble_selection():
     """
     blob, symbols = patch.link(
         [patch.ROOT / 'frontier/asm/modes_selection.s'], FIELD_AT, 'mode_register',
-        {**patch.mode_constants(), 'ROUTE_OFF': 2 * (patch.WORK_ROUTE - 0x4000)},
+        {**patch.mode_constants(), 'ROUTE_OFF': 2 * (patch.WORK_ROUTE - 0x4000),
+         'DOME_TEAM_OFF': 2 * (DOME_ENTRANTS[0] - 0x4000), 'DOME_ROUTE': patch.ROUTE['dome']},
         {**SELECTION_CODE, 'CODE_MODE_OF': patch.assemble()[1]['mode_of'], 'SETRANK_THUNK': SETRANK_THUNK})
     if FIELD_AT + len(blob) > FIELD_END:
         raise ValueError('registration API exceeds the F9 Field reservation')

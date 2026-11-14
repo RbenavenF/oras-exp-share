@@ -4416,3 +4416,35 @@ no se alcanzó en esta pelea (pruebas del motor existente siguen verdes).
 Siguiente paso: orquestador, integrar los dos commits, pasar aceptación en main
  y continuar F10. work/lane-task.json done. Sin push, paquete, inputs ni partida
 original; tasks.json y turno REPARTO no modificados.
+
+## 2026-11-14 — Codex — F9 especiales: menús Libre, bancos y registro de tres del Domo
+Estado: en curso
+Hecho: Domo/Tubo/Pirámide habilitan Individual Libre. Domo registra los tres
+TEAM con descriptor temporal antes de elegir dos y conserva L al reanudar.
+Tubo usa banco M para salas/tramos y AddWinCount saturado; compactación del reset
+ y menús, eliminación guardada del selector retail inalcanzable para caber.
+Pirámide registra antes de destruir el work; pisos, récord y Brandon resuelven
+banco persistido sin reinscribir por planta. Cima pendiente no cuenta/paga dos veces.
+No se asignan IDs nuevos: se reutilizan reservas F9 y textos619/191–196.
+Evidencia: reports/modos-especiales.md y work/frontier/modos/especiales1/:
+- env -u ORCH_LANE python -m pytest -q tests:3178 passed,4 skipped,59.58s
+  (tests-release.log); VM525 passed (vm.log); nativas selección558 (selection.log).
+- Build completo overlay.py --out work/frontier/modos/especiales1/release,
+  build.log y build-hashes.json; DllField SHA256
+  eb70d036317eedf93cb36b8258c8cd496047cbe0b6e12462a88c46a3d9be2bb1;
+  code.ips/DllBattle iguales a previos; hashes restantes en informe.
+- zone-sizes.json, entradas GARC del build descomprimidas: ZO456=16904,
+  458=17248,140=16428,141/142=17060. Tubo sin margen hasta límite17248.
+- modes_audit.py (audit.json): code2008/36 libres, Battle788/1148 libres,
+  Field F9 556/980 libres. Luma0x579604–0x579804 intacta, cifras posterioresF7.
+- py_compile del helper especiales.py y git diff --check correctos.
+Commits: el de esta entrada (frontier: habilita Libre de Domo Tubo y Pirámide).
+Decisiones: regresión agrupada2026-11-13, sin combates ajenos/historia; el Domo
+mantiene desviación anterior de reinscribir al reanudar pero no recalcula L.
+No probado: Azahar, consola, equipo real intacto en ejecución. No declarar done.
+Siguiente paso: aceptación Azahar del build release: un combate Libre por ruta,
+Domo cierre torneo, Tubo arrastre PS/PP/estado y salvaje L−4/L−5, Pirámide cambio
+piso/recarga sin selector; medir bancos/PB y comparar equipo/Cajas. Helper
+frontier/probes/modos/especiales.py y copia inicial pyramid.sav/json preparados.
+Carril24691; no se ha abierto laboratorio en este hito. work/lane-task.json
+in_progress. Sin push, inputs ni partida original; turno y tasks.json intactos.

@@ -358,7 +358,7 @@ def _pow4(p):
     return p.data_labels['brains_pow4']
 
 
-def check_routine(p, streak_work=None, offset=1):
+def check_routine(p, streak_work=None, offset=1, streak_route=None):
     """brains_check(): WORK_BRAIN for the coming battle (module docstring); 0 when none. The unit is the facility's
     streak (GetMyWinCount, or saved work `streak_work`) + `offset`: the Pyramid calls it after counting the floor."""
     r = factory.Routine(p, 'brains_check', ['route', 'unit', 'sym', 'silver', 'gold', 'variant'])
@@ -380,7 +380,10 @@ def check_routine(p, streak_work=None, offset=1):
         r.store(name)
     r.load('silver')
     r.op('JZER', none)                      # not enabled
-    if streak_work is None:
+    if streak_route is not None:
+        import modes
+        modes.script_get(r, streak_route)
+    elif streak_work is None:
         r.sysreq('GetMyWinCount', 0, 0)     # the facility's streak (WORK_ROUTE set)
     else:
         r.sysreq('WorkGet', streak_work)

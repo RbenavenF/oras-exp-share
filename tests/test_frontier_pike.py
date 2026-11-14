@@ -14,6 +14,7 @@ import factory  # noqa: E402
 import overlay  # noqa: E402
 import patch as fp  # noqa: E402
 import brains  # noqa: E402
+import modes
 import pike  # noqa: E402
 import tower  # noqa: E402
 from formats import garc_entries, zo_build  # noqa: E402
@@ -94,14 +95,32 @@ def test_tower_and_palace_scripts_are_unchanged_by_the_stages_table():
 def rooms_run(zone, works, results):
     _, _, script, labels = zone
     log, results = [], list(results)
+    mode = modes.unpack_config(pike.ROUTE, works.get(modes.CONFIG[pike.ROUTE], 0))[0]
+    streak, record = modes.bank(pike.ROUTE, mode)
+    def increment(vm, args):
+        assert args == [0, 0]
+        works[streak] = min(9999, works.get(streak, 0) + 1)
+        works[record] = max(works.get(record, 0), works[streak])
     stubs = natives({'WorkGet': lambda vm, a: works.get(a[0], 0),
                      'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
-                     'GetMyWinCount': lambda vm, a: works.get(pike.STREAK, 0),
+                     'GetMyWinCount': lambda vm, a: works.get(streak, 0),
+                     'AddWinCount': increment,
                      'GlobalCall': lambda vm, a: log.append(('global', a[0])),
                      'GlobalGetChildParam': lambda vm, a: results.pop(0),
                      'SetRank': lambda vm, a: log.append(('rank', a[0]))})
     VM(script, stubs, {}).run(labels['pike_rooms'])
     return log
+
+
+def test_open_nonbattle_rooms_increment_only_the_open_bank_and_keep_damage(zone):
+    streak, record = modes.bank(6, 1)
+    works = {fp.WORK_ROUTE: 6, modes.CONFIG[6]: modes.pack_config(6, 1, 73),
+             streak: 11, record: 12, pike.STREAK: 27, pike.RECORD: 30,
+             **{w: 17 for w in (*fp.PIKE_HP, *fp.PIKE_ST, *fp.PIKE_PP[0], *fp.PIKE_PP[1])}}
+    before = dict(works)
+    rooms_run(zone, works, [pike.ROOM_DONE, pike.ROOM_DONE, pike.ROOM_HARD])
+    assert works[streak] == 13 and works[record] == 13
+    assert all(works[w] == v for w, v in before.items() if w not in (streak, record))
 
 
 def test_a_new_challenge_gets_a_fresh_team_and_plays_until_a_battle(zone):
@@ -266,6 +285,14 @@ def test_room_number_and_doors_menu(shared):
     menus = [x[1] for x in log if x[0] == 'menu']
     assert menus == [[(pike.LINE_DOOR + d, d) for d in range(3)]]
     assert log[-1] == ('result', 0, RESULT.get(room_type(log), pike.ROOM_DONE))
+
+
+def test_open_fourteenth_room_uses_its_bank_not_the_old_one(shared):
+    works, log, _ = _room_run(shared, streak=0, door=0,
+                            extra={modes.CONFIG[6]: modes.pack_config(6, 1, 73),
+                                   modes.bank(6, 1)[0]: 27})
+    assert ('number', 1, 14) in log
+    assert ('result', 0, pike.ROOM_BATTLE) in log
 
 
 @pytest.mark.parametrize('streak', [13, 27, 41])

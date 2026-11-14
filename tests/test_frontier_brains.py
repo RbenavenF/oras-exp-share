@@ -600,7 +600,7 @@ def test_code_bin_functions_are_the_measured_ones():
     assert set(brains.CODE.values()) <= set(brains.CODE_HEADS)
 
 
-@pytest.mark.parametrize('facility', ('tower', 'palace', 'arena'))
+@pytest.mark.parametrize('facility', ('tower', 'palace', 'arena', 'dome', 'pike', 'pyramid'))
 @pytest.mark.parametrize('level', (60, 73, 100))
 @pytest.mark.parametrize('active', (0, 1))
 def test_open_level_brain_uses_the_challenge_level_and_the_open_bank(active, facility, level):
@@ -608,9 +608,12 @@ def test_open_level_brain_uses_the_challenge_level_and_the_open_bank(active, fac
     late bracket reads the Open bank's streak, not the Level 50 one."""
     route, variant = fp.ROUTE[facility], brains.SILVER
     config = modes.pack_config(route, modes.SINGLE_OPEN, level)
-    _, calls = start(route, route + 8 * variant, brains.trainer_id(facility, variant), config=config, active=active)
+    count = 2 if facility == 'dome' else 3
+    forced = [brains.set_index(facility, variant, k) for k in range(count)] if count == 2 else None
+    _, calls = start(route, route + 8 * variant, brains.trainer_id(facility, variant),
+                     count=count, forced=forced, config=config, active=active)
     makes = [c for c in calls if c[0] == C['CODE_MAKE_PARAM']]
-    assert len(makes) == 3 and all(c[2] == (level if active else 50) for c in makes)
+    assert len(makes) == count and all(c[2] == (level if active else 50) for c in makes)
     open_streak, _ = modes.bank(route, modes.SINGLE_OPEN)
     # the Level 50 streak (machine's `streak`) is 0; the Open bank's decides
     assert choose(route, config=config, works={open_streak: 25}, retail=0x73)[0] == 77

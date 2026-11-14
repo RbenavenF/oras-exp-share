@@ -48,6 +48,7 @@ import data as fd  # noqa: E402
 import dome  # noqa: E402
 import factory  # noqa: E402
 import patch  # noqa: E402
+import modes
 import tower  # noqa: E402
 
 FACILITY = 'pike'
@@ -215,7 +216,7 @@ def room_routine(p, helpers):
     r.op('STOR_P_PRI', state)
 
     # room = streak % ROOMS (0-based)
-    r.sysreq('WorkGet', STREAK)
+    modes.script_get(r, ROUTE)
     r.store('room')
     r.op('MOVE_ALT', 0)
     r.const(ROOMS)
@@ -356,7 +357,7 @@ def room_routine(p, helpers):
     r.op('JUMP', 'pike_room_wildset')
     r.p.label(third)
     r.set('value', patch.PIKE_WILD_FAR)
-    r.sysreq('WorkGet', STREAK)
+    modes.script_get(r, ROUTE)
     r.store('count')
     for n in WILD_HEADER_ROOMS:
         nxt = r.new_label('header')
@@ -522,13 +523,24 @@ def rooms_routine(p):
     r.sysreq('WorkGet', patch.WORK_ROUTE)
     r.op('EQ_P_C_PRI', ROUTE)
     r.op('JZER', end)
-    r.sysreq('WorkGet', STREAK)
+    r.sysreq('GetMyWinCount', 0, 0)
     r.op('JNZ', 'pike_rooms_loop')
-    for k in range(FIGHTERS):                    # a new challenge: a fresh team
-        r.sysreq('WorkSet', patch.PIKE_HP[k], patch.PIKE_FULL)
-        r.sysreq('WorkSet', patch.PIKE_ST[k], 0)
-        for pair in patch.PIKE_PP:
-            r.sysreq('WorkSet', pair[k], patch.PIKE_FULL)
+    r.set('result', 0)                          # a new challenge: a fresh team
+    r.p.label('pike_rooms_fresh')
+    for works, value in ((patch.PIKE_HP, patch.PIKE_FULL), (patch.PIKE_ST, 0),
+                         *((pair, patch.PIKE_FULL) for pair in patch.PIKE_PP)):
+        if list(works) != list(range(works[0], works[0] + FIGHTERS)):
+            raise ValueError('Pike reset loop requires contiguous positional works')
+        r.p.push(value)
+        r.load('result')
+        r.add(works[0])
+        r.op('PUSH_PRI', 0)
+        r.p.emit('SYSREQ_N', 'WorkSet', 8)
+    r.load('result')
+    r.add(1)
+    r.store('result')
+    r.const_alt(FIGHTERS)
+    r.op('JSLESS', 'pike_rooms_fresh')
     r.p.label('pike_rooms_loop')
     # Check every room, including after non-battle rooms. Lucy consumes this one room through
     # the ordinary win path, never a second scripted increment. Preserve all v2 party works.
@@ -550,15 +562,8 @@ def rooms_routine(p):
     r.op('JZER', end)
     r.sysreq('SetRank', 1)                       # hard battle: the Maison's Super rank, this battle only
     r.op('JUMP', end)
-    r.p.label('pike_rooms_done')                 # a room without battle: one more room on the streak
-    r.sysreq('WorkGet', STREAK)
-    r.add(1)
-    r.store('streak')
-    r.sysreq('WorkSet', STREAK, 'streak')
-    r.sysreq('WorkGet', RECORD)
-    r.load_alt('streak')
-    r.op('JSGEQ', 'pike_rooms_loop')             # record >= streak
-    r.sysreq('WorkSet', RECORD, 'streak')
+    r.p.label('pike_rooms_done')                 # saturates at the native limit; uses the current mode bank
+    r.sysreq('AddWinCount', 0, 0)
     r.op('JUMP', 'pike_rooms_loop')
     r.p.label(end)
     r.op('ZERO_PRI', 0)
@@ -590,6 +595,18 @@ BATTLE_LOOP = 'L1e1c'
 def pike_program(retail):
     """Zone 517's retail script with the Pike (module docstring)."""
     p = tower.facility_program(retail, FACILITY)
+    # Our reception dispatch always jumps to RECEPTION_NEXT. The original
+    # inline selector (0x1640..0x17af) is dead; keep its separate L12a0 helper.
+    # Guard all symbolic incoming references before reclaiming the 368 bytes.
+    first, last = factory._index(p, 'L1644') - 1, factory._index(p, 'L17b0')
+    removed = {x[1] for x in p.items[first:last] if not isinstance(x, Op)}
+    if p.items[first - 1].op != OP['JUMP'] or p.items[first - 1].args != [factory.RECEPTION_NEXT]:
+        raise ValueError('Pike reception no longer bypasses the retail selector')
+    if (any(label in removed for label, _ in p.publics)
+            or any(isinstance(x, Op) and any(a in removed for a in x.args if isinstance(a, str))
+                   for x in p.items[:first] + p.items[last:])):
+        raise ValueError('retail inline selector still has an incoming reference')
+    del p.items[first:last]
     brains.symbols_option(p, FACILITY, factory.LINE_SYMBOLS)
     start = factory._index(p, BATTLE_LOOP)
     clear = next(i for i in range(start, len(p.items)) if isinstance(p.items[i], Op)

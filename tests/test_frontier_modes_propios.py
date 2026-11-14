@@ -131,7 +131,7 @@ def test_reward_boundaries_use_facility_table(facility, round_number, delta):
     from test_frontier_tower import battle_points_run
     name, script, labels = facility
     route = patch.ROUTE[name]
-    streak = round_number * 7 + delta
+    streak = round_number * tower.STAGES.get(name, 7) + delta
     log = battle_points_run((None, None, script, labels, None, None), streak, route=route)
     expected = data.FRONTIER_BP[name][min(round_number, 30) - 1]
     assert log == ([('bp', expected), ('number', expected)] if delta == 0 else [])

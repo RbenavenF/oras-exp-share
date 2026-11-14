@@ -2,7 +2,7 @@
 """Battle Dome v1 (reports/diseno/domo.md): the zone script of its interior (a clone of the Battle Maison hall) and
 its parts of shared script 5.
 
-Singles, Level 50, rank Normal, with three of the player's own Pokémon entered for the challenge. Before each battle
+Singles, Level 50 or Open Level (F9), rank Normal, with three of the player's own Pokémon entered for the challenge. Before each battle
 the player sees the rival's three Pokémon and picks two of the three entered; the rival brings two of its three (at
 random). A tournament is four battles (round 1, round 2, semifinal, final); BP after each final won
 (data.FRONTIER_BP['dome'], by tournaments won); own streak (battles won) and record by route 5; the loss ends the
@@ -42,8 +42,9 @@ the Factory's in text 637 (LINE_BASE):
 - GLOBAL_WON `dome_won`: the champion's line.
 
 Known deviations (design §1, §6): the Maison's texts and receptionist; no bracket, no simulated 14 others, no
-ranking, no rival style, no Doubles or Open Level; the streak counts battles (tournaments = streak / 4);
-the entry has no banned species list and does not cap levels (the builder scales those above 50 to 50, 0x1e3ddc);
+ranking, no rival style, no Doubles; the streak counts battles (tournaments = streak / 4);
+the entry has no banned species list; Level 50 caps private copies and Open keeps their levels,
+with L=max(60, all three entrants' levels), fixed before the two-fighter choice;
 the rival's two are random, not chosen against the player's team; ordinary rival IVs are the Maison's by streak. Tucker replaces the finals of tournaments 5/10 (S19/39),
 with exact IV/EV teams through brains.py; the native Maison boss is suppressed on route 5.
 """
@@ -58,6 +59,8 @@ import factory  # noqa: E402
 import battle_video  # noqa: E402
 import brains  # noqa: E402
 import patch  # noqa: E402
+import modes
+import tower
 
 FACILITY = 'dome'
 ZONE = 456                       # frontier/REPARTO.md; checked statically by frontier/zone_check.py (§26)
@@ -69,7 +72,7 @@ ENTRIES = 3                      # Pokémon entered
 FIGHTERS = len(patch.DOME_FIGHT)  # 2 per battle, on each side
 # Saved works, free per frontier/ids.py (2026-11-04), assigned in frontier/REPARTO.md. The code.bin hook reads
 # patch.DOME_FIGHT and patch.DOME_FORCED; these only the scripts.
-TEAM = (16493, 16494, 16495)     # party slots entered
+TEAM = modes.DOME_ENTRANTS       # party slots entered
 WORK_STREAK = 16651              # streak handed from the zone script to GLOBAL_ROUND (the child may not call Maison natives)
 RIVAL = (16653, 16654, 16655)    # the rival's three sets this battle (rental work value: bit 15 Super, bits 0-9 index)
 WORK_RNG = 16659                 # generator state between draws
@@ -434,17 +437,47 @@ def shared_cases(levels):
 
 def reception_routine(p):
     """dome_reception() -> 1 = back to the reception menu, 0 = challenge played."""
-    r = factory.Routine(p, 'dome_reception', ['declined'])
+    r = factory.Routine(p, 'dome_reception', ['declined', 'x', 'level'])
     factory.busy_check(r, FACILITY, 'dome_refused')
+    r.sysreq('WorkGet', ACTIVE)
+    r.op('JZER', 'dome_choose_level')
+    tower.config_check(r, ROUTE, 'dome_refused', 'dome_pause_menu')
+    r.p.label('dome_pause_menu')
+    tower.level_menu(r, tower.LINE_PAUSED, ((tower.LINE_RESUME, 0), (tower.LINE_ABANDON, 1), (55, 2)))
+    r.op('JZER', 'dome_paused_level')
+    r.op('EQ_P_C_PRI', 1)
+    r.op('JZER', 'dome_refused')
+    modes.script_set(r, ROUTE, 0)
+    r.sysreq('WorkSet', ACTIVE, 0)
+    r.call('dome_clear')
+    r.op('JUMP', 'dome_refused')
+    r.p.label('dome_paused_level')
+    r.sysreq('WorkGet', modes.CONFIG[ROUTE])
+    r.op('SHR_P_C_PRI', 8)
+    r.add(4)                                    # same M/L, even with a new entry on resume
+    r.store('level')
+    r.op('JUMP', 'dome_selector')
+    r.p.label('dome_choose_level')
+    tower.level_menu(r, tower.LINE_LEVEL, ((tower.LINE_50, 0), (tower.LINE_OPEN, 1), (55, 2)))
+    r.store('level')
+    r.const_alt(1)
+    r.op('JSGRTR', 'dome_refused')
+    r.const_alt(0)
+    r.op('JSLESS', 'dome_refused')
+    r.p.label('dome_selector')
     r.sysreq('SetRank', 0)                      # the streak route covers rank Normal only
     r.sysreq('WorkSet', patch.WORK_ROUTE, ROUTE)
-    r.sysreq('WorkGet', ACTIVE)
-    r.op('JNZ', 'dome_resume')                  # paused challenge: keep the streak
-    r.sysreq('WorkSet', STREAK, 0)              # a new challenge starts at battle 1
-    r.p.label('dome_resume')
     r.sysreq('GlobalCall', GLOBAL_ENTRY)
     r.sysreq('GlobalGetChildParam', 0)
     r.op('JZER', 'dome_back')                   # entry cancelled: nothing else changes
+    r.load('level')
+    r.add(modes.REGISTER)
+    r.op('PUSH_PRI', 0)
+    r.p.emit('SYSREQ_N', 'SetRank', 4)           # API constructs descriptor of all three TEAM members
+    r.sysreq('WorkGet', ACTIVE)
+    r.op('JNZ', 'dome_resume')
+    modes.script_set(r, ROUTE, 0)
+    r.p.label('dome_resume')
     r.sysreq('WorkSet', ACTIVE, 1)
     r.sysreq('WorkSet', factory.WORK_SELECT_RESULT, 1)
     r.sysreq('WorkSet', factory.WORK_SELECT_TYPE, 0)

@@ -9,6 +9,7 @@ import brains
 import data as fd
 import patch as fp
 import pyramid as py
+import modes
 from pawn_vm import VM
 
 SHIFT = 2 * (py.ROUTE - 1)
@@ -58,6 +59,28 @@ def top(streak_before, symbols=0, extra=None):
 
 def challenge_bp(streak):
     return fd.FRONTIER_BP['pyramid'][min(streak // 7, len(fd.FRONTIER_BP['pyramid'])) - 1]
+
+
+@pytest.mark.parametrize('count,pending,win', [(6, 0, 1), (20, 0, 1), (21, 1, 1), (21, 1, 0),
+                                            (69, 0, 1), (70, 2, 1), (9999, 0, 1)])
+def test_open_summit_uses_its_bank_once_after_reload(floor, count, pending, win):
+    streak, record = modes.bank(7, 1)
+    config = modes.pack_config(7, 1, 73)
+    works = top(13, 1 if count >= 69 else 0, {
+        modes.CONFIG[7]: config, streak: count, record: count,
+        py.WORK_SUMMIT: pending, fp.WORK_ROUTE: 0})
+    after, log = run(floor, 'pyramid_stairs', works, win=win)
+    counted = min(9999, count + (not pending))
+    assert after[streak] == (counted if win else 0) and after[record] == counted
+    assert after[py.STREAK] == 13 and after[py.RECORD] == 13
+    assert after[modes.CONFIG[7]] == config and after[py.WORK_SUMMIT] == 0
+    expected = [('bp', challenge_bp(counted))] if win else []
+    if win and (pending or count in (20, 69)):
+        expected.insert(0, ('bp', fd.BRAIN_BONUS))
+    assert [e for e in log if e[0] == 'bp'] == expected
+    again, repeated = run(floor, 'pyramid_stairs', after)
+    assert not any(e[0] in ('bp', 'battle') for e in repeated)
+    assert again[streak] == after[streak]
 
 
 @pytest.mark.parametrize('symbols', [0, 1, 2, 3])

@@ -128,14 +128,38 @@ mode_setrank:
     blo     SETRANK_THUNK
     cmp     r4, #0x108
     bxhs    lr
-    push    {r4, lr}
-    and     r1, r4, #3             @ M
+    push    {r4-r6, lr}
+    sub     sp, sp, #0x20
     add     r2, r0, #0x2c          @ the retail selection descriptor
+    ldr     ip, [r0, #0xb78]
+    ldr     ip, [ip, #0x1c]
+    ldr     ip, [ip]
+    add     ip, ip, #0x13000
+    add     ip, ip, #0x144
+    ldrh    r1, [ip, #ROUTE_OFF]
+    cmp     r1, #DOME_ROUTE
+    bne     descriptor_ready
+    @ Dome inscriptions precede the two-fighter replacement. Build a temporary
+    @ descriptor from TEAM without changing the live work or the real party.
+    mov     r2, sp
+    mov     r1, #0
+    str     r1, [r2]
+    ldrh    r1, [ip, #DOME_TEAM_OFF]
+    str     r1, [r2, #4]
+    ldrh    r1, [ip, #(DOME_TEAM_OFF + 2)]
+    str     r1, [r2, #8]
+    ldrh    r1, [ip, #(DOME_TEAM_OFF + 4)]
+    str     r1, [r2, #12]
+    mov     r1, #3
+    str     r1, [r2, #0x1c]
+descriptor_ready:
+    and     r1, r4, #3             @ M
     and     r3, r4, #4
     lsr     r3, r3, #1             @ resume -> bit 1
     orr     r3, r3, #1             @ accepted
     bl      mode_register
-    pop     {r4, pc}
+    add     sp, sp, #0x20
+    pop     {r4-r6, pc}
 
     .ltorg
 configs:

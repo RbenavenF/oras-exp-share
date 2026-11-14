@@ -64,7 +64,7 @@ def reception_routine(p, facility=FACILITY):
         r.op('JZER', f'{t}_choose_level')
         config_check(r, route, f'{t}_refused', f'{t}_pause_menu')
         r.p.label(f'{t}_pause_menu')
-        level_menu(r, LINE_PAUSED, ((LINE_RESUME, 0), (LINE_ABANDON, 1), (55, 2)))
+        reception_level_menu(r, facility, LINE_PAUSED, LINE_RESUME, LINE_ABANDON)
         r.op('JZER', f'{t}_selector')
         r.op('EQ_P_C_PRI', 1)
         r.op('JZER', f'{t}_refused')
@@ -80,7 +80,7 @@ def reception_routine(p, facility=FACILITY):
         r.sysreq('WorkSet', active, 0)
         r.op('JUMP', f'{t}_refused')
         r.p.label(f'{t}_choose_level')
-        level_menu(r, LINE_LEVEL, ((LINE_50, 0), (LINE_OPEN, 1), (55, 2)))
+        reception_level_menu(r, facility, LINE_LEVEL, LINE_50, LINE_OPEN)
         r.store('level')
         r.op('JZER', f'{t}_selector')
         r.op('EQ_P_C_PRI', 1)
@@ -152,11 +152,19 @@ def reception_routine(p, facility=FACILITY):
     r.p.label(f'{t}_refused')
     r.const(1)
     r.ret()
+    if facility == 'pike':
+        # Share the two menus in the Pike's nearly full ZO container.
+        menu = factory.Routine(p, 'pike_level_menu', ['prompt', 'first', 'second', 'x'])
+        for name, offset in (('prompt', 12), ('first', 16), ('second', 20)):
+            menu.op('LOAD_P_S_PRI', offset)
+            menu.store(name)
+        level_menu(menu, 'prompt', (('first', 0), ('second', 1), (55, 2)))
+        menu.ret()
 
 
 # F9 own-team Singles: a new challenge chooses 50/Open before the retail selector.
 # A paused challenge offers resume/retire and retains its validated CONFIG.
-MODE_FACILITIES = ('tower', 'palace', 'arena')
+MODE_FACILITIES = ('tower', 'palace', 'arena', 'pike')
 LINE_50, LINE_OPEN, LINE_LEVEL, LINE_RESUME, LINE_ABANDON, LINE_PAUSED = range(191, 197)
 LEVEL_TEXT = {
     'es': ('Nivel 50', 'Nivel Libre',
@@ -178,6 +186,13 @@ def level_menu(r, prompt, entries):
     r.store('x')
     r.call(f'L{factory.MSG_CLOSE:x}', 0)
     r.load('x')
+
+
+def reception_level_menu(r, facility, prompt, first, second):
+    if facility == 'pike':
+        r.call('pike_level_menu', prompt, first, second)
+    else:
+        level_menu(r, prompt, ((first, 0), (second, 1), (55, 2)))
 
 
 NEW_ACTIVE = 2                   # ACTIVE of a new challenge between the reception and its registration (registration)
