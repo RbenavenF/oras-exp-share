@@ -204,38 +204,35 @@ def test_every_island_clone_gets_its_donors_native_groups():
                          island_build.ZONE_PALACE, island_build.ZONE_PIKE, island_build.ZONE_ARENA, 140, 141, 142))
 
 
-def test_plaza_plan_links_the_tower_the_dome_the_factory_and_the_palace():
-    """Seven facility buildings with their door props (§23), four door warps in FACILITIES order: the Tower's into
-    329 (island warp 0), the Dome's into 456 (warp 1), the Factory's into 213 (warp 2) and the Palace's into 340
-    (warp 3); each interior's exit comes back to its door."""
+def test_island_plan_links_the_seven_doors_on_their_emerald_tiles():
+    """F11-ISLA-CONSTRUCCION: seven provisional buildings, each with its door on its facility's Emerald door tile
+    (island_layout.DOORS at OFFSET) and one door warp, in FACILITIES order: Tower 0, Dome 1, Factory 2, Pyramid 3,
+    Pike 4, Arena 5, Palace 6; each interior's exit (its warp 0) comes back to its own door."""
     import island_build
-    lines = island_build.plan('s').splitlines()
-    buildings = [line for line in lines if line.startswith('plaza.building.')]
-    doors = [line for line in lines if line.startswith('plaza.door.')]
-    assert len(buildings) == 7 and all(line.split('=', 1)[1].count('|') == 2 for line in buildings)
-    factory, tower, dome, palace, pike, arena, pyramid = (
-        list(island_build.FACILITIES).index(f) for f in ('Factory', 'Tower', 'Dome', 'Palace', 'Pike', 'Arena', 'Pyramid'))
-    assert doors == [f'plaza.door.{tower}={island_build.ZONE_TOWER},0',
-                     f'plaza.door.{dome}={island_build.ZONE_DOME},0',
-                     f'plaza.door.{factory}={island_build.ZONE_HALL},0',
-                     f'plaza.door.{pyramid}={island_build.ZONE_PYRAMID},0',
-                     f'plaza.door.{pike}={island_build.ZONE_PIKE},0',
-                     f'plaza.door.{arena}={island_build.ZONE_ARENA},0',
-                     f'plaza.door.{palace}={island_build.ZONE_PALACE},0']
-    assert buildings[palace].startswith(f'plaza.building.{palace}=Rustboro two-story house|28|25')
-    assert buildings[dome].startswith(f'plaza.building.{dome}=Fallarbor house|')
-    assert buildings[factory].startswith(f'plaza.building.{factory}=Gym|')
+    import island_layout as L
+    lines = island_build.plan('w/scripts').splitlines()
+    buildings = [line for line in lines if line.startswith('island.building.')]
+    assert not any(line.startswith('plaza.') for line in lines)
+    assert list(island_build.FACILITIES) == ['Tower', 'Dome', 'Factory', 'Pyramid', 'Pike', 'Arena', 'Palace']
+    targets = {'Tower': island_build.ZONE_TOWER, 'Dome': island_build.ZONE_DOME, 'Factory': island_build.ZONE_HALL,
+               'Pyramid': island_build.ZONE_PYRAMID, 'Pike': island_build.ZONE_PIKE, 'Arena': island_build.ZONE_ARENA,
+               'Palace': island_build.ZONE_PALACE}
+    expected = []
+    for i, facility in enumerate(island_build.FACILITIES):
+        ex, ey = L.DOORS[facility]
+        x, y = ex + L.OFFSET[0], ey + L.OFFSET[1]
+        assert island_build.FACILITIES[facility][1:] == (x, y)
+        expected.append(f'island.building.{i}={island_build.FACILITY_BUILDINGS[facility]}|{x}|{y}|{targets[facility]}|0')
+        assert island_build.door_warp(facility) == i
+        assert f'zone.{targets[facility]}.warp.0=0,{island_build.ZONE_ISLAND},{i}' \
+            + (',2' if facility == 'Dome' else '') in lines
+    assert buildings == expected
+    assert island_build.FACILITIES['Palace'] == ('Rustboro two-story house', 101 + L.OFFSET[0], 56 + L.OFFSET[1])
+    assert f'island.zone={island_build.ZONE_ISLAND}' in lines and 'island.grid=w/island-grid.txt' in lines
+    assert f'island.clerk={island.ARRIVAL[1] - 1},{island.ARRIVAL[3]},{island_build.CLERK_FACE}' in lines
     assert not any(line.startswith(f'zone.{island_build.ZONE_ISLAND}.warp.') for line in lines)
-    assert f'zone.{island_build.ZONE_TOWER}.warp.0=0,{island_build.ZONE_ISLAND},0' in lines
-    assert f'zone.{island_build.ZONE_DOME}.warp.0=0,{island_build.ZONE_ISLAND},1,2' in lines
-    assert f'zone.{island_build.ZONE_HALL}.warp.0=0,{island_build.ZONE_ISLAND},2' in lines
-    assert f'zone.{island_build.ZONE_PYRAMID}.warp.0=0,{island_build.ZONE_ISLAND},3' in lines   # door (32,57)
-    assert f'zone.{island_build.ZONE_PIKE}.warp.0=0,{island_build.ZONE_ISLAND},4' in lines
-    assert f'zone.{island_build.ZONE_ARENA}.warp.0=0,{island_build.ZONE_ISLAND},5' in lines
-    assert f'zone.{island_build.ZONE_PALACE}.warp.0=0,{island_build.ZONE_ISLAND},6' in lines
     assert [f'zone.{z}.warp.{k}={k},140,0' for z in (141, 142) for k in range(3)] == [l for l in lines if l.startswith(('zone.141.', 'zone.142.'))
                                                                        and '.warp.' in l]
-    assert buildings[arena].startswith(f'plaza.building.{arena}=Battle Resort thatched house|17|25')
     assert all(f'keeptext.{z}=1' in lines
                for z in (island_build.ZONE_TOWER, island_build.ZONE_DOME, island_build.ZONE_PALACE,
                          island_build.ZONE_PIKE, island_build.ZONE_ARENA))
@@ -291,13 +288,15 @@ def test_plaza_buildings_are_distinct_and_drawn(monkeypatch):
         island_build.plan('s')
 
 
-def test_island_load_budget_over_the_measured_one_is_refused():
-    """§23: Plaza's last "load budget" line is checked against LOAD_BUDGET; a log without one is refused too."""
+def test_island_load_budget_over_the_retail_resort_is_refused():
+    """F11: Island's last "load budget" line is checked against ISLAND_BUDGET (retail Resort 211, 4192384 bytes with
+    the same metric); a log without one is refused too. The facility interiors keep LOAD_BUDGET."""
     import island_build
+    assert island_build.ISLAND_BUDGET == 4192384 and island_build.LOAD_BUDGET == 2724608
     line = 'load budget {} bytes: world pack 1, prop pack 2, models 3 (864 3)'
-    log = '\n'.join([line.format(10 ** 7), 'pack ok', line.format(island_build.LOAD_BUDGET)]) + '\n'
-    assert island_build.check_budget(log) == island_build.LOAD_BUDGET   # the last line counts
-    with pytest.raises(ValueError, match='measured to load'):
-        island_build.check_budget(log + line.format(island_build.LOAD_BUDGET + 1) + '\n')
+    log = '\n'.join([line.format(10 ** 7), 'pack ok', line.format(island_build.ISLAND_BUDGET)]) + '\n'
+    assert island_build.check_budget(log) == island_build.ISLAND_BUDGET   # the last line counts
+    with pytest.raises(ValueError, match='retail Resort 211'):
+        island_build.check_budget(log + line.format(island_build.ISLAND_BUDGET + 1) + '\n')
     with pytest.raises(ValueError, match='no load budget'):
         island_build.check_budget('pack ok\n')

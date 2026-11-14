@@ -54,7 +54,7 @@ def main():
     args = parser.parse_args()
     c.SHOTS = ROOT / 'work/f11/prototype/shots'
     c.SHOTS.mkdir(parents=True, exist_ok=True)
-    targets = ((prototype.L.FERRY[0]+16, prototype.L.FERRY[1]+4),) if args.pier else ((1,1),(1,0),(0,0),(2,0),(3,0),(3,1),(2,1))
+    targets = ((prototype.L.FERRY[0]+prototype.L.OFFSET[0], prototype.L.FERRY[1]+prototype.L.OFFSET[1]),) if args.pier else ((1,1),(1,0),(0,0),(2,0),(3,0),(3,1),(2,1))
     for cell in targets:
         start = c.pos()
         steps = path(start,cell,exact=args.pier)

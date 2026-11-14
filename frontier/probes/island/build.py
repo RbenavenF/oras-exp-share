@@ -73,13 +73,13 @@ def grids():
     heights = [['0'] * 160 for _ in range(80)]
     for y in range(L.H):
         for x in range(L.W):
-            rows[y + 4][x + 16] = L.GRID[y][x]
-            heights[y + 4][x + 16] = L.HEIGHT[y][x]
+            rows[y + L.OFFSET[1]][x + L.OFFSET[0]] = L.GRID[y][x]
+            heights[y + L.OFFSET[1]][x + L.OFFSET[0]] = L.HEIGHT[y][x]
     # No reception building in the prototype: a narrow corridor links its two doors.
     # One stair rises from pier level 1 to plaza level 2; the reference data stays untouched.
     for y in range(61, 66):
-        rows[y + 4][26 + 16] = '=' if y == 65 else ':'
-        heights[y + 4][26 + 16] = '2'
+        rows[y + L.OFFSET[1]][26 + L.OFFSET[0]] = '=' if y == 65 else ':'
+        heights[y + L.OFFSET[1]][26 + L.OFFSET[0]] = '2'
     return [''.join(r) for r in rows + heights]
 
 
@@ -117,7 +117,7 @@ def main():
     # Rebuild only ferry 79, preserving all other v0.2 shared scripts and its texts.
     shared = OUT / 'mod/romfs' / overlay.SHARED
     retail = overlay.shared_script((overlay.ROMFS / overlay.SHARED).read_bytes(), island.FERRY_SCRIPT)
-    island.ARRIVAL = (209, L.FERRY[0] + 16, 1, L.FERRY[1] + 4, 2)
+    island.ARRIVAL = (209, L.FERRY[0] + L.OFFSET[0], 1, L.FERRY[1] + L.OFFSET[1], 2)
     script = island.ferry_program(retail).build_script(f'L{retail.main:x}').build(pad=False)
     shared.write_bytes(rebuild_garc(shared.read_bytes(), {(island.FERRY_SCRIPT, 0): script}))
     manifest()

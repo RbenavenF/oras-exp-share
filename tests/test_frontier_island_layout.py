@@ -37,8 +37,8 @@ def test_grid_is_128_by_72_and_fits_4x2_cells():
     assert (L.W, L.H) == (128, 72) == (56 + 72, 72)
     assert len(L.GRID) == len(L.HEIGHT) == 72
     assert all(len(r) == 128 for r in L.GRID + L.HEIGHT)
-    assert L.CELLS == (4, 2) and L.OFFSET == (16, 4)
-    assert L.OFFSET[0] * 2 + L.W == 160 and L.OFFSET[1] * 2 + L.H == 80
+    assert L.CELLS == (4, 2) and L.OFFSET == (15, 6)     # F11-ISLA-CONSTRUCCION: no building straddles a cell edge
+    assert 0 < L.OFFSET[0] and L.OFFSET[0] + L.W < 160 and 0 < L.OFFSET[1] and L.OFFSET[1] + L.H < 80
 
 
 def test_every_tile_has_a_class_of_the_legend():

@@ -22,7 +22,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / 'scripts')]
 sys.path.append(str(ROOT / 'faraway'))
 from pawn import OP, Op, Program  # noqa: E402
-import event as ev  # noqa: E402  (faraway/event.py: ferry helper addresses, give routine, conversation idioms)
+import event as ev  # noqa: E402
+sys.path.insert(0, str(ROOT / 'frontier'))
+import island_layout  # noqa: E402  (faraway/event.py: ferry helper addresses, give routine, conversation idioms)
 
 ITEM_PASS = 701
 FLAG_CHAMPION = 2720
@@ -42,8 +44,12 @@ RESORT_CASE, RESORT_CASE_END = 'Lcb8', 'Le84'
 RESORT_CONFIRM_LINE = 10
 RESORT_ARRIVAL = (212, 53, 2, 34, 2)       # (zone, x, height, y, direction) of the retail Battle Resort trip
 ZONE_ISLAND = 209              # the island exterior, a clone of the Resort harbor (frontier/island_build.py)
-# The island has the Resort harbor's geometry, so the ferry lands on the same tile.
-ARRIVAL = (ZONE_ISLAND,) + RESORT_ARRIVAL[1:]
+# F11-ISLA-CONSTRUCCION: the ferry lands where Emerald's leaves the player (island_layout.FERRY, on the south-west
+# pier) at the trace's map OFFSET, at the pier's height level 1, facing as on the Resort trip (accepted in Azahar with
+# the F11 terrain prototype, reports/diseno/isla-esmeralda.md §2.3).
+PIER_LEVEL = 1
+ARRIVAL = (ZONE_ISLAND, island_layout.FERRY[0] + island_layout.OFFSET[0], PIER_LEVEL,
+           island_layout.FERRY[1] + island_layout.OFFSET[1], RESORT_ARRIVAL[4])
 MAPCHANGE = 'L724'
 GAMETEXT_ITEM = {'counted': 113, 'single': 114, 'plural': 115, 'single2': 116, 'description': 117}
 

@@ -14,15 +14,14 @@ First functional island (provisional geometry, reports/frontier.md §18):
   registers the Maison natives only in zones 448, 517 and 520 (per-zone native groups, frontier/patch.py
   ZONE_NATIVES): without 517's groups every event of the hall fails and the game hangs, so overlay.py passes CLONES
   to patch.build, which gives every clone its donor's groups.
-- The plaza (PLAZA_*, faraway/java/ctrmap/tests/FrontierPlaza.java): after the clones, CTRMap-F5's map painter
-  repaints part of the island's own map cell (cell 0,1: the south half of the pier and the sea around it) as a path
-  square with one catalogue building per Emerald facility (FACILITIES). Composite Apply: tiles outside the square
-  keep the harbor's sea and pier. The painter wires no door; Plaza replaces the island's warps with one door warp,
-  the Factory's, into the hall 213 (whose exit, warp 0, comes back to it). The other six buildings are mocks with no
-  warp. Every building keeps its swinging-door prop. After the paint, Plaza copies into the area's world pack any
-  map-model texture only its prop pack holds (the painter counts those as present, and the island then hangs on
-  load; reports/frontier.md §23), and prints the load budget, which must stay within LOAD_BUDGET. Walking south from
-  the dock leads onto the square.
+- The exterior (F11-ISLA-CONSTRUCCION; island_rows, FACILITIES, faraway/java/ctrmap/tests/FrontierIsland.java):
+  after the clones, the island's private map becomes 4x2 painted cells, the Emerald Frontier outside traced by
+  frontier/island_layout.py at its OFFSET, with one provisional catalogue building per facility, its door on the
+  facility's Emerald door tile and its swinging-door prop. The island's warps are replaced by one door warp per
+  facility, in FACILITIES order, into its interior (whose exit, warp 0, comes back to it), and the ferry clerk moves to
+  the pier beside island.ARRIVAL. Flat runs of identical floor tiles are merged losslessly (IslandFloors), map
+  textures are kept in the world pack (§23) and the load budget must stay within ISLAND_BUDGET (retail Resort 211).
+  The old v0.2 plaza (one painted cell over the cloned harbor, faraway/java/faraway/Plaza.java) is no longer built.
 Both slots were chosen with CTRMap-F5's ZoneRepurposeScanner (empty, no incoming warps, no script or shared script
 sends the player there; §18); both keep their placeholder entity scripts (517's is empty as well).
 
@@ -43,6 +42,7 @@ from formats import garc_entries, lz11_decompress, text_lines, words_to_text, zo
 from pawn import OP, Op, Program, Script  # noqa: E402
 import factory  # noqa: E402
 import island  # noqa: E402
+import island_layout  # noqa: E402
 import pyramid  # noqa: E402
 import dome_room  # noqa: E402
 
@@ -77,30 +77,94 @@ def native_donors():
     """slot: zone whose native groups it registers (patch.zone_natives)."""
     return {**CLONES, **NATIVE_DONORS}
 
-PLAZA_RECT = (1, 0, 39, 38)    # cell-local tiles x0, y0, x1, y1 of the island's own cell (0,1) painted as path
-# Emerald facility: (catalogue building, anchor x, y). Only the Factory has a door (into the hall 213); the others are
-# mocks. One distinct building each, among the cheapest catalogue houses besides the Gym (each one's load budget
-# alone, reports/frontier.md §24); the seven together stay within LOAD_BUDGET. Left out: the Pokemon Center and the
-# Mart (the player would take a facility for one), and the Pacifidlog stilt hut and Lanette's house (cut and placed,
-# but the game draws neither; §24). The layout is fixed: each facility's agent works inside its own building.
-FACILITIES = {
-    'Tower': ('Rustboro flat-roof house', 16, 2),
-    'Dome': ('Fallarbor house', 4, 13),
-    'Factory': ('Gym', 16, 13),
-    'Pyramid': ('Dewford shingle house', 30, 13),
-    'Pike': ('Route 124 treasure cabin', 3, 25),
-    'Arena': ('Battle Resort thatched house', 17, 25),
-    'Palace': ('Rustboro two-story house', 28, 25),
+# F11-ISLA-CONSTRUCCION (reports/diseno/isla-esmeralda.md §2-§3): the island is Emerald's Battle Frontier outside,
+# traced tile by tile (frontier/island_layout.py) and painted 1:1 over 4x2 map cells at island_layout.OFFSET by
+# CTRMap-F5 (faraway/java/ctrmap/tests/FrontierIsland.java). Each facility keeps today's provisional catalogue building
+# (one distinct building each, among the cheapest catalogue houses besides the Gym, reports/frontier.md §24), now
+# stamped with its door on the facility's Emerald door tile; the rest of the facility's hueco (island_layout.BUILDINGS,
+# the definitive building's silhouette) is reserved rock, as are the huecos of the Pokemon Center, Mart, Ranking Hall,
+# Scott's house, Exchange and lounges, which have no door. Left out: the Pokemon Center and the Mart as provisional
+# buildings, the Pacifidlog stilt hut and Lanette's house (the game draws neither; §24).
+FACILITY_BUILDINGS = {
+    'Tower': 'Rustboro flat-roof house',
+    'Dome': 'Fallarbor house',
+    'Factory': 'Gym',
+    'Pyramid': 'Dewford shingle house',
+    'Pike': 'Route 124 treasure cabin',
+    'Arena': 'Battle Resort thatched house',
+    'Palace': 'Rustboro two-story house',
 }
+
+
+def map_tile(x, y):
+    """ORAS map tile of an Emerald (trace) tile."""
+    return x + island_layout.OFFSET[0], y + island_layout.OFFSET[1]
+
+
+# facility: (catalogue building, its door's map tile x, y)
+FACILITIES = {f: (name, *map_tile(*island_layout.DOORS[f])) for f, name in FACILITY_BUILDINGS.items()}
+# Facilities whose building keeps the cut's passengers (shadow decals, terrain chips, sea planes around it).
+PASSENGERS = set(FACILITY_BUILDINGS)
 # Catalogue buildings the painter cuts and places but the game does not draw on the island (collision and door prop
 # only; Azahar, reports/frontier.md §24). plan() refuses them.
 NOT_DRAWN = {'Pacifidlog stilt hut', "Route 114 Lanette's house"}
-# Plaza's "load budget": the island area's world pack + prop pack + the map models of all the island's regions,
-# unpacked. The largest measured to load in Azahar; 2986112 and up hung (reports/frontier.md §23). A measured bound,
-# not the engine's limit, which was not found: retail areas hold larger texture packs.
+# Plaza's "load budget": the area's world pack + prop pack + the map models of all the zone's regions, unpacked. The
+# largest measured to load in Azahar with the old plaza; 2986112 and up hung there (reports/frontier.md §23). Still
+# the bound of the facility interiors (dome_room, pyramid). Not the engine's limit.
 LOAD_BUDGET = 2724608
+ZO_LIMIT = pyramid.ZO_LIMIT    # the largest zone container measured to load (reports/frontier.md §11)
+# The island's own bound (F11): the retail Battle Resort exterior, zone 211, measured with the same metric
+# (reports/diseno/isla-esmeralda.md §2.1, reports/frontier.md F11 hito 2, frontier/probes/island/survey.sh). What the
+# game ships loads on a console; the island has to stay at or below it.
+ISLAND_BUDGET = 4192384
 DOORS = {'Tower': (ZONE_TOWER, 0), 'Dome': (ZONE_DOME, 0), 'Factory': (ZONE_HALL, 0), 'Palace': (ZONE_PALACE, 0),
          'Pike': (ZONE_PIKE, 0), 'Arena': (ZONE_ARENA, 0), 'Pyramid': (ZONE_PYRAMID, 0)}   # facility: (zone, warp) its door leads to (island warps follow FACILITIES order)
+# The ferry clerk (NPC 0) stands on the pier one tile west of where the ferry leaves the player (island.ARRIVAL).
+CLERK_FACE = 3
+CATALOGUE = ROOT / 'tools/CTRMap-F5/src/ctrmap/resources/oras_buildings.tsv'
+# The reception (island_layout.DOORS ReceptionNorth/South) has no building yet: a one-tile passage crosses its hueco
+# from the pier landing (stair at its south door) to the plaza (its north door), as in the F11 terrain prototype.
+RECEPTION_PASSAGE = [(26, y) for y in range(61, 66)]
+
+
+def catalogue(name):
+    """(tiles wide, tiles high, door dx, door dy, door prop) of a CTRMap-F5 catalogue building."""
+    for line in CATALOGUE.read_text().splitlines():
+        f = line.split('\t')
+        if len(f) > 11 and not line.startswith('#') and f[1] == name:
+            tx0, ty0, tx1, ty1 = map(int, f[4:8])
+            return tx1 - tx0 + 1, ty1 - ty0 + 1, int(f[9]), int(f[10]), f[11]
+    raise ValueError(f'no catalogue building {name!r} in {CATALOGUE}')
+
+
+def building_box(facility):
+    """Inclusive map-tile box x0, y0, x1, y1 the facility's provisional building covers."""
+    name, x, y = FACILITIES[facility]
+    w, h, dx, dy, _ = catalogue(name)
+    return x - dx, y - dy, x - dx + w - 1, y - dy + h - 1
+
+
+def island_rows():
+    """Class rows then height rows of the whole map (frontier/island_layout.py at OFFSET, sea around it), with the
+    reception passage open and the hueco tiles under each provisional building painted as floor (the building's own
+    footprint blocks them)."""
+    w, h = island_layout.CELLS[0] * 40, island_layout.CELLS[1] * 40
+    rows = [['~'] * w for _ in range(h)]
+    heights = [['0'] * w for _ in range(h)]
+    for y in range(island_layout.H):
+        for x in range(island_layout.W):
+            mx, my = map_tile(x, y)
+            rows[my][mx], heights[my][mx] = island_layout.GRID[y][x], island_layout.HEIGHT[y][x]
+    for x, y in RECEPTION_PASSAGE:
+        mx, my = map_tile(x, y)
+        rows[my][mx], heights[my][mx] = ('=' if y == RECEPTION_PASSAGE[-1][1] else ':'), '2'
+    for facility in FACILITIES:
+        x0, y0, x1, y1 = building_box(facility)
+        for y in range(y0, y1 + 1):
+            for x in range(x0, x1 + 1):
+                if rows[y][x] == 'B':
+                    rows[y][x] = '.'
+    return [''.join(r) for r in rows + heights]
 
 
 ISLAND_EVENTS = {-1, 1, 2}      # zone 212's events the island keeps: -1 empty, 1 arrival, 2 the ferry clerk
@@ -135,7 +199,7 @@ def island_script(donor):
 
 
 def door_warp(facility):
-    """The island warp of a facility's door: Plaza adds one per door, in FACILITIES order (FrontierPlaza.linkDoors)."""
+    """The island warp of a facility's door: Island adds one per door, in FACILITIES order (FrontierIsland.build)."""
     return [f for f in FACILITIES if f in DOORS].index(facility)
 
 
@@ -148,19 +212,18 @@ def plan(scripts):
         'zones=' + ','.join(map(str, CLONES)),
         f'zone.{ZONE_ISLAND}.clearNpcs=1', f'zone.{ZONE_ISLAND}.clearTriggers=1',
         f'zone.{ZONE_ISLAND}.npc.0=' + ','.join(str(v) for v in CLERK),
-        f'plaza.zone={ZONE_ISLAND}', 'plaza.rect=' + ','.join(map(str, PLAZA_RECT)),
-        'plaza.heightof=0',            # the pier's warp: the painted square lies at the pier's ground
+        f'island.zone={ZONE_ISLAND}', f'island.grid={Path(scripts).parent / "island-grid.txt"}',
+        f'island.clerk={island.ARRIVAL[1] - 1},{island.ARRIVAL[3]},{CLERK_FACE}',
     ]
     names = [name for name, _, _ in FACILITIES.values()]
     if len(set(names)) != len(names) or NOT_DRAWN & set(names):
-        raise ValueError(f'plaza buildings must be distinct and drawn (not {sorted(NOT_DRAWN)}): {names}')
+        raise ValueError(f'island buildings must be distinct and drawn (not {sorted(NOT_DRAWN)}): {names}')
     for facility, (zone, _) in DOORS.items():   # each interior's exit (its warp 0) comes back to its own door
         lines.append(f'zone.{zone}.warp.0=0,{ZONE_ISLAND},{door_warp(facility)}'
                      + (',2' if zone == ZONE_DOME else ''))
-    for i, (facility, (name, x, y)) in enumerate(FACILITIES.items()):
-        lines.append(f'plaza.building.{i}={name}|{x}|{y}')
-        if facility in DOORS:
-            lines.append(f'plaza.door.{i}=' + ','.join(map(str, DOORS[facility])))
+    for i, (facility, (name, x, y)) in enumerate(FACILITIES.items()):   # zone -1: a building without a warp
+        lines.append(f'island.building.{i}={name}|{x}|{y}|' + '|'.join(map(str, DOORS.get(facility, (-1, 0))))
+                     + ('' if facility in PASSENGERS else '|nopassengers'))
     if ZONE_DOME in CLONES:
         lines += dome_room.plan_lines(LOAD_BUDGET)
     lines += pyramid.plan_lines()   # the Pyramid's floors: NPCs and exit to its lobby
@@ -212,28 +275,19 @@ def build(archives, source, work, zone_scripts=None):
         if Script.parse(script).build() != script:
             raise ValueError(f'zone {slot} script does not round-trip')
         (scripts / f'zone{slot}.bin').write_bytes(script)
+    (work / 'island-grid.txt').write_text('\n'.join(island_rows()) + '\n')
     (work / 'plan.properties').write_text(plan(scripts))
     log = work / 'java.log'
     with log.open('w') as stream:
         subprocess.run([str(ROOT / 'faraway/run.sh'), 'Build', str(game), str(work / 'ws'),
                         str(work / 'plan.properties')], stdout=stream, stderr=subprocess.STDOUT, check=True)
-        subprocess.run([str(ROOT / 'faraway/run.sh'), 'Plaza', str(game), str(work / 'ws'),
+        subprocess.run([str(ROOT / 'faraway/run.sh'), 'Island', str(game), str(work / 'ws'),
                         str(work / 'plan.properties')], stdout=stream, stderr=subprocess.STDOUT, check=True)
     text = log.read_text()
     for zone in CLONES:
         if f'zone {zone} cloned from' not in text:
             raise ValueError(f'Java build did not clone zone {zone}: {text}')
-    painted = f'Painted map applied to zone {ZONE_ISLAND}' in text
-    if not painted or f'{len(FACILITIES)} door(s) left unwired' not in text:
-        raise ValueError(f'the plaza was not painted: {text}')
-    if 'Swinging-door prop(s) placed' not in text:
-        raise ValueError(f'the plaza placed no door props: {text}')
-    if 'world textures copied from the prop pack:' not in text:
-        raise ValueError(f'Plaza did not keep the map textures in the world pack (§23): {text}')
-    for facility in DOORS:
-        name = FACILITIES[facility][0]
-        if f'warp {door_warp(facility)} door of {name} at tile' not in text:
-            raise ValueError(f'the {facility} door was not linked: {text}')
+    check_island_log(text)
     out = dict(archives)
     for rel in STAGED:
         new = (game / rel).read_bytes()
@@ -249,16 +303,89 @@ def build(archives, source, work, zone_scripts=None):
         dome_room.check_room(lz11_decompress(out['a/0/1/3'][offset:offset + length]),
                              zone_scripts[ZONE_DOME], ZONE_ISLAND, door_warp('Dome'))
     check_budget(text)
+    _, _, offset, length = garc_entries(out['a/0/1/3'])[ZONE_ISLAND]
+    size = len(lz11_decompress(out['a/0/1/3'][offset:offset + length]))
+    if size > ZO_LIMIT:
+        raise ValueError(f'the island ZO is {size} bytes, over the {ZO_LIMIT} measured to load (reports/frontier.md §11)')
     out.update(place_names(out, source))
     return out, text
 
 
-def check_budget(text):
-    """The load budget Plaza printed (its last such line); refuses one over LOAD_BUDGET or a log without one."""
+def check_island_log(text):
+    """What FrontierIsland must have printed: eight painted cells, every building stamped in its cell with its door
+    prop, one door warp per facility with a door on its door tile, the clerk on the pier and no map texture outside
+    the world pack (reports/frontier.md §23)."""
+    cells = re.findall(r'^cell (\d),(\d) region (\d+) .* buildings (\d+) door props (\d+)', text, re.M)
+    if sorted((int(x), int(y)) for x, y, *_ in cells) != [(x, y) for x in range(4) for y in range(2)]:
+        raise ValueError(f'the island was not painted over its eight cells: {text}')
+    if sum(int(c[3]) for c in cells) != len(FACILITIES) or sum(int(c[4]) for c in cells) != len(FACILITIES):
+        raise ValueError(f'the island did not stamp {len(FACILITIES)} buildings with their door props: {text}')
+    for facility in DOORS:
+        name, x, y = FACILITIES[facility]
+        if f'warp {door_warp(facility)} door of {name} at tile {x},{y} ' not in text:
+            raise ValueError(f'the {facility} door was not linked on its tile {x},{y}: {text}')
+    if len(re.findall(r'^warp \d+ door of ', text, re.M)) != len(DOORS):
+        raise ValueError(f'the island has warps that are not facility doors: {text}')
+    if f'clerk at tile {island.ARRIVAL[1] - 1},{island.ARRIVAL[3]} ' not in text:
+        raise ValueError(f'the ferry clerk is not on the pier: {text}')
+    if 'outside the world pack: {}' not in text:
+        raise ValueError(f'the island draws with textures its world pack lacks (§23): {text}')
+
+
+def check_budget(text, bound=None):
+    """The load budget Island printed (its last such line); refuses one over ISLAND_BUDGET or a log without one."""
+    bound = ISLAND_BUDGET if bound is None else bound
     found = re.findall(r'^load budget (\d+) bytes', text, re.M)
     if not found:
-        raise ValueError('Plaza printed no load budget')
+        raise ValueError('Island printed no load budget')
     budget = int(found[-1])
-    if budget > LOAD_BUDGET:
-        raise ValueError(f'the island load budget is {budget} bytes, over the {LOAD_BUDGET} measured to load (§23)')
+    if budget > bound:
+        raise ValueError(f'the island load budget is {budget} bytes, over the {bound} of the retail Resort 211 (F11)')
     return budget
+
+
+def steps_from(at, rows):
+    """The tiles one step from `at` on the island map (island_rows): walkable classes only (island_layout.WALKABLE),
+    and a change of height level only by one level up or down a stair ('=') walked north-south."""
+    h = len(rows) // 2
+    x, y = at
+    for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+        if not (0 <= nx < len(rows[0]) and 0 <= ny < h) or rows[ny][nx] not in island_layout.WALKABLE:
+            continue
+        delta = abs(int(rows[h + ny][nx]) - int(rows[h + y][x]))
+        if delta and not (delta == 1 and '=' in (rows[ny][nx], rows[y][x]) and nx == x):
+            continue
+        yield nx, ny
+
+
+def route(start, goal=None, rows=None):
+    """Shortest walk on the island map from `start` to `goal` (map tiles), as the list of tiles; raises if there is
+    none. With no goal: {tile: previous tile} of everything reached. Used by the tests and the lab's circuit."""
+    from collections import deque
+    rows = rows or island_rows()
+    queue, prev = deque([start]), {start: None}
+    while queue:
+        at = queue.popleft()
+        if at == goal:
+            steps = []
+            while at is not None:
+                steps.append(at)
+                at = prev[at]
+            return steps[::-1]
+        for nxt in steps_from(at, rows):
+            if nxt not in prev:
+                prev[nxt] = at
+                queue.append(nxt)
+    if goal is None:
+        return prev
+    raise ValueError(f'no walk on the island from {start} to {goal}')
+
+
+def corners(steps):
+    """The turning points of a walk (and its end): what the lab's walker is given."""
+    out = []
+    for i in range(1, len(steps)):
+        if i == len(steps) - 1 or (steps[i][0] - steps[i - 1][0], steps[i][1] - steps[i - 1][1]) != \
+                (steps[i + 1][0] - steps[i][0], steps[i + 1][1] - steps[i][1]):
+            out.append(steps[i])
+    return out

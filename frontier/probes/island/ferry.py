@@ -16,6 +16,8 @@ sys.path.insert(0,str(ROOT/'frontier/probes/package'))
 import circuit as c
 sys.path.insert(0,str(ROOT/'faraway'))
 import save_event as se
+sys.path.insert(0,str(ROOT/'frontier'))
+import island_layout as L
 
 OUT=ROOT/'work/f11/prototype'
 c.SHOTS=OUT/'shots'
@@ -65,7 +67,7 @@ def main():
     at=c.pos()
     c.log(f'FERRY ARRIVAL {at}')
     c.shot('arrival')
-    assert at==(35,71),f'Not at new pier: {at}'
+    assert at==(L.FERRY[0]+L.OFFSET[0],L.FERRY[1]+L.OFFSET[1]),f'Not at new pier: {at}'
 
 
 if __name__=='__main__':

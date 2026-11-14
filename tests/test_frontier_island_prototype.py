@@ -18,8 +18,9 @@ def test_export_preserves_trace_and_sea_padding_except_documented_reception_pass
     for y in range(80):
         for x in range(160):
             c, h = rows[y][x], rows[80+y][x]
-            if 16 <= x < 144 and 4 <= y < 76:
-                ex, ey = x-16, y-4
+            ox, oy = L.OFFSET
+            if ox <= x < ox + L.W and oy <= y < oy + L.H:
+                ex, ey = x-ox, y-oy
                 if ex == 26 and 61 <= ey <= 65:
                     assert c == ('=' if ey == 65 else ':') and h == '2'
                 else:
@@ -29,7 +30,7 @@ def test_export_preserves_trace_and_sea_padding_except_documented_reception_pass
 
 
 def test_ferry_lands_on_dry_walkable_pier_in_southwest_cell():
-    x, y = L.FERRY[0]+16, L.FERRY[1]+4
+    x, y = L.FERRY[0]+L.OFFSET[0], L.FERRY[1]+L.OFFSET[1]
     rows = prototype.grids()
     assert (x//40,y//40) == (0,1)
     assert rows[y][x] == 'm' and rows[80+y][x] == '1'
@@ -39,7 +40,7 @@ def test_reception_passage_connects_ferry_to_all_eight_cells_at_walkable_heights
     route_spec = importlib.util.spec_from_file_location('f11_route', ROOT / 'frontier/probes/island/route.py')
     route = importlib.util.module_from_spec(route_spec)
     route_spec.loader.exec_module(route)
-    start = (L.FERRY[0]+16, L.FERRY[1]+4)
+    start = (L.FERRY[0]+L.OFFSET[0], L.FERRY[1]+L.OFFSET[1])
     for cy in range(2):
         for cx in range(4):
             steps = route.path(start, (cx,cy))

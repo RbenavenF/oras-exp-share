@@ -259,7 +259,9 @@ OutsideEast (its x + 56); the ORAS map is 4x2 cells (160x80) with this grid at O
 """
 W, H = {W}, {H}
 CELLS = (4, 2)                  # ORAS map cells of 40x40 tiles
-OFFSET = ((CELLS[0] * 40 - W) // 2, (CELLS[1] * 40 - H) // 2)   # (16, 4): the trace centred, sea around it
+# Where the trace sits on the ORAS map: (15, 6), not centred (16, 4), so that no provisional facility building
+# (frontier/island_build.py FACILITIES) straddles a cell edge: a building is stamped into one 40x40 cell (F11).
+OFFSET = (15, 6)
 LEGEND = {{
     '~': 'mar', 'w': 'estanque (agua rodeada de tierra)', '.': 'suelo de baldosa clara', ':': 'camino',
     ',': 'hierba / cesped', 's': 'arena (recinto de la Piramide)', 'm': 'muelle', '=': 'escalera (sube al norte)',

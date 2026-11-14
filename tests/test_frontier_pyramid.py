@@ -84,7 +84,8 @@ def test_plan_lines_give_each_floor_three_trainers_an_attendant_and_the_lobby_ex
         assert [int(n[2]) for n in npcs] == [2, 3, 4, py.STAIRS_EVENT]
         assert len({(n[4], n[5]) for n in npcs}) == 4
     plan = island_build.plan('s').splitlines()
-    assert f'plaza.door.{list(island_build.FACILITIES).index("Pyramid")}={py.LOBBY},0' in plan
+    name, x, y = island_build.FACILITIES['Pyramid']
+    assert f'island.building.{list(island_build.FACILITIES).index("Pyramid")}={name}|{x}|{y}|{py.LOBBY}|0' in plan
     assert f'zone.{py.LOBBY}.warp.0=0,{island_build.ZONE_ISLAND},{island_build.door_warp("Pyramid")}' in plan
 
 
