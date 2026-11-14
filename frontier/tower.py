@@ -82,12 +82,14 @@ def reception_routine(p, facility=FACILITY):
         r.sysreq('WorkSet', modes.CONFIG[route], 0)   # F9: a new challenge is Level 50 Singles (no mode menu yet)
     r.sysreq('WorkSet', streak, 0)              # a new challenge starts at battle 1
     if facility in MODE_FACILITIES:
-        r.op('JUMP', f'{t}_start')
+        r.sysreq('WorkSet', active, NEW_ACTIVE)  # F9: «new, mode not registered yet» until registration()
+        r.op('JUMP', f'{t}_challenge')
     r.p.label(f'{t}_resume')
     if facility in MODE_FACILITIES:              # F9: resume in the persisted mode, if it is one this reception runs
         config_check(r, route, f'{t}_new', f'{t}_start')
     r.p.label(f'{t}_start')
     r.sysreq('WorkSet', active, 1)
+    r.p.label(f'{t}_challenge')
     r.call(factory.CHALLENGE, 0, 0, 'x')
     r.op('EQ_P_C_PRI', 1)
     r.op('JNZ', f'{t}_declined')
@@ -96,7 +98,12 @@ def reception_routine(p, facility=FACILITY):
     r.op('ZERO_PRI', 0)
     r.op('JSLESS', f'{t}_kept')                # 0 < streak: paused
     r.sysreq('WorkSet', active, 0)
+    if facility in MODE_FACILITIES:
+        r.op('JUMP', f'{t}_closed')
     r.p.label(f'{t}_kept')
+    if facility in MODE_FACILITIES:
+        r.sysreq('WorkSet', active, 1)          # F9: never leave NEW_ACTIVE behind a played challenge
+    r.p.label(f'{t}_closed')
     r.sysreq('WorkSet', patch.WORK_ROUTE, 0)
     r.op('ZERO_PRI', 0)
     r.ret()
@@ -117,6 +124,40 @@ def reception_routine(p, facility=FACILITY):
 # modes.CONFIG[route]. BASE runs Singles only (the selector refuses Doubles), so it resumes M 0 (CONFIG 0 or Level 50)
 # and M 1 (Singles Open Level, L 60-100); anything else is not resumed: a new Level 50 challenge instead.
 MODE_FACILITIES = ('tower',)
+NEW_ACTIVE = 2                   # ACTIVE of a new challenge between the reception and its registration (registration)
+REGISTERED = 'L1a38'             # challenge 0x18f8: the party app accepted the selection, before the save (0x13d4)
+
+
+def registration(p, facility):
+    """F9 registration in the challenge routine of a MODE_FACILITIES zone script, right after the party app accepted
+    (REGISTERED, before the save): SetRank(modes.REGISTER + M + 4*resume), M = CONFIG[route] >> 8, resume unless
+    ACTIVE is NEW_ACTIVE; the DllField SetRank native hands it to mode_register (frontier/asm/modes_selection.s),
+    which fixes a new challenge's CONFIG from the effective selection (party or Battle Box) and keeps a resumed one.
+    Then ACTIVE = 1, so the save holds an ordinary challenge in progress."""
+    at = factory._index(p, REGISTERED)
+    if p.items[at + 1].op != OP['SYSREQ_N'] or p.items[at + 1].args[0] != p.native('FieldMenuChangePagePlayNavi'):
+        raise ValueError('accepted-selection path not found at 0x1a38')
+    p.items[at + 1:at + 1] = _ops(p, lambda b: registration_ops(b, facility))
+
+
+def registration_ops(b, facility):
+    """The ops of registration() into Program `b`."""
+    route, active = patch.ROUTE[facility], patch.ACTIVE_WORK[facility]
+    b.sysreq('WorkGet', active)
+    b.emit('EQ_P_C_PRI', NEW_ACTIVE)            # 1 new, 0 resumed
+    b.emit('SMUL_P_C', -4)
+    b.emit('ADD_P_C', 4)                        # 4*resume
+    b.emit('PUSH_PRI', 0)
+    b.sysreq('WorkGet', modes.CONFIG[route])
+    b.emit('SHR_P_C_PRI', 8)
+    b.emit('CONST_P_ALT', 3)
+    b.emit('AND', 0)                            # M
+    b.emit('ADD_P_C', modes.REGISTER)
+    b.emit('PALT', 0)
+    b.emit('ADD', 0)
+    b.emit('PUSH_PRI', 0)
+    b.items.append(Op(OP['SYSREQ_N'], [b.native('SetRank'), 4]))
+    b.sysreq('WorkSet', active, 1)
 
 
 def config_check(r, route, invalid, valid):
@@ -232,6 +273,8 @@ def facility_program(retail, facility):
         raise ValueError('lost-battle path not found at 0x2210')
     p.items[at + 1:at + 1] = _ops(p, lambda b: b.sysreq('WorkSet', active, 0))
     battle_points(p, facility)
+    if facility in MODE_FACILITIES:
+        registration(p, facility)
     reception_routine(p, facility)
     brains.install(p)             # Frontier Brains (frontier/brains.py) and no Maison boss on the route
     return battle_video.suppress(p)

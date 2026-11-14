@@ -133,14 +133,70 @@ def test_factory_never_reads_descriptor_or_real_party():
         assert writes == [(work_address(m.CONFIG[1]), 2, result)] and getters == []
 
 
-def test_field_payload_is_guarded_rehashed_and_does_not_install_callback():
+def test_field_payload_is_guarded_rehashed_and_only_the_setrank_call_is_redirected():
     from build_patch import cro_hashes
     data, _ = field()
     blob, _ = m.assemble_selection()
     assert data[m.FIELD_AT:m.FIELD_AT + len(blob)] == blob
     assert len(blob) <= m.FIELD_END - m.FIELD_AT
     assert b''.join(cro_hashes(data)) == data[:0x80]
-    assert m.cro_writes() == [dict(offset=m.FIELD_AT, before=bytes(len(blob)).hex(), after=blob.hex())]
+    import brains
+    _, symbols = m.assemble_selection()
+    assert m.cro_writes() == [dict(offset=m.FIELD_AT, before=bytes(len(blob)).hex(), after=blob.hex()),
+                              dict(offset=m.SETRANK_SITE, before=brains.bl(m.SETRANK_SITE, m.SETRANK_THUNK).hex(),
+                                   after=brains.bl(m.SETRANK_SITE, symbols['mode_setrank']).hex())]
+    assert data[m.SETRANK_SITE:m.SETRANK_SITE + 4] == brains.bl(m.SETRANK_SITE, symbols['mode_setrank'])
+    # the native keeps the script argument in r4 across the call (0x95e44 uxth r4, r0; pops it at 0x95e68)
+    raw = (fp.MOD_ROMFS / fp.FIELD_CRO).read_bytes()
+    assert raw[0x95E44:0x95E48] == bytes.fromhex('7040ffe6') and raw[0x95E64:0x95E6C] == bytes.fromhex('0000a0e31080bde8')
     code = fp.build()[0]
     original = fp.REPOLISHED.read_bytes()
     assert code[0x1D8968 - fp.BASE:0x1D8978 - fp.BASE] == original[0x1D8968 - fp.BASE:0x1D8978 - fp.BASE]
+
+
+
+@pytest.mark.parametrize('arg, mode, flags', [(0x100, 0, 1), (0x101, 1, 1), (0x105, 1, 3), (0x104, 0, 3),
+                                               (0x103, 3, 1)])
+def test_setrank_argument_maps_to_registration(arg, mode, flags):
+    """SetRank(0x100 + M + 4*resume) -> mode_register(work, M, work+0x2c, accepted | resume<<1)."""
+    seen = []
+    data, symbols = field()
+
+    def run():
+        uc, _ = machine(2, 0x149)
+        uc.mem_map(FIELD, (len(data) + 0xFFF) & ~0xFFF)
+        uc.mem_write(FIELD, data)
+
+        def stop(uc, at, size, _):
+            if at == FIELD + symbols['mode_register']:
+                seen.append(tuple(uc.reg_read(getattr(A, f'UC_ARM_REG_R{n}')) for n in range(4)))
+                uc.reg_write(A.UC_ARM_REG_R0, 0x1234)
+                uc.reg_write(A.UC_ARM_REG_PC, uc.reg_read(A.UC_ARM_REG_LR))
+            elif at == FIELD + m.SETRANK_THUNK:
+                seen.append('retail')
+                uc.reg_write(A.UC_ARM_REG_PC, uc.reg_read(A.UC_ARM_REG_LR))
+        uc.hook_add(UC_HOOK_CODE, stop)
+        return call(uc, FIELD + symbols['mode_setrank'], r0=WORK, r1=1, r4=arg)
+    run()
+    assert seen == [(WORK, mode, WORK + 0x2C, flags)]
+
+
+@pytest.mark.parametrize('arg, expected', [(0, ['retail']), (1, ['retail']), (0xFF, ['retail']), (0x108, []),
+                                           (0xFFFF, [])])
+def test_setrank_keeps_retail_and_ignores_unknown_arguments(arg, expected):
+    seen = []
+    data, symbols = field()
+    uc, _ = machine(2, 0x149)
+    uc.mem_map(FIELD, (len(data) + 0xFFF) & ~0xFFF)
+    uc.mem_write(FIELD, data)
+
+    def stop(uc, at, size, _):
+        if at == FIELD + symbols['mode_register']:
+            seen.append('register')
+        elif at == FIELD + m.SETRANK_THUNK:
+            seen.append('retail')
+            assert uc.reg_read(A.UC_ARM_REG_R0) == WORK and uc.reg_read(A.UC_ARM_REG_R1) == 1
+            uc.reg_write(A.UC_ARM_REG_PC, uc.reg_read(A.UC_ARM_REG_LR))
+    uc.hook_add(UC_HOOK_CODE, stop)
+    call(uc, FIELD + symbols['mode_setrank'], r0=WORK, r1=1, r4=arg)
+    assert seen == expected

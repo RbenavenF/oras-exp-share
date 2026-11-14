@@ -508,3 +508,48 @@ de disasm. Suite anterior2335/3 en65,00s. `git diff --check` correcto.
 Aclaración numérica de hitos anteriores: la sonda imprime CONFIG con `%x`;
 «149» en esas trazas y notas significa **0x149=329 decimal**, no149 decimal.
 El JSON de guardado del hito8 registra el entero329 y elimina la ambigüedad.
+
+## Hito 9 — inscripción inicial conectada en la Torre (2026-11-14, Claude)
+
+Camino elegido: desde code.bin no se llega a DllField (base del CRO desconocida en ejecución), así que el script
+de la Torre llama a `mode_register` a través del nativo **SetRank** de DllField, justo después de aceptar la app de
+equipo y antes del guardado.
+- DllField 0x95e3c `SetRank`: su `bl` al thunk 0x37a8 en **0x95e60** (`50b6fdeb` → `496b01eb`) va a
+  `mode_setrank` (Field 0xf0b8c, dentro de la reserva F9 0xf0a00–0xf1000). El nativo conserva el argumento del script
+  en r4 (0x95e44 `uxth r4,r0`; lo restaura en 0x95e68).
+- `SetRank(x)` con x < 0x100 es el retail.
+- `SetRank(0x100 + M + 4·reanudar)` llama a `mode_register(work, M, work+0x2c, aceptado | reanudar<<1)` y no toca el
+  rango.
+- x ≥ 0x108 no hace nada.
+- Payload Field: 472 bytes; quedan 1064 en la reserva. Guards: bytes de `guarded_writes`, `rehash_cro` y `update_crr`.
+- Script de la Torre (`tower.registration`), en 0x18f8/0x1a38, delante de `FieldMenuChangePagePlayNavi` y del
+  guardado 0x13d4:
+  - calcula `SetRank(0x100 + (CONFIG>>8 & 3) + 4·(ACTIVE≠2))` y después pone ACTIVE=1;
+  - la recepción marca un desafío nuevo con ACTIVE=2 (`NEW_ACTIVE`);
+  - un desafío reanudado entra con ACTIVE=1 tras `config_check`;
+  - tras un desafío jugado, la rama «racha>0» deja ACTIVE=1.
+  Solo la Torre (`MODE_FACILITIES`).
+- Build `work/frontier/modos/base9/patch`:
+  - code.ips `0368f521…a4dbb2d`, DllField `c3ef67de…5e48fdb`, DllBattle `5cde67f6…d51754` (sin cambios), CRR
+    `796122ec…88790edcb`, a/0/1/3 `e6704d55…af9ca109`; hashes completos en `base9/build-hashes.txt`;
+  - code.bin sin cambios de motor: cave 2008 bytes, 36 libres; Luma intacta.
+
+Azahar (carril 24690, build base9):
+
+| Caso | Medida | Evidencia |
+| --- | --- | --- |
+| Nueva M0 (sin menú) | copia `new73.sav` (ACTIVE0, CONFIG0). Tras aceptar 73/55/41, en el aviso de guardado: CONFIG **0x32**, ACTIVE **1**. Al rechazar el guardado: ACTIVE 0, CONFIG 0x32 | `new-gdb.log`, `b3.png`, `b9.png` |
+| Nueva Libre | mismo arranque. CONFIG puesto a **0x100** en RAM tras la recepción (lo que hará el menú futuro). Tras aceptar 73/55/41: CONFIG **0x149** (L=73), ACTIVE 1. Guardado: 329/ACTIVE1, equipo y Cajas iguales a la copia. Combate: miembros 73/55/41 sin bajar, tres rivales a nivel **73** | `registered-new.sav/json`, `c2.png`, `c4.png`, `new-gdb.log` (OPEN CAP/MAKE) |
+| Reanudación | `resume73.sav` (`vertical.py seed`, CONFIG 0x149, ACTIVE1). Selección distinta [1,2,4] = 55/41/7, que daría 0x13c si recalculase: CONFIG sigue **0x149**, ACTIVE 1 | `resume-gdb.log`, `a5.png`, `a6.png` |
+
+- Los puntos de ruptura en el CRO creados en ejecución (hardware o software) **no saltan** en Azahar, probablemente
+  por la caché del JIT. La entrada de `mode_setrank` no se observó directamente: los resultados salen de la RAM
+  (CONFIG/ACTIVE) antes y después.
+- Unicorn (`test_frontier_modes_selection.py`):
+  - asignación de argumentos 0x100–0x107 → (M, flags);
+  - retail < 0x100; ignorados ≥ 0x108;
+  - bytes del sitio y conservación de r4 en el nativo.
+- VM del script (`test_frontier_tower.py`): argumentos en nuevo/reanudado/corrupto, ACTIVE=1 tras inscribir y
+  posición antes del guardado.
+- Suite `env -u ORCH_LANE python -m pytest -q tests`: **2894 passed, 2 skipped** (`base9/tests-full.log`).
+- No probado: consola; Domo (tres inscritos), Caja como fuente desde la recepción y Fábrica, en esta conexión; menús.

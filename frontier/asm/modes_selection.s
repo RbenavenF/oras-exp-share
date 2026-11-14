@@ -1,4 +1,4 @@
-@ F9 registration API, linked in the reserved DllField padding. No caller installed yet.
+@ F9 registration API, linked in the reserved DllField padding. Caller: mode_setrank below, from the SetRank native.
 @ r0 = facility work, r1 = requested M, r2 = effective selection descriptor,
 @ r3 = flags: bit0 accepted, bit1 resume. Other bits invalid.
 @ Descriptor: byte +0 Box(1)/party(0), u32 slots at +4, u32 count at +0x1c
@@ -116,6 +116,27 @@ commit:
 invalid:
     mvn     r0, #0
     pop     {r4-r10, pc}
+
+@ DllField SetRank native (0x95e3c): its `bl thunk(SetRank 0x1e567c)` at 0x95e60 -> here, with r0 = facility work,
+@ r1 = the argument normalised to 0/1 and r4 = the script's argument (u16, kept by the native). Below 0x100: the
+@ retail SetRank. 0x100 + M + 4*resume (0x100-0x107): the Tower's registration right after the party app accepted the
+@ selection (zone script 0x18f8 at 0x1a38, before its save; frontier/tower.py), as an accepted call of mode_register
+@ on the retail descriptor work+0x2c; the rank is not touched. Above 0x107: nothing. The native returns 0 either way.
+    .global mode_setrank
+mode_setrank:
+    cmp     r4, #0x100
+    blo     SETRANK_THUNK
+    cmp     r4, #0x108
+    bxhs    lr
+    push    {r4, lr}
+    and     r1, r4, #3             @ M
+    add     r2, r0, #0x2c          @ the retail selection descriptor
+    and     r3, r4, #4
+    lsr     r3, r3, #1             @ resume -> bit 1
+    orr     r3, r3, #1             @ accepted
+    bl      mode_register
+    pop     {r4, pc}
+
     .ltorg
 configs:
     .hword CFG_1, CFG_2, CFG_3, CFG_4, CFG_5, CFG_6, CFG_7

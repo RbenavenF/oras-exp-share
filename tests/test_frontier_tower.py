@@ -108,7 +108,7 @@ def test_a_new_tower_challenge(built):
     assert ('app', [0, 0x800C, 0x800D, 0x800E, 5, 6, 7, 8, 9]) in log      # as 0x16fc: flags 385-389
     _, args, seen = next(e for e in log if e[0] == 'challenge')
     assert args == [0, 0, 7]                                              # rank 0, Singles, work 0x800E
-    assert seen[fp.WORK_ROUTE] == tower.ROUTE == 2 and seen[tower.ACTIVE] == 1 and seen[tower.STREAK] == 0
+    assert seen[fp.WORK_ROUTE] == tower.ROUTE == 2 and seen[tower.ACTIVE] == tower.NEW_ACTIVE and seen[tower.STREAK] == 0
     assert works[fp.WORK_ROUTE] == 0 and works[tower.ACTIVE] == 0      # lost: no challenge in progress
     assert all(e[1][fp.WORK_ROUTE] == 2 for e in log if e[0] == 'wins')  # the streak read is the Tower's
 
@@ -216,3 +216,43 @@ def test_no_tower_battle_points_inside_a_round(built, streak):
 @pytest.mark.parametrize('route', [0, 1])
 def test_maison_battle_points_without_the_tower_route(built, route):
     assert battle_points_run(built, 7, route=route) == [('bp', 2), ('number', 2)]   # GetWinCount 99 > 10: 2 BP
+
+
+def registration(active, config):
+    """tower.registration_ops alone in the VM: (SetRank arguments, works after)."""
+    from pawn import Program
+    import modes
+    p = Program(Script.parse(tower.zone_script(overlay.maison_retail(overlay.ZONES.read_bytes())[1])))
+    p.items = []
+    p.label('entry')
+    p.emit('PROC', 0)
+    tower.registration_ops(p, 'tower')
+    p.emit('ZERO_PRI', 0)
+    p.emit('RETN', 0)
+    script = p.build_script('entry')
+    labels = p.layout()
+    works, ranks = {tower.ACTIVE: active, modes.CONFIG[tower.ROUTE]: config}, []
+    stubs = natives({'WorkGet': lambda vm, a: works.get(a[0], 0),
+                     'WorkSet': lambda vm, a: works.__setitem__(a[0], a[1]),
+                     'SetRank': lambda vm, a: ranks.append(a) or 0})
+    VM(script, stubs, {}).run(labels['entry'])
+    return ranks, works
+
+
+@pytest.mark.parametrize('active, config, arg', [
+    (tower.NEW_ACTIVE, 0, 0x100), (tower.NEW_ACTIVE, 0x100, 0x101), (1, 0x149, 0x105), (1, 0, 0x104),
+    (1, 0x32, 0x104), (1, 0xFFFF, 0x107)])
+def test_registration_after_the_party_app(built, active, config, arg):
+    """F9: SetRank(0x100 + M + 4*resume) after the accepted selection, then ACTIVE 1 for the save."""
+    ranks, works = registration(active, config)
+    assert ranks == [[arg]] and works[tower.ACTIVE] == 1
+
+
+def test_registration_sits_after_the_accepted_party_app_before_the_save(built):
+    _, _, script, labels, _, _ = built
+    ins = decode(script.code)
+    names = {i: h for i, (_, h) in enumerate(script.natives)}
+    at = next(k for k, x in enumerate(ins) if x.address == labels[tower.REGISTERED])
+    calls = [names[x.args[0]] for x in ins[at:at + 40] if x.op == OP['SYSREQ_N']]
+    assert calls[:4] == [s32(gf_hash(n)) for n in ('WorkGet', 'WorkGet', 'SetRank', 'WorkSet')]
+    assert calls[4] == s32(gf_hash('FieldMenuChangePagePlayNavi'))

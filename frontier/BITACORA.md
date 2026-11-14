@@ -3707,3 +3707,36 @@ Callback0x1d8968 es candidato medido; todavía sin hook. Medir TEAM16493–16495
 Domo antes de reducir a dos y completar API/matriz nativa/VM. No declarar cálculo
 inicial probado: ambos ensayos parten de CONFIG ya sembrado. BASE in_progress,
 sin decisión externa necesaria.
+
+## 2026-11-14 — Claude Code (Opus 5.5) — F9-MODOS-BASE hito 9: inscripción inicial conectada (Torre)
+Estado: en curso
+Relevo: Codex se cortó tras 9d8f0ba (API `mode_register` en la reserva Field, sin llamante). Árbol limpio salvo mi
+`frontier/probes/modos/libre.py` sin seguimiento, de la sesión anterior: lo he borrado porque `vertical.py` lo sustituye
+y su evidencia no se usa. El laboratorio que dejé abierto se paró con `reap`.
+Hecho:
+- Conexión del cálculo inicial de L sin hooks nuevos en code.bin. El nativo SetRank de DllField (0x95e60) pasa a
+  `mode_setrank`: los argumentos 0x100 + M + 4·reanudar llaman a `mode_register(work, M, work+0x2c, aceptado |
+  reanudar<<1)` y los menores de 0x100 son el retail.
+- Script de la Torre: tras aceptar la app de equipo (0x1a38) y antes del guardado, llama a SetRank con ese argumento
+  y pone ACTIVE=1. La recepción marca los desafíos nuevos con ACTIVE=2. Detalle en `reports/modos-base.md` hito 9 y
+  en REPARTO.
+Evidencia:
+- Azahar 24690, build base9: inscripción nueva M0 → CONFIG 0x32/ACTIVE 1. Nueva Libre (CONFIG 0x100 en RAM, como el
+  menú futuro), 73/55/41 → **0x149**, guardado 329/ACTIVE 1, equipo y Cajas idénticos, rivales 73. Reanudación con
+  55/41/7 → 0x149 sin cambio.
+- Rechazar el guardado tras inscribir → ACTIVE 0.
+- Logs y capturas en `work/frontier/modos/base9/`.
+- Los puntos de ruptura en el CRO creados en ejecución no saltan en Azahar: el resultado se mide en RAM.
+- Suite `env -u ORCH_LANE python -m pytest -q tests`: 2894 passed, 2 skipped (`base9/tests-full.log`).
+- Hashes de la build en `base9/build-hashes.txt` e informe. ZO de la Torre ≤ 17248 (test). code.bin sin cambios de
+  motor (36 bytes libres); Luma intacta. Reserva Field: 1064 bytes libres.
+Commits: el de esta entrada.
+Decisiones:
+- Usar el argumento de SetRank (≥ 0x100, nunca usado por los scripts retail) en vez de un hook en 0x1d8968. Desde
+  code.bin no se puede llamar a DllField.
+- Regresión agrupada del 13/11: en Azahar solo la Torre, sin otras instalaciones ni historia.
+No probado: consola, Domo (tres inscritos), Fábrica e instalaciones distintas de la Torre con esta conexión. Tampoco
+hay menús: siguen cerrados.
+Siguiente paso: decidir si BASE se da por cumplida. Los criterios de nivel, racha, pausa y derrota de la Torre están
+medidos (hitos 4–9). Lo que queda es de F9-LIBRE-*: menús; Domo con TEAM 16493–16495; Fábrica Libre 100 en
+recepción.

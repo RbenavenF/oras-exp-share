@@ -407,7 +407,7 @@ def battle_cro(romfs=MOD_ROMFS):
                        after=struct.pack('<4I', 0xE59FC004, 0xE12FFF3C, 0xEA000000,
                                          symbols['pike_param']).hex())
     import brains                       # DllField natives SetTrainer/StartBattle -> the Frontier Brains (brains.py)
-    import modes                        # F9 registration API only; callback not connected yet
+    import modes                        # F9 registration (mode_register) and its SetRank entry
     if sha256(REPOLISHED) != HASHES[REPOLISHED]:
         sys.exit('registration accessors: wrong Repolished code.bin hash')
     code = REPOLISHED.read_bytes()

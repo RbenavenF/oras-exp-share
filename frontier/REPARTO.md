@@ -183,6 +183,13 @@ libres**; Cerebros 0xf0480–**0xf0a00** (llega justo al inicio de la reserva F9
 0xf0a00–0xf1000 sigue sin bytes. Luma 0x579604–0x579804 intacta. Recepciones con CONFIG: solo la Torre
 (`tower.MODE_FACILITIES`).
 
+### Inscripción F9 por SetRank (2026-11-14, Claude)
+
+Sin works, textos ni casos nuevos. DllField 0x95e60 (`bl` del nativo SetRank) → `mode_setrank` en la reserva F9 de
+DllField, junto a `mode_register` (0xf0a00–0xf0bd8, 472 bytes). Convención de argumento del script: `SetRank(0x100 +
+M + 4·reanudar)` reservado a la inscripción F9; 0x108–0xffff, sin efecto; < 0x100, retail. ACTIVE de la Torre = 2 marca
+«desafío nuevo aún sin inscribir» (solo entre la recepción y 0x1a38).
+
 ## Reservas del motor (Arena B, 2026-11-05)
 
 Arena: bit 31 (`0x80000000`) del word `BattleSetup+0xa8`; se pondrá al final de StartBattle solo con ruta 4

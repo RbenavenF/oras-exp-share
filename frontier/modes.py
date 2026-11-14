@@ -28,6 +28,10 @@ RESERVED = (*[w for bank in NEW_BANKS.values() for w in bank],
 FIELD_AT, FIELD_END = 0xF0A00, 0xF1000
 SELECTION_CODE = {'CODE_PARTY_SLOT': 0x3B6150, 'CODE_GET_LEVEL': 0x14FD1C}
 SELECTION_HEADS = {0x3B6150: 0xE3510006, 0x14FD1C: 0xE92D4070}
+# DllField SetRank native 0x95e3c: its `bl` to the code.bin SetRank thunk, redirected to mode_setrank (F9 registration
+# by script argument 0x100 + M + 4*resume; below 0x100 the retail call). Guarded by its bytes in cro_writes.
+SETRANK_SITE, SETRANK_THUNK = 0x95E60, 0x37A8
+REGISTER = 0x100                    # SetRank(REGISTER + M + 4*resume): see frontier/asm/modes_selection.s
 
 
 def valid(route, mode):
@@ -112,22 +116,24 @@ def selection_config(route, mode, levels, *, persisted=None):
 
 
 def assemble_selection():
-    """Native registration API in the previously reserved Field cave. No callback
-    or reception calls it yet: accepted/new/resume must be explicit at that caller.
+    """Native registration API (mode_register) and its SetRank entry (mode_setrank) in the reserved Field cave.
     Descriptor ABI and side effects: frontier/asm/modes_selection.s.
     """
     blob, symbols = patch.link(
         [patch.ROOT / 'frontier/asm/modes_selection.s'], FIELD_AT, 'mode_register',
         {**patch.mode_constants(), 'ROUTE_OFF': 2 * (patch.WORK_ROUTE - 0x4000)},
-        {**SELECTION_CODE, 'CODE_MODE_OF': patch.assemble()[1]['mode_of']})
+        {**SELECTION_CODE, 'CODE_MODE_OF': patch.assemble()[1]['mode_of'], 'SETRANK_THUNK': SETRANK_THUNK})
     if FIELD_AT + len(blob) > FIELD_END:
         raise ValueError('registration API exceeds the F9 Field reservation')
     return blob, symbols
 
 
 def cro_writes():
-    """Unreachable API payload; no hook until callback linkage is measured.
+    """The registration payload and the SetRank native's call into it (mode_setrank).
     patch.battle_cro supplies v0.5 identity, rehash and CRR validation.
     """
-    blob, _ = assemble_selection()
-    return [dict(offset=FIELD_AT, before=bytes(len(blob)).hex(), after=blob.hex())]
+    import brains
+    blob, symbols = assemble_selection()
+    return [dict(offset=FIELD_AT, before=bytes(len(blob)).hex(), after=blob.hex()),
+            dict(offset=SETRANK_SITE, before=brains.bl(SETRANK_SITE, SETRANK_THUNK).hex(),
+                 after=brains.bl(SETRANK_SITE, symbols['mode_setrank']).hex())]
