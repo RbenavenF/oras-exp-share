@@ -4505,3 +4505,45 @@ No probado: Domo Azahar aún pendiente, consola, recorrido alfa.
 Siguiente paso: Domo Libre, tres inscritos (máximo tercero), cierre torneo y bancos/PB;
 parar laboratorio24691 antes de terminar. lane-task in_progress. Sin push ni cambios
 a inputs, fuente original, turno REPARTO o tasks.json.
+
+## 2026-11-14 — Codex — F9 especiales: cierre Domo Libre y aceptación
+Estado: hecho
+Hecho: revisados git status/diff vacíos y último commit92c8283 al relevo; no había
+cambios versionados a medias. Auditada copia local dome-ready de sesión cortada.
+Ampliada sonda pasiva especiales.py con TEAM/RIVAL/FIGHT/FORCED, cantidad y
+especies construidas del Domo. Completado torneo Libre con cuatro victorias
+naturales, máximo del tercer inscrito, pausa/recarga a mitad y guardado final.
+Evidencia: reports/modos-especiales.md y work/frontier/modos/especiales1/:
+- installed-relevo.json:28 archivos cotejados, ninguna discrepancia con build
+  ba0580a; hashes completos y espacio actual en informe/build-hashes.json/audit.json.
+  code2008/36 libres, Battle788/1148 libres, Field556/980 libres; reserva Luma intacta.
+- dome-gdb-part1.log: inscritos1/2/0 (55/41/73), primera pareja1/2, CAP55/41
+  force0, rivales73, CONFIG149. Máximo del tercero que no combate. Preview
+  Bronzor/Omanyte/Chespin y FORCED118/101 coinciden con combate. Ronda2 rivales
+  Honedge/Grimer73. dome-battle1/2.log: raw1 naturales41/33 pulsaciones.
+- dome-paused2.sav/json SHA dbb32d4e14a8235d4d839d193921e09bec84e0e38728aedded1d58091c21e205:
+  Libre2/6, antiguo12/20, PB0, CONFIG329, ACTIVE1,58 bloques válidos. Recarga
+  completa; dome-resume-menu.png conserva modalidad/nivel. Reinscripción0/1/2,
+  desviación previa documentada, sin recalcular L. dome-gdb-part2.log: rondas3/4
+  con Libre2/6 y3/6, DOME COUNT2, MAKE73; CAP73/55 y55/41. Preview final
+  Baltoy/Ledyba/Pineco y MAKE165/204 coinciden. dome-battle3/4.log raw1 naturales
+  tras26/32 pulsaciones. Sin asistencia ni escrituras RAM.
+- dome-prize.png:1 PB tras cuatro victorias, siguiente combate5. Pausa y guardado
+  dome-champion.sav/json SHA22315db63803511a2fea7f3348ee462781dd0ccb7e931b611bce5ee87bffdb58:
+  Libre4/6, antiguo12/20, PB1, CONFIG329, ACTIVE1, ruta0,58 bloques válidos.
+  dome-champion-audit.json: equipo y Cajas iguales byte a byte a tower73.sav;
+  hashes en informe. No hay premio anticipado ni duplicado al pausar.
+- env -u ORCH_LANE python -m pytest -q tests:3178 passed,4 skipped,62.92s,
+  tests-dome-evidence.log tras último cambio de sonda; py_compile/diff--check verdes.
+  Primera pasada tests-relevo.log falló9 tests del orquestador por ORCH_LANE
+  heredado; pasada limpia3178/4,61.93s en tests-relevo-clean.log.
+- lab-closed.json: GDB parado, reap del carril, procesos propios[], gdbstub off,
+  D-Bus privado terminado. Puerto24691; no se tocaron procesos de otro carril.
+Commits: ba0580a implementación;8d12312 Pirámide;92c8283 Tubo; el de esta entrada
+(frontier: completa aceptación de Domo Libre y F9).
+Decisiones: solo novedades de tarea según regresión agrupada2026-11-13. Se conserva
+reinscripción de tres al reanudar Domo, con L fijado. Build sin cambios. Sin push,
+inputs/partida original, turno REPARTO ni tasks.json modificados. No probado:
+consola y recorrido completo alfa (fuera de esta aceptación).
+Siguiente paso: orquestador integra el carril y pasa aceptación; F10 después de F9.
+work/lane-task.json pasa a done con commits y pruebas. Laboratorio cerrado.

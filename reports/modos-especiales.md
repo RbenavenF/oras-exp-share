@@ -1,6 +1,6 @@
 # F9 — Libre: Domo, Tubo y Pirámide
 
-Estado: en curso. Implementación y pruebas VM/nativas listas; aceptación Azahar pendiente.
+Estado: hecho. Implementación, pruebas VM/nativas y aceptación Azahar de las tres rutas completas.
 Diseño: `reports/diseno/modos.md` §2–§4. No se añaden IDs: CONFIG/bancos F9,
 TEAM Domo y textos619/191–196 ya reservados en REPARTO.
 
@@ -114,4 +114,63 @@ Azahar, Tubo (mismo release, `especiales1/`):
   permanente por fotograma; observación pasiva de restauración PS/estado.
   `tests-final.log`: suite completa3178 passed,4 skipped,62.88s; py_compile verde.
 
-Queda pendiente únicamente la aceptación Azahar del Domo y el cierre del lab.
+En el hito anterior quedaban pendientes la aceptación Azahar del Domo y el cierre del lab.
+
+Azahar, Domo, relevo del 2026-11-14 (mismo release):
+
+- Revisión de relevo: `git status --short` y `git diff` vacíos; HEAD92c8283.
+  No había código a medias. Había copias locales no versionadas de una preparación
+  posterior al commit; se auditó `dome-ready.sav`, SHA256
+  `7ff025e04e025cf293d8096af40fd19de6109f96c83362b84bc8279f5e84c7fb`:
+  58 bloques válidos, zona456, bancos50=12/20 y Libre0/6, PB0, equipo y Cajas
+  idénticos a tower73.sav (`dome-ready-audit.json`). Su preparación anterior no
+  quedó registrada: no se atribuyen a esta ejecución los pasos que la crearon.
+- `installed-relevo.json`: 28 archivos instalados cotejados con build-hashes.json,
+  cero discrepancias. No se reconstruye ni modifica la build ba0580a.
+- `dome-gdb-part1.log`, `dome-preview1.png`, `dome-forced1.json`: inscripción
+  real en orden1/2/0 (niveles55/41/73); se eligen1/2 para la primera pelea.
+  CAP55/41 sin ajuste y dos MAKE73, CONFIG149. Así el máximo procede del
+  tercero inscrito que no combate. Preview Bronzor/Omanyte/Chespin; works
+  RIVAL101/118/97 y FORCED118/101; rivales en pantalla Omanyte73 y Bronzor73.
+- `dome-battle1.log`: victoria natural raw1,41 pulsaciones; el conductor manejó
+  un reemplazo tras KO. Segunda ronda selecciona0/1 (73/55); preview
+  Honedge/Grimer/Bunnelby (`dome-preview2.png`), MAKE679/88 a73. Victoria
+  natural raw1 tras33 pulsaciones, `dome-battle2.log`. Sin asistencia ni
+  escrituras RAM; la sonda observa construcción, selección y resultados.
+- `dome-paused2.sav/json/png`: pausa real tras dos victorias y guardado manual;
+  Libre2/6, antiguo12/20, CONFIG329, ACTIVE1, ruta0, PB0 (todavía sin torneo).
+  SHA256 `dbb32d4e14a8235d4d839d193921e09bec84e0e38728aedded1d58091c21e205`.
+  Equipo completo y Cajas idénticos a la fuente. El helper exporta ahora también
+  TEAM/RIVAL/FIGHT/FORCED y observa cantidades/bancos por pelea.
+- `tests-relevo.log`: primera ejecución con ORCH_LANE heredado falla9 pruebas del
+  orquestador (3169 passed,4 skipped); misma causa ambiental ya evitada en hitos
+  anteriores. `env -u ORCH_LANE python -m pytest -q tests` pasa3178/4 en61.93s
+  (`tests-relevo-clean.log`). Tras ampliar la sonda, suite3178/4 en62.92s
+  (`tests-dome-evidence.log`); `py_compile` y `git diff --check` correctos.
+- `dome-resume-menu.png`: recarga completa de dome-paused2.sav, aviso de
+  modalidad/nivel conservados y opción Reanudar. Se reinscriben0/1/2 (desviación
+  ya descrita), sin recalcular CONFIG149. `dome-gdb-part2.log` muestra banco
+  Libre2/6 antes de ronda3, tres inscritos0/1/2 y DOME COUNT2. CAP73/55,
+  MAKE188/60 a73 (Skiploom/Poliwag), victoria natural raw1 tras26 pulsaciones
+  (`dome-battle3.log`). El primer intento del conductor en esta fase se interrumpió
+  en el selector por repetir un slot; no constituye combate ni victoria.
+- Final: `dome-preview4.png`, Baltoy/Ledyba/Pineco. FORCED103/94,
+  MAKE165/204 a73 (Ledyba/Pineco); CAP55/41, DOME COUNT2, Libre3/6,
+  antiguo12/20 y CONFIG149. No se nivela al tercero ni se cambia L entre rondas.
+- `dome-battle4.log`: victoria natural raw1 tras32 pulsaciones. `dome-prize.png`
+  concede1 PB al cerrar las cuatro rondas; siguiente combate5. Pausa posterior
+  y guardado `dome-champion.sav/json/png`, SHA256
+  `22315db63803511a2fea7f3348ee462781dd0ccb7e931b611bce5ee87bffdb58`:
+  58 bloques válidos, zona456, Libre4/6, antiguo12/20, PB1, CONFIG329,
+  ACTIVE1, ruta0, TEAM0/1/2. Transitorios de combate limpios; la pausa no concede
+  otro PB. `dome-champion-audit.json`: equipo completo y Cajas byte a byte
+  iguales a tower73.sav, mismos hashes que las otras dos instalaciones.
+- `lab-closed.json`: `faraway/gdbctl.sh stop`, `python scripts/azahar_lab.py reap`,
+  procesos propios vacíos, gdbstub desactivado; D-Bus privado terminado. Solo se
+  usó el laboratorio del carril, puerto24691. No consola ni recorrido alfa;
+  no regresiones de otras instalaciones conforme a usuario2026-11-13.
+
+Aceptación F9 completada: VM y límites/premios/jefes cubiertos por la suite;
+Azahar Pirámide (combates, piso y recarga), Tubo (combate, salvaje y arrastre),
+Domo (tercero máximo, preview, dos combatientes, cuatro victorias y pausa/recarga).
+Build exacto ba0580a sin cambios; las sondas añadidas no forman parte del parche.

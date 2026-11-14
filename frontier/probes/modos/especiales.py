@@ -23,6 +23,7 @@ import patch
 import save_event as se
 import save_fixture as sf
 import pyramid
+import dome
 from vertical import probe
 
 FACILITIES = {'dome': 456, 'pike': 458, 'pyramid': 140}
@@ -64,6 +65,7 @@ def snapshot(source, destination):
     data = source.read_bytes()
     blocks = sf.blocks(data)
     works = {patch.WORK_ROUTE, 16729, 16730, *patch.PYRAMID_SEL, patch.PYRAMID_COUNT,
+             *dome.TEAM, *dome.RIVAL, *patch.DOME_FIGHT, *patch.DOME_FORCED,
              pyramid.WORK_BEATEN, pyramid.WORK_SUMMIT,
              *patch.PIKE_HP, *patch.PIKE_ST, *(w for pair in patch.PIKE_PP for w in pair)}
     for name in FACILITIES:
@@ -99,6 +101,19 @@ def script(facility, directory):
     # Initial selector packet and native construction suffice here. Avoid a
     # persistent CRO packet breakpoint while playing the facilities.
     result = result.replace("            Hook(field_base+0x96b00,lambda: packet(rd(reg('r0')+4)))\n", '')
+    if facility == 'dome':
+        works = (*dome.TEAM, *patch.DOME_FIGHT, *dome.RIVAL, *patch.DOME_FORCED,
+                 modes.CONFIG[route], *modes.bank(route, 0), *modes.bank(route, 1))
+        result += f'''python
+def dome_state():
+    w = reg('r4')
+    save = rd(rd(rd(w+0xb78)+0x1c))
+    print('DOME STATE', {{k:rd(save+0x13144+2*(k-0x4000),2) for k in {works!r}}})
+    print('DOME COUNT',rd(w+0x48))
+Hook(0x1e33dc,dome_state)
+Hook(0x1ef904,lambda: print('DOME SET species=%u level=%u'%(rd(reg('r0'),2),reg('r1'))))
+end
+'''
     if facility == 'pike':
         # Observe the existing HP/status/PP path as well. Room forcing, if wanted,
         # changes only the clock return; pk_want is empty by default.
