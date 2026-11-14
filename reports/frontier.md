@@ -3946,3 +3946,27 @@ la política de permisos no permite pedir ampliación. El integrador debe ejecut
 **desde main**, comparar los 39 hashes y la partida, y cerrar F7-PAQUETE-V03 si coinciden. Se comunica
 `blocked` en `work/lane-task.json` para evitar reanudar indefinidamente un carril que no puede publicar allí.
 La consola real continúa sin probar.
+
+## 53. Isla Esmeralda: acabado con piezas ORAS — F11-ISLA-ACABADO (2026-11-14, Codex)
+
+Estado: candidato aislado; producción pendiente de integración. Fuentes y reproducción en
+[`diseno/isla-esmeralda-acabado.md`](diseno/isla-esmeralda-acabado.md). No se modifican los builders comunes,
+asignados al integrador en el brief. `frontier/probes/island/landscape.py` compila una copia de FrontierIsland
+con cuatro hooks revisables, compartiendo texturas, sin modificar el trazado ni los edificios provisionales.
+
+Medidas del candidato `work/f11/finish/flags` (`build.log`, `movement-proof.json`): 361 piezas retail
+(43 árboles, 236 arbustos, 68 tramos de valla, 8 parterres, 6 banderas azules Aqua), **4.151.040 bytes**
+(mundo 835.328, props 209.152, modelos 3.106.560). Margen 41.344 sobre Resort211; WorldTextures `{}`.
+ZO209 11.288 <=17.248; el archivo entero de zonas permanece idéntico. Los GR[0,2,3,4,5,6] de las ocho
+celdas también son idénticos a F11: pasos, colisiones, coordenadas y props conservados. B se conserva en GRID,
+pero se cubre con baldosa o arena (Pirámide). Canales y estanques ya tenían agua en F11 y se conservan.
+
+La textura `chip_steps01` sí estaba presente en AD229[11]; se investiga la UV del pintor, no una imagen ausente.
+Primer ensayo `dense`: la banda gris exportada con V sin invertir aún sale blanca en Azahar. `flags` prueba
+V invertida. No se da por corregida hasta inspección. Banderines: las piezas del catálogo son banderas de
+Aqua/Magma; se eligen las azules originales como aproximación, con emblema, sin arte propio.
+
+Regresión en curso, caso (c) de la política del usuario: ferry, exterior y siete puertas, guardado/recarga.
+El primer ensayo cargó por ferry (34,73), Fábrica y Domo entraron/salieron a su puerta; recorrido interrumpido
+para cargar la variante final. No constituye aceptación del candidato final. No se tocan engine, CRO, asm,
+reserva Luma 0x579604–0x579804, inputs, partida original, REPARTO ni tasks.json. No paquete ni consola.

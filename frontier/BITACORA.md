@@ -4183,3 +4183,29 @@ Evidencia: vista cenital `work/orch/lanes/claude/work/f11/proto/c2/topview_vs_re
 Commits: este.
 Decisiones: no se empaqueta en la tarea; lo recogerá la alfa siguiente.
 Siguiente paso: Codex toma F11-ISLA-ACABADO en el siguiente sondeo del orquestador.
+## 2026-11-14 14:17 — Codex — F11 acabado: candidato reproducible con movimiento conservado
+Estado: en curso
+Hecho: leídos AGENTS, PLAN, REPARTO, últimas entradas y diseño; turno del orquestador sin modificar.
+Se añaden IslandLandscape.java, LandscapeTrial.java, LandscapeAudit.java y landscape.py en probes/island;
+ningún cambio a island_build.py, overlay.py ni faraway/java (son del integrador). Copia del constructor con
+cuatro hooks fail-closed y diff en work/f11/finish/flags/integration.diff. 361 piezas ORAS compartiendo
+texturas, baldosa sobre reservas B (arena Pirámide), agua conservada, ensayo de UV de escalera.
+Evidencia:
+- overlay.py --out work/f11/finish/base/out --romfs dist/held-exp-share-v0.5/mods/000400000011C400/romfs;
+  landscape.py --name flags; lab_mod.py work/f11/finish/flags. sources.json con hashes y revisión d483994.
+- flags/build.log: 4151040 <=4192384, mundo835328 props209152 modelos3106560; WorldTextures {}.
+- flags/movement-proof.json: ZO20911288 <=17248; a/0/1/3 íntegro SHA25610a6c1c7…; ocho GR conservan
+  subficheros0,2,3,4,5,6 byte a byte. Solo cambia geometría visual GR[1]. GRID conserva B.
+- LandscapeAudit.java: chip_steps01 presente en AD229[11], no faltaba textura. dense usa V inicial y aún
+  muestra blanco (proto/finish-dense/factory_out.png); flags invierte V, pendiente inspección.
+- Azahar del carril24691: dense llega por ferry desde copia v03-back-calagua.sav a(34,73), Fábrica y Domo
+  entran/salen a(26,45)/(34,24). Se interrumpe ese recorrido para arrancar flags. No aceptación final aún.
+- env -u ORCH_LANE python -m pytest -q tests: 2931 passed, 4 skipped, 61,52s; work/f11/finish/tests-final.log.
+  git diff --check limpio. Reporte estable: reports/frontier.md §53
+  y reports/diseno/isla-esmeralda-acabado.md. No probado: variante final en Azahar, consola.
+Commits: el de esta entrada (frontier: prototipo aislado del acabado ORAS de la isla).
+Decisiones: no tocar common builders; entregar diff y guía al integrador. Banderas Aqua originales como pieza
+más próxima, sin fabricar banderines propios. Política caso(c), sin combates ni recorrido ajeno a la isla.
+La reserva Luma no se modifica. Sin paquete, sin push, sin subagentes; laboratorio se detendrá al terminar.
+Siguiente paso: comprobar flags por ferry y las siete puertas, inspeccionar escaleras y cuatro puntos, guardar
+  y recargar; corregir lo que se mida y entregar integración de helpers a faraway/java al integrador.
