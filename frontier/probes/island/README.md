@@ -20,8 +20,9 @@ La exportación copia los cuatro GARCs: zona `a/0/1/3`, área `a/0/1/4`, geometr
 `a/0/3/9` y matriz `a/0/4/0`. boot.sh comprueba el manifiesto antes de instalar y
 los hashes instalados después (`installed-hashes.json`). Omitir área o geometría
 invalida el ensayo, aunque el cálculo estático del presupuesto sea correcto.
-Cada GR se clona del contenedor ORAS retail de siete subficheros y solo se sustituyen
-0–3: crear uno nuevo de seis (XY) dejó este prototipo en pantalla blanca al llegar.
+Cada GR se clona del contenedor ORAS retail de siete subficheros; se sustituyen
+0–3 y se asignan fila/columna en los dos primeros bytes de GR[4], conservando el resto.
+Crear uno nuevo de seis (XY) dejó este prototipo en pantalla blanca al llegar.
 Las escaleras conservan su pendiente/material, con comportamiento de andar normal:
 el `0x6c` del catálogo impedía subir el peldaño de recepción en este prototipo.
 
@@ -79,6 +80,18 @@ Diagnóstico del regreso tras recargar (todavía no es una aceptación):
 - `coordinates` asigna fila y columna a los primeros dos bytes de GR[4], siguiendo
   el patrón medido en los GR retail 489–492. Se prueba como hipótesis separada:
   clonar 489 dejaba (0,0) en las ocho celdas. Conservar el resto de GR[4].
+
+Censo de coordenadas, sin modificar archivos del juego (tras preparar el workspace):
+
+```sh
+javac --release 8 -nowarn -cp work/faraway/classes:tools/CTRMap-F5/build/classes \
+  -d work/faraway/classes frontier/probes/island/GRCoordinates.java
+java -Djava.awt.headless=true -cp work/faraway/classes:tools/CTRMap-F5/build/classes \
+  faraway.GRCoordinates work/f11/prototype/game work/f11/prototype/ws
+```
+
+Compara matriz y GR[4] en Ferrica, Calagua, una matriz 16×6, los tres exteriores
+del Resort y la isla. Imprime los desacuerdos; no reescribe la geometría.
 
 Rectificación del hito 5: las instalaciones manuales de variantes omitían área y
 geometría. Sus resultados de ejecución no permiten excluir esas hipótesis. La

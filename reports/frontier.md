@@ -3709,3 +3709,24 @@ workspace verificado. AD229[7/8/9] vacíos; GR489–492[4] empiezan respectivame
 clonados de 489 conservaban todos `00 00`. La variante `coordinates` ensaya fila/columna
 por celda conservando el resto del subfichero. No modificar GR[4] en producción sin
 confirmar su efecto en ejecución.
+
+### F11: fila y columna en los auxiliares de región
+
+`frontier/probes/island/GRCoordinates.java` contrasta los dos primeros bytes de GR[4]
+con la posición de cada región en su matriz (comando en README del laboratorio).
+`work/f11/prototype/m7-coordinate-census.txt`: Ferrica19/19, Calagua6/6, matriz12
+de16×6 con18/18, Resort210=9/9,211=9/9,212=4/4: **65 regiones retail, sin discrepancias**.
+La isla reconstruida da8/8. No se deduce de un solo nombre BCH: son bytes del auxiliar.
+
+Respecto al control acumulado que falla en (99,45), cambiar solo estos dos bytes
+permite el recorrido inverso completo hasta **(35,71)**: `m6-coordinates-trial.log`,
+`m6-coordinates-return.log`. El intento de abrir el ferry en ese ensayo no mostró
+diálogo; no se cuenta como salida real. No se usa este resultado para aprobar cámara
+vacía, animaciones vacías ni el aspecto de esa combinación diagnóstica.
+
+TerrainPrototype asigna fila/columna al generar cada GR y conserva el resto de GR[4].
+La recreación limpia del hito7, `rebuild-m7.log`, solo aplica `world,props,compact,names`,
+sin los controles extra lod/camera/animations. Conserva cámara y animaciones originales,
+un área229, matriz431 de4×2, 2133760 bytes y WorldTextures {}. `m7-ferry.log` registra
+llegada real desde Calagua a(35,71); el empleado aparece junto al muelle. Recorrido,
+nuevo guardado, recarga y regreso con esta combinación quedan en comprobación.
