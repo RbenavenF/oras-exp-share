@@ -4626,3 +4626,42 @@ ZO margen420bytes; si no cabe, mover helpers a compartido con reservas previas.
 Fuente fija indica +1 condicionado a sPerformedRentalSwap tras victoria, nunca
 +3 por elegir tres. Después build/suite/Azahar del brief (solo novedades).
 work/lane-task.json in_progress; no marcar done hasta completar Azahar y criterios.
+
+## 2026-11-14 — Codex — F9-LIBRE-FABRICA hito 3: cambios acreditados tras victoria
+Estado: en curso.
+Hecho: factory_open.py marca draft/cambio pendiente en 16673 (reserva previa
+en REPARTO, sin cambiar turno) y acredita +1 tras victoria con saturación y
+consumo. Contadores Individual 50/Libre aislados; marca inválida no suma.
+factory.py valida especie/objeto del intercambio Libre contra los dos retenidos,
+rechaza ID fuera de archivo y conserva bit Súper/etiqueta del rival de Noland.
+Rangos/draft Nivel50 intactos. paths comunes de limpieza borran marca; recepción
+actual Nivel50 reinicia contador propio. Recepción Libre sigue sin habilitar.
+Evidencia: reports/modos-fabrica.md hito3 y work/frontier/modos/fabrica/hito3/:
+- accounting-source.json/source-{0,1,2}.txt: objetos Git de fuente 731ad5bf;
+  PreBattleRoom:40 marca alquiler inicial una vez, :154 cambio confirmado;
+  BattleRoom:91–98/175–180 y battle_factory.c:259–264 acreditan tras victoria.
+- tests-green.log: env -u ORCH_LANE python -m pytest -q tests →3540 passed,
+  4 skipped,65.50s; 50 casos nuevos VM contabilidad/cancelación/saturación,
+  bancos/récords, duplicados N/S y objeto, archivo Súper y tres posiciones.
+  tests.log inicial: nueve fallos de tests del orquestador por ORCH_LANE heredado;
+  3531 pasaron. Aislado como en hitos previos, suite completa verde.
+- build.log: overlay.py --out work/frontier/modos/fabrica/hito3/build.
+  Script51716256/ZO17048 (200bytes de margen), compartido531077, texto637ES71780,
+  hook2008.28 hashes en build-hashes.json. IPS0368f52100d49dfe34809ddda710637a58b1055fb8f07b7de0a5337d2a4dbb2d;
+  Field eb70d036317eedf93cb36b8258c8cd496047cbe0b6e12462a88c46a3d9be2bb1;
+  compartidos 3e0fd0ce562d7cf2ba3d0b3895206988dc9519a3246f0e8ec0d9e180a5e47ec9.
+- audit.json: code36libres,Battle1148,F9Field980; Luma0x579604–0x579804 intacta.
+  Works libres restantes16677/16678. git diff --check correcto.
+Commits: el de esta entrada (frontier: valida intercambio Libre y acredita alquiler tras victoria).
+Decisiones: guardar marca por modalidad, nunca +3 por draft. Filtro de duplicados
+solo Libre para preservar adaptación50; rechazar selección incompatible sin
+cambiar equipo (presentación del menú por mejorar antes de habilitar). Sin ARM,
+CRO ni construcción común modificados. No push ni inputs/partida original tocados.
+No probado: Azahar, persistencia16673, consola. Laboratorio no iniciado; build sin
+instalar. Regresión agrupada13nov: novedades al habilitar, no otras instalaciones.
+Siguiente paso: recepción50/Libre, CONFIG válido, bancos propios, cancelar
+reanudación conserva equipo/IV/semilla/snapshot/marca; limpieza banco activo y
+récord intacto. MargenZO200bytes: mover menú/preparación a compartido si hace
+falta, reservando caso/textos antes (9779 aún libre/no reservado). No pisar
+WORK_STREAK al pausar: replay Noland lo usa. Luego VM/PB/símbolos y Azahar completo
+del brief. Estado lane-task in_progress; no declarar done sin esos criterios.

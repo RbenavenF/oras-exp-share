@@ -226,9 +226,10 @@ def test_text_lines_cover_rentals_and_rivals(game):
     assert all(set_of_line(factory.line_of(r, i)) == (r, i) for r, i in table)
 
 
-def swap(game, choices, mine, rivals):
+def swap(game, choices, mine, rivals, extra=None):
     script, labels = game[3], game[4]
     works = {**dict(zip(fp.WORK_SETS, mine)), **dict(zip(fp.WORK_RIVAL, rivals))}
+    works.update(extra or {})
     menus, log, state = [], [], {'menu': None}
 
     def run_menu(vm, args):

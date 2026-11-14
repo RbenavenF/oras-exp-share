@@ -28,7 +28,59 @@ STRONG_POOLS = tuple(tuple(fd.indices(tier)) for tier in fd.SUPER_TIERS)
 LEGENDARY_POOL = tuple(('S', index) for index in sorted(i for ids in LEGENDARY_SETS.values() for i in ids))
 LINE_BASE = 1134  # appended AFTER all existing shared text (REPARTO)
 WORK_DRAFT_RENTS = 16471  # saved counter at the start of this round's draw
+WORK_PENDING_RENT = 16673  # 0 none, 1 Singles 50, 2 Singles Open; consumed only on victory
 OPEN_POOLS = (*STRONG_POOLS, tuple(x for pool in STRONG_POOLS for x in pool) + LEGENDARY_POOL)
+
+
+def mark_rental(r):
+    """Persist one pending rental, only for supported Singles CONFIG values."""
+    done, open_ = r.new_label(r.name + '_rent_mark_done'), r.new_label(r.name + '_rent_mark_open')
+    import modes
+    r.sysreq('WorkGet', modes.CONFIG[1])
+    r.op('EQ_P_C_PRI', 0x164)
+    r.op('JNZ', open_)
+    for config in (0, 50):
+        next_ = r.new_label(r.name + '_rent_mark_next')
+        r.sysreq('WorkGet', modes.CONFIG[1])
+        r.op('EQ_P_C_PRI', config)
+        r.op('JZER', next_)
+        r.sysreq('WorkSet', WORK_PENDING_RENT, 1)
+        r.op('JUMP', done)
+        r.p.label(next_)
+    r.op('JUMP', done)
+    r.p.label(open_)
+    r.sysreq('WorkSet', WORK_PENDING_RENT, 2)
+    r.p.label(done)
+
+
+def credit_rental(r):
+    """Credit one successful rental to its mode bank, saturating the saved u16."""
+    import modes
+    done = r.new_label('rent_credit_done')
+    for mode, configs in ((0, (0, 50)), (1, (0x164,))):
+        next_, valid, saturated = (r.new_label('rent_credit_' + s) for s in ('next', 'valid', 'sat'))
+        r.sysreq('WorkGet', WORK_PENDING_RENT)
+        r.op('EQ_P_C_PRI', mode + 1)
+        r.op('JZER', next_)
+        for config in configs:
+            r.sysreq('WorkGet', modes.CONFIG[1])
+            r.op('EQ_P_C_PRI', config)
+            r.op('JNZ', valid)
+        r.op('JUMP', done)
+        r.p.label(valid)
+        r.sysreq('WorkGet', modes.FACTORY_RENTS[mode])
+        r.const_alt(65535)
+        r.op('JSGEQ', saturated)
+        r.add(1)
+        r.op('PUSH_PRI', 0)
+        r.p.push(modes.FACTORY_RENTS[mode])
+        r.p.emit('SYSREQ_N', 'WorkSet', 8)
+        r.p.label(saturated)
+        r.op('JUMP', done)
+        r.p.label(next_)
+    r.p.label(done)
+    # A stale/corrupt mark must never be credited by a later unrelated win.
+    r.sysreq('WorkSet', WORK_PENDING_RENT, 0)
 
 
 def check_mapping(sets):

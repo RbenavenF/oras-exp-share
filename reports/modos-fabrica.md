@@ -223,3 +223,80 @@ presuponía que Cerebros era el último bloque. El test ahora comprueba por sepa
 el bloque íntegro de Cerebros y los 44 nuevos textos en los ocho idiomas, sin
 relajar las comprobaciones de prefijos ni de otras entradas. Pasada final verde
 tras ambas correcciones y los 177 casos nuevos; `git diff --check` correcto.
+
+## Hito 3: alquiler pendiente de victoria e intercambio Libre
+
+Estado: **en curso**. Recepción Libre todavía cerrada. Se han implementado y
+probado en VM los dos requisitos que faltaban dentro del draft/intercambio.
+Azahar, persistencia del nuevo work y consola: **no probados**; laboratorio no
+iniciado y build sin instalar.
+
+La fuente fijada aclara el alquiler inicial: `data/maps/
+BattleFrontier_BattleFactoryPreBattleRoom/scripts.inc:40` llama
+`factory_setswapped` **antes** de seleccionar tres. En el mismo archivo, línea
+154, un intercambio confirmado vuelve a marcarlo. `BattleFrontier_
+BattleFactoryBattleRoom/scripts.inc:91–98` y `175–180` intentan incrementar
+tras victoria ordinaria/Noland; `src/battle_factory.c:259–264` solo escribe el
+contador si hay marca y la consume. Objetos Git leídos del commit completo
+731ad5bfd6e6f265508d0efcca0ba42f9dcf5881: copias locales `hito3/source-{0,1,2}.txt`
+y SHA-256 por fichero en `hito3/accounting-source.json`.
+
+Reserva **16673** anotada en REPARTO antes de usarla y añadida al auditor. Es una
+marca persistente: 1 para Individual 50, 2 para Individual Libre, 0 sin alquiler
+pendiente. El draft completo y el cambio confirmado marcan una unidad; no
+incrementan el contador. La victoria posterior consume la marca y acredita +1
+al banco `FACTORY_RENTS[M]`, con saturación 65535. Una marca corrupta o de otra
+modalidad se descarta sin sumar. Cancelar draft/cambio o «No cambiar» no crea
+marca; ejecutar de nuevo el callback sin otra marca no suma. La recepción actual
+Nivel 50 limpia su contador al empezar; los caminos comunes de abandono/derrota
+limpian la marca antes de guardar. La inscripción Libre aún debe inicializar
+su banco propio. El draft Nivel 50 conserva exactamente sus rangos, IV y menús;
+se añade contabilidad sin promoción retroactiva.
+
+`factory_swap_meta` usa una tabla privada generada del volcado validado: dirección
+por archivo e ID, sin los bits de habilidad. En Libre se rechaza el cambio si
+la especie o el objeto no nulo se repite con cualquiera de los dos conservados.
+El hueco reemplazado se excluye de la comprobación; IDs fuera de los archivos
+tienen metadatos cero y se rechazan. Esta validación se ejecuta al confirmar la
+selección; de momento el menú muestra también opciones que se rechazarán sin
+cambiar el equipo. Pendiente mejorar su presentación al habilitar recepción.
+Los tres Pokémon del rival resuelven ahora sus etiquetas por archivo igual que
+los alquileres; al aceptar se conserva el bit Súper (necesario para Noland),
+y se sortea solo la habilidad. Nivel 50 conserva su política previa de
+intercambio; no se activa allí el filtro nuevo de especie/objeto.
+
+Pruebas nuevas: `tests/test_frontier_factory_lifecycle.py`, **50 casos VM**:
+draft inicial, cancelación, marca única, consumo tras victoria, saturación,
+bancos aislados (también los dos Dobles), récords intactos, configuración corrupta,
+cruce N/S de la misma especie, objeto repetido de otra especie, cambio a un
+legendario Súper en cada posición, crédito diferido y cancelación/ID inválido.
+Los 237 casos anteriores de draft/intercambio/replay también pasaron.
+
+Build exacta: `python frontier/overlay.py --out
+work/frontier/modos/fabrica/hito3/build`, registro `hito3/build.log`.
+Script 517 **16256**, ZO **17048** (200 bytes hasta el máximo comprobado 17248);
+compartido 5 **31077**, texto 637 ES **71780**, hook **2008**. Los 28 hashes están
+en `hito3/build-hashes.json`; IPS
+`0368f52100d49dfe34809ddda710637a58b1055fb8f07b7de0a5337d2a4dbb2d`,
+DllField `eb70d036317eedf93cb36b8258c8cd496047cbe0b6e12462a88c46a3d9be2bb1`,
+compartidos `3e0fd0ce562d7cf2ba3d0b3895206988dc9519a3246f0e8ec0d9e180a5e47ec9`.
+Auditor `hito3/audit.json`: code 36 libres, Battle 1148, Field F9 980; reserva
+Luma 0x579604–0x579804 intacta; candidatos restantes 16677/16678. Ningún
+ARM/CRO ni fichero de construcción común modificado.
+
+Continuación: recepción 50/Libre con CONFIG válido y bancos propios; cancelar
+reanudación debe conservar alquileres/semilla/IV/snapshot/marca. Limpiar solo
+racha/contador activos en abandono/derrota y preservar récords/símbolos. El margen
+ZO ya es 200 bytes: probablemente hará falta llevar menú y preparación al
+compartido; **9779 aún no está reservado ni usado**, 9770–9778 ya tienen dueño.
+No reutilizar WORK_STREAK para transportar operaciones de menú pausado: contiene
+la ronda que necesita el replay de Noland. Reservar cualquier caso/texto nuevo
+antes de escribirlo. Después VM recepción/PB/símbolos y toda la aceptación
+Azahar del brief, incluida medición del rango/IV ordinario, guardar/cargar y
+derrota. No marcar done antes. Regresión agrupada 2026-11-13: solo novedades.
+
+Suite final: `env -u ORCH_LANE python -m pytest -q tests` → **3540 passed,
+4 skipped**, 65,50 s (`hito3/tests-green.log`). La primera ejecución sin quitar
+ORCH_LANE falló en nueve tests del supervisor por heredar el carril real
+(`hito3/tests.log`); 3531 pasaron. Sin cambios al supervisor; repetición con el
+entorno aislado usado en los hitos anteriores, verde. `git diff --check` correcto.

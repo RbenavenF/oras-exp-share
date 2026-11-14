@@ -455,6 +455,7 @@ def draft_routine(p, cells, levels, helpers):
     r.op('JZER', saved)
     r.sysreq('WorkSet', fo.WORK_DRAFT_RENTS, 'rents')
     r.p.label(saved)
+    fo.mark_rental(r)
     r.sysreq('GlobalSetParentParam', 0, 1)
     r.op('ZERO_PRI', 0)
     r.ret()
@@ -469,7 +470,28 @@ def swap_routine(p, helpers):
     """factory_swap(): after a win, offer one of the last rival's sets (patch.WORK_RIVAL, maisonpkN indices
     written by the code.bin rival hook) for one of the player's rentals, as Emerald's Factory. Two menus:
     which rental to give (or «Don't swap»), then which rival set to take. B in either menu keeps the team."""
-    names = ['sel', 'give', 'value', 'tmp', *(f'mine{k}' for k in range(fd.PARTY_SIZE)),
+    # Metadata keyed by archive/index, independent of ability bits. Zero cells
+    # reject IDs outside the guarded archives. Only Open uses the new filter;
+    # keep the delivered Level-50 exchange path unchanged.
+    sets = fd.check_tiers(fd.load())
+    metadata = p.data_block('factory_swap_metadata', [
+        (sets[rank][i]['species'] | sets[rank][i]['item'] << 10) if i < len(sets[rank]) else 0
+        for rank in ('N', 'S') for i in range(1024)])
+    meta = Routine(p, 'factory_swap_meta', ['value'])
+    meta.op('LOAD_P_S_PRI', 12)
+    meta.store('value')
+    meta.field(15, 1)
+    meta.op('SMUL_P_C', 1024)
+    meta.op('PUSH_PRI', 0)
+    meta.load('value')
+    meta.field(0, 10)
+    meta.op('PALT', 0)
+    meta.op('ADD', 0)
+    meta.cell(metadata)
+    meta.ret()
+
+    names = ['sel', 'give', 'value', 'tmp', 'species', 'item',
+             *(f'mine{k}' for k in range(fd.PARTY_SIZE)),
              *(f'rival{k}' for k in range(fd.PARTY_SIZE))]
     r = Routine(p, 'factory_swap', names)
     for k in range(fd.PARTY_SIZE):
@@ -486,12 +508,7 @@ def swap_routine(p, helpers):
         for k, local in enumerate(entries):
             r.p.push(0)
             r.p.push(k)
-            if local.startswith('mine'):
-                r.line_of_value(local, 'tmp')
-            else:
-                r.load(local)
-                r.field(0, 10)
-                r.add(LINE_N)
+            r.line_of_value(local, 'tmp')
             r.op('PUSH_PRI', 0)
             r.p.emit('SYSREQ_N', 'ListMenuAdd', 12)
         if extra:
@@ -516,12 +533,44 @@ def swap_routine(p, helpers):
         r.op('EQ_P_C_PRI', k)
         r.op('JZER', other)
         r.load(f'rival{k}')
-        r.field(0, 10)
+        r.const_alt(patch.SUPER | 1023)
+        r.op('AND', 0)
         r.store('value')
         r.op('JUMP', taken)
         r.p.label(other)
     r.op('JUMP', keep)
     r.p.label(taken)
+    checked = r.new_label('swap_checked')
+    r.sysreq('WorkGet', modes.CONFIG[1])
+    r.op('EQ_P_C_PRI', 0x164)
+    r.op('JZER', checked)
+    r.call('factory_swap_meta', 'value')
+    r.op('JZER', keep)
+    r.store('tmp')
+    r.field(0, 10)
+    r.store('species')
+    r.load('tmp')
+    r.field(10, 10)
+    r.store('item')
+    for k in range(fd.PARTY_SIZE):
+        skip, no_item = r.new_label('swap_skip'), r.new_label('swap_no_item')
+        r.load('give')
+        r.op('EQ_P_C_PRI', k)
+        r.op('JNZ', skip)
+        r.call('factory_swap_meta', f'mine{k}')
+        r.store('tmp')
+        r.field(0, 10)
+        r.load_alt('species')
+        r.op('JEQ', keep)
+        r.load('item')
+        r.op('JZER', no_item)  # empty items do not violate the item clause
+        r.load('tmp')
+        r.field(10, 10)
+        r.load_alt('item')
+        r.op('JEQ', keep)
+        r.p.label(no_item)
+        r.p.label(skip)
+    r.p.label(checked)
     r.call('factory_rand', 2)
     r.op('SMUL_P_C', 1 << patch.ABILITY_SHIFT)
     r.load_alt('value')
@@ -534,6 +583,7 @@ def swap_routine(p, helpers):
         r.op('JZER', other)
         r.sysreq('WorkSet', patch.WORK_SETS[k], 'value')
         r.p.label(other)
+    fo.mark_rental(r)
     r.p.label(keep)
     r.call(helpers['msg_close'], 0)
     r.op('ZERO_PRI', 0)
@@ -609,6 +659,8 @@ def reception_routine(p):
     r.sysreq('WorkGet', patch.WORK_IV)
     r.op('JNZ', 'factory_resume')    # paused Factory challenge: keep the rentals and streak, as Emerald
     r.sysreq('WorkSet', patch.WORK_FSTREAK, 0)  # a new challenge starts at round 1
+    r.sysreq('WorkSet', modes.FACTORY_RENTS[0], 0)
+    r.sysreq('WorkSet', fo.WORK_PENDING_RENT, 0)
     r.sysreq('WorkSet', WORK_STREAK, 0)
     r.sysreq('GlobalCall', GLOBAL_DRAFT)
     r.sysreq('GlobalGetChildParam', 0)
@@ -631,6 +683,7 @@ def reception_routine(p):
     r.ret()
     r.p.label('factory_back')
     r.sysreq('WorkSet', patch.WORK_IV, 0)
+    r.sysreq('WorkSet', fo.WORK_PENDING_RENT, 0)
     r.sysreq('WorkSet', patch.WORK_FSTREAK, 0)
     r.sysreq('WorkSet', patch.WORK_ROUTE, 0)
     r.p.label('factory_refused')     # another facility's challenge in progress: nothing changed
@@ -644,6 +697,7 @@ def after_win_routine(p):
     r = Routine(p, 'factory_after_win', ['streak'])
     r.sysreq('WorkGet', patch.WORK_IV)
     r.op('JZER', 'factory_after_win_end')
+    fo.credit_rental(r)
     r.sysreq('GetMyWinCount', 0, 0)
     r.store('streak')
     r.sysreq('WorkSet', WORK_STREAK, 'streak')
@@ -717,7 +771,7 @@ def _clear(p, *also):
     """WorkSet(WORK_IV, 0) and WorkSet(w, 0) for each extra work."""
     body = Program(p.script)
     body.native_hashes = p.native_hashes
-    for work in (patch.WORK_IV, *also):
+    for work in (patch.WORK_IV, fo.WORK_PENDING_RENT, *also):
         body.sysreq('WorkSet', work, 0)
     return body.items
 

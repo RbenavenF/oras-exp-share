@@ -247,3 +247,14 @@ anterior de REPARTO/informe Fábrica. Fuente: `brains.line_base()=1072` y
 `len(brains.lines(7))=62`; se preservan esas seis etiquetas y todos los IDs previos.
 El work snapshot 16471 no cambia. Las líneas 1128–1133 quedan documentadas como
 reserva de Cerebros/Domo ya en uso; no pertenecen a Fábrica Libre.
+
+### Marca pendiente F9-LIBRE-FABRICA (2026-11-14, Codex)
+
+Reserva previa al uso del work **16673** para el alquiler/cambio pendiente de
+victoria: 1 = Individual 50, 2 = Individual Libre, 0 = ninguno. No es contador:
+solo una victoria posterior acredita +1 al banco de su modalidad y consume la
+marca. El draft inicial cuenta una vez, no tres, según `factory_setswapped` en
+BattleFrontier_BattleFactoryPreBattleRoom/scripts.inc:40 de la fuente 731ad5bf.
+Libre no se ofrece todavía. Fuente de disponibilidad: `python frontier/modes_audit.py`,
+`work/frontier/modos/fabrica/hito3/audit-before.json` (1157 scripts/147 ficheros);
+candidatos restantes 16673/16677/16678. Persistencia en Azahar pendiente.
