@@ -10,11 +10,16 @@ de staging no cubiertos por ese paquete contra el manifiesto baseline; registra
 las fuentes verificadas en `sources.json`.
 
 La zona 209 conserva su área privada, sustituye su matriz por 4×2 regiones nuevas
-y pinta la referencia a escala 1:1 con OFFSET (16,4). Se vacían las entidades;
+y pinta la referencia a escala 1:1 con OFFSET (16,4). Se retira el resto de entidades
+y se conserva al empleado del ferry (UID 0, modelo 300, script 2), en (34,71);
 los huecos de edificios son terreno bloqueado. Solo se abre el pasillo de recepción
 (26,61–65) para conectar muelle y plaza sin edificio. Los materiales se comparten
 en un solo AD[11]. `build.log` registra cada región, texturas ausentes y load budget;
 `hashes.json` identifica los archivos del mod. No se modifica code.ips ni CRO.
+La exportación copia los cuatro GARCs: zona `a/0/1/3`, área `a/0/1/4`, geometría
+`a/0/3/9` y matriz `a/0/4/0`. boot.sh comprueba el manifiesto antes de instalar y
+los hashes instalados después (`installed-hashes.json`). Omitir área o geometría
+invalida el ensayo, aunque el cálculo estático del presupuesto sea correcto.
 Cada GR se clona del contenedor ORAS retail de siete subficheros y solo se sustituyen
 0–3: crear uno nuevo de seis (XY) dejó este prototipo en pantalla blanca al llegar.
 Las escaleras conservan su pendiente/material, con comportamiento de andar normal:
@@ -67,3 +72,15 @@ Diagnóstico del regreso tras recargar (todavía no es una aceptación):
 - `names` da a cada celda un nombre BCH propio, como los nombres retail de 489–492.
   Sustituye el prefijo de igual longitud dentro de la sección de strings; conserva
   todos los offsets. Es una hipótesis en ensayo, no una causa demostrada del bloqueo.
+- Controles adicionales: `animations` usa el BCH vacío retail del área 0; `camera`
+  su tabla vacía de cámaras; `flatcollision` sustituye la colisión por una plataforma
+  a altura 36; `retailmodels` usa modelos intactos de 489–492 y sus texturas.
+  Son controles diagnósticos acumulados, no un terreno aceptado ni una solución.
+- `coordinates` asigna fila y columna a los primeros dos bytes de GR[4], siguiendo
+  el patrón medido en los GR retail 489–492. Se prueba como hipótesis separada:
+  clonar 489 dejaba (0,0) en las ocho celdas. Conservar el resto de GR[4].
+
+Rectificación del hito 5: las instalaciones manuales de variantes omitían área y
+geometría. Sus resultados de ejecución no permiten excluir esas hipótesis. La
+construcción completa con build.py sí exportaba los cuatro archivos; por eso el
+ferry, recorrido y guardado del prototipo inicial mantienen su evidencia.

@@ -3928,3 +3928,42 @@ builders comunes, tareas, REPARTO ni reserva Luma. Sin consola ni pruebas de ins
 Siguiente paso: capturar el buffer IPC y la ruta del cargador al bloquearse con stub ya corregido; comprobar
 animaciones de área y carga de regiones antes de decidir B. Laboratorio parado al cierre del hito; puede arrancar
 con boot.sh y terreno-saved.sav en un shell persistente. Fuentes de work siguen en este carril.
+
+
+## 2026-11-14 — Codex — F11-ISLA-TRAZADO hito 6: instalación verificada y metadatos GR
+Estado: en curso
+Hecho:
+- Relevo revisado: git status/diff limpios al iniciar sobre 22fafd7; ningún cambio a medias ajeno.
+- Rectificación del hito 5: las instalaciones manuales copiaban zona/matriz, omitiendo área/geometría.
+  ZONE_DATA=a/0/1/3, AREA_DATA=a/0/1/4, FIELD_DATA=a/0/3/9, MAP_MATRIX=a/0/4/0 (OrasProfile.java).
+  Los presupuestos son válidos; los resultados runtime de world/props/lod/compact/names no excluyen esas
+  hipótesis. Los primeros controles manuales de animaciones/cámara/colisión/modelos retail tampoco valen.
+  La construcción completa inicial sí copiaba los cuatro archivos: ferry/ocho celdas/guardado del hito 4 válidos.
+- build.py centraliza la exportación; boot.sh compara el manifiesto antes de instalar y los archivos instalados
+  después. Prueba de regresión con los cuatro destinos obsoletos, incluidos área y geometría.
+- Reconstrucción limpia v0.2, world/props/compact/names: 2133760 bytes, WorldTextures {}. Instalación completa
+  verificada reproduce bloqueo (99,45). Añadir lod/camera/animations también falla, con exportación verificada.
+- Censo de GR[4]: retail489..492 empieza 00 00 / 00 01 / 01 00 / 01 01; las ocho copias tenían 00 00.
+  coordinates asigna fila/columna conservando el resto. Tras este único cambio respecto al control anterior,
+  route --pier llega de11945 a3571, pasando7945/7949/5749/5752/4252/4270/3570. No implica aún ferry superado:
+  el intento de hablar no abre diálogo; falta validación visual y repetición desde construcción limpia mínima.
+- TerrainPrototype asigna esos bytes por celda y conserva el empleado de ferry original en3471, altura18.
+  Se reconstruye desde fuentes verificadas con world/props/compact/names (sin lod/camera/animations extra).
+  Reinicio desde harbor-checkpoint y repetición completa en marcha, logs m7-*.
+Evidencia:
+- work/f11/prototype/rebuild-m6.log, boot-m6-candidate.log, m6-return-pier.log, m6-extra-return.log;
+  m6-extra-hashes.json y m6-coordinates-{hashes,installed-hashes,config}.json conservan variantes.
+- m6-aux-census.txt, generado por work/f11/AreaAux.java; m6-coordinates-trial.log y m6-coordinates-return.log.
+- Los backtraces names-all-bt.txt no identifican cargador: hilo0x4200dc corresponde a WirelessScanProc.
+  capture-loader.sh local seleccionaba thread13 inexistente; sus registros no son una captura válida de loader.
+  La cadena estática fade.garc tampoco demuestra carga pendiente. No se prueba OOM.
+- Suite completa tras último cambio de código: env -u ORCH_LANE python -m pytest -q tests → **2905 passed,
+  3 skipped**,60,38s (work/f11/tests-m7.log). javac de AreaTrial y construcción completa pasan.
+  git diff --check limpio. Nuevas comprobaciones UI/guardado todavía no probadas con variante final.
+Commits: el de esta entrada; anteriores7d089eb,99b9cff,3879a67,0d204e1,22fafd7.
+Decisiones: A provisional hasta repetir ferry/recorrido/guardar/recargar/regreso con la variante final. Caso(c),
+  sin combates ni puertas de instalaciones (prototipo sin edificios). Motor/builders comunes/REPARTO/tasks.json
+  intactos; reserva Luma sin usar. Artefactos en work/f11 del carril, no binarios comerciales en Git.
+Siguiente paso: terminar m7-ferry.log/m7-route.log/m7-save.log en shell62609 (namespace del laboratorio),
+  guardar/reiniciar y volver al muelle; validar ferry real de regreso y aspecto. Si el diálogo no abre, revisar
+  estado gráfico/posición del NPC antes de declarar aceptación. No declarar done aún. Parar laboratorio al cierre.

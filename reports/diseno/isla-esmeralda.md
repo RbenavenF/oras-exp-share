@@ -108,7 +108,7 @@ introduce un conflicto de imagen con `chip_kusa` y no se propone importarla así
 **A provisional: una zona (209), una sola área privada y 4×2 celdas, a escala 1:1, sin cortes.** El prototipo de terreno
 comparte texturas en AD[11], no tiene referencias fuera del world pack y mide **4028928 bytes**, 163456 menos
 que Resort 211. Ha cargado por ferry en Azahar y se han cruzado fronteras horizontales y verticales leyendo la
-posición, sin modificarla. Fuentes: `work/f11/prototype/{build.log,ferry5.log,route-walk.log}` y generador aislado
+posición, sin modificarla. Fuentes: `work/f11/prototype/{build-original.log,ferry5.log,route-walk.log}` y generador aislado
 `frontier/probes/island/`. B no se justifica por el terreno medido; no se reduce la escala.
 Se han recorrido las ocho celdas, guardado mediante UI en (119,45), celda (2,1), y recargado allí con movimiento
 posterior: `terrain-saved.json` y `reload.log`. Zona/área/matriz final: **209/229/431** (`zones-final.txt`).
@@ -119,8 +119,11 @@ de recepción funciona con andar normal; el comportamiento de escalera `0x6c` de
 este ensayo. Solo el exportador del prototipo abre el pasillo temporal por recepción (26,61–65); el calco no cambia.
 
 La aceptación queda pendiente del regreso al muelle tras recargar: hay un bloqueo reproducible cerca de x=99,
-también sin GDB. Limpiar texturas/props y compactar suelo no lo resuelve; diagnóstico y presupuestos de
-variantes en reports/frontier.md (F11). No se declara A cerrada ni se justifica B todavía.
+también sin GDB. Rectificación del hito 5: las instalaciones manuales de variantes omitían área y geometría;
+sus resultados runtime quedan invalidados. El hito 6 reconstruye desde fuentes verificadas y comprueba los
+cuatro GARCs instalados: la combinación world/props/compact/names (2133760 bytes) reproduce el fallo en
+(99,45), m6-return-pier.log. Diagnóstico y presupuestos en reports/frontier.md (F11). No se declara A cerrada
+ni se justifica B todavía.
 
 Se ha validado el recorrido inicial del **terreno**. La carga con los siete edificios recolocados y su decoración definitiva,
 los retornos de interiores y la consola siguen **no probados**: F11-ISLA-CONSTRUCCION medirá su composición,

@@ -3579,10 +3579,10 @@ Generador aislado: `frontier/probes/island/build.py` y `TerrainPrototype.java`; 
 en `frontier/probes/island/README.md`. Base: staging de isla más overlay íntegro del paquete v0.2; hashes de
 los archivos resultantes en `work/f11/prototype/hashes.json`. Una zona (209), su área privada y una matriz
 4×2 de regiones 872–879, área **229**, matriz **431** (`zones-final.txt`, Probe). Escala 1:1, mar de relleno
-(16,4), sin edificios ni entidades. El calco versionado
+(16,4), sin edificios. En el hito 6 se conserva el empleado del ferry en (34,71); su retorno aún no está probado. El calco versionado
 permanece intacto; solo el exportador abre un pasillo de recepción temporal (26,61–65).
 
-`work/f11/prototype/build.log`: **4028928 bytes** = mundo 654336 + props 209152 + modelos 3165440;
+`work/f11/prototype/build-original.log` (antes `build.log`): **4028928 bytes** = mundo 654336 + props 209152 + modelos 3165440;
 163456 menos que Resort 211. Texturas compartidas en AD[11], `outside the world pack: {}`. No se ha cambiado
 LOAD_BUDGET de producción, ni reutilizado la reserva de Luma.
 
@@ -3634,10 +3634,10 @@ de build.py y AreaTrial.java (todos con `outside world pack {}`):
 | Variante | Mundo | Props | Modelos | Load budget | Regreso desde (119,45), sin GDB |
 |---|---:|---:|---:|---:|---|
 | Inicial | 654336 | 209152 | 3165440 | 4028928 | Bloqueo |
-| `world`: solo texturas referenciadas | 195840 | 209152 | 3165440 | 3570432 | Bloqueo |
-| + `props`: sin registro, un BCH de textura testigo | 195840 | 1792 | 3165440 | 3363072 | Bloqueo |
-| + `lod`: pertenencia explícita 209, sin LOD | 195840 | 1792 | 3165440 | 3363072 | Bloqueo |
-| + `compact`: rectángulos de suelo plano | 195840 | 1792 | 1936128 | 2133760 | Bloqueo; el menú no guarda |
+| `world`: solo texturas referenciadas | 195840 | 209152 | 3165440 | 3570432 | Ensayo invalidado (ver rectificación) |
+| + `props`: sin registro, un BCH de textura testigo | 195840 | 1792 | 3165440 | 3363072 | Ensayo invalidado (ver rectificación) |
+| + `lod`: pertenencia explícita 209, sin LOD | 195840 | 1792 | 3165440 | 3363072 | Ensayo invalidado (ver rectificación) |
+| + `compact`: rectángulos de suelo plano | 195840 | 1792 | 1936128 | 2133760 | Ensayo invalidado (ver rectificación) |
 
 Fuentes locales: `work/f11/prototype/{prune-trial,prune-props-trial,lod-trial,compact-trial}.log`,
 `{pruned-return,pruned-props-return,lod-return,compact-return}.log`. La recreación de world/props/lod
@@ -3659,6 +3659,53 @@ su marca `default=true` anulaba el valor editado; boot.sh corrige esa marca. Ese
 `battle03_01_01`. En el prototipo las ocho regiones comparten `battle03_00_00`.
 La variante `names` asigna un nombre propio por celda, sin cambiar offsets ni geometría.
 `names-trial.log` registra 22 sustituciones de strings por modelo y presupuesto 2133760.
-El regreso también falla con nombres únicos (`names-return.log`: el menú no guarda). No queda
-demostrado que los nombres duplicados causasen el bloqueo. Suite completa: **2904 passed, 3 skipped**,
+La instalación manual de `names-return.log` tampoco exportó los cuatro GARCs: su resultado queda invalidado.
+No queda demostrado que los nombres duplicados causasen el bloqueo. Suite completa: **2904 passed, 3 skipped**,
 58,78 s (`work/f11/tests-m5-final.log`). A sigue provisional y el regreso pendiente.
+
+
+### F11 hito 6: rectificación de instalaciones y primer reensayo verificado
+
+**Rectificación del hito 5:** las copias manuales de variantes actualizaban zona y matriz,
+pero omitían los GARCs de área y geometría. La correspondencia correcta, medida en
+`OrasProfile.java`, es ZONE_DATA `a/0/1/3`, AREA_DATA `a/0/1/4`, FIELD_DATA `a/0/3/9`,
+MAP_MATRIX `a/0/4/0`. Los presupuestos estáticos siguen siendo válidos; los resultados
+runtime de world/props/lod/compact/names del hito 5 no permiten excluir esas hipótesis.
+La construcción completa del prototipo inicial sí exportó los cuatro archivos: su ferry,
+ocho celdas y guardar/recargar mantienen la evidencia. Las primeras pruebas manuales de
+animaciones, colisión plana, cámara y modelos retail del hito 6 también quedan invalidadas.
+Los ficheros locales `area-unpruned.garc` y `collision-before-flat.garc` tienen nombres
+erróneos (son zona y matriz); no utilizarlos para restaurar área ni geometría.
+
+build.py centraliza ahora la exportación de los cuatro GARCs y el manifiesto de todos los
+archivos. boot.sh verifica el manifiesto antes de instalar y los hashes instalados después,
+registrados en `installed-hashes.json`. La prueba de exportación parte de cuatro destinos
+obsoletos y comprueba contenido y hashes de todos, incluidos área y geometría.
+
+Recreación limpia desde las fuentes v0.2 verificadas: `rebuild-m6.log`, `build.log`,
+`config.json`, `sources.json`. Ensayo `world,props,compact,names`: **2133760 bytes**, mundo
+195840, props1792, modelos1936128, referencias fuera de world pack {}. Instalación completa
+verificada: `boot-m6-candidate.log`, `installed-hashes.json`. `m6-return-pier.log` reproduce
+el fallo al volver desde (119,45): última posición (99,45). Esta es la primera prueba
+válida de ejecución de esa combinación; sigue sin demostrar OOM ni justificar B.
+
+Los backtraces `names-all-bt.txt` no identifican un cargador de terreno: el hilo en
+0x4200dc contiene referencias a `gflnet_WirelessScanProc.cpp` (exploración de red).
+`capture-loader.sh` local seleccionaba un thread 13 inexistente; sus registros no son
+una captura válida del cargador. La cadena estática `rom:/gfl_grp/fade.garc` tampoco
+identifica una petición de carga pendiente. No usar esos ficheros como causa del bloqueo.
+
+Suite completa: **2905 passed, 3 skipped**, 60,49 s (`work/f11/tests-m6.log`).
+
+Segundo ensayo con instalación completa verificada, acumulando `lod,camera,animations`:
+`m6-{lod,camera,animations}-trial.log`, `m6-extra-hashes.json`, `m6-extra-boot.log`.
+`m6-extra-return.log` vuelve a registrar última posición (99,45). La tabla de cámaras
+vacía y el BCH de animaciones vacío proceden del área retail 0; no hay archivos
+sintéticos de longitud cero. Este control acumulado tampoco demuestra una causa de memoria.
+
+Censo de auxiliares: `m6-aux-census.txt`, generado con `work/f11/AreaAux.java` sobre el
+workspace verificado. AD229[7/8/9] vacíos; GR489–492[4] empiezan respectivamente
+`00 00`, `00 01`, `01 00`, `01 01`, seguidos de dos ceros y float 18. Los GR872–879
+clonados de 489 conservaban todos `00 00`. La variante `coordinates` ensaya fila/columna
+por celda conservando el resto del subfichero. No modificar GR[4] en producción sin
+confirmar su efecto en ejecución.

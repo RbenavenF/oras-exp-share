@@ -45,3 +45,23 @@ def test_reception_passage_connects_ferry_to_all_eight_cells_at_walkable_heights
             steps = route.path(start, (cx,cy))
             assert steps[0] == start
             assert (steps[-1][0]//40,steps[-1][1]//40) == (cx,cy)
+
+
+def test_trial_export_replaces_stale_area_and_geometry_as_well_as_zone_and_matrix(tmp_path, monkeypatch):
+    import hashlib
+    import json
+    monkeypatch.setattr(prototype, 'OUT', tmp_path)
+    paths = ('a/0/1/3', 'a/0/1/4', 'a/0/3/9', 'a/0/4/0')
+    for rel in paths:
+        src, dst = tmp_path/'game'/rel, tmp_path/'mod/romfs'/rel
+        src.parent.mkdir(parents=True, exist_ok=True)
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        src.write_bytes(('new '+rel).encode())
+        dst.write_bytes(b'stale archive')
+    prototype.export_mod()
+    prototype.manifest()
+    hashes = json.loads((tmp_path/'hashes.json').read_text())
+    for rel in paths:
+        expected = ('new '+rel).encode()
+        assert (tmp_path/'mod/romfs'/rel).read_bytes() == expected
+        assert hashes['romfs/'+rel] == hashlib.sha256(expected).hexdigest()

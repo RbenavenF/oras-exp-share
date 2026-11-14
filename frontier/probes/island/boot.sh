@@ -5,6 +5,15 @@ cd "$(dirname "$0")/../../.."
 source scripts/env.sh
 SAVE=${1:-work/frontier/pkg02/s1_story.sav}
 LAB=work/azahar-lab
+python - <<'PYHASH'
+import hashlib,json
+from pathlib import Path
+p=Path('work/f11/prototype')
+expected=json.loads((p/'hashes.json').read_text())
+actual={str(f.relative_to(p/'mod')):hashlib.sha256(f.read_bytes()).hexdigest()
+        for f in (p/'mod').rglob('*') if f.is_file()}
+assert actual==expected, 'Prototype changed: regenerate its manifest before boot'
+PYHASH
 python scripts/azahar_lab.py reap
 python scripts/azahar_lab.py prepare
 GDB_ENABLED=${F11_GDB:-1}
@@ -21,6 +30,15 @@ PYCFG
 MOD=$LAB/data/azahar-emu/load/mods/000400000011C400
 rm -rf "$MOD"
 cp -r work/f11/prototype/mod "$MOD"
+python - "$MOD" <<'PYHASH'
+import hashlib,json,sys
+from pathlib import Path
+p=Path(sys.argv[1]); out=Path('work/f11/prototype')
+actual={str(f.relative_to(p)):hashlib.sha256(f.read_bytes()).hexdigest()
+        for f in p.rglob('*') if f.is_file()}
+assert actual==json.loads((out/'hashes.json').read_text()), 'Installed mod differs'
+(out/'installed-hashes.json').write_text(json.dumps(actual,indent=2)+'\n')
+PYHASH
 SAVEDIR="$LAB/data/azahar-emu/sdmc/Nintendo 3DS/00000000000000000000000000000000/00000000000000000000000000000000/title/00040000/0011c400/data/00000001"
 mkdir -p "$SAVEDIR"
 cp "$SAVE" "$SAVEDIR/main"

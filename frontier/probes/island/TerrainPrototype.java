@@ -61,6 +61,12 @@ public final class TerrainPrototype {
             Files.copy(nativeRegion.getOriginFile().toPath(),out.toPath(),StandardCopyOption.REPLACE_EXISTING);
             GR gr=new GR(out,Workspace.session());
             gr.storeFile(0,bc.tilemap);gr.storeFile(1,bc.model);gr.storeFile(2,bc.collision);gr.storeFile(3,bc.props);
+            // Retail 489..492 encode {row,column} at GR[4][0..1]. Copying
+            // {0,0} to every region froze the return at (99,45); retain the
+            // remaining auxiliary bytes but identify each cell correctly.
+            byte[] extended=gr.getFile(4).clone();
+            extended[0]=(byte)cy;extended[1]=(byte)cx;
+            gr.storeFile(4,extended);
             Workspace.session().registerPendingCompression(ArchiveType.FIELD_DATA,region,true);
             matrix.ids.set(cx,cy,(short)region);
             System.out.println("CELL " + cx+","+cy+" region="+region+" model="+bc.model.length+" collision="+bc.collision.length);
@@ -73,7 +79,12 @@ public final class TerrainPrototype {
         }
         ad.storeFile(11,world);
         ZoneEntities ent=new ZoneEntities(zo.getFile(1));
+        ZoneEntities.NPC clerk=ent.npcs.get(0);
+        if(clerk.uid!=0 || clerk.model!=300 || clerk.script!=2)
+            throw new IllegalStateException("Expected the accepted island ferry clerk");
+        clerk.xTile=34; clerk.yTile=71; clerk.z3DCoordinate=18; clerk.faceDirection=3;
         ent.npcs.clear();ent.warps.clear();ent.furniture.clear();ent.triggers1.clear();ent.triggers2.clear();
+        ent.npcs.add(clerk);
         zo.storeFile(1,ent.assembleData());
         System.out.println("pack " + Workspace.packArchives((p,what)->{}));
         System.out.println("outside the world pack: " + ctrmap.tests.FrontierPlaza.worldTexturesOutsideWorldPack(zone));
