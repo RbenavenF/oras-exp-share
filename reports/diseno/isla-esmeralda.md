@@ -105,7 +105,7 @@ introduce un conflicto de imagen con `chip_kusa` y no se propone importarla así
 
 ### 2.3 Decisión A/B de F11-ISLA-TRAZADO (2026-11-14)
 
-**A provisional: una zona (209), una sola área privada y 4×2 celdas, a escala 1:1, sin cortes.** El prototipo de terreno
+**Decisión: A (terreno), una zona (209), una sola área privada y 4×2 celdas, a escala 1:1, sin cortes.** B no hace falta. El prototipo de terreno
 comparte texturas en AD[11], no tiene referencias fuera del world pack y mide **4028928 bytes**, 163456 menos
 que Resort 211. Ha cargado por ferry en Azahar y se han cruzado fronteras horizontales y verticales leyendo la
 posición, sin modificarla. Fuentes: `work/f11/prototype/{build-original.log,ferry5.log,route-walk.log}` y generador aislado
@@ -118,12 +118,16 @@ de 6 subficheros dio pantalla blanca con el mismo presupuesto: no era prueba de 
 de recepción funciona con andar normal; el comportamiento de escalera `0x6c` del catálogo la bloqueaba en
 este ensayo. Solo el exportador del prototipo abre el pasillo temporal por recepción (26,61–65); el calco no cambia.
 
-La aceptación queda pendiente del regreso al muelle tras recargar: hay un bloqueo reproducible cerca de x=99,
-también sin GDB. Rectificación del hito 5: las instalaciones manuales de variantes omitían área y geometría;
-sus resultados runtime quedan invalidados. El hito 6 reconstruye desde fuentes verificadas y comprueba los
-cuatro GARCs instalados: la combinación world/props/compact/names (2133760 bytes) reproduce el fallo en
-(99,45), m6-return-pier.log. Diagnóstico y presupuestos en reports/frontier.md (F11). No se declara A cerrada
-ni se justifica B todavía.
+El bloqueo del regreso cerca de x=99 (hitos 4–6) no era de memoria: cada GR lleva su fila y columna en GR[4][0..1]
+(retail 489–492: 00 00 / 00 01 / 01 00 / 01 01) y las copias tenían todas 00 00. Con esos bytes por celda
+(`TerrainPrototype`, construcción por defecto, sin ensayos; 4.028.928 bytes) se repitió todo en Azahar
+(2026-11-14, Claude, `work/f11/proto/m8/`): ferry desde Calagua → (35,71); las ocho celdas dibujadas y cruzadas
+(route.out: (40,71), (42,39), (39,32), (84,39), (126,39), (126,40), (119,45)); guardado UI en (119,45), celda
+(2,1); reinicio con esa partida; regreso andando al muelle (pier.out, 110 pasos por (79,45)…(42,70)) y ferry de
+vuelta a Calagua (`back_lilycove.png`). Corrobora la causa: en un ensayo previo con regiones copiadas sin esos
+bytes, las celdas de x≥40 no dibujaban su suelo aunque se podía caminar por ellas (`work/f11/proto/v1/`).
+**A queda cerrada para el terreno.** Requisito para F11-ISLA-CONSTRUCCION: cada región nueva con su fila/columna en
+GR[4] y el contenedor GR retail de 7 subficheros.
 
 Se ha validado el recorrido inicial del **terreno**. La carga con los siete edificios recolocados y su decoración definitiva,
 los retornos de interiores y la consola siguen **no probados**: F11-ISLA-CONSTRUCCION medirá su composición,

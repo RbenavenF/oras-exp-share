@@ -3730,3 +3730,40 @@ sin los controles extra lod/camera/animations. Conserva cámara y animaciones or
 un área229, matriz431 de4×2, 2133760 bytes y WorldTextures {}. `m7-ferry.log` registra
 llegada real desde Calagua a(35,71); el empleado aparece junto al muelle. Recorrido,
 nuevo guardado, recarga y regreso con esta combinación quedan en comprobación.
+
+### F11: aceptación del prototipo A y coste por pieza (2026-11-14, Claude)
+
+**Prototipo.** Construcción por defecto de `frontier/probes/island/build.py` (sin `--trial`; fila/columna por celda
+en GR[4]): zona 209, área 229, matriz 431, regiones 872–879; load budget **4.028.928** (mundo 654.336, props
+209.152, modelos 3.165.440), `outside the world pack: {}` (`work/f11/prototype/build.log`). Azahar, laboratorio
+24690, todo en `work/f11/proto/m8/`:
+- `checkpoint_harbor.sav` (5ddaa992…) → Pase del marinero y ferry (`drive.py m8 ferry sailor`) → llegada (35,71),
+  terreno dibujado (`arrival.png`);
+- `route.py`: celdas (1,1) en (40,71), (1,0) en (42,39), (0,0) en (39,32), (2,0) en (84,39), (3,0) en (126,39),
+  (3,1) en (126,40), (2,1) en (119,45) (`route.out`, `cell21.png`);
+- guardado UI en (119,45), celda (2,1): `m8-terrain-saved.sav` 552d8a15…, 58 bloques válidos;
+- reinicio con esa partida, `route.py --pier` de (119,45) a (35,71) sin bloqueo (`pier.out`), y ferry de vuelta:
+  empleado → «Ciudad Calagua» → puerto de Calagua (16,25) (`clerk_talk.png`, `back_lilycove.png`).
+El bloqueo de x=99 de los hitos 4–6 desaparece con GR[4]; en `work/f11/proto/v1/` (regiones copiadas sin esos
+bytes) las celdas x≥40 no dibujaban su suelo. No probado: consola, edificios, puertas de instalación.
+
+**Coste por pieza estampada** (`frontier/probes/island/piece_costs.sh` → `work/f11/piece_costs.txt`): load budget de
+la isla v0.2 con la pieza sola en (16,13) de la plaza, como §24; base solo camino 2.458.880.
+
+| Pieza del catálogo | Δ total | Δ mundo | Δ modelos |
+| --- | ---: | ---: | ---: |
+| Palm tree (465/85) | 17.024 | 0 | 17.024 |
+| Battle Resort tree (yashi_m) | 82.176 | 43.904 | 38.272 |
+| Bush (5/8) | 142.208 | 135.680 | 6.528 |
+| Roadside tree (5/8) | 146.432 | 135.680 | 10.752 |
+| Littleroot Town tree (r103_happa) | 303.232 | 227.072 | 76.160 |
+| Battle Resort stairs (chip_steps01a) 2 | 56.064 | 33.408 | 22.656 |
+| Battle Resort rock (r105_chip_rock_c) 3 | 12.288 | 0 | 12.288 |
+| New Mauville fence (c107r0601_saku) | 116.736 | 35.968 | 80.768 |
+| Iron fence (4-tile run) | 4.096 | 0 | 4.096 |
+| Battle Resort decor (gaitou) | 41.856 | 25.088 | 16.768 |
+| Battle Resort decor (stone) | 19.840 | 10.752 | 8.832 |
+| Battle Resort structure (batres_vase06) | 36.224 | 25.088 | 11.136 |
+
+Coinciden con la tabla de materiales: la palmera, la roca y la valla de hierro no añaden texturas a esta área;
+los árboles y arbustos del área 8 cuestan ~135 KB de texturas la primera vez (una sola vez si se comparten).

@@ -3967,3 +3967,32 @@ Decisiones: A provisional hasta repetir ferry/recorrido/guardar/recargar/regreso
 Siguiente paso: terminar m7-ferry.log/m7-route.log/m7-save.log en shell62609 (namespace del laboratorio),
   guardar/reiniciar y volver al muelle; validar ferry real de regreso y aspecto. Si el diálogo no abre, revisar
   estado gráfico/posición del NPC antes de declarar aceptación. No declarar done aún. Parar laboratorio al cierre.
+
+## 2026-11-14 — Claude Code (Opus 5.5) — F11-ISLA-TRAZADO hito 7: A aceptada en Azahar con la variante final
+Estado: hecho
+Relevo: Codex se cortó por cuota tras bc9caf1 (hito 6). Árbol limpio salvo mi `frontier/lab/` sin seguimiento, de
+mi sesión anterior al relevo (prototipo propio Island8 + conductor + coste por pieza). Su prototipo duplicaba el de
+Codex (`frontier/probes/island/`), que es el que queda: he borrado `frontier/lab/` y conservado solo dos cosas,
+movidas a `frontier/probes/island/`: `drive.py` (conductor: Pase del marinero + ferry desde
+`checkpoint_harbor.sav`, posición, pasos, capturas) y `piece_costs.sh` (coste por pieza con Plaza). Mi laboratorio
+viejo se paró con `reap` antes de empezar.
+Hecho:
+- `build.py` por defecto (fila/columna por celda en GR[4], sin ensayos) con el paquete de `dist/` enlazado en
+  `work/frontier/pkg02/oras-frontier-alpha-v0.2` (el generador valida su manifiesto): 4.028.928 bytes, `{}`.
+- Azahar 24690 (`work/f11/proto/m8/`): ferry desde Calagua → (35,71); `route.py` por las ocho celdas, todas
+  dibujadas; guardado UI en (119,45), celda (2,1); reinicio con esa partida; `route.py --pier` hasta (35,71) sin el
+  bloqueo de x=99; el empleado habla y el ferry vuelve a Calagua.
+- Decisión escrita en `reports/diseno/isla-esmeralda.md` §2.3: **A cerrada para el terreno**, B no hace falta, sin
+  reducir escala. Informe: `reports/frontier.md`, «F11: aceptación del prototipo A y coste por pieza».
+Evidencia: `work/f11/proto/m8/{walk.log,route.out,pier.out,arrival.png,cell21.png,clerk_talk.png,back_lilycove.png}`;
+`m8-terrain-saved.sav` 552d8a15…; `work/f11/prototype/build.log` y `hashes.json`; `work/f11/piece_costs.txt`;
+suite `env -u ORCH_LANE python -m pytest -q tests`: 2906 passed, 2 skipped (`work/f11/tests-m8.log`).
+Laboratorio parado (gdbctl stop + reap; sin session.json).
+Commits: el de esta entrada.
+Decisiones:
+- La causa del bloqueo y de las celdas sin suelo es GR[4] (fila/columna), no memoria: mi ensayo previo sin esos
+  bytes (`work/f11/proto/v1/`) no dibujaba el suelo de x≥40. F11-ISLA-CONSTRUCCION debe conservarlo.
+- Regresión caso (c): sin edificios ni puertas en el prototipo, no hay instalaciones que probar. Motor, builders
+  comunes, REPARTO y tasks.json intactos; reserva Luma sin usar (espacio medido en el hito 2 de Codex).
+No probado: consola; edificios, decoración y puertas sobre el terreno nuevo (F11-ISLA-CONSTRUCCION).
+Siguiente paso: F11-ISLA-CONSTRUCCION sobre `frontier/island_layout.py` y `frontier/probes/island/`.
