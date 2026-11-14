@@ -37,10 +37,14 @@ public final class Materials {
                 System.out.println("RETAIL " + region + " mesh=" + mesh + " material=" + model.getMaterialName(mat) + " textures=" + model.getMaterialTextureNames(mat));
             }
         }
-        for (int mesh : new int[]{1,2,3,4,9,13}) {
+        for (int mesh : new int[]{1,2,3,4,5,9,13}) {
             BchMapModel m = new BchMapModel(BuildingCatalog.pristineRegion(Workspace.session(),489).getFile(1));
-            measure("NATIVE_489_" + mesh,489,101,m.getMaterialTextureNames(m.getMeshMaterialIndex(mesh)),0);
+            BchMapModel.MeshGeom g = m.geometry().get(mesh);
+            measure("NATIVE_489_" + mesh,489,101,m.getMaterialTextureNames(m.getMeshMaterialIndex(mesh)),g.vertexCount*g.stride+m.getTriangles(mesh).length*2);
         }
+        BchMapModel decoration = new BchMapModel(BuildingCatalog.pristineRegion(Workspace.session(),490).getFile(1));
+        BchMapModel.MeshGeom dg = decoration.geometry().get(0);
+        measure("NATIVE_490_0",490,101,decoration.getMaterialTextureNames(decoration.getMeshMaterialIndex(0)),dg.vertexCount*dg.stride+decoration.getTriangles(0).length*2);
         for (TilePalette brush : new TilePalette[]{TilePalette.PATH, TilePalette.GRASS, TilePalette.SAND, TilePalette.WATER, TilePalette.STAIRS_Z, TilePalette.WALKWAY}) {
             TerrainCatalog.Donor d = TerrainCatalog.donors().get(brush);
             measure(brush.name(), d.donorRegion, d.donorArea, TerrainCatalog.donorTextures(Workspace.session(),d), 0);

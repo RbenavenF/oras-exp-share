@@ -3559,8 +3559,8 @@ construirlo. Compartir textura entre instancias no multiplica su coste.
 | `T` seto | Bush catálogo 5/8, completo | 143360 | 135552 | 460 bytes vértices/índices; comparte atlas con árboles del área 8 |
 | `p` parterre | Pokémon League structure (flower01), 621/159 | 84992 | 86912 | recorte completo 8718 bytes vértices/índices; jardinera con flores, forma distinta |
 | `f` valla/banderín | Iron fence (4-tile run), 38/11 | 18432 | 19072 | 4064 bytes vértices/índices; valla como sustituto del banderín, sin omitir sus casillas |
-| `o` roca | región 489 mesh 5 `r124_2_chip_rock_c`, área 101 | pendiente geometría | 0 texturas nuevas | pieza retail del puerto; tamaño final no medido |
-| `x` decoración | piezas del puerto 490, área 101 | según pieza | 0 texturas nuevas | selección final por casilla en construcción; aún no medida |
+| `o` roca | región 489 mesh 5 `r124_2_chip_rock_c`, área 101 | 8192 | 0 | 38256 bytes de vértices/índices del mesh retail entero; el recorte final puede ser menor |
+| `x` decoración | región 490 mesh 0 `resort_obj3`, área 101 | 8192 | 0 | 324 bytes vértices/índices; señal/decoración del puerto como sustituto provisional de estatua/farola |
 | `B`, `+` hueco/puerta | reserva lógica del calco; edificios actuales de FACILITIES | — | — | no son material de terreno; costes edificios en §24 |
 
 Control de alternativas: Roadside tree completo (5/8) mide 159744 texels, Δ152192, recorte 1698 bytes;

@@ -3830,3 +3830,35 @@ Decisiones:
 No probado: prototipo 8 celdas en Azahar, ferry, cruces, guardar/cargar fuera de llegada, decisión A/B ni consola.
 Siguiente paso: generador de prototipo separado, 209/una área/4×2, texturas compartidas; probar A en el laboratorio
 24691, llegar por ferry y recorrer cruces de celda antes de decidir A/B.
+
+## 2026-11-14 — Codex — F11-ISLA-TRAZADO hito 3: prototipo A reproducible
+Estado: en curso
+Hecho:
+- `frontier/probes/island/build.py` y `TerrainPrototype.java`: laboratorio 209, área privada, matriz 4×2,
+  8 regiones nuevas (872–879), sin edificios ni entidades. Referencia 128×72 a OFFSET (16,4), escala 1:1;
+  solo el pasillo temporal de recepción (26,61–65) abre el paso del muelle a la plaza.
+- Importación única de materiales al world pack; cada región conserva colisión y alturas. Se conserva todo el
+  paquete v0.2 antes de sustituir la geometría (el staging por sí solo es anterior a su overlay).
+- `boot.sh`, `route.py` y README de laboratorio: copia de partida, arranque por puerto del carril y recorrido
+  derivado del calco con lectura pasiva de posición. Sin modificar los builders comunes ni motor.
+- Completados costes antes pendientes de roca/decoración en Materials.java y reports/frontier.md: mesh 489/5
+  = 38256 bytes vértices/índices + 8192 texels; mesh 490/0 = 324 + 8192; ambos Δworld=0.
+Evidencia:
+- `source scripts/env.sh; python frontier/probes/island/build.py` → `work/f11/prototype/build.log` y hashes.json.
+  Load budget **4028928** = world 654336 + props 209152 + modelos 3165440; texturas fuera del world pack `{}`.
+  Son 163456 bytes menos que Resort 211 (misma métrica). No demuestra por sí solo carga en ejecución.
+- 3 tests de exportación/acceso a las ocho celdas; suite `env -u ORCH_LANE python -m pytest -q tests`:
+  **2904 passed, 3 skipped**, 60,62 s (`work/f11/tests-m3-final.log`). `git diff --check` limpio.
+- Azahar: la fixture s1_story está en Ruta 102 (medido con save_event.place, 24/160.5/146.5), no en puerto.
+  Copia de v02_saved_plaza.sav editada con save_event (hash fuente 4784ac54…) al puerto 317; editar posición
+  deja actores sin cargar hasta salir a Calagua y volver. Recorrido real salida/reentrada:
+  `work/f11/prototype/reenter.log`: (19,26) → ciudad (24,60) → puerto (27,29); captura c_f11_port.png en
+  work/frontier/pkg/shots. No atribuir la falta inicial de NPCs al terreno ni al tamaño del área.
+Commits: el de esta entrada; hito anterior `99b9cff`.
+Decisiones:
+- Sigue A, sin reducir escala ni cambiar LOAD_BUDGET de producción. B todavía no se justifica.
+- Toda la sesión de Azahar/GDB debe vivir en el mismo shell/namespace; cada exec nuevo tiene otros PID.
+No probado todavía: llegada por ferry a esta geometría, carga de la isla, cruces y guardar/cargar. La regresión
+aplicada es caso (c), sin combates ni siete instalaciones: el prototipo no tiene edificios/puertas de instalación.
+Siguiente paso: terminar ensayo de ferry en el shell vivo; luego route.py, guardar/cargar fuera de celda (0,1),
+medir/corregir lo que falle y escribir decisión A/B. Parar el laboratorio al acabar.
