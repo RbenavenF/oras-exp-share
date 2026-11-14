@@ -3809,3 +3809,52 @@ en `build()`). Reserva de Luma 0x579604–0x579804 sin usar (no se toca code.bin
 No probado: consola; combates (no se toca el motor ni los interiores: regresión caso (c)).
 Pendiente estético: la textura de escalera del pintor se ve blanca; árboles, vallas y decoración se pintan aún como
 hierba o roca (tareas F10 sobre el trazado nuevo).
+
+## 52. Paquete alfa v0.3 — F7-PAQUETE-V03 (2026-11-14, Codex)
+
+**Estado: en curso; no distribuir como validado hasta completar el circuito.** La confirmación de v0.2 en
+3DS no valida la isla nueva de v0.3. No se ha ejecutado v0.3 en consola.
+
+Relevo limpio sobre `fa68d218633a7e6465f1eed08138f96187105983`: ese commit de Claude cambió generador y tests,
+pero faltaban bitácora y aceptación del paquete exacto. Se conserva su implementación. Construcción local:
+
+```bash
+source scripts/env.sh
+python frontier/package.py --output work/frontier/pkg03/oras-frontier-alpha-v0.3
+python frontier/package.py checkpoint dist/oras-frontier-checkpoint-test-v0.2/FrenteTest-puerto-Calagua/main \
+  --output work/frontier/pkg03/oras-frontier-checkpoint-test-v0.3
+python frontier/probes/luma/package_ips.py work/frontier/pkg03/oras-frontier-alpha-v0.3 \
+  --out work/frontier/pkg03/luma
+```
+
+El manifiesto registra `fa68d21`, árbol limpio. Los 39 hashes reales coinciden con `files` (38 del mod y LEEME).
+ZIP: `5ee0adb86eb4fe145d60148f03a194f2ac02a2dd453cfb7db46803467a0f42c1`;
+IPS distribuible: `0368f52100d49dfe34809ddda710637a58b1055fb8f07b7de0a5337d2a4dbb2d`;
+IPS exclusivo del laboratorio con Luma: `75618a08cb5baa746d6638a1065de5a01c3c13c42a8cf3ad920d843b5034ca49`.
+Partida Checkpoint: `5ddaa992c5aea98a3da1af80c1f2486b6d2db1690da0ae8be84abf2397edeffa`.
+En este carril `dist` es un enlace fuera de su raíz escribible: la construcción final desde main en dist queda
+para la integración del orquestador; los ficheros del juego deben coincidir con estos hashes.
+
+`work/frontier/pkg03/space.json` (`python frontier/modes_audit.py`): code.bin **0x579804–0x579fdc**, 2008 bytes,
+**36 libres**; **0x579604–0x579804 reservado íntegro a Luma**. DllBattle 1148 libres; F9 DllField 472 usados y
+1064 libres. `work/frontier/package/build-island/java.log`: isla **3.534.592 bytes**, presupuesto 4.192.384;
+`outside the world pack: {}`. Sin cambios de motor ni modos: menús de Individual Nivel 50, infraestructura F9
+incluida sin abrir modalidades incompletas.
+
+Laboratorio del carril, puerto **24691**, instalado por `probes/package/boot.sh`: los 38 ficheros del mod se
+comprueban contra el manifiesto antes de sustituir únicamente code.ips por la simulación de Luma. Lectura RAM en
+`work/frontier/pkg03/circuit-reenter.out`: 0x579604 empieza `ea000004 e92d5fff eaeee3e5 ea000012` y 0x579804
+`e92d41f0 e24dd018 e1a04000 e1a05001`, coincidentes con la simulación del paquete.
+
+Incidencias del conductor (no del juego): el Checkpoint publicado empieza en (27,27), y el marinero uid 2 de
+317 tiene movimiento 47, con casilla inicial (29,24). Fuente: `work/frontier/pkg03/harbor-entities.txt`, generado
+con `faraway/run.sh Probe ... entities 317`. Las teclas antiguas no llegaban al NPC; se exige aproximación por
+(28,26)→(28,24) y avanzar a su colisión antes de hablar. El acceso al ferry pasa por fila 26 para evitar los
+obstáculos de fila 24. El conductor comprueba además la llegada esperada (34,73) antes de continuar.
+Primeros intentos conservados en `circuit-first.out`, `circuit-final.out`, `circuit-ferry.out` y `circuit-reenter.out`:
+no se cuentan como aceptación. Reentrar al puerto no solucionó la aproximación y no se considera requisito del juego.
+Pase realmente entregado: `work/frontier/pkg03/shots/c_moving_sailor_3.png`, con «Ruben ha obtenido un Pase del Frente».
+
+Regresión caso d del paquete exacto + Luma: pendiente de completar y registrar aquí (siete instalaciones,
+Mansión original, combate normal, Repartir Exp., DexNav, guardar/cargar y regreso a Calagua). El texto anticipado
+del LEEME heredado no constituye evidencia de estas pruebas hasta su cierre.

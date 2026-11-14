@@ -151,15 +151,19 @@ def main():
     log(f'circuit from {a.first}')
     if 'sailor' in todo:
         log(f'harbor: at {pos()}')
-        keys('h', pause=1)
-        keys('t', 'a', pause=2.5)
+        # The published Checkpoint starts below uid 2, who walks along row 24
+        # (movement 47). Hold right up to his collision, then talk; turning from
+        # his initial tile can silently "pass" this step while talking to nobody.
+        walk((28, 26), (28, 24))
+        keys('h', hold='0.3', pause=0.3)
+        keys('a', pause=2.5)
         shot('sailor_1')
         keys('a', 'a', 'a', pause=2.5)
         shot('sailor_pass')
         run('python', f'{HERE}/to_field.py', '--max', '12')
         log('sailor: pass given (shots c_sailor_*)')
     if 'ferry' in todo:
-        walk((19, 26), (19, 25))                        # the ferry clerk is at (18,25)
+        walk((pos()[0], 26), (19, 26), (19, 25))        # avoid the fence/NPCs along row 24
         keys('f', 'a', pause=2.5)
         keys('a', 'a', pause=2.5)
         keys('a', pause=2.5)
@@ -170,8 +174,12 @@ def main():
         shot('ferry_yesno')
         keys('a', pause=15)
         run('python', f'{HERE}/to_field.py', '--max', '12')
-        log(f'ferry: arrived at {pos()}')
+        arrival = pos()
+        log(f'ferry: arrived at {arrival}')
         shot('island_pier')
+        expected = (island_build.island.ARRIVAL[1], island_build.island.ARRIVAL[3])
+        if arrival != expected:
+            raise RuntimeError(f'ferry: expected the new island pier {expected}, got {arrival}')
     if 'factory' in todo:
         go('factory')
         maison('factory', 1, factory=True)

@@ -4062,3 +4062,24 @@ No probado todavía: circuito completo v0.3, Mansión original, historia/Reparti
 consola real. El texto heredado del LEEME que anticipa el circuito no constituye evidencia de que ya se haya ejecutado.
 Siguiente paso: completar laboratorio 24691 (boot.log y circuit.out en work/frontier/pkg03), registrar resultados,
 corregir cualquier fallo antes de dar por válida la entrega. Integración final y construcción dist desde main pendientes.
+
+## 2026-11-14 — Codex — F7-PAQUETE-V03 hito 2: acceso real y conductor corregido
+Estado: en curso
+Hecho: corregido frontier/probes/package/circuit.py: acercamiento al marinero móvil uid 2 antes de hablar,
+trayecto al ferry por fila 26 y comprobación de la llegada exacta al muelle nuevo. reports/frontier.md §52 registra
+identidad del paquete, espacio y ensayos. El paquete del juego sigue idéntico al construido sobre fa68d21.
+Evidencia:
+- Probe entities de zona 317: NPC 2 inicial (29,24), move=47 (work/frontier/pkg03/harbor-entities.txt).
+- work/frontier/pkg03/shots/c_moving_sailor_3.png: «Ruben ha obtenido un Pase del Frente».
+- work/frontier/pkg/shots/c_ferry_menu.png: Isla del Frente; c_ferry_yesno.png: rumbo a la Isla del Frente.
+- work/frontier/pkg03/circuit-pass.out: ferry arrived at (34,73), a las 10:51:40.
+- Lectura pasiva de 0x579604 y 0x579804 coincide con los primeros 16 bytes esperados por console_check
+  (circuit-reenter.out). Laboratorio persistente controlado por work/frontier/pkg03/driver.py, puerto 24691.
+- `env -u ORCH_LANE python -m pytest -q tests`: 2928 passed, 4 skipped (tests-final.log, 60.72 s).
+  `git diff --check` limpio. Ningún cambio de motor, mapa, inputs ni partida original.
+Commits: bd828f7 y el de esta entrada (Agent: Codex).
+Decisiones: los intentos que no obtenían el pase o se desviaban al Resort se conservan como fallos del conductor,
+no como aceptación ni como fallos del paquete. No hace falta reentrar al puerto: la aproximación al NPC móvil
+resolvió el diálogo en el Checkpoint original. La política d sigue pendiente más allá del acceso a la isla.
+Siguiente paso: continuar circuito-pass.out (Fábrica→Torre→Arena→Palacio→Tubo→Domo→Pirámide); luego guardar/cargar,
+ferry de regreso, Mansión original y historia/Repartir Exp./DexNav. No declarar validación completa aún.
