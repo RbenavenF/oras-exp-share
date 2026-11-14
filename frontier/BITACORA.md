@@ -4152,3 +4152,18 @@ Siguiente paso: integrador, desde main limpio: python frontier/package.py; pytho
   work/orch/lanes/codex/work/frontier/pkg03/oras-frontier-alpha-v0.3/manifest.json (39 hashes) y Checkpoint con
   5ddaa992c5aea98a3da1af80c1f2486b6d2db1690da0ae8be84abf2397edeffa; si coinciden, cerrar done sin repetir
   Azahar. Si cambia juego, aplicar regresión al cambio. La reserva Luma sigue intacta; 36 bytes libres medidos §52.
+
+## 2026-11-14 13:50 — Claude Code (Opus 5.5) — Alfa v0.3 publicada en dist
+Estado: hecho
+Hecho: F7-PAQUETE-V03 estaba bloqueada porque `dist/` queda fuera del sandbox del carril de Codex. La regresión en
+Azahar ya estaba hecha (§52). Desde `main` d7953c4 se han ejecutado:
+- `python frontier/package.py`;
+- `python frontier/package.py checkpoint dist/oras-frontier-checkpoint-test-v0.2/FrenteTest-puerto-Calagua/main`.
+Evidencia:
+- `manifest.files` es igual en los 39 ficheros al del carril (`work/orch/lanes/codex/work/frontier/pkg03/…/manifest.json`).
+- Checkpoint `5ddaa992…`.
+- ZIP `7b8a06b0…`; log en `work/frontier/pkg03-main.log`.
+- El LEEME lleva el aviso de guardar fuera de la isla.
+Commits: este.
+Decisiones: no se repite Azahar porque los hashes son idénticos. Consola: no probada; la prueba la hace el usuario.
+Siguiente paso: el usuario prueba la v0.3 en la 3DS. El orquestador sigue con F9-LIBRE-PROPIOS.
