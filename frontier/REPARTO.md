@@ -29,7 +29,8 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-frontier-orch (orquestador automático), desde 2026-11-13 22:23
+Codex — publicación GitHub, checkout aislado feature/orch-viewer (2026-11-15).
+El checkout principal sigue bajo frontier-orch; solo se registra la publicación.
 
 ## Instalaciones
 
