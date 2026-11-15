@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-frontier-orch (orquestador automático), desde 2026-11-13 22:23
+Codex: documentación y revisión de publicación, solo checkout aislado work/public-readme. El supervisor conserva el turno del checkout principal.
 
 ## Instalaciones
 
