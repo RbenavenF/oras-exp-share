@@ -4802,3 +4802,37 @@ que dumps y adjuntos. No publicar ramas de trabajo de los workers por defecto.
 No probado: clonación en otra máquina ni reconstrucción del mod desde clon limpio.
 Siguiente paso: integrar visor cuando el integrador tenga el turno; los próximos
 push de main usan origin/main. El turno principal permanece en frontier-orch.
+
+
+## 2026-11-15 — Codex — Observatorio con controles locales
+Estado: hecho.
+Hecho: --control habilita clave local persistente0600 en work/orch/viewer-control.key,
+POST de acciones permitidas con Origin y autorización. Panel añade arranque paralelo
+finito/continuo, confirmación de cuota, drain, stop, resume y formulario de bloqueo.
+Respuestas duraderas en work/orch/viewer-replies: con supervisor activo piden stop;
+al quedar libre, lock exclusivo, comprobación de tarea inalterada y archivos limpios,
+turno/commit mediante Orch; conserva notas/evidencia, añade respuesta, desbloquea,
+reinicia no_progress y registra bitácora. Sin reinicio automático tras responder.
+Cambios solo en módulo viewer y su documentación, checkout aislado work/orch-viewer.
+Evidencia:
+- unittest discover -s work/orch-viewer/frontier/orch/viewer -p 'test_*.py' -v:
+  19 pruebas OK, incluidas HTTP IPv4/IPv6, clave/Origin/tamaño/tipo JSON, lock activo,
+  arranque duplicado/worker huérfano y respuesta real con commits en fixture temporal.
+- Firefox headless BiDi /tmp/frontier-viewer-control-browser-qa.py: PASS escritorio
+  y móvil390px, clave/arranque cancelado/drain/stop/resume, borrador conservado tras
+  refresco, respuesta real aplicada en proyecto ficticio y bloqueo de controles.
+  Sin errores consola. Capturas work/viewer-controls-{desktop,mobile}.png y
+  work/viewer-controls-reply-mobile.png (ignoradas). No se envían acciones al motor real.
+- Servicio tmux frontier-viewer reiniciado con --control, root checkout principal.
+  GET /api/state HTTP200 por127.0.0.1/192.168.1.20/[::1]; enabled=true/running=true.
+  POST unlock real HTTP200 sin acciones; clave ausente del snapshot y permisos0600.
+- py_compile y git diff --check OK. Gitleaks dir del módulo: cero secretos detectados.
+Commits: 58bed33 turno aislado; el de esta entrada.
+Decisiones: instancia específica de frontier-orch, --root reutilizable con esquema
+compatible. No shell arbitrario, no modificación de cooldowns ni login desde web.
+Supervisor y workers reales no se arrancan/paran como parte de las pruebas. El
+supervisor ya existente mantiene turno principal; referencia aislada restaurada.
+No probado: arranque real de workers de pago desde botón (Popen probado con doble),
+acceso desde dispositivo físico externo, HTTPS/proxy público (servicio local HTTP).
+Siguiente paso: usuario abre panel y copia clave local al campo para habilitar
+controles. Integrador une feature/orch-viewer cuando corresponda; no tocar main activo.

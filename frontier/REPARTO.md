@@ -29,7 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-Codex: controles web del orquestador, solo checkout aislado work/orch-viewer. Supervisor conserva checkout principal.
+frontier-orch (orquestador automático), desde 2026-11-13 22:23
 
 ## Instalaciones
 

@@ -6,7 +6,7 @@
   <a class="brand" href="#overview"><span class="brand-icon">F<span>↗</span></span><span>FRONTIER<small>OBSERVATORIO</small></span></a>
   <div class="project"><span class="eyebrow">PROYECTO ACTIVO</span><strong>ORAS Repolished</strong><span>Frente de Batalla · Esmeralda</span></div>
   <nav aria-label="Secciones"><a href="#overview" class="active" data-page="overview"><span>◉</span> Vista general</a><a href="#queue" data-page="queue"><span>≡</span> Cola de tareas <b id="nav-count">—</b></a><a href="#activity" data-page="activity"><span>⌁</span> Actividad</a><a href="#tools" data-page="tools"><span>◇</span> Herramientas</a></nav>
-  <div class="sidebar-bottom"><span class="readonly">◈ &nbsp; Solo lectura</span><p>Una ventana al trabajo.<br>El control sigue en el orquestador.</p><div class="source-label">DATOS LOCALES · SIN SERVICIOS EXTERNOS</div></div>
+  <div class="sidebar-bottom"><span class="readonly">◈ &nbsp; Observatorio local</span><p>Estado y controles.<br>Tu centro de operaciones.</p><div class="source-label">DATOS LOCALES · SIN SERVICIOS EXTERNOS</div></div>
 </aside>
 <div class="workspace">
   <header><div class="breadcrumb">Frente de Batalla <span>/</span> <strong id="crumb">Vista general</strong></div><div class="connection"><span class="dot" id="connection-dot"></span><span id="connection-text" role="status">Conectando</span><button id="refresh" class="icon-button" aria-label="Actualizar ahora" title="Actualizar ahora">↻</button></div></header>
@@ -14,6 +14,16 @@
     <div id="error" role="alert" hidden></div>
     <section id="page-overview" class="page">
       <div class="page-heading"><div><div class="eyebrow">CENTRO DE OPERACIONES</div><h1>El Frente, en marcha<span>.</span></h1><p>Todo lo que está pasando, en un mismo lugar.</p></div><div class="snapshot"><span id="clock">—</span><small>Actualización cada 3 segundos</small></div></div>
+      <section class="panel control-panel" aria-labelledby="control-title">
+        <div class="control-heading"><div><span class="eyebrow">AL MANDO</span><h2 id="control-title">Ejecución del orquestador</h2><p id="control-status">Consultando estado…</p></div><span id="control-badge" class="small-pill">LOCAL</span></div>
+        <form id="unlock-controls" class="unlock-row"><label for="control-key">Clave de control</label><input id="control-key" type="password" autocomplete="off" placeholder="Introduce tu clave local" required><button class="control-button" type="submit">Habilitar controles</button></form>
+        <div id="control-actions" hidden>
+          <div class="control-launch"><label for="launch-mode">Al iniciar</label><select id="launch-mode"><option value="follow">Continuo · espera nuevas tareas</option><option value="parallel">Paralelo · termina al vaciar la cola</option></select><button class="control-button primary" data-control="start">▶ Iniciar ejecución</button><button class="control-button subtle" id="lock-controls">Bloquear controles</button></div>
+          <div class="control-options"><button class="control-option" data-control="drain"><strong>◷ Terminar tareas y parar</strong><span>Drain: completa las tareas actuales de los carriles, sin tomar otras.</span></button><button class="control-option" data-control="stop"><strong>Ⅱ Parar tras esta ejecución</strong><span>Termina las llamadas actuales de los workers, aunque la tarea quede abierta.</span></button><button class="control-option" data-control="resume"><strong>↻ Cancelar parada</strong><span>Retira un drain o stop pendiente. Si ya salió, usa Iniciar.</span></button></div>
+        </div>
+        <div id="control-feedback" role="status" aria-live="polite"></div><div id="reply-requests"></div>
+        <p class="control-footnote">Iniciar ejecuta workers y consume su cuota. El modo continuo sigue esperando mientras haya límites de uso. Los controles requieren el servidor local; publicar el repositorio no publica este panel.</p>
+      </section>
       <div id="summary" class="summary-grid"></div>
       <div class="section-title"><h2>Workers <span class="muted">/ 02</span></h2><span class="caption">Procesos visibles · Cuotas: esperas registradas</span></div>
       <div id="workers" class="workers-grid"></div>
@@ -33,10 +43,11 @@
     <section id="page-tools" class="page" hidden>
       <div class="page-heading"><div><div class="eyebrow">LA MESA DE TRABAJO</div><h1>Cada herramienta, su papel<span>.</span></h1><p>Cómo se construye y se comprueba el Frente de Batalla.</p></div></div>
       <div id="tool-grid" class="tool-grid"></div>
-      <section class="panel sources-panel"><h2>De dónde sale esta información</h2><p>Se leen los archivos del orquestador y los procesos locales. No se ejecutan comandos del proyecto ni se cambia su estado.</p><div id="sources"></div><p class="footnote">La cuota es la espera registrada por el supervisor; no es una consulta al proveedor ni un porcentaje de créditos. Los eventos se muestran como extractos: no son un registro completo ni una auditoría de secretos.</p></section>
+      <section class="panel sources-panel"><h2>De dónde sale esta información</h2><p>Se leen los archivos del orquestador y los procesos locales. El visor consulta archivos locales; los controles habilitados envían acciones al supervisor y registran las respuestas a bloqueos.</p><div id="sources"></div><p class="footnote">La cuota es la espera registrada por el supervisor; no es una consulta al proveedor ni un porcentaje de créditos. Los eventos se muestran como extractos: no son un registro completo ni una auditoría de secretos.</p></section>
     </section>
     <footer><span>FRONTIER <b>↗</b> <span class="footer-divider">/</span> Hecho para seguir construyendo.</span><span id="footer-state">Esperando datos…</span></footer>
   </main>
 </div>
-<dialog id="task-dialog" aria-labelledby="task-detail-title"><div class="dialog-top"><span class="eyebrow">DETALLE DE TAREA</span><button id="close-dialog" class="icon-button" aria-label="Cerrar detalle">×</button></div><div class="dialog-body"><div id="task-detail"></div></div></dialog>
+<dialog id="task-dialog" aria-labelledby="task-detail-title"><div class="dialog-top"><span class="eyebrow">DETALLE DE TAREA</span><button id="close-dialog" class="icon-button" aria-label="Cerrar detalle">×</button></div><div class="dialog-body"><div id="task-detail"></div><form id="reply-form" class="reply-form" hidden><h3>Responder al bloqueo</h3><p>La respuesta se añade a las notas y vuelve a abrir la tarea. Si está activo, el supervisor terminará las ejecuciones actuales y saldrá para aplicarla. Después podrás iniciarlo de nuevo.</p><label for="task-answer">Tu decisión o instrucciones</label><textarea id="task-answer" rows="5" maxlength="12000" required placeholder="Escribe la respuesta que necesita el worker…"></textarea><button class="control-button primary" type="submit">Enviar respuesta y desbloquear</button><div id="reply-feedback" role="status"></div></form></div></dialog>
+<dialog id="start-dialog" aria-labelledby="start-title"><div class="dialog-body"><h2 id="start-title">Iniciar el orquestador</h2><p>Se ejecutarán los workers configurados, usando sus cuotas. Puedes pedir una parada limpia desde este panel.</p><div class="start-confirm"><button id="confirm-start" class="control-button primary">Iniciar workers</button><button id="cancel-start" class="control-button">Cancelar</button></div></div></dialog>
 </body></html>

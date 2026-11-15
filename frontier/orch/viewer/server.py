@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
-"""Read-only, dependency-free local dashboard for frontier-orch."""
+"""Local dashboard and optional controls for frontier-orch."""
 import argparse
+import fcntl
+import hashlib
+import importlib.util
+import secrets
+import subprocess
+import sys
+import uuid
+from contextlib import contextmanager
 from collections import Counter
 import json
 import os
@@ -109,8 +117,197 @@ def process_state(root, agents, lane_root):
     return workers, supervisors
 
 
-class Snapshot:
+class ControlError(Exception):
+    def __init__(self, message, status=409):
+        super().__init__(message)
+        self.status = status
+
+
+class Controller:
+    """Only named actions; the supervisor lock protects stopped-only task edits."""
     def __init__(self, root):
+        self.root = root.resolve()
+        self.work = self.root / 'work/orch'
+        self.work.mkdir(parents=True, exist_ok=True)
+        self.queue = self.work / 'viewer-replies'
+        self.queue.mkdir(exist_ok=True)
+        key = self.work / 'viewer-control.key'
+        try:
+            fd = os.open(key, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError:
+            pass
+        else:
+            with os.fdopen(fd, 'w') as f:
+                f.write(secrets.token_urlsafe(24) + '\n')
+        self.key = key.read_text().strip()
+        if len(self.key) < 20:
+            raise ValueError('Clave local de control demasiado corta')
+        self.mutex = threading.RLock()
+        self.child = None
+
+    @contextmanager
+    def exclusive(self):
+        with (self.work / 'orch.lock').open('a') as f:
+            try:
+                fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                raise ControlError('El supervisor sigue activo; espera a su parada limpia.')
+            yield
+
+    def running(self):
+        if self.child and self.child.poll() is None:
+            return True
+        try:
+            with self.exclusive():
+                return False
+        except ControlError:
+            return True
+
+    def status(self):
+        items = []
+        for p in sorted(self.queue.glob('*.json'))[-20:]:
+            try:
+                item = json.loads(p.read_text())
+                items.append({k: item.get(k) for k in ('id', 'task_id', 'status', 'created', 'error')})
+            except (OSError, ValueError):
+                continue
+        return {'enabled': True, 'running': self.running(), 'replies': items,
+                'launch_exit': self.child.poll() if self.child else None,
+                'launch_log': [clean(line, 500) for line in tail(self.work / 'viewer-supervisor.log', 4000)[-5:]]}
+
+    def audit(self, action, message):
+        with (self.work / 'viewer-actions.jsonl').open('a') as f:
+            f.write(json.dumps({'at': time.time(), 'action': action, 'message': message}, ensure_ascii=False) + '\n')
+
+    def dispatch(self, payload):
+        if not isinstance(payload, dict):
+            raise ControlError('Se esperaba un objeto JSON.', 400)
+        action = payload.get('action')
+        with self.mutex:
+            if action == 'unlock':
+                return 'Controles habilitados en este navegador.'
+            if action in ('drain', 'stop'):
+                (self.work / action).write_text(time.ctime() + '\n')
+                message = 'Terminará las tareas actuales y saldrá.' if action == 'drain' else 'Terminará las ejecuciones actuales y saldrá.'
+            elif action == 'resume':
+                for name in ('drain', 'stop'):
+                    (self.work / name).unlink(missing_ok=True)
+                message = 'Parada pendiente cancelada. Si ya salió, usa Iniciar.'
+            elif action == 'start':
+                if self.running():
+                    raise ControlError('El supervisor ya está activo.')
+                self.apply_replies()
+                mode = payload.get('mode', 'follow')
+                flags = {'follow': ['--follow'], 'parallel': ['--parallel']}.get(mode)
+                if flags is None:
+                    raise ControlError('Modo de ejecución inválido.', 400)
+                # Check lock again; the CLI takes the same lock before starting any worker.
+                with self.exclusive():
+                    cfg = json.loads((self.root / 'frontier/orch/config.json').read_text())
+                    workers, _ = process_state(self.root, cfg.get('agents', {}), cfg.get('lanes', {}).get('root', 'work/orch/lanes'))
+                    if any(workers.values()):
+                        raise ControlError('Hay workers activos sin supervisor; revisa sus procesos antes de iniciar.')
+                    for name in ('drain', 'stop'):
+                        (self.work / name).unlink(missing_ok=True)
+                    with (self.work / 'viewer-supervisor.log').open('ab') as log:
+                        self.child = subprocess.Popen([sys.executable, str(self.root / 'frontier/orch/frontier_orch.py'),
+                            'auto', '--root', str(self.root), *flags], cwd=self.root,
+                            stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+                message = 'Arranque solicitado. El estado confirmará si el supervisor está activo.'
+            elif action == 'reply':
+                task_id, answer = payload.get('task_id'), payload.get('answer')
+                if not isinstance(answer, str) or not answer.strip() or len(answer) > 12000:
+                    raise ControlError('Escribe una respuesta de 1 a 12000 caracteres.', 400)
+                tasks = json.loads((self.root / 'frontier/orch/tasks.json').read_text())['tasks']
+                task = next((t for t in tasks if t['id'] == task_id), None)
+                if not task or task.get('status') != 'blocked':
+                    raise ControlError('La tarea ya no está bloqueada; actualiza su detalle.')
+                if any(x.get('task_id') == task_id and x.get('status') == 'pending'
+                       for x in (json.loads(p.read_text()) for p in self.queue.glob('*.json'))):
+                    raise ControlError('Esta tarea ya tiene una respuesta pendiente.')
+                item = {'id': uuid.uuid4().hex, 'task_id': task_id, 'answer': answer.strip(),
+                        'fingerprint': self.fingerprint(task), 'created': time.time(), 'status': 'pending'}
+                self.save_reply(item)
+                if self.running():
+                    (self.work / 'stop').write_text(time.ctime() + '\n')
+                    message = 'Respuesta guardada. Parada limpia solicitada; se aplicará al salir el supervisor. Después podrás iniciar de nuevo.'
+                else:
+                    self.apply_replies()
+                    message = 'Respuesta procesada. Revisa su estado antes de iniciar.'
+            else:
+                raise ControlError('Acción desconocida.', 400)
+            self.audit(action, message)
+            return message
+
+    @staticmethod
+    def fingerprint(task):
+        return hashlib.sha256(json.dumps(task, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+    def save_reply(self, item):
+        path = self.queue / (item['id'] + '.json')
+        tmp = path.with_suffix('.tmp')
+        tmp.write_text(json.dumps(item, ensure_ascii=False, indent=2) + '\n')
+        tmp.replace(path)
+
+    def apply_replies(self):
+        with self.mutex:
+            if self.running():
+                return
+            with self.exclusive():
+                for path in sorted(self.queue.glob('*.json')):
+                    item = json.loads(path.read_text())
+                    if item['status'] != 'pending':
+                        continue
+                    try:
+                        self.apply_reply(item)
+                        item['status'] = 'applied'
+                    except Exception as exc:
+                        item['status'], item['error'] = 'failed', clean(str(exc), 300)
+                    self.save_reply(item)
+
+    def apply_reply(self, item):
+        spec = importlib.util.spec_from_file_location('frontier_web_orch', self.root / 'frontier/orch/frontier_orch.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        orch = module.Orch(self.root)
+        workers, _ = process_state(self.root, orch.cfg.get('agents', {}), orch.cfg.get('lanes', {}).get('root', 'work/orch/lanes'))
+        if any(workers.values()):
+            raise ControlError('Quedan workers activos sin supervisor; respuesta conservada sin aplicar.')
+        data = json.loads(orch.tasks_path.read_text())
+        task = next((t for t in data['tasks'] if t['id'] == item['task_id']), None)
+        if not task or task.get('status') != 'blocked' or self.fingerprint(task) != item['fingerprint']:
+            raise ControlError('La tarea cambió desde que respondiste. Revisa el bloqueo y vuelve a responder.')
+        paths = ['frontier/orch/tasks.json', 'frontier/BITACORA.md', 'frontier/REPARTO.md']
+        if orch.git('status', '--porcelain', '--', *paths).strip():
+            raise ControlError('Hay cambios locales pendientes en cola, turno o bitácora; no se aplicó la respuesta.')
+        orch.take_turn()
+        try:
+            task['notes'] = (task.get('notes', '') + '\n\n[Respuesta del usuario · web]\n' + item['answer']).strip()
+            task['status'] = 'in_progress'
+            orch.tasks_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n')
+            with (self.root / 'frontier/BITACORA.md').open('a') as f:
+                f.write('\n\n## ' + time.strftime('%Y-%m-%d %H:%M') + ' — frontier-orch web — Respuesta a ' + task['id'] +
+                        '\nEstado: en curso.\nHecho: usuario responde desde el panel; notas añadidas y tarea desbloqueada.\n'
+                        'Evidencia: respuesta en tasks.json y registro local viewer-actions.jsonl.\n'
+                        'Commits: el de esta entrada.\nDecisiones: aplicada con supervisor parado y lock exclusivo.\n'
+                        'Siguiente paso: reanudar desde el panel cuando el usuario lo indique.\n')
+            orch.commit('frontier-orch: respuesta web a ' + task['id'], *paths[:2])
+            orch.state['no_progress'].pop(task['id'], None)
+            orch.save_state()
+        finally:
+            orch.release_turn()
+
+    def watch(self, stopped):
+        while not stopped.wait(2):
+            try:
+                self.apply_replies()
+            except (OSError, ValueError, ControlError):
+                pass
+
+
+class Snapshot:
+    def __init__(self, root, controller=None):
+        self.controller = controller
         self.root = root.resolve()
         self.lock = threading.Lock()
         self.cached = None
@@ -167,7 +364,7 @@ class Snapshot:
             journal = '\n'.join(journal[starts[-1]:]) if starts else '\n'.join(journal[-50:])
         except OSError:
             journal = ''
-        return {'generated_at': now, 'root': str(root), 'tasks': tasks, 'counts': dict(Counter(t.get('status', 'pending') for t in tasks)),
+        return {'control': self.controller.status() if self.controller else {'enabled': False}, 'generated_at': now, 'root': str(root), 'tasks': tasks, 'counts': dict(Counter(t.get('status', 'pending') for t in tasks)),
             'workers': workers, 'supervisor': {'running': bool(supervisor), 'pids': supervisor, 'runs': state.get('runs', 0),
                 'controls': [n for n in ('stop', 'drain') if (work / n).exists()],
                 'events': [clean(line, 1000) for line in tail(work / 'orch.log', 18_000)[-30:]],
@@ -199,9 +396,37 @@ def handler_for(snapshot):
             self.do_GET()
 
         def do_POST(self):
-            self.respond(b'Read only', 'text/plain', 405)
+            controller = snapshot.controller
+            if urlsplit(self.path).path != '/api/control' or controller is None:
+                self.respond(b'Controls disabled', 'text/plain', 405)
+                return
+            try:
+                # Browser writes require an exact Origin and a secret never served by GET.
+                origin = self.headers.get('Origin', '')
+                if origin != 'http://' + self.headers.get('Host', ''):
+                    raise ControlError('Origen no permitido.', 403)
+                auth = self.headers.get('Authorization', '')
+                if not secrets.compare_digest(auth.encode(), ('Bearer ' + controller.key).encode()):
+                    raise ControlError('Introduce la clave local de control.', 401)
+                if self.headers.get_content_type() != 'application/json':
+                    raise ControlError('Se requiere JSON.', 415)
+                size = int(self.headers.get('Content-Length', '0'))
+                if not 0 < size <= 64000:
+                    raise ControlError('Petición demasiado grande o vacía.', 413)
+                self.connection.settimeout(10)
+                payload = json.loads(self.rfile.read(size))
+                message = controller.dispatch(payload)
+                snapshot.updated = 0
+                self.respond(json.dumps({'message': message}, ensure_ascii=False).encode(), 'application/json')
+            except ControlError as exc:
+                self.respond(json.dumps({'error': str(exc)}, ensure_ascii=False).encode(), 'application/json', exc.status)
+            except (OSError, ValueError, subprocess.SubprocessError):
+                self.respond(b'{"error":"No se pudo ejecutar la accion; revisa los registros locales."}', 'application/json', 500)
 
-        do_PUT = do_DELETE = do_PATCH = do_POST
+        def deny_mutation(self):
+            self.respond(b'Method not allowed', 'text/plain', 405)
+
+        do_PUT = do_DELETE = do_PATCH = deny_mutation
 
         def respond(self, body, mime, status=200):
             self.send_response(status)
@@ -235,16 +460,22 @@ def main():
     parser.add_argument('--root', type=Path, required=True, help='Checkout principal que contiene work/orch')
     parser.add_argument('--host', help='Dirección de escucha; por defecto todas las interfaces IPv4/IPv6')
     parser.add_argument('--port', type=int, default=8787)
+    parser.add_argument('--control', action='store_true', help='Habilita controles con clave local en work/orch/viewer-control.key')
     args = parser.parse_args()
     if not (args.root / 'frontier/orch/tasks.json').is_file():
         parser.error('--root debe apuntar al checkout del orquestador')
-    server = create_server(args.host, args.port, Snapshot(args.root))
-    print(f'Frontier · visor de solo lectura → http://localhost:{args.port} (escucha: {server.server_address[0]})', flush=True)
+    controller = Controller(args.root) if args.control else None
+    stopped = threading.Event()
+    if controller:
+        threading.Thread(target=controller.watch, args=(stopped,), daemon=True).start()
+    server = create_server(args.host, args.port, Snapshot(args.root, controller))
+    print(f'Frontier · observatorio → http://localhost:{args.port} (escucha: {server.server_address[0]})', flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
     finally:
+        stopped.set()
         server.server_close()
 
 

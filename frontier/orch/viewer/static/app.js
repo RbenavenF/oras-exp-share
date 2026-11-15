@@ -6,6 +6,7 @@ const badge = status => `<span class="badge ${esc(status)}">${status==='working'
 const date = epoch => epoch ? new Date(epoch*1000).toLocaleString('es-ES',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Sin datos';
 const ago = epoch => {if(!epoch)return 'Sin actividad registrada';const n=Math.max(0,Math.floor(Date.now()/1000-epoch));return n<60?'Hace unos segundos':n<3600?`Hace ${Math.floor(n/60)} min`:n<86400?`Hace ${Math.floor(n/3600)} h`:`Hace ${Math.floor(n/86400)} días`;};
 const name = n => n==='any'?'Cualquier worker':n==='codex'?'Codex':n==='claude'?'Claude':n;
+let controlKey = sessionStorage.getItem('frontier-control-key') || '', controlBusy = false;
 let data = null, filter = 'open', selectedTask = null, lastGood = null, detailSignature = null;
 function html(selector, value){const el=$(selector);if(el.innerHTML===value)return;const positions=[el,...el.querySelectorAll('.event-list,pre')].map(e=>e.scrollTop);el.innerHTML=value;[el,...el.querySelectorAll('.event-list,pre')].forEach((e,i)=>e.scrollTop=positions[i]||0);}
 function route(){let p=location.hash.slice(1)||'overview';if(!['overview','queue','activity','tools'].includes(p))p='overview';document.querySelectorAll('.page').forEach(el=>el.hidden=el.id!==`page-${p}`);document.querySelectorAll('nav a').forEach(el=>el.classList.toggle('active',el.dataset.page===p));$('#crumb').textContent=({overview:'Vista general',queue:'Cola de tareas',activity:'Actividad',tools:'Herramientas'})[p];}
@@ -34,7 +35,7 @@ function render(){
  $('#nav-count').textContent=open;
  const alive=data.supervisor.running;
  html('#summary',`<article class="stat green"><span class="label">SUPERVISOR</span><span class="stat-mark">⌁</span><strong>${alive?(active?'En marcha':'A la espera'):'No detectado'}</strong><small>${alive?'Proceso local activo':'Sin proceso visible en este entorno'}</small></article><article class="stat"><span class="label">TAREAS TERMINADAS</span><span class="stat-mark">↗</span><strong>${done}<span class="muted"> / ${data.tasks.length}</span></strong><small>${open} tareas abiertas</small></article><article class="stat"><span class="label">WORKERS ACTIVOS</span><span class="stat-mark">◉</span><strong>${active}<span class="muted"> / ${data.workers.length}</span></strong><small>${data.supervisor.runs} ejecuciones registradas</small></article><article class="stat"><span class="label">BLOQUEOS</span><span class="stat-mark">◇</span><strong>${c.blocked||0}</strong><small>${c.blocked?'Requieren intervención':'Ningún bloqueo registrado'}</small></article>`);
- renderWorkers();
+ renderControls(); renderWorkers();
  const radar=data.tasks.filter(t=>t.status!=='done').sort((a,b)=>({blocked:0,in_progress:1,pending:2}[a.status]-{blocked:0,in_progress:1,pending:2}[b.status])||a.order-b.order).slice(0,5);
  html('#radar',radar.map(t=>`<button class="radar-row" data-task="${esc(t.id)}"><span class="radar-number">${String(t.order).padStart(2,'0')}</span><span class="radar-text"><strong>${esc(t.title)}</strong><small>${esc(t.id)}</small></span>${badge(t.status)}</button>`).join('')||'<div class="empty">Todas las tareas están terminadas.</div>');
  const j=data.journal.split('\n'), heading=j.find(l=>l.startsWith('## '))||'Sin entrada reciente';
@@ -42,17 +43,18 @@ function render(){
  renderQueue(); activity();
  html('#sources',data.sources.map(s=>`<code>${esc(s)}</code>`).join(''));
  $('#clock').textContent=new Date(data.generated_at*1000).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
- $('#footer-state').textContent=`Estado leído ${date(data.generated_at)} · Solo lectura`;
+ $('#footer-state').textContent=`Estado leído ${date(data.generated_at)} · ${data.control?.enabled?'Controles locales disponibles':'Solo lectura'}`;
  if(selectedTask&&$('#task-dialog').open)renderDetail(selectedTask);
 }
 function renderDetail(id){
  const t=data.tasks.find(t=>t.id===id);if(!t)return;
+ $('#reply-form').hidden=!(t.status==='blocked'&&data.control?.enabled&&controlKey);
  const signature=JSON.stringify(t);if(signature===detailSignature)return;detailSignature=signature;
  const paragraphs=text=>String(text).replace(/([.!?])\s+(?=[A-ZÁÉÍÓÚÑ])/gu, '$1\n').split(/\n+/).filter(Boolean).map(p=>`<p>${esc(p)}</p>`).join('');
  const section=(title,text,fold=false)=>!text?'':fold?`<details class="detail-section detail-fold"><summary>${title}<span>Desplegar</span></summary><div class="detail-prose">${paragraphs(text)}</div></details>`:`<section class="detail-section"><h3>${title}</h3><div class="detail-prose">${paragraphs(text)}</div></section>`;
  html('#task-detail',`<span class="task-code">#${t.order} · ${esc(t.id)}</span><h2 id="task-detail-title" class="detail-title" tabindex="-1">${esc(t.title)}</h2><div class="detail-meta">${badge(t.status)}<span>Asignación: ${esc(name(t.owner))}</span>${t.lane?`<span>Último carril: ${esc(name(t.lane))}</span>`:''}</div><section class="detail-section"><h3>Dependencias</h3>${t.after?.length?t.after.map(d=>`<button class="dependency" data-task="${esc(d)}">${data.tasks.find(x=>x.id===d)?.status==='done'?'✓ ':'◷ '}${esc(d)}</button>`).join(''):'<p>Sin dependencias.</p>'}</section>${section('Estado y notas',t.notes)}${section('Evidencia',t.evidence,true)}${section('Criterios de aceptación',t.accept,true)}${section('Diseño',t.design)}`);
 }
-document.addEventListener('click',e=>{const task=e.target.closest('[data-task]');if(task&&data){e.preventDefault();selectedTask=task.dataset.task;renderDetail(selectedTask);if(!$('#task-dialog').open){$('#task-dialog').showModal();$('#task-detail-title').focus();}$('.dialog-body').scrollTop=0;}const f=e.target.closest('[data-filter]');if(f){filter=f.dataset.filter;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('selected',b===f));if(data)renderQueue();}});
+document.addEventListener('click',e=>{const task=e.target.closest('[data-task]');if(task&&data){e.preventDefault();if(selectedTask!==task.dataset.task){$('#task-answer').value='';$('#reply-feedback').textContent='';}selectedTask=task.dataset.task;renderDetail(selectedTask);if(!$('#task-dialog').open){$('#task-dialog').showModal();$('#task-detail-title').focus();}$('.dialog-body').scrollTop=0;}const f=e.target.closest('[data-filter]');if(f){filter=f.dataset.filter;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('selected',b===f));if(data)renderQueue();}});
 $('#close-dialog').addEventListener('click',()=>$('#task-dialog').close());
 $('#task-dialog').addEventListener('click',e=>{if(e.target===$('#task-dialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});
 $('#search').addEventListener('input',()=>{if(data)renderQueue();});
@@ -65,3 +67,35 @@ async function refresh(){
 }
 $('#refresh').addEventListener('click',()=>location.reload());
 route();refresh();
+
+function renderControls(){
+ const c=data.control||{}, running=c.running??data.supervisor.running, flags=data.supervisor.controls;
+ $('#control-status').textContent=!c.enabled?'Servidor en modo de consulta. Los controles no están habilitados.':running?(flags.includes('stop')?'Parada tras ejecución solicitada':flags.includes('drain')?'Drain activo · terminando tareas':'Supervisor activo'):c.launch_exit?'El último arranque terminó con error. '+(c.launch_log||[]).join(' '):'Supervisor parado · listo para iniciar';
+ $('#control-badge').textContent=!c.enabled?'SOLO LECTURA':controlKey?'CONTROLES HABILITADOS':'CONTROLES BLOQUEADOS';
+ $('#unlock-controls').hidden=!c.enabled||!!controlKey;
+ $('#control-actions').hidden=!c.enabled||!controlKey;
+ document.querySelectorAll('[data-control]').forEach(b=>{b.disabled=controlBusy||(b.dataset.control==='start'&&running)||(b.dataset.control==='resume'&&!flags.length);});
+ const states={pending:'Pendiente de parada limpia',applied:'Aplicada · tarea desbloqueada',failed:'No aplicada · requiere revisión'};
+ html('#reply-requests',(c.replies||[]).slice(-5).reverse().map(r=>`<div class="reply-request ${esc(r.status)}"><strong>${esc(r.task_id)}</strong><span>${esc(states[r.status]||r.status)}</span>${r.error?`<p>${esc(r.error)}</p>`:''}</div>`).join(''));
+}
+async function command(action,extra={},feedback='#control-feedback'){
+ if(controlBusy)return false;
+ controlBusy=true;if(data)renderControls();
+ $(feedback).textContent='Enviando…';
+ try{
+  const response=await fetch('/api/control',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+controlKey},body:JSON.stringify({action,...extra}),signal:AbortSignal.timeout(30000)});
+  const result=await response.json();
+  if(!response.ok){if(response.status===401){controlKey='';sessionStorage.removeItem('frontier-control-key');}throw new Error(result.error||'No se pudo enviar la acción.');}
+  $(feedback).textContent=result.message;
+  const state=await fetch('/api/state',{cache:'no-store',signal:AbortSignal.timeout(7000)});
+  if(state.ok){data=await state.json();render();}
+  return true;
+ }catch(error){$(feedback).textContent=error.message;return false;}
+ finally{controlBusy=false;if(data)renderControls();}
+}
+$('#unlock-controls').addEventListener('submit',async e=>{e.preventDefault();controlKey=$('#control-key').value.trim();if(await command('unlock')){sessionStorage.setItem('frontier-control-key',controlKey);$('#control-key').value='';}else{controlKey='';}if(data)renderControls();});
+$('#lock-controls').addEventListener('click',()=>{controlKey='';sessionStorage.removeItem('frontier-control-key');if(data)render();});
+document.querySelectorAll('[data-control]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.control==='start')$('#start-dialog').showModal();else command(b.dataset.control);}));
+$('#confirm-start').addEventListener('click',()=>{$('#start-dialog').close();command('start',{mode:$('#launch-mode').value});});
+$('#cancel-start').addEventListener('click',()=>$('#start-dialog').close());
+$('#reply-form').addEventListener('submit',async e=>{e.preventDefault();if(await command('reply',{task_id:selectedTask,answer:$('#task-answer').value},'#reply-feedback'))$('#task-answer').value='';});
