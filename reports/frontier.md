@@ -4021,3 +4021,42 @@ especie/copia se documentan en el informe, sin prometer igualdad de movesets.
 Mapa de 510 IDs y hashes en `work/frontier/modos/fabrica/reference.json`.
 Todavía sin conexión al draft/recepción ni habilitación Libre de Fábrica; Nivel
 50 intacto. Build y espacio exactos en el informe. Azahar/consola no probados.
+
+## F9 Fábrica Individual Libre — habilitación y aceptación (2026-11-15, Codex)
+
+Actualiza el mapa previo del 14nov: recepción y draft Libre ya conectados.
+Detalle, fuentes y límites en `reports/modos-fabrica.md`, hitos2–5. CONFIG0x164
+fija alquileres/rivales a100, sin consultar el máximo del equipo real; Nivel50
+conserva su draft. Primeras cuatro rondas usan las cuatro copias fuertes
+196/196/196/196; quinta+ unión828 con44 variantes legendarias explícitas.
+Promoción con contador propio, snapshot16471, IV de ronda3/6/9/12/15/21/31,
+tope31. Marca16673 acredita un alquiler solo tras victoria; intercambio Libre
+rechaza especie u objeto no nulo repetidos. VM cubre selección/cancelación,
+promociones, IV, bancos, persistencia y PB. Noland usa constructor100/IV15 o31,
+símbolo compartido y bonus+10 una sola vez (ARM/VM, no combate Noland Azahar).
+
+Build `work/frontier/modos/fabrica/hito4/build`, 28 hashes en
+`hito4/build-hashes.json`; `hito5/installed.json` sin discrepancias. Script517
+16308/ZO17100 (148bytes libres), compartido531874, textoES63772360, hook2008.
+`hito4/audit.json`: code36/Battle1148/FieldF9980 libres; reserva Luma
+0x579604–0x579804 intacta. Suite del relevo:3586 passed/4 skipped/102.56s,
+`hito5/tests-relevo.log`. Sin cambios de producto después de esa build.
+
+Azahar propio24691: draft tres de seis100/IV3, victoria, cambio Cradily por
+Fletchinder, pausa/guardado, carga/cancelación/reanudación100/IV3 y derrota
+con limpieza del banco Libre/récord conservado. Fuentes `hito4/azahar-first.log`,
+`azahar-reload.log`, guardados/JSON y capturas enumerados en el informe.
+Rival ordinario medido trainer43/poolN0–65, nivel100/IV3; conserva dificultad
+Mansión, desviación explícita respecto a rangos fuertes Libre del jugador.
+Equipo real73/55/41/6/7/6 y cajas conservados; tras derrota solo recuerdo retail
+byte0xCC del cuarto Pokémon2→3 y checksum asociado, según PK6 descifrado.
+Consola no probada. Regresión agrupada13nov: solo novedad Fábrica.
+
+Cierre hito5: victoria natural7 desde fixture racha6 artificial, pago3PB y
+draft nuevo100/IV6; victoria8 contra rival100/IV3, pausa retail. Guardado
+`hito5/round-two-paused.sav/json` SHA256
+5c8529acf71f92092f313181d92f7517e7ad1698e864f439e28ed280d38ce4ef:
+58 bloques, PB6 (antes3), racha/récord8/8, contador3/marca0, snapshot2, IV6;
+bancos ajenos intactos, hashes equipo/cajas iguales a paused.json anterior.
+Fuente `hito5/azahar-round.log`; no RAM writes. Laboratorio cerrado. F9 hecha;
+rechazo incompatible sin mensaje específico queda como pulido opcional.

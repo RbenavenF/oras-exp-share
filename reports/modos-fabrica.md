@@ -1,5 +1,9 @@
 # F9 — Fábrica Individual Libre
 
+Estado actual (2026-11-15): **hecho**. Recepción habilitada y aceptación
+VM/ARM/Azahar cerrada en hito5; los estados de hitos anteriores son históricos.
+Consola y recorrido completo de alfa: no probados aquí.
+
 ## Hito 1: rangos y equivalencias antes de habilitar
 
 Estado: **en curso**. `factory_open.py` define y valida los rangos, pero todavía
@@ -417,3 +421,58 @@ Guard de hash/zona/works esperados, rechazo de sobrescritura, 58 checksums.
 `round-end-guard.json` prueba hash incorrecto rechazado, salida ausente y fuente
 intacta. PB/equipo/cajas/IV/semilla/contador/marca preservados. Pendiente medir el
 cierre de ronda en esta copia y cerrar el laboratorio antes de terminar.
+
+### Relevo del 15 de noviembre
+
+Al arrancar se revisaron `git status --short`, `git diff` y el último commit
+`8c9033d` (incluidos su diff y los tests Noland): árbol limpio, sin cambios
+parciales que deshacer. Ese commit recoge el helper `round-end` y la evidencia
+de derrota anterior; esta sesión continúa el cierre pendiente. Sin cambios de
+producto respecto a la build hito4. `hito5/installed.json` compara los 28 archivos
+instalados con `hito4/build-hashes.json`: ninguna discrepancia.
+
+Suite obligatoria ejecutada de nuevo tras `source scripts/env.sh`:
+`env -u ORCH_LANE python -m pytest -q tests` → **3586 passed, 4 skipped,
+102.56s**, en `hito5/tests-relevo.log`. `python -m py_compile
+frontier/probes/modos/fabrica.py` y `git diff --check` correctos.
+
+### Cierre del hito 5 (2026-11-15)
+
+Desde `hito4/round-end.sav` (racha6 artificial, no seis victorias naturales),
+se ganó naturalmente el combate7: `hito5/azahar-round.log`,
+`FACTORY RESULT raw=1`, racha previa6/IV3 y marca2. Rival ordinario medido
+Cherrim/Snorunt/Skiploom100/IV3. El juego pagó3PB y abrió un draft nuevo:
+Darmanitan/Skarmory/Gardevoir, conjuntos33199/33176/34299, semilla49541,
+snapshot2, IV6. `round-two-draft.png` y `round-two-level100.png`.
+El contador propio pasó de1 a2 al acreditar el cambio anterior, conservando
+marca2 para acreditar este nuevo draft tras una victoria.
+
+También se ganó naturalmente el combate8 con esos tres alquileres100/IV6;
+el constructor rival creó Phantump/Joltik/Glameow100/**IV3**. Esta medida confirma
+la desviación Mansión: el rival ordinario no hereda los IV6 del draft Libre.
+Se rechazó el cambio (B), se eligió Pausar y se completó el guardado retail.
+`hito5/round-two-paused.sav/json`, SHA256
+`5c8529acf71f92092f313181d92f7517e7ad1698e864f439e28ed280d38ce4ef`,
+58 bloques válidos: **PB6** (antes3), racha/récordLibre8/8, contador3,
+marca0, snapshot2, IV6, CONFIG356, ruta1 (reto pausado), semilla49541 y los
+mismos tres conjuntos. Nivel50 racha12/récord20/contador22; Dobles24/25;
+récords Dobles6/6 intactos. `round-two-paused.png` muestra recepción tras pausa.
+Hashes de equipo y cajas idénticos a `hito4/paused.json`: equipo
+`e376f1b635055be23d12e0dc18b1d8fbf836c806d6e2fdc40515a80c4da5d54a`, cajas
+`4b00b99e63599ba5f9a744f075f66b5e7ef9f068b15987e8d610945d0d8621d8`.
+No hay PB adicional dentro de ronda: el combate8 conserva PB6.
+
+El primer intento del combate7 se descartó sin guardar tras agotar Giro Bola
+contra Pidgey (`azahar-attempt1.log`); se restauró la misma copia round-end.
+Una entrada accidental al selector ordinario también se descartó antes de
+combatir. Solo el intento exitoso anterior sustenta el cierre. Las sondas GDB
+son pasivas: no se escribió RAM. La línea `FACTORY ROUND BP 0` del log usa un
+offset de archivo sobre RAM y **no mide PB**; la medida válida es el guardado
+retail, offset0x4230, leído por `fabrica.py snapshot`.
+
+Laboratorio del carril cerrado con `faraway/gdbctl.sh stop` y
+`python scripts/azahar_lab.py reap`. Regresión agrupada13nov: solo lo nuevo de
+Fábrica; sin combates ajenos. Noland probado ARM/VM, no en Azahar; consola no
+probada. La presentación del rechazo de intercambio incompatible sigue como
+pulido opcional: conserva el equipo sin mensaje específico; validación VM
+cubierta. No se añaden recursos ni se modifica la build para ese pulido.
