@@ -4732,3 +4732,18 @@ contiene identidad/correo de autores y rutas/notas locales; no son credenciales.
 La revisión no constituye garantía absoluta de ausencia de secretos.
 Siguiente paso: subir documentación a main, cambiar visibilidad con gh y verificar.
 Volver a privado cuando lo solicite el usuario; no hay fecha ni temporizador acordados.
+
+
+## 2026-11-15 — Codex — Publicación pública confirmada
+Estado: hecho.
+Hecho: README y revisión subidos a main (018a1b6); repositorio ahora público,
+a petición del usuario. La rama feature/orch-viewer sigue separada.
+Evidencia: `gh api --method PATCH repos/RbenavenF/oras-exp-share -F private=false`
+devuelve private=false. GET anónimo de api.github.com/repos/RbenavenF/oras-exp-share
+sin credenciales confirma private=false. gh repo edit con indicador moderno falló
+porque la versión instalada no lo admite; se corrigió mediante API.
+Commits: 018a1b6 documentación; el de esta entrada registra el resultado.
+Decisiones: sin cambios de juego, supervisor, datos locales ni archivos sin versionar.
+Identidad de autor y notas técnicas del historial permanecen públicas. No se ha
+programado vuelta automática a privado: el usuario no indicó plazo.
+Siguiente paso: compartir enlace; volver a privado cuando lo solicite el usuario.
