@@ -29,8 +29,7 @@ mismo commit que cambia lo que describe.
 
 ## Turno
 
-Codex — visor web, checkout aislado feature/orch-viewer (2026-11-15).
-El checkout principal sigue bajo frontier-orch; esta sesión solo modifica el visor.
+frontier-orch (orquestador automático), desde 2026-11-13 22:23
 
 ## Instalaciones
 

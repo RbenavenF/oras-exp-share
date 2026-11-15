@@ -4746,3 +4746,31 @@ No probado: acceso desde otro dispositivo, autenticación o publicación externa
 parte de esta entrega local), recuperación automática tras reiniciar la máquina.
 Siguiente paso: usuario abre8787; arranque y límites en frontier/orch/viewer/README.md.
 Integrar solo los archivos del visor y esta entrada cuando el integrador tenga el turno.
+
+
+## 2026-11-15 13:56 — Codex — Detalle legible y visor en todas las interfaces
+Estado: hecho (rama aislada feature/orch-viewer).
+Hecho: detalle de tarea ampliado, texto15px de mayor contraste y párrafos, encabezado
+con cierre fijo, cuerpo con scroll propio, criterios/evidencia desplegables y nombre
+accesible del diálogo. Se conserva el desplegado al refrescar cuando la tarea no cambia.
+Servidor por defecto en todas las interfaces: socket IPv6 dual-stack, alternativa IPv4
+0.0.0.0; --host permite limitar la escucha. README actualizado. Petición explícita del usuario.
+Evidencia:
+- python3 -m unittest discover -s work/orch-viewer/frontier/orch/viewer -p 'test_*.py' -v:
+  10 OK; nuevos casos IPv4/IPv6 por HTTP real y alternativa a todas las interfaces IPv4.
+- Firefox headless/BiDi, helper /tmp/frontier-viewer-browser-qa.py: filtros, búsqueda,
+  diálogo escritorio/móvil390px, texto15px, cierre visible tras scroll, desplegable
+  conservado después de3,2s (refresco), sin desbordamiento ni errores de consola.
+  Primera prueba detectó cierre automático del desplegable; firma del contenido evita
+  reconstruir el detalle sin cambios; repetición completa PASS. Capturas principales:
+  work/viewer-task.png y work/viewer-detail-mobile.png.
+- urllib con ProxyHandler vacío: /api/state HTTP200 por127.0.0.1,192.168.1.20 y[::1].
+  ip -brief address: eno1 UP192.168.1.20/24. Sesión tmux frontier-viewer reiniciada
+  exclusivamente para aplicar la escucha nueva. Servidor queda activo en puerto8787.
+- py_compile y git diff --check correctos. No se toca el supervisor, cola ni laboratorios.
+Commits: 656b2ab turno aislado; el de esta entrada.
+Decisiones: solo visor y documentos propios en checkout aislado; referencia de turno
+devuelta al supervisor sin modificar el checkout principal. Sin autenticación añadida.
+No probado: navegador embebido de Codex directamente ni acceso desde otro dispositivo
+físico (las tres direcciones se probaron desde la máquina servidora).
+Siguiente paso: usuario recarga el visor; acceso LAN http://192.168.1.20:8787.

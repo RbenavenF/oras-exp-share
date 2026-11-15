@@ -7,9 +7,10 @@ compilación, CDN ni conexión a proveedores. No ejecuta comandos del proyecto.
 python3 frontier/orch/viewer/server.py --root /home/rbenaven/projects/oras-exp-share
 ```
 
-Abre <http://127.0.0.1:8787>. `--port` cambia el puerto. Se vincula exclusivamente
-al loopback: no publica los logs en Internet. Desde otro equipo, usa un túnel SSH
-(`ssh -L 8787:127.0.0.1:8787 usuario@maquina`) y abre la misma URL.
+Abre <http://127.0.0.1:8787>. Escucha por defecto en todas las interfaces IPv4 e
+IPv6 (socket dual cuando está disponible; IPv4 como alternativa). Desde otro
+equipo, abre `http://IP-DE-LA-MAQUINA:8787`. `--host 127.0.0.1` limita a loopback
+y `--port` cambia el puerto. El acceso depende del encaminamiento y firewall de la red.
 
 Durante el desarrollo aislado, el comando desde el checkout principal es:
 

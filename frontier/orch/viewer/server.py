@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import re
+import socket
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -215,16 +216,30 @@ def handler_for(snapshot):
     return Handler
 
 
+def create_server(host, port, snapshot):
+    host = host or ('::' if socket.has_dualstack_ipv6() else '0.0.0.0')
+    if ':' in host:
+        class IPv6Server(ThreadingHTTPServer):
+            address_family = socket.AF_INET6
+
+            def server_bind(self):
+                if socket.has_dualstack_ipv6():
+                    self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+                super().server_bind()
+        return IPv6Server((host, port), handler_for(snapshot))
+    return ThreadingHTTPServer((host, port), handler_for(snapshot))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', type=Path, required=True, help='Checkout principal que contiene work/orch')
-    parser.add_argument('--host', choices=['127.0.0.1'], default='127.0.0.1')
+    parser.add_argument('--host', help='Dirección de escucha; por defecto todas las interfaces IPv4/IPv6')
     parser.add_argument('--port', type=int, default=8787)
     args = parser.parse_args()
     if not (args.root / 'frontier/orch/tasks.json').is_file():
         parser.error('--root debe apuntar al checkout del orquestador')
-    server = ThreadingHTTPServer((args.host, args.port), handler_for(Snapshot(args.root)))
-    print(f'Frontier · visor de solo lectura → http://{args.host}:{args.port}', flush=True)
+    server = create_server(args.host, args.port, Snapshot(args.root))
+    print(f'Frontier · visor de solo lectura → http://localhost:{args.port} (escucha: {server.server_address[0]})', flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

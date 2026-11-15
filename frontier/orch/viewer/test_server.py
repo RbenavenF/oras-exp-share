@@ -1,12 +1,13 @@
 import importlib.util
 import json
+import socket
 from pathlib import Path
 import tempfile
 import threading
 import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError
-from urllib.request import urlopen, Request
+from urllib.request import urlopen, Request, build_opener, ProxyHandler
 from http.server import ThreadingHTTPServer
 
 spec = importlib.util.spec_from_file_location('viewer_server', Path(__file__).with_name('server.py'))
@@ -77,6 +78,30 @@ class ViewerTest(unittest.TestCase):
 
     def test_secrets_in_command_excerpt(self):
         self.assertEqual(server.clean('token=abc password=xyz'), 'token=[oculto] password=[oculto]')
+
+    def test_default_binding_falls_back_to_all_ipv4_interfaces(self):
+        with patch.object(server.socket, 'has_dualstack_ipv6', return_value=False):
+            http = server.create_server(None, 0, server.Snapshot(self.root))
+        try:
+            self.assertEqual(http.server_address[0], '0.0.0.0')
+        finally:
+            http.server_close()
+
+    @unittest.skipUnless(socket.has_dualstack_ipv6(), 'Dual stack not supported')
+    def test_dual_stack_accepts_ipv4_and_ipv6(self):
+        http = server.create_server(None, 0, server.Snapshot(self.root))
+        thread = threading.Thread(target=http.serve_forever, daemon=True)
+        thread.start()
+        opener = build_opener(ProxyHandler({}))
+        try:
+            self.assertEqual(http.server_address[0], '::')
+            for host in ('127.0.0.1', '[::1]'):
+                with opener.open(f'http://{host}:{http.server_port}/api/state', timeout=3) as res:
+                    self.assertEqual(res.status, 200)
+        finally:
+            http.shutdown()
+            http.server_close()
+            thread.join()
 
     def test_api_and_static_are_read_only(self):
         before = {str(p): p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
