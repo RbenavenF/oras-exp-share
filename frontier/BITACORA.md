@@ -4774,3 +4774,31 @@ devuelta al supervisor sin modificar el checkout principal. Sin autenticación a
 No probado: navegador embebido de Codex directamente ni acceso desde otro dispositivo
 físico (las tres direcciones se probaron desde la máquina servidora).
 Siguiente paso: usuario recarga el visor; acceso LAN http://192.168.1.20:8787.
+
+
+## 2026-11-15 14:23 — Codex — Repositorio privado creado y subido
+Estado: hecho.
+Hecho: usuario autoriza crear el repositorio y prepara gh autenticado. Creado
+https://github.com/RbenavenF/oras-exp-share como privado; origin HTTPS configurado
+y ramas main y feature/orch-viewer subidas con upstream, sin integrar ni parar
+el supervisor. Los archivos locales sin versionar no se añadieron.
+Evidencia:
+- gh repo create RbenavenF/oras-exp-share --private --source . --remote origin;
+  git push -u origin main feature/orch-viewer: ambas ramas nuevas recibidas.
+- gh repo view --json nameWithOwner,isPrivate,url,defaultBranchRef:
+  isPrivate=true, defaultBranchRef.name=main.
+- git ls-remote --heads origin main feature/orch-viewer:
+  main935d411eca7a1d3e67214ab87f191be0a3c8cddc; visor8e001d4aa7a5c535b93d9d23a1691b2863827521
+  antes de esta entrada; se sube también esta trazabilidad en la rama del visor.
+- Revisión local: git ls-files no incluye inputs/dist/dumps/adjuntos; búsqueda
+  de nombres de binarios de juego/partidas/claves en objetos alcanzables por las
+  dos ramas sin coincidencias. Sin coincidencias de patrones de tokens GitHub
+  o claves privadas en árboles publicados (comprobación acotada, no auditoría total).
+Commits: a8ba11c turno documental aislado; el de esta entrada.
+Decisiones: solo historial ya versionado, más esta entrada documental.
+reports/evoluciones-repolished.md, iniciales-repolished.md, senda-ignea.md y los
+scripts inspect_encounters.py/inspect_evolutions.py siguen sin versionar, igual
+que dumps y adjuntos. No publicar ramas de trabajo de los workers por defecto.
+No probado: clonación en otra máquina ni reconstrucción del mod desde clon limpio.
+Siguiente paso: integrar visor cuando el integrador tenga el turno; los próximos
+push de main usan origin/main. El turno principal permanece en frontier-orch.
