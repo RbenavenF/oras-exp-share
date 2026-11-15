@@ -4712,3 +4712,23 @@ intercambio incompatible. paused.sav es un punto de continuación reproducible
 con alquiler N50 recién cambiado y marca pendiente2; no confundir con seis
 victorias: racha real1. Reservar cualquier nuevo recurso antes de escribirlo.
 Estado lane-task in_progress; recepción ya habilitada, aceptación aún parcial.
+
+
+## 2026-11-15 — Codex — README actual y revisión para publicación pública
+Estado: hecho (documentación y revisión); cambio de visibilidad pendiente del comando GitHub.
+Hecho: README reescrito alrededor del Frente, alfa v0.3, límites visuales,
+modalidades, orquestador, visor en rama separada, herramientas y generación local.
+Trabajo documental en work/public-readme; supervisor y checkout principal intactos.
+Evidencia: Gitleaks oficial descargado mediante gh release download gitleaks/gitleaks;
+`gitleaks git . --log-opts='main feature/orch-viewer' --redact`: 325 commits,
+3,20 MB escaneados, cero hallazgos. Informe local /tmp/oras-public-audit/gitleaks.json=[];
+no se versiona el binario. Barrido de 2902 objetos alcanzables: sin rutas de inputs,
+dist, dumps, adjuntos, ROM/CRO/binarios, partidas, .env, claves ni credentials.
+Enlaces locales de README comprobados: cero inexistentes; git diff --check correcto.
+Commits: 701b711 turno aislado; el de esta entrada.
+Decisiones: usuario autoriza visibilidad pública temporal para compartir con un amigo.
+No se añaden archivos sin versionar ni se integran cambios del visor. El historial
+contiene identidad/correo de autores y rutas/notas locales; no son credenciales.
+La revisión no constituye garantía absoluta de ausencia de secretos.
+Siguiente paso: subir documentación a main, cambiar visibilidad con gh y verificar.
+Volver a privado cuando lo solicite el usuario; no hay fecha ni temporizador acordados.
