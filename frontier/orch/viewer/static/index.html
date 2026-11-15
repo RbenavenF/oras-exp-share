@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#102b29"><title>Frontier · Observatorio</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body>
+<aside class="sidebar">
+  <a class="brand" href="#overview"><span class="brand-icon">F<span>↗</span></span><span>FRONTIER<small>OBSERVATORIO</small></span></a>
+  <div class="project"><span class="eyebrow">PROYECTO ACTIVO</span><strong>ORAS Repolished</strong><span>Frente de Batalla · Esmeralda</span></div>
+  <nav aria-label="Secciones"><a href="#overview" class="active" data-page="overview"><span>◉</span> Vista general</a><a href="#queue" data-page="queue"><span>≡</span> Cola de tareas <b id="nav-count">—</b></a><a href="#activity" data-page="activity"><span>⌁</span> Actividad</a><a href="#tools" data-page="tools"><span>◇</span> Herramientas</a></nav>
+  <div class="sidebar-bottom"><span class="readonly">◈ &nbsp; Solo lectura</span><p>Una ventana al trabajo.<br>El control sigue en el orquestador.</p><div class="source-label">DATOS LOCALES · SIN SERVICIOS EXTERNOS</div></div>
+</aside>
+<div class="workspace">
+  <header><div class="breadcrumb">Frente de Batalla <span>/</span> <strong id="crumb">Vista general</strong></div><div class="connection"><span class="dot" id="connection-dot"></span><span id="connection-text" role="status">Conectando</span><button id="refresh" class="icon-button" aria-label="Actualizar ahora" title="Actualizar ahora">↻</button></div></header>
+  <main>
+    <div id="error" role="alert" hidden></div>
+    <section id="page-overview" class="page">
+      <div class="page-heading"><div><div class="eyebrow">CENTRO DE OPERACIONES</div><h1>El Frente, en marcha<span>.</span></h1><p>Todo lo que está pasando, en un mismo lugar.</p></div><div class="snapshot"><span id="clock">—</span><small>Actualización cada 3 segundos</small></div></div>
+      <div id="summary" class="summary-grid"></div>
+      <div class="section-title"><h2>Workers <span class="muted">/ 02</span></h2><span class="caption">Procesos visibles · Cuotas: esperas registradas</span></div>
+      <div id="workers" class="workers-grid"></div>
+      <div class="overview-bottom"><section class="panel"><div class="panel-heading"><h2>En el radar</h2><a href="#queue">Ver cola completa ↗</a></div><div id="radar"></div></section><section class="panel journal-panel"><div class="panel-heading"><h2>Última bitácora</h2><span class="small-pill">REPOSITORIO</span></div><div id="journal"></div></section></div>
+    </section>
+    <section id="page-queue" class="page" hidden>
+      <div class="page-heading"><div><div class="eyebrow">PLAN DE TRABAJO</div><h1>Una tarea detrás de otra<span>.</span></h1><p>Orden de la cola y dependencias reales. Las tareas listas pueden ejecutarse en paralelo.</p></div><span class="readonly light">◈ Solo lectura</span></div>
+      <div class="queue-toolbar"><div class="filters" role="group" aria-label="Filtrar estado"><button data-filter="open" class="selected">Abiertas</button><button data-filter="all">Todas</button><button data-filter="in_progress">En curso</button><button data-filter="blocked">Bloqueadas</button><button data-filter="done">Terminadas</button></div><input type="search" id="search" placeholder="Buscar tarea, worker o descripción…" aria-label="Buscar tareas"></div>
+      <div class="queue-meta"><span id="queue-count"></span><span>Orden original del orquestador ↓</span></div>
+      <div id="task-list" class="task-list"></div>
+    </section>
+    <section id="page-activity" class="page" hidden>
+      <div class="page-heading"><div><div class="eyebrow">PULSO DEL SISTEMA</div><h1>El trabajo, por dentro<span>.</span></h1><p>Últimos mensajes y llamadas a herramientas de cada worker.</p></div></div>
+      <div id="activity-workers" class="activity-grid"></div>
+      <section class="panel supervisor-panel"><div class="panel-heading"><h2>Registro del supervisor</h2><span class="small-pill">ÚLTIMOS 30 EVENTOS</span></div><pre id="supervisor-log" tabindex="0"></pre></section>
+    </section>
+    <section id="page-tools" class="page" hidden>
+      <div class="page-heading"><div><div class="eyebrow">LA MESA DE TRABAJO</div><h1>Cada herramienta, su papel<span>.</span></h1><p>Cómo se construye y se comprueba el Frente de Batalla.</p></div></div>
+      <div id="tool-grid" class="tool-grid"></div>
+      <section class="panel sources-panel"><h2>De dónde sale esta información</h2><p>Se leen los archivos del orquestador y los procesos locales. No se ejecutan comandos del proyecto ni se cambia su estado.</p><div id="sources"></div><p class="footnote">La cuota es la espera registrada por el supervisor; no es una consulta al proveedor ni un porcentaje de créditos. Los eventos se muestran como extractos: no son un registro completo ni una auditoría de secretos.</p></section>
+    </section>
+    <footer><span>FRONTIER <b>↗</b> <span class="footer-divider">/</span> Hecho para seguir construyendo.</span><span id="footer-state">Esperando datos…</span></footer>
+  </main>
+</div>
+<dialog id="task-dialog"><div class="dialog-top"><span class="eyebrow">DETALLE DE TAREA</span><button id="close-dialog" class="icon-button" aria-label="Cerrar detalle">×</button></div><div id="task-detail"></div></dialog>
+</body></html>

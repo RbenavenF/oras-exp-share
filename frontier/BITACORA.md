@@ -4712,3 +4712,37 @@ intercambio incompatible. paused.sav es un punto de continuación reproducible
 con alquiler N50 recién cambiado y marca pendiente2; no confundir con seis
 victorias: racha real1. Reservar cualquier nuevo recurso antes de escribirlo.
 Estado lane-task in_progress; recepción ya habilitada, aceptación aún parcial.
+
+
+## 2026-11-15 10:27 — Codex — Visor web local del orquestador
+Estado: hecho (entrega aislada, sin integrar en main).
+Hecho: por petición del usuario, visor de solo lectura en frontier/orch/viewer/: servidor
+Python estándar y HTML/CSS/JS sin dependencias ni servicios externos. Vista general, cola
+en orden original con búsqueda/filtros y detalle/dependencias/evidencia, workers, cuotas
+registradas, extractos de actividad Codex/Claude, bitácora y herramientas documentadas.
+Actualiza cada3s; caché2s y colas de logs limitadas a160KB por worker. No ejecuta comandos
+del proyecto ni modifica estado/cola/cuotas. in_progress no equivale a proceso activo.
+Evidencia:
+- python3 -m unittest discover -s work/orch-viewer/frontier/orch/viewer -p 'test_*.py' -v:
+  8 pruebas OK. HTTP API/estáticos, rechazo de escrituras y rutas arbitrarias, archivos
+  originales sin mutar, JSON parcial, dependencias, logs de ambos agentes, espera
+  obsoleta frente a proceso activo, colas acotadas y filtrado preventivo de secretos.
+- Firefox headless + WebDriver BiDi local: carga de datos reales, filtros, búsqueda,
+  diálogo, actividad, herramientas, escape HTML y móvil390px sin desbordamiento; sin
+  errores de consola. Helper QA /tmp/frontier-viewer-browser-qa.py; capturas
+  work/viewer-desktop.png, work/viewer-task.png, work/viewer-mobile.png del principal.
+  La segunda ejecución inicial del helper falló por sesión BiDi anterior sin cerrar;
+  se cerró el navegador propio, se añadió session.end y la repetición completa pasó.
+- Servido en http://127.0.0.1:8787, tmux frontier-viewer; tmux has-session correcto.
+  Lee --root /home/rbenaven/projects/oras-exp-share. Supervisor visible,118 ejecuciones,
+  37/51 tareas terminadas y0/2 workers activos en la lectura de aceptación.
+- py_compile y git diff --check correctos. No suite de juego ni Azahar: no cambia el mod.
+Commits: 4a806bc toma de turno aislado; el de esta entrada entrega el visor.
+Decisiones: desarrollo en work/orch-viewer, rama feature/orch-viewer, sin tocar checkout
+principal ni laboratorios. El turno temporal de este checkout se devuelve a la referencia
+del supervisor; el turno del principal nunca se tomó. La cuota es la espera que guarda
+el supervisor, no saldo del proveedor; se conserva aunque el usuario indique cuota nueva.
+No probado: acceso desde otro dispositivo, autenticación o publicación externa (no forman
+parte de esta entrega local), recuperación automática tras reiniciar la máquina.
+Siguiente paso: usuario abre8787; arranque y límites en frontier/orch/viewer/README.md.
+Integrar solo los archivos del visor y esta entrada cuando el integrador tenga el turno.
